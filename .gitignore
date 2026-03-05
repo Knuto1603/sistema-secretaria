@@ -1,0 +1,53 @@
+# ============================================================
+# Monorepo – Sistema Secretaría Académica FII-UNP
+# ============================================================
+
+# ── Variables de entorno (contienen secretos) ─────────────
+.env
+.env.*
+!.env.*.example
+
+# ── IDEs y editores ───────────────────────────────────────
+.idea/
+.vscode/
+*.sublime-workspace
+.fleet/
+.nova/
+.zed/
+
+# ── Sistema operativo ─────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Claude Code ───────────────────────────────────────────
+.claude/
+
+# ────────────────────────────────────────────────────────────
+# BACKEND (Laravel)
+# ────────────────────────────────────────────────────────────
+backend/vendor/
+backend/node_modules/
+backend/public/build/
+backend/public/hot/
+backend/public/storage/
+backend/storage/*.key
+backend/storage/pail/
+backend/.phpunit.cache/
+backend/.phpunit.result.cache
+backend/auth.json
+backend/Homestead.json
+backend/Homestead.yaml
+
+# ────────────────────────────────────────────────────────────
+# FRONTEND (Angular)
+# ────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/tmp/
+frontend/out-tsc/
+
+# Archivos temporales con rutas Windows incorrectas
+frontend/C:*
+frontend/build_output.txt
