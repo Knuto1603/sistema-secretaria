@@ -1,0 +1,142 @@
+<div class="relative flex h-screen bg-[#F8FAFC] overflow-hidden font-sans">
+
+  <!-- Overlay backdrop (mobile) -->
+  @if (isSidebarOpen()) {
+    <div
+      class="absolute inset-0 z-30 bg-black/50 md:hidden"
+      (click)="toggleSidebar()">
+    </div>
+  }
+
+  <!-- SIDEBAR -->
+  <aside
+    [ngClass]="isSidebarOpen()
+      ? 'translate-x-0 w-72'
+      : '-translate-x-full md:translate-x-0 w-72 md:w-20'"
+    class="absolute md:relative z-40 md:z-30 h-full bg-indigo-950 text-white flex flex-col transition-all duration-300 ease-in-out shadow-2xl">
+
+    <!-- Logo Area -->
+    <div class="px-4 md:p-6 border-b border-white/10 h-20 flex items-center justify-between">
+      <div class="flex items-center gap-3 overflow-hidden" *ngIf="isSidebarOpen()">
+        <img src="logo_UNP.webp" alt="Logo UNP" class="h-10 w-auto object-contain shrink-0">
+        <div>
+          <h2 class="text-sm font-black tracking-widest text-white leading-none">FACULTAD DE</h2>
+          <h2 class="text-sm font-black tracking-widest text-white leading-none">INGENIERÍA INDUSTRIAL</h2>
+          <p class="text-[9px] text-indigo-400 font-bold uppercase tracking-tighter">UNP</p>
+        </div>
+      </div>
+      <button (click)="toggleSidebar()" class="p-2 hover:bg-white/10 rounded-lg transition-colors mx-auto">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-grow p-4 space-y-1 overflow-y-auto">
+      <p class="text-[10px] font-bold text-indigo-400/40 uppercase mb-4 px-3 tracking-widest" *ngIf="isSidebarOpen()">
+        Módulos Académicos
+      </p>
+
+      @for (item of filteredMenu; track item.title) {
+        <a [routerLink]="item.route"
+           (click)="handleNavClick()"
+           routerLinkActive="bg-indigo-500/20 text-white border-l-4 border-indigo-400 shadow-inner"
+           class="flex items-center gap-4 p-3.5 rounded-xl hover:bg-white/5 transition-all group text-indigo-100/60 hover:text-white"
+           [title]="item.title">
+          <svg class="w-6 h-6 shrink-0 transition-transform group-hover:scale-110"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24" [attr.stroke-width]="2">
+            <path [attr.d]="item.icon" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="text-sm font-bold whitespace-nowrap" *ngIf="isSidebarOpen()">{{ item.title }}</span>
+        </a>
+      }
+    </nav>
+
+    <!-- User Section -->
+    <div class="p-4 bg-black/20 border-t border-white/5">
+      <div class="flex items-center gap-3 mb-4" *ngIf="isSidebarOpen()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-400 to-indigo-600 flex items-center justify-center font-black text-white shadow-lg">
+          {{ user()?.name?.charAt(0) }}
+        </div>
+        <div class="truncate">
+          <p class="text-xs font-black text-white truncate">{{ user()?.name }}</p>
+          <p class="text-[9px] text-indigo-400 font-bold uppercase">{{ user()?.roles?.[0] }}</p>
+        </div>
+      </div>
+      <button (click)="logout()"
+        class="w-full flex items-center justify-center gap-3 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white p-3 rounded-xl text-[10px] font-black transition-all border border-red-500/20 uppercase tracking-widest">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+        <span *ngIf="isSidebarOpen()">Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENT AREA -->
+  <main class="flex-grow flex flex-col min-w-0 overflow-hidden">
+
+    <!-- Banner de Impersonación -->
+    @if (authService.isImpersonating()) {
+      <div class="bg-red-500 text-white text-center py-2 text-xs font-black flex items-center justify-center gap-4 z-50">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>MODO IMPERSONACIÓN: {{ user()?.name }}</span>
+        <button (click)="stopImpersonation()"
+          class="px-3 py-1 bg-white text-red-600 rounded-full font-black text-xs hover:bg-red-50 transition-colors">
+          Salir
+        </button>
+      </div>
+    }
+
+    <!-- Topbar -->
+    <header class="h-20 bg-white border-b border-slate-200 px-4 md:px-8 flex justify-between items-center z-20 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <!-- Hamburger (solo mobile) -->
+        <button
+          (click)="toggleSidebar()"
+          class="md:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div class="flex flex-col">
+          <h3 class="text-slate-800 font-black text-sm uppercase tracking-tight">Secretaría Académica</h3>
+          <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">Facultad de Ingeniería Industrial - UNP</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 md:gap-6">
+        <div class="hidden sm:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+          <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+          <span class="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Servidor Activo</span>
+        </div>
+
+        <div class="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+
+        <div class="flex items-center gap-2 md:gap-3">
+          <div class="text-right hidden sm:block">
+            <p class="text-[10px] font-black text-slate-400 uppercase leading-none">Rol Actual</p>
+            <p class="text-xs font-bold text-indigo-600">{{ user()?.roles?.[0] }}</p>
+          </div>
+          <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center">
+            <svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dynamic Content -->
+    <section class="flex-grow overflow-y-auto p-6 md:p-10 relative">
+      <!-- Background Decorative Element -->
+      <div class="absolute top-0 right-0 -z-10 opacity-5">
+        <svg width="400" height="400" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="100" fill="#4F46E5" />
+        </svg>
+      </div>
+
+      <!-- AQUÍ SE RENDERIZAN LAS PÁGINAS (Home, Registro, etc) -->
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

@@ -1,0 +1,39 @@
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mchunk-EXW42DH4.js[39m  [2m | [22m[2m-[22m                            [2m | [22m[36m858.35 kB[39m[2m | [22m
+[32mchunk-7JU4432J.js[39m  [2m | [22m[2m-[22m                            [2m | [22m[36m268.79 kB[39m[2m | [22m
+[32mchunk-TZ2ZMGYK.js[39m  [2m | [22m[2m-[22m                            [2m | [22m[36m256.02 kB[39m[2m | [22m
+[32mchunk-WLZTIZKX.js[39m  [2m | [22m[2m-[22m                            [2m | [22m[36m224.27 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m                    [2m | [22m [36m89.77 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                         [2m | [22m [36m69.48 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                       [2m | [22m [36m56.18 kB[39m[2m | [22m
+[32mchunk-2UEBS2X7.js[39m  [2m | [22m[2m-[22m                            [2m | [22m  [36m5.31 kB[39m[2m | [22m
+[32mchunk-JTJ7B6UZ.js[39m  [2m | [22m[2m-[22m                            [2m | [22m  [36m4.91 kB[39m[2m | [22m
+[32mchunk-Y5RQAIA6.js[39m  [2m | [22m[2m-[22m                            [2m | [22m  [36m1.50 kB[39m[2m | [22m
+[32mchunk-ZJRPBB7G.js[39m  [2m | [22m[2m-[22m                            [2m | [22m[36m203 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                [2m | [22m  [1m1.83 MB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mchunk-KHQOGJDX.js[39m  [2m | [22m[2musuarios-home-component[22m      [2m | [22m[36m133.99 kB[39m[2m | [22m
+[32mchunk-7I3XUFTE.js[39m  [2m | [22m[2mplan-estudios-component[22m      [2m | [22m [36m59.80 kB[39m[2m | [22m
+[32mchunk-EZUDS7PR.js[39m  [2m | [22m[2mchatbot-component[22m            [2m | [22m [36m52.80 kB[39m[2m | [22m
+[32mchunk-TXCWSTQ3.js[39m  [2m | [22m[2mactivar-cuenta-component[22m     [2m | [22m [36m49.25 kB[39m[2m | [22m
+[32mchunk-N7QOKJT3.js[39m  [2m | [22m[2mrecuperar-password-component[22m [2m | [22m [36m48.29 kB[39m[2m | [22m
+[32mchunk-XXTJAW3M.js[39m  [2m | [22m[2msolicitud-lista-component[22m    [2m | [22m [36m40.70 kB[39m[2m | [22m
+[32mchunk-FPSF6XRQ.js[39m  [2m | [22m[2mkb-documents-component[22m       [2m | [22m [36m39.51 kB[39m[2m | [22m
+[32mchunk-JNJ5XADB.js[39m  [2m | [22m[2mregistro-component[22m           [2m | [22m [36m37.32 kB[39m[2m | [22m
+[32mchunk-2TZUIUGF.js[39m  [2m | [22m[2mkb-analytics-component[22m       [2m | [22m [36m35.28 kB[39m[2m | [22m
+[32mchunk-LZ3XYBYK.js[39m  [2m | [22m[2madministrativo-form-component[22m[2m | [22m [36m34.37 kB[39m[2m | [22m
+[32mchunk-4UUP5KTA.js[39m  [2m | [22m[2msolicitud-detalle-component[22m  [2m | [22m [36m32.27 kB[39m[2m | [22m
+[32mchunk-AK4L2XGK.js[39m  [2m | [22m[2msolicitud-form-component[22m     [2m | [22m [36m30.80 kB[39m[2m | [22m
+[32mchunk-GF5HEFIG.js[39m  [2m | [22m[2mkb-lista-component[22m           [2m | [22m [36m27.76 kB[39m[2m | [22m
+[32mchunk-VUTN47TK.js[39m  [2m | [22m[2mimpersonation-component[22m      [2m | [22m [36m27.33 kB[39m[2m | [22m
+[32mchunk-XJDD4G26.js[39m  [2m | [22m[2mperiodos-lista-component[22m     [2m | [22m [36m26.25 kB[39m[2m | [22m
+[2m...and 30 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [29.087 seconds]
+
+Output location: E:\UNP\PROYECTOS SECRETARIA\sistema-secretaria\frontend\dist\frontend
+

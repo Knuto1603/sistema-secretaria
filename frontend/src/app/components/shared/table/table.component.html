@@ -1,0 +1,75 @@
+<div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
+  
+  <!-- Encabezado de la Tabla -->
+  @if (title()) {
+    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/30">
+      <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">{{ title() }}</h3>
+    </div>
+  }
+
+  <div class="overflow-x-auto min-h-[200px]">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-slate-50/50 text-[10px] uppercase tracking-widest text-slate-400 font-black border-b border-slate-100">
+          <th class="px-6 py-4 w-12 text-center">#</th>
+          @for (col of columns(); track col.key) {
+            <th class="px-6 py-4">{{ col.label }}</th>
+          }
+          @if (actionsTemplate) {
+            <th class="px-6 py-4 text-right">Acciones</th>
+          }
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-slate-100">
+        <!-- Overlay de carga usando el componente oficial -->
+        @if (loading()) {
+          <tr>
+            <td [attr.colspan]="columns().length + (actionsTemplate ? 2 : 1)" class="p-0">
+              <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                <app-loading />
+              </div>
+            </td>
+          </tr>
+        }
+
+        @for (row of data(); track $index) {
+          <tr 
+            (click)="rowClick.emit(row)"
+            class="hover:bg-indigo-50/30 transition-colors group cursor-pointer"
+          >
+            <td class="px-6 py-4 text-center">
+              <span class="text-[10px] font-black text-slate-400 group-hover:text-indigo-600 transition-colors">
+                {{ $index + 1 }}
+              </span>
+            </td>
+
+            @for (col of columns(); track col.key) {
+              <td class="px-6 py-4">
+                @if (cellTemplate) {
+                  <ng-container *ngTemplateOutlet="cellTemplate; context: { $implicit: row, column: col }"></ng-container>
+                } @else {
+                  <span class="text-sm font-bold text-slate-700">{{ row[col.key] }}</span>
+                }
+              </td>
+            }
+
+            @if (actionsTemplate) {
+              <td class="px-6 py-4 text-right">
+                <ng-container *ngTemplateOutlet="actionsTemplate; context: { $implicit: row }"></ng-container>
+              </td>
+            }
+          </tr>
+        } @empty {
+          @if (!loading()) {
+            <tr>
+              <td [attr.colspan]="columns().length + (actionsTemplate ? 2 : 1)" class="py-20 text-center">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">No se encontraron resultados</p>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

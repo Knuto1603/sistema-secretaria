@@ -1,0 +1,201 @@
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <!-- Mensaje -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="volver()"
+        class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <div class="flex-grow">
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Detalle de Solicitud</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+          Información completa del trámite
+        </p>
+      </div>
+      @if (solicitud()) {
+        <app-badge [color]="getColorEstado(solicitud()!.estado)" class="text-sm">
+          {{ getEstadoLabel(solicitud()!.estado) }}
+        </app-badge>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="bg-white rounded-3xl border border-slate-200 p-12 flex items-center justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    </div>
+  } @else if (solicitud()) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Columna principal -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Información del estudiante -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Estudiante</h3>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-400 to-indigo-600 flex items-center justify-center text-xl font-black text-white">
+              {{ solicitud()!.user?.name?.charAt(0) || '?' }}
+            </div>
+            <div class="flex-1">
+              <p class="text-lg font-bold text-slate-800">{{ solicitud()!.user?.name || 'Sin nombre' }}</p>
+              <div class="flex flex-wrap items-center gap-2 mt-1">
+                @if (solicitud()!.user?.codigo_universitario) {
+                  <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-mono font-bold">
+                    {{ solicitud()!.user!.codigo_universitario }}
+                  </span>
+                }
+                @if (solicitud()!.user?.escuela) {
+                  <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium">
+                    {{ solicitud()!.user!.escuela }}
+                  </span>
+                }
+                @if (solicitud()!.user?.anio_ingreso) {
+                  <span class="text-xs text-slate-400">
+                    Promoción {{ solicitud()!.user!.anio_ingreso }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información del curso -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Curso Solicitado</h3>
+          @if (solicitud()!.programacion?.curso) {
+            <div class="space-y-3">
+              <p class="text-lg font-bold text-slate-800">{{ solicitud()!.programacion!.curso!.nombre }}</p>
+              <div class="flex flex-wrap gap-3">
+                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
+                  Código: {{ solicitud()!.programacion!.curso!.codigo }}
+                </span>
+                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
+                  Grupo: {{ solicitud()!.programacion!.grupo }}
+                </span>
+                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
+                  Clave: {{ solicitud()!.programacion!.clave }}
+                </span>
+              </div>
+            </div>
+          } @else {
+            <p class="text-slate-500">Sin información de curso</p>
+          }
+        </div>
+
+        <!-- Motivo de la solicitud -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Motivo de la Solicitud</h3>
+          <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{{ solicitud()!.motivo }}</p>
+        </div>
+
+        <!-- Archivos adjuntos -->
+        @if (solicitud()!.archivo_sustento_path) {
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Archivo Adjunto</h3>
+            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <div class="flex-grow">
+                <p class="text-sm font-medium text-slate-700">{{ solicitud()!.archivo_sustento_nombre || 'Archivo adjunto' }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Columna lateral -->
+      <div class="space-y-6">
+
+        <!-- Información de la solicitud -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Información</h3>
+          <dl class="space-y-4">
+            <div>
+              <dt class="text-[10px] font-bold text-slate-400 uppercase">Tipo de Solicitud</dt>
+              <dd class="text-sm font-medium text-slate-700">{{ solicitud()!.tipo_solicitud?.nombre || '-' }}</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-bold text-slate-400 uppercase">Fecha de Registro</dt>
+              <dd class="text-sm font-medium text-slate-700">{{ formatearFecha(solicitud()!.created_at) }}</dd>
+            </div>
+            <div>
+              <dt class="text-[10px] font-bold text-slate-400 uppercase">Última Actualización</dt>
+              <dd class="text-sm font-medium text-slate-700">{{ formatearFecha(solicitud()!.updated_at) }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Panel de acciones (solo admin) -->
+        @if (esAdmin()) {
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Gestionar Solicitud</h3>
+
+            <div class="space-y-4">
+              <!-- Selector de estado -->
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Cambiar Estado</label>
+                <select
+                  [ngModel]="nuevoEstado()"
+                  (ngModelChange)="nuevoEstado.set($event)"
+                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                  @for (estado of estados; track estado.value) {
+                    <option [value]="estado.value">{{ estado.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Observaciones -->
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Observaciones</label>
+                <textarea
+                  [ngModel]="observaciones()"
+                  (ngModelChange)="observaciones.set($event)"
+                  rows="4"
+                  placeholder="Agregar comentarios sobre la decisión..."
+                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+              </div>
+
+              <!-- Botón guardar -->
+              <app-btn
+                variant="primary"
+                [loading]="updating()"
+                (clicked)="actualizarEstado()"
+                class="w-full">
+                Guardar Cambios
+              </app-btn>
+            </div>
+          </div>
+        }
+
+        <!-- Observaciones existentes -->
+        @if (solicitud()!.observaciones_admin) {
+          <div class="bg-amber-50 p-6 rounded-3xl border border-amber-200">
+            <h3 class="text-xs font-black text-amber-700 uppercase tracking-widest mb-2">Observaciones del Revisor</h3>
+            <p class="text-sm text-amber-800">{{ solicitud()!.observaciones_admin }}</p>
+          </div>
+        }
+
+      </div>
+    </div>
+  }
+
+</div>

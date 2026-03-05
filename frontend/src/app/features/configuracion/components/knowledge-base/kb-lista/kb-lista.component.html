@@ -1,0 +1,140 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900">Base de Conocimientos</h1>
+      <p class="text-sm text-gray-500 mt-1">{{ total() }} artículos en total</p>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="navigate('/app/configuracion/knowledge-base/documentos')"
+        class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Documentos
+      </button>
+      <button (click)="navigate('/app/configuracion/knowledge-base/nuevo')"
+        class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Nuevo artículo
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex flex-wrap gap-3">
+    <input
+      [(ngModel)]="searchText"
+      (keyup.enter)="applyFilters()"
+      type="text"
+      placeholder="Buscar..."
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent flex-1 min-w-40" />
+
+    <select [(ngModel)]="filterTipo" (change)="applyFilters()"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      <option value="">Todos los tipos</option>
+      @for (tipo of tipos; track tipo) {
+        <option [value]="tipo">{{ tipo | titlecase }}</option>
+      }
+    </select>
+
+    <select [(ngModel)]="filterActivo" (change)="applyFilters()"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      <option value="">Todos</option>
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+    </select>
+
+    <button (click)="applyFilters()"
+      class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition">
+      Buscar
+    </button>
+    <button (click)="clearFilters()"
+      class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition">
+      Limpiar
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    @if (loading()) {
+      <div class="p-8 text-center text-gray-400 text-sm">Cargando...</div>
+    } @else if (articles().length === 0) {
+      <div class="p-8 text-center text-gray-400 text-sm">No se encontraron artículos.</div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Título</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Tipo</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Categoría</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Docs</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Estado</th>
+            <th class="px-4 py-3 text-right font-medium text-gray-600">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (art of articles(); track art.id) {
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-3">
+                <p class="font-medium text-gray-800">{{ art.titulo }}</p>
+                @if (art.tags?.length) {
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    @for (tag of art.tags!; track tag) {
+                      <span class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{{ tag }}</span>
+                    }
+                  </div>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <span [class]="'text-xs px-2 py-0.5 rounded-full font-medium ' + getTypeBadgeClass(art.tipo)">
+                  {{ art.tipo }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-gray-600">{{ art.categoria }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ art.documents?.length ?? 0 }}</td>
+              <td class="px-4 py-3">
+                <button (click)="toggleActivo(art)"
+                  [class]="'text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer ' + (art.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')">
+                  {{ art.activo ? 'Activo' : 'Inactivo' }}
+                </button>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end gap-2">
+                  <button (click)="navigate('/app/configuracion/knowledge-base/editar/' + art.id)"
+                    class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Editar">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button (click)="delete(art)"
+                    class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Paginación -->
+      @if (lastPage() > 1) {
+        <app-shared-pagination
+          [currentPage]="currentPage()"
+          [lastPage]="lastPage()"
+          [total]="total()"
+          [from]="from()"
+          [to]="to()"
+          [perPage]="perPage()"
+          (pageChange)="load($event)"
+          (pageSizeChange)="load(1)">
+        </app-shared-pagination>
+      }
+    }
+  </div>
+</div>

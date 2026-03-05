@@ -1,0 +1,205 @@
+<div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <!-- Logo -->
+    <div class="flex justify-center">
+      <img src="logo_UNP.webp" alt="Logo UNP" class="h-20 w-auto object-contain">
+    </div>
+    <h2 class="mt-6 text-center text-3xl font-black text-slate-900 tracking-tight">
+      SECRETARÍA ACADÉMICA
+    </h2>
+    <p class="mt-2 text-center text-sm text-slate-500 font-medium uppercase tracking-widest">
+      Facultad de Ingeniería Industrial - UNP
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+    <div class="bg-white py-8 px-6 shadow-2xl shadow-slate-200 rounded-3xl border border-slate-100 sm:px-10">
+
+      <!-- Tabs -->
+      <div class="flex mb-6 bg-slate-100 rounded-xl p-1">
+        <button
+          type="button"
+          (click)="setTab('estudiante')"
+          [class]="activeTab() === 'estudiante'
+            ? 'flex-1 py-2.5 px-4 text-xs font-black uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
+            : 'flex-1 py-2.5 px-4 text-xs font-bold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
+          Estudiante
+        </button>
+        <button
+          type="button"
+          (click)="setTab('administrativo')"
+          [class]="activeTab() === 'administrativo'
+            ? 'flex-1 py-2.5 px-4 text-xs font-black uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
+            : 'flex-1 py-2.5 px-4 text-xs font-bold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
+          Administrativo
+        </button>
+      </div>
+
+      <!-- Formulario Estudiante -->
+      @if (activeTab() === 'estudiante') {
+        <form class="space-y-5" (ngSubmit)="onLoginEstudiante()">
+          <!-- Campo Código -->
+          <div>
+            <label for="codigo" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+              Código Universitario
+            </label>
+            <div class="mt-1">
+              <input
+                id="codigo"
+                name="codigo"
+                type="text"
+                [(ngModel)]="estudianteCredentials.codigo"
+                maxlength="10"
+                required
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50 font-mono tracking-widest"
+                placeholder="0512021002">
+            </div>
+            <p class="mt-1 text-[10px] text-slate-400">10 dígitos numéricos</p>
+          </div>
+
+          <!-- Campo Password -->
+          <div>
+            <label for="password-est" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+              Contraseña
+            </label>
+            <div class="mt-1">
+              <input
+                id="password-est"
+                name="password"
+                type="password"
+                [(ngModel)]="estudianteCredentials.password"
+                required
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                placeholder="••••••••">
+            </div>
+          </div>
+
+          <!-- Link Primera vez / Olvidé contraseña -->
+          <div class="flex justify-between text-xs">
+            <a routerLink="/activar-cuenta" class="font-medium text-indigo-600 hover:text-indigo-500">
+              ¿Primera vez? Activa tu cuenta
+            </a>
+            <a routerLink="/recuperar-password" class="font-medium text-slate-500 hover:text-slate-700">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          <!-- Alerta de Error -->
+          @if (errorMessage()) {
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+              <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <p class="text-xs font-bold leading-tight">{{ errorMessage() }}</p>
+            </div>
+          }
+
+          <!-- Prompt de activación -->
+          @if (requiresActivation()) {
+            <div class="bg-amber-50 border border-amber-100 text-amber-700 p-4 rounded-xl">
+              <p class="text-xs font-bold mb-3">Tu cuenta necesita ser activada.</p>
+              <button
+                type="button"
+                (click)="goToActivation()"
+                class="w-full py-2 px-4 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors uppercase tracking-wider">
+                Activar mi cuenta
+              </button>
+            </div>
+          }
+
+          <!-- Botón Enviar -->
+          <div>
+            <button
+              type="submit"
+              [disabled]="isLoading()"
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              @if (isLoading()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Ingresando...
+              } @else {
+                Ingresar
+              }
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- Formulario Administrativo -->
+      @if (activeTab() === 'administrativo') {
+        <form class="space-y-5" (ngSubmit)="onLoginAdmin()">
+          <!-- Campo Username -->
+          <div>
+            <label for="username" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+              Usuario
+            </label>
+            <div class="mt-1">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                [(ngModel)]="adminCredentials.username"
+                required
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                placeholder="nombre.usuario">
+            </div>
+          </div>
+
+          <!-- Campo Password -->
+          <div>
+            <label for="password-admin" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+              Contraseña
+            </label>
+            <div class="mt-1">
+              <input
+                id="password-admin"
+                name="password"
+                type="password"
+                [(ngModel)]="adminCredentials.password"
+                required
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                placeholder="••••••••">
+            </div>
+          </div>
+
+          <!-- Alerta de Error -->
+          @if (errorMessage()) {
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+              <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <p class="text-xs font-bold leading-tight">{{ errorMessage() }}</p>
+            </div>
+          }
+
+          <!-- Botón Enviar -->
+          <div>
+            <button
+              type="submit"
+              [disabled]="isLoading()"
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              @if (isLoading()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Ingresando...
+              } @else {
+                Ingresar
+              }
+            </button>
+          </div>
+        </form>
+      }
+
+      <div class="mt-8 pt-6 border-t border-slate-100">
+        <p class="text-center text-[10px] text-slate-400 font-bold uppercase tracking-tighter leading-relaxed">
+          Uso exclusivo para estudiantes y personal de la FII.<br>
+          © 2026 Facultad de Ingeniería Industrial - UNP
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

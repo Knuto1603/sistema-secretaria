@@ -1,0 +1,43 @@
+<div class="space-y-6">
+
+  <!-- Encabezado -->
+  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <h2 class="text-xl font-black text-slate-800 tracking-tight">Configuración del Sistema</h2>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+      Administra los parámetros generales del sistema
+    </p>
+  </div>
+
+  <!-- Grid de tarjetas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (card of cards; track card.route) {
+      <div
+        (click)="navigateTo(card.route)"
+        class="bg-white p-6 rounded-3xl border cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg group"
+        [ngClass]="[getColorClasses(card.color).border, getColorClasses(card.color).hover]">
+
+        <!-- Icono -->
+        <div
+          class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+          [ngClass]="getColorClasses(card.color).icon">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="card.icon"></path>
+          </svg>
+        </div>
+
+        <!-- Contenido -->
+        <h3 class="text-lg font-bold text-slate-800 mb-2">{{ card.title }}</h3>
+        <p class="text-sm text-slate-500 leading-relaxed">{{ card.description }}</p>
+
+        <!-- Flecha -->
+        <div class="mt-4 flex items-center text-slate-400 group-hover:text-slate-600 transition-colors">
+          <span class="text-xs font-bold uppercase tracking-wider">Gestionar</span>
+          <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>

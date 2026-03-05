@@ -1,0 +1,141 @@
+<div class="space-y-6">
+
+  <!-- Mensaje de alerta -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="volver()"
+        class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <div>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">Gestión de Periodos</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Administrar periodos académicos</p>
+      </div>
+    </div>
+
+    <app-btn variant="primary" (clicked)="nuevoPeriodo()">
+      <span class="flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nuevo Periodo
+      </span>
+    </app-btn>
+  </div>
+
+  <!-- Tabla de periodos -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    @if (loading()) {
+      <div class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    } @else if (periodos().length === 0) {
+      <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+        <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <p class="text-sm font-medium">No hay periodos registrados</p>
+        <p class="text-xs mt-1">Crea el primer periodo académico</p>
+      </div>
+    } @else {
+      <table class="w-full">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nombre</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Fecha Inicio</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Fecha Fin</th>
+            <th class="px-6 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">Estado</th>
+            <th class="px-6 py-4 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (periodo of periodos(); track periodo.id) {
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4">
+                <span class="text-sm font-bold text-slate-800">{{ periodo.nombre }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-sm text-slate-600">{{ formatearFecha(periodo.fecha_inicio) }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-sm text-slate-600">{{ formatearFecha(periodo.fecha_fin) }}</span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                @if (periodo.activo) {
+                  <app-badge color="emerald">Activo</app-badge>
+                } @else {
+                  <app-badge color="slate">Inactivo</app-badge>
+                }
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                  @if (actionLoading() === periodo.id) {
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+                  } @else {
+                    <!-- Activar/Desactivar -->
+                    @if (periodo.activo) {
+                      <button
+                        (click)="desactivarPeriodo(periodo)"
+                        class="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors"
+                        title="Desactivar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </button>
+                    } @else {
+                      <button
+                        (click)="activarPeriodo(periodo)"
+                        class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                        title="Activar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                      </button>
+                    }
+
+                    <!-- Editar -->
+                    <button
+                      (click)="editarPeriodo(periodo.id)"
+                      class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                      title="Editar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </button>
+
+                    <!-- Eliminar -->
+                    <button
+                      (click)="eliminarPeriodo(periodo)"
+                      class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Eliminar"
+                      [disabled]="periodo.activo">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" [class.opacity-30]="periodo.activo">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>

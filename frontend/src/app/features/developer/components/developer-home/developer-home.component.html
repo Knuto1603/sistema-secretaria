@@ -1,0 +1,37 @@
+<div class="max-w-6xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8 flex items-center gap-4">
+    <div>
+      <div class="flex items-center gap-3 mb-1">
+        <h1 class="text-2xl font-black text-slate-800">Panel Developer</h1>
+        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-black rounded-full uppercase tracking-widest border border-purple-200">
+          Modo Developer
+        </span>
+      </div>
+      <p class="text-sm text-slate-500">Herramientas exclusivas para el administrador del sistema.</p>
+    </div>
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    @for (card of cards; track card.route) {
+      @let colors = getColorClasses(card.color);
+      <button
+        (click)="navigateTo(card.route)"
+        class="text-left p-6 rounded-2xl border-2 bg-white shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+        [ngClass]="[colors.border, colors.hover]">
+
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+             [ngClass]="colors.icon">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="card.icon" />
+          </svg>
+        </div>
+
+        <h3 class="font-black text-slate-800 text-sm mb-1">{{ card.title }}</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">{{ card.description }}</p>
+      </button>
+    }
+  </div>
+</div>

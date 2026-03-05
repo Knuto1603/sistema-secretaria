@@ -1,0 +1,209 @@
+<div class="space-y-6">
+
+  <!-- Encabezado con filtros -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
+    <div>
+      <h2 class="text-xl font-black text-slate-800 tracking-tight">
+        {{ esAdmin() ? 'Gestión de Solicitudes' : 'Mis Solicitudes' }}
+      </h2>
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+        {{ esAdmin() ? 'Revisión y aprobación de trámites' : 'Historial de trámites realizados' }}
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Filtro por estado (solo admin) -->
+      @if (esAdmin()) {
+        <div class="relative">
+          <select
+            [ngModel]="estadoFiltro()"
+            (ngModelChange)="onEstadoChange($event)"
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px] appearance-none cursor-pointer font-medium">
+            @for (estado of estados; track estado.value) {
+              <option [value]="estado.value">{{ estado.label }}</option>
+            }
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+      }
+
+      <!-- Buscador (solo admin) -->
+      @if (esAdmin()) {
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearch($event)"
+            placeholder="Buscar por código, nombre o curso..."
+            class="pl-11 pr-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-72 transition-all">
+        </div>
+
+        <!-- Filtro por curso (cursos llenos) -->
+        <div class="relative">
+          <select
+            [ngModel]="programacionIdFiltro() || ''"
+            (ngModelChange)="onProgramacionChange($event)"
+            [disabled]="loadingProgramaciones()"
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[280px] appearance-none cursor-pointer font-medium">
+            <option value="">Filtrar por curso...</option>
+            @for (prog of programaciones(); track prog.id) {
+              <option [value]="prog.id">{{ getProgramacionLabel(prog) }}</option>
+            }
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            @if (loadingProgramaciones()) {
+              <svg class="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            } @else {
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Filtro activo por curso -->
+  @if (programacionIdFiltro()) {
+    <div class="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-200 rounded-2xl">
+      <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+      </svg>
+      <div class="flex-1">
+        <span class="text-xs font-bold text-indigo-700">Filtrando por curso:</span>
+        @if (loading()) {
+          <span class="text-sm font-medium text-indigo-600 ml-2">Cargando...</span>
+        } @else if (cursoFiltrado()) {
+          <span class="text-sm font-medium text-indigo-600 ml-2">{{ cursoFiltrado() }}</span>
+        } @else {
+          <span class="text-sm font-medium text-amber-600 ml-2">No se encontraron solicitudes para este curso</span>
+        }
+      </div>
+      <button
+        (click)="limpiarFiltroCurso()"
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 rounded-xl transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        Quitar filtro
+      </button>
+    </div>
+  }
+
+  <!-- Tabla de solicitudes -->
+  <app-table
+    [columns]="columnas()"
+    [data]="solicitudes()"
+    [loading]="loading()">
+
+    <ng-template #cellTemplate let-row let-column="column">
+
+      <!-- Celda de Fecha -->
+      @if (column.key === 'fecha') {
+        <div class="flex flex-col">
+          <span class="text-xs font-bold text-slate-700">{{ row.created_at | date:'dd/MM/yyyy' }}</span>
+          <span class="text-[10px] text-slate-400 font-medium">{{ row.created_at | date:'HH:mm' }}</span>
+        </div>
+      }
+
+      <!-- Celda de Estudiante (solo admin) -->
+      @if (column.key === 'estudiante') {
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-xs font-black text-indigo-600 border border-indigo-200">
+            {{ row.user?.name?.charAt(0) || '?' }}
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-slate-800">{{ row.user?.name || 'Sin nombre' }}</span>
+            <div class="flex items-center gap-2 mt-0.5">
+              @if (row.user?.codigo_universitario) {
+                <span class="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                  {{ row.user.codigo_universitario }}
+                </span>
+              }
+              @if (row.user?.escuela) {
+                <span class="text-[10px] font-medium text-slate-500">
+                  {{ row.user.escuela }}
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Celda de Trámite / Curso -->
+      @if (column.key === 'tramite') {
+        <div class="flex flex-col">
+          <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+            {{ row.tipo_solicitud?.nombre || 'Solicitud' }}
+          </span>
+          <span class="text-xs font-medium text-slate-500 truncate max-w-[250px]">
+            @if (row.programacion?.curso) {
+              {{ row.programacion.curso.nombre }} (G: {{ row.programacion.grupo }})
+            } @else {
+              Sin curso asignado
+            }
+          </span>
+        </div>
+      }
+
+      <!-- Celda de Estado -->
+      @if (column.key === 'estado') {
+        <app-badge [color]="getColorEstado(row.estado)">
+          {{ getEstadoLabel(row.estado) }}
+        </app-badge>
+      }
+
+    </ng-template>
+
+    <!-- Acciones -->
+    <ng-template #actionsTemplate let-row>
+      <app-btn variant="ghost" (clicked)="verDetalle(row)">
+        {{ esAdmin() ? 'Revisar' : 'Ver' }}
+      </app-btn>
+    </ng-template>
+
+  </app-table>
+
+  <!-- Paginación -->
+  @if (paginationData() && !loading()) {
+    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+      <app-shared-pagination
+        [currentPage]="currentPage()"
+        [lastPage]="paginationData()!.last_page"
+        [total]="paginationData()!.total"
+        [from]="paginationData()!.from"
+        [to]="paginationData()!.to"
+        [perPage]="perPage()"
+        (pageChange)="cargarDatos($event)"
+        (pageSizeChange)="cargarDatos(1, $event)">
+      </app-shared-pagination>
+    </div>
+  }
+
+  <!-- Estado vacío -->
+  @if (!loading() && solicitudes().length === 0) {
+    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <h3 class="text-lg font-bold text-slate-600 mb-2">No hay solicitudes</h3>
+      <p class="text-sm text-slate-400">
+        {{ esAdmin() ? 'No hay solicitudes que coincidan con los filtros.' : 'Aún no has realizado ninguna solicitud.' }}
+      </p>
+    </div>
+  }
+
+</div>

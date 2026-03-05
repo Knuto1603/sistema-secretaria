@@ -1,0 +1,67 @@
+<div class="max-w-2xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-4 mb-6">
+    <a routerLink="/app/developer" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <div>
+      <h1 class="text-xl font-black text-slate-800">Maintenance Tools</h1>
+      <p class="text-xs text-slate-500">Herramientas de mantenimiento del sistema</p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  @if (toast(); as t) {
+    <div class="mb-4 px-4 py-3 rounded-xl text-sm font-bold border"
+         [class.bg-emerald-50]="t.tipo === 'success'"
+         [class.border-emerald-200]="t.tipo === 'success'"
+         [class.text-emerald-700]="t.tipo === 'success'"
+         [class.bg-red-50]="t.tipo === 'error'"
+         [class.border-red-200]="t.tipo === 'error'"
+         [class.text-red-700]="t.tipo === 'error'">
+      {{ t.texto }}
+    </div>
+  }
+
+  <!-- Tools -->
+  <div class="space-y-4">
+
+    <!-- Cache -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 class="font-black text-slate-800">Limpiar Caché</h3>
+          <p class="text-sm text-slate-500 mt-1">Ejecuta <code class="bg-slate-100 px-1 rounded text-xs">cache:clear</code>, <code class="bg-slate-100 px-1 rounded text-xs">config:clear</code> y <code class="bg-slate-100 px-1 rounded text-xs">view:clear</code>.</p>
+        </div>
+        <button (click)="clearCache()" [disabled]="loadingCache()"
+          class="shrink-0 px-5 py-2.5 bg-orange-500 text-white text-sm font-black rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors flex items-center gap-2">
+          @if (loadingCache()) {
+            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          Limpiar Caché
+        </button>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 class="font-black text-slate-800">Limpiar Logs</h3>
+          <p class="text-sm text-slate-500 mt-1">Vacía el contenido de los archivos <code class="bg-slate-100 px-1 rounded text-xs">*.log</code> en <code class="bg-slate-100 px-1 rounded text-xs">storage/logs/</code>.</p>
+        </div>
+        <button (click)="clearLogs()" [disabled]="loadingLogs()"
+          class="shrink-0 px-5 py-2.5 bg-red-500 text-white text-sm font-black rounded-xl hover:bg-red-600 disabled:opacity-50 transition-colors flex items-center gap-2">
+          @if (loadingLogs()) {
+            <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          }
+          Limpiar Logs
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

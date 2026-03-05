@@ -1,0 +1,125 @@
+<div class="space-y-6">
+
+  <!-- Mensaje -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="volver()"
+        class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      <div>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Tipos de Solicitud</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+          Configura los tipos de trámites disponibles
+        </p>
+      </div>
+    </div>
+    <app-btn variant="primary" (clicked)="nuevoTipo()">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      Nuevo Tipo
+    </app-btn>
+  </div>
+
+  <!-- Tabla -->
+  <app-table
+    [columns]="columnas"
+    [data]="tipos()"
+    [loading]="loading()">
+
+    <ng-template #cellTemplate let-row let-column="column">
+
+      <!-- Código -->
+      @if (column.key === 'codigo') {
+        <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-700 font-mono">
+          {{ row.codigo }}
+        </span>
+      }
+
+      <!-- Nombre -->
+      @if (column.key === 'nombre') {
+        <span class="text-sm font-semibold text-slate-800">{{ row.nombre }}</span>
+      }
+
+      <!-- Descripción -->
+      @if (column.key === 'descripcion') {
+        <span class="text-xs text-slate-500 truncate max-w-[200px] block">
+          {{ row.descripcion || '-' }}
+        </span>
+      }
+
+      <!-- Requiere Archivo -->
+      @if (column.key === 'requiere_archivo') {
+        @if (row.requiere_archivo) {
+          <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Sí
+          </span>
+        } @else {
+          <span class="text-xs text-slate-400 font-medium">No</span>
+        }
+      }
+
+      <!-- Estado -->
+      @if (column.key === 'activo') {
+        <app-badge [color]="row.activo ? 'emerald' : 'slate'">
+          {{ row.activo ? 'Activo' : 'Inactivo' }}
+        </app-badge>
+      }
+
+    </ng-template>
+
+    <!-- Acciones -->
+    <ng-template #actionsTemplate let-row>
+      <div class="flex items-center gap-2">
+        <app-btn variant="ghost" (clicked)="editarTipo(row)">
+          Editar
+        </app-btn>
+        <app-btn
+          [variant]="row.activo ? 'ghost' : 'primary'"
+          (clicked)="toggleActivo(row)">
+          {{ row.activo ? 'Desactivar' : 'Activar' }}
+        </app-btn>
+        <button
+          (click)="eliminarTipo(row)"
+          class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </div>
+    </ng-template>
+
+  </app-table>
+
+  <!-- Estado vacío -->
+  @if (!loading() && tipos().length === 0) {
+    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <h3 class="text-lg font-bold text-slate-600 mb-2">No hay tipos de solicitud</h3>
+      <p class="text-sm text-slate-400 mb-4">Crea el primer tipo de solicitud para comenzar.</p>
+      <app-btn variant="primary" (clicked)="nuevoTipo()">Crear Tipo</app-btn>
+    </div>
+  }
+
+</div>

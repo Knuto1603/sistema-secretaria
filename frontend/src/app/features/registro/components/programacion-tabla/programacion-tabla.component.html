@@ -1,0 +1,196 @@
+<div class="space-y-6">
+  
+  <!-- Encabezado con Buscador y Acciones -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
+    <div>
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">Programación Académica</h2>
+        @if (!isPeriodoActivo() && periodoSeleccionado()) {
+          <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
+            Periodo Inactivo
+          </span>
+        }
+      </div>
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Gestión de cupos y secciones</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Selector de Periodo -->
+      <div class="relative">
+        <select
+          [ngModel]="periodoSeleccionado()"
+          (ngModelChange)="onPeriodoChange($event)"
+          [disabled]="loadingPeriodos()"
+          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[180px] transition-all appearance-none cursor-pointer font-medium">
+          @for (periodo of periodos(); track periodo.id) {
+            <option [value]="periodo.id">
+              {{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}
+            </option>
+          }
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Buscador -->
+      <div class="relative">
+        <input
+          type="text"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar curso o docente..."
+          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
+      </div>
+
+      <!-- Importación -->
+      @if (authService.hasRole('secretaria') || authService.hasRole('admin')) {
+        <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx, .xls, .csv">
+        <app-btn
+          variant="ghost"
+          (clicked)="descargarPlantilla()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Plantilla
+        </app-btn>
+        <app-btn
+          variant="success"
+          [loading]="isUploading()"
+          (clicked)="triggerImport(fileInput)">
+          Importar Excel
+        </app-btn>
+      }
+    </div>
+  </div>
+
+  <!-- Tabla Genérica con componente de carga integrado -->
+  <app-table 
+    [columns]="columnas" 
+    [data]="programacion()" 
+    [loading]="loading()"
+  >
+    <!-- Personalización de Celdas -->
+    <ng-template #cellTemplate let-row let-column="column">
+      
+      <!-- Celda de Curso -->
+      @if (column.key === 'curso') {
+        <div class="flex flex-col">
+          <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
+          <span class="text-[10px] text-slate-400 font-bold tracking-tighter">
+            {{ row.curso?.codigo || '-' }}
+          </span>
+        </div>
+      }
+
+      <!-- Celda de Grupo -->
+      @if (column.key === 'grupo') {
+        <div class="flex justify-center">
+          <span class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-black text-slate-600">
+            {{ row.grupo }}
+          </span>
+        </div>
+      }
+
+           <!-- Celda de Seccion -->
+      @if (column.key === 'seccion') {
+        <div class="flex justify-center">
+          <span class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-black text-slate-600">
+            {{ row.seccion }}
+          </span>
+        </div>
+      }
+
+      <!-- Celda de Docente -->
+      @if (column.key === 'docente') {
+        <span class="text-xs font-medium text-slate-500 italic">
+          {{ row.docente?.nombre_completo || 'POR ASIGNAR' }}
+        </span>
+      }
+
+      <!-- Celda de Estado/Cupos -->
+      @if (column.key === 'estado') {
+        <div class="flex flex-col items-center gap-1">
+          <div class="flex items-center gap-2">
+            @if (row.esta_lleno) {
+              <app-badge color="red">
+                Lleno{{ row.lleno_manual ? ' (M)' : '' }}
+              </app-badge>
+            } @else {
+              <app-badge color="emerald">Disponible</app-badge>
+            }
+          </div>
+          <span class="text-[10px] font-bold text-slate-400">{{ row.n_inscritos }} / {{ row.capacidad }}</span>
+        </div>
+      }
+    </ng-template>
+
+    <!-- Acciones de la Fila -->
+    <ng-template #actionsTemplate let-row>
+      <div class="flex items-center gap-2">
+        <!-- Botón para marcar como lleno (solo secretaria/admin) -->
+        @if (authService.hasRole('secretaria') || authService.hasRole('admin')) {
+          <button
+            (click)="toggleLleno(row)"
+            [title]="row.lleno_manual ? 'Desmarcar como lleno' : 'Marcar como lleno'"
+            class="p-2 rounded-lg transition-colors"
+            [ngClass]="row.lleno_manual ? 'text-amber-600 hover:bg-amber-50' : 'text-slate-400 hover:bg-slate-100'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              @if (row.lleno_manual) {
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              } @else {
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+              }
+            </svg>
+          </button>
+        }
+
+        <!-- Acciones según rol -->
+        @if (authService.hasRole('secretaria') || authService.hasRole('admin') || authService.hasRole('decano') || authService.hasRole('secretario academico')) {
+          <!-- Secretaria/Admin: Ver solicitudes del curso -->
+          @if (row.esta_lleno) {
+            <app-btn variant="secondary" (clicked)="verSolicitudesCurso(row)">
+              Solicitudes
+            </app-btn>
+          } @else {
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-4">Ok</span>
+          }
+        } @else {
+          <!-- Estudiantes: Solicitar cupo -->
+          @if (row.esta_lleno) {
+            @if (isPeriodoActivo()) {
+              <app-btn variant="primary" (clicked)="solicitarCupo(row)">
+                Solicitar
+              </app-btn>
+            } @else {
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2" title="Solo se pueden solicitar cupos en periodos activos">
+                Periodo Inactivo
+              </span>
+            }
+          } @else {
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-4">Ok</span>
+          }
+        }
+      </div>
+    </ng-template>
+  </app-table>
+
+  <!-- Paginación Reutilizable -->
+  @if (paginationData() && !loading()) {
+    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+      <app-shared-pagination
+        [currentPage]="currentPage()"
+        [lastPage]="paginationData()!.last_page"
+        [total]="paginationData()!.total"
+        [from]="paginationData()!.from"
+        [to]="paginationData()!.to"
+        [perPage]="perPage()"
+        (pageChange)="handlePageChange($event)"
+        (pageSizeChange)="handleSizeChange($event)">
+      </app-shared-pagination>
+    </div>
+  }
+
+</div>

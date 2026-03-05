@@ -1,0 +1,73 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Saludo Principal -->
+  <div class="mb-10 text-center md:text-left">
+    <h1 class="text-4xl font-black text-slate-900 tracking-tight">
+      ¡Bienvenido, {{ user()?.name }}!
+    </h1>
+    <p class="text-slate-500 mt-2 font-medium">
+      Hoy es {{ today | date:'fullDate' }}. Aquí tienes un resumen de lo que puedes hacer hoy.
+    </p>
+    @if (authService.isDeveloper()) {
+      <span class="inline-block mt-2 px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full uppercase tracking-wider">
+        Modo Developer
+      </span>
+    }
+  </div>
+
+  <!-- Cards de Acceso Rápido según ROL -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Para Estudiantes -->
+    @if (authService.isEstudiante()) {
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📝</div>
+        <h3 class="font-bold text-slate-800">Mis Trámites</h3>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Sigue el estado de tus solicitudes de cupo o rectificaciones.</p>
+        <button class="mt-4 text-sm font-bold text-blue-600 hover:underline">Ir a mis trámites →</button>
+      </div>
+    }
+
+    <!-- Para Secretaría / Decanato / Admin / Developer -->
+    @if (authService.hasRole('secretaria') || authService.hasRole('decano') || authService.hasRole('admin') || authService.isDeveloper()) {
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl mb-4">📂</div>
+        <h3 class="font-bold text-slate-800">Bandeja de Entrada</h3>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Tienes solicitudes pendientes por revisar y dictaminar.</p>
+        <button class="mt-4 text-sm font-bold text-indigo-600 hover:underline">Ver solicitudes →</button>
+      </div>
+    }
+
+    <!-- Común: Chatbot -->
+    <a routerLink="/app/chatbot" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow block">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-4">🤖</div>
+      <h3 class="font-bold text-slate-800">Asistente IA</h3>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">Consulta procesos académicos, requisitos y trámites de la FII con ayuda de inteligencia artificial.</p>
+      <span class="mt-4 inline-block text-sm font-bold text-emerald-600 hover:underline">Abrir asistente →</span>
+    </a>
+
+    <!-- Para Admin / Developer: Configuración -->
+    @if (authService.hasRole('admin') || authService.isDeveloper()) {
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4">⚙️</div>
+        <h3 class="font-bold text-slate-800">Configuración</h3>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">Gestiona periodos académicos, tipos de solicitud y más.</p>
+        <button class="mt-4 text-sm font-bold text-amber-600 hover:underline">Ir a configuración →</button>
+      </div>
+    }
+
+    <!-- Para Developer: Panel de desarrollo -->
+    @if (authService.isDeveloper()) {
+      <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-3xl shadow-lg hover:shadow-xl transition-shadow text-white">
+        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mb-4">🛠️</div>
+        <h3 class="font-bold">Panel Developer</h3>
+        <p class="text-xs text-white/80 mt-2 leading-relaxed">Acceso total al sistema y a opciones de desarrollo.</p>
+        <div class="mt-4 flex gap-2">
+          <span class="px-2 py-1 bg-white/20 rounded text-[10px] font-bold">API</span>
+          <span class="px-2 py-1 bg-white/20 rounded text-[10px] font-bold">Logs</span>
+          <span class="px-2 py-1 bg-white/20 rounded text-[10px] font-bold">Debug</span>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

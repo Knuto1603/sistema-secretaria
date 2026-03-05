@@ -1,0 +1,123 @@
+<div class="max-w-7xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-4 mb-6">
+    <a routerLink="/app/developer" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+      <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <div>
+      <h1 class="text-xl font-black text-slate-800">Email Viewer</h1>
+      <p class="text-xs text-slate-500">Correos OTP enviados a estudiantes</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input [(ngModel)]="filters.search" placeholder="Buscar por nombre o código..."
+        class="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300">
+      <select [(ngModel)]="filters.purpose"
+        class="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300">
+        <option value="">Todos los propósitos</option>
+        <option value="activation">Activación</option>
+        <option value="recovery">Recuperación</option>
+      </select>
+      <select [(ngModel)]="filters.usado"
+        class="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300">
+        <option value="">Todos</option>
+        <option value="true">Usados</option>
+        <option value="false">Pendientes</option>
+      </select>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button (click)="applyFilters()"
+        class="px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-xl hover:bg-violet-700 transition-colors">
+        Aplicar
+      </button>
+      <button (click)="clearFilters()"
+        class="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">
+        Limpiar
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    @if (loading()) {
+      <div class="flex justify-center py-12">
+        <div class="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Fecha</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Propósito</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Usuario</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Enviado a</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Código OTP</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Estado</th>
+              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Expira</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (item of items(); track item.id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 text-slate-500 text-xs font-mono whitespace-nowrap">
+                  {{ item.created_at | date:'dd/MM/yy HH:mm' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-bold"
+                    [class.bg-blue-100]="item.purpose === 'activation'"
+                    [class.text-blue-700]="item.purpose === 'activation'"
+                    [class.bg-amber-100]="item.purpose === 'recovery'"
+                    [class.text-amber-700]="item.purpose === 'recovery'"
+                    [class.bg-slate-100]="item.purpose !== 'activation' && item.purpose !== 'recovery'"
+                    [class.text-slate-600]="item.purpose !== 'activation' && item.purpose !== 'recovery'">
+                    {{ item.purpose }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 font-bold text-slate-700">{{ item.user?.name ?? '—' }}</td>
+                <td class="px-4 py-3 text-slate-500 text-xs font-mono">{{ item.enviado_a ?? '—' }}</td>
+                <td class="px-4 py-3 font-mono font-black text-slate-800 tracking-widest">{{ item.code }}</td>
+                <td class="px-4 py-3">
+                  @if (item.usado) {
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Usado</span>
+                  } @else if (item.expirado) {
+                    <span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">Expirado</span>
+                  } @else {
+                    <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Pendiente</span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-slate-400 text-xs font-mono whitespace-nowrap">
+                  {{ item.expires_at | date:'dd/MM/yy HH:mm' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-center py-10 text-slate-400 text-sm">Sin registros</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination(); as pag) {
+        <app-shared-pagination
+          [currentPage]="pag.current_page"
+          [lastPage]="pag.last_page"
+          [total]="pag.total"
+          [from]="pag.from"
+          [to]="pag.to"
+          [perPage]="pag.per_page"
+          (pageChange)="load($event)"
+          (pageSizeChange)="filters.per_page = $event; load(1)">
+        </app-shared-pagination>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,191 @@
+<div class="space-y-6">
+
+  <!-- Mensaje -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="flex items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <button
+      (click)="cancelar()"
+      class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+      <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
+    </button>
+    <div>
+      <h2 class="text-xl font-black text-slate-800 tracking-tight">
+        {{ isEditing ? 'Editar Usuario' : 'Nuevo Usuario' }}
+      </h2>
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+        Usuario administrativo
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center">
+      <svg class="animate-spin w-8 h-8 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="text-sm text-slate-500 mt-4">Cargando...</p>
+    </div>
+  }
+
+  <!-- Formulario -->
+  @if (!loading()) {
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-6 space-y-6">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+            Nombre Completo *
+          </label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="Ej: Juan Pérez García"
+            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+            [class.border-red-300]="form.get('name')?.invalid && form.get('name')?.touched">
+          @if (form.get('name')?.invalid && form.get('name')?.touched) {
+            <p class="mt-1 text-xs text-red-500">El nombre es requerido</p>
+          }
+        </div>
+
+        <!-- Username y Email en grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Username -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+              Nombre de Usuario *
+            </label>
+            <input
+              type="text"
+              formControlName="username"
+              placeholder="Ej: jperez"
+              class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono"
+              [class.border-red-300]="form.get('username')?.invalid && form.get('username')?.touched">
+            @if (form.get('username')?.hasError('required') && form.get('username')?.touched) {
+              <p class="mt-1 text-xs text-red-500">El usuario es requerido</p>
+            }
+            @if (form.get('username')?.hasError('pattern') && form.get('username')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Solo letras, números, guiones y guiones bajos</p>
+            }
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+              Correo Electrónico *
+            </label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="Ej: jperez@unp.edu.pe"
+              class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              [class.border-red-300]="form.get('email')?.invalid && form.get('email')?.touched">
+            @if (form.get('email')?.invalid && form.get('email')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Ingrese un correo válido</p>
+            }
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+            Contraseña {{ isEditing ? '(dejar vacío para mantener)' : '*' }}
+          </label>
+          <div class="relative">
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="{{ isEditing ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres' }}"
+              class="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              [class.border-red-300]="form.get('password')?.invalid && form.get('password')?.touched">
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
+              @if (showPassword()) {
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                </svg>
+              } @else {
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (form.get('password')?.invalid && form.get('password')?.touched) {
+            <p class="mt-1 text-xs text-red-500">La contraseña debe tener al menos 8 caracteres</p>
+          }
+        </div>
+
+        <!-- Roles -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-3">
+            Roles
+          </label>
+          <div class="flex flex-wrap gap-2">
+            @for (rol of roles(); track rol.id) {
+              <button
+                type="button"
+                (click)="toggleRole(rol.name)"
+                class="px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all"
+                [ngClass]="{
+                  'border-indigo-500 bg-indigo-50 text-indigo-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'indigo',
+                  'border-purple-500 bg-purple-50 text-purple-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'purple',
+                  'border-emerald-500 bg-emerald-50 text-emerald-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'emerald',
+                  'border-amber-500 bg-amber-50 text-amber-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'amber',
+                  'border-cyan-500 bg-cyan-50 text-cyan-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'cyan',
+                  'border-slate-200 text-slate-600 hover:border-slate-300': !isRoleSelected(rol.name)
+                }">
+                @if (isRoleSelected(rol.name)) {
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                }
+                {{ rol.name }}
+              </button>
+            }
+          </div>
+          <p class="mt-2 text-xs text-slate-400">Selecciona uno o más roles para el usuario</p>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+        <app-btn variant="ghost" type="button" (clicked)="cancelar()">
+          Cancelar
+        </app-btn>
+        <app-btn variant="primary" type="submit" [disabled]="saving() || form.invalid">
+          @if (saving()) {
+            <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Guardando...
+          } @else {
+            {{ isEditing ? 'Actualizar' : 'Crear Usuario' }}
+          }
+        </app-btn>
+      </div>
+
+    </form>
+  }
+
+</div>

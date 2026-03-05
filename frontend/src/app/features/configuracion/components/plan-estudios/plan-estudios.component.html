@@ -1,0 +1,348 @@
+<div class="space-y-6">
+
+  <!-- Mensaje -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div class="flex items-center gap-4">
+      <button
+        (click)="volver()"
+        class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <div>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">Planes de Estudio</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+          Currícula por escuela profesional
+        </p>
+      </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="flex flex-wrap gap-2">
+      <!-- Descargar plantilla -->
+      <button
+        (click)="descargarPlantilla()"
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Plantilla
+      </button>
+
+      <!-- Importar Excel -->
+      <label
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
+        [class.opacity-60]="importando()"
+        [class.pointer-events-none]="importando()">
+        @if (importando()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Importando...
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Importar Excel
+        }
+        <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoSeleccionado($event)" />
+      </label>
+
+      <!-- Limpiar plan -->
+      <button
+        (click)="pedirConfirmacionLimpiar()"
+        [disabled]="eliminando() || (plan()?.total ?? 0) === 0"
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-600 border border-red-200 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+        @if (eliminando()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        }
+        Limpiar plan
+      </button>
+    </div>
+  </div>
+
+  <!-- Selector de escuela + filtro ciclo -->
+  <div class="bg-white px-6 py-4 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
+    <div class="flex items-center gap-3">
+      <label class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+        Escuela Profesional
+      </label>
+      <select
+        [(ngModel)]="escuelaSeleccionada"
+        (ngModelChange)="onEscuelaChange()"
+        class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50">
+        @for (e of escuelas; track e.codigo) {
+          <option [value]="e.codigo">{{ e.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Filtro por ciclo -->
+    @if (ciclosDisponibles.length > 0) {
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Ciclo:</span>
+        <button
+          (click)="cicloFiltro.set(null)"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+          [class.bg-indigo-600]="cicloFiltro() === null"
+          [class.text-white]="cicloFiltro() === null"
+          [class.bg-slate-100]="cicloFiltro() !== null"
+          [class.text-slate-600]="cicloFiltro() !== null">
+          Todos
+        </button>
+        @for (ciclo of ciclosDisponibles; track ciclo) {
+          <button
+            (click)="cicloFiltro.set(ciclo)"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+            [class.bg-indigo-600]="cicloFiltro() === ciclo"
+            [class.text-white]="cicloFiltro() === ciclo"
+            [class.bg-slate-100]="cicloFiltro() !== ciclo"
+            [class.text-slate-600]="cicloFiltro() !== ciclo">
+            {{ ciclo }}°
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Filtro por tipo -->
+    @if ((plan()?.total ?? 0) > 0) {
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tipo:</span>
+        <button (click)="tipoFiltro.set(null)"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+          [class.bg-slate-700]="tipoFiltro() === null" [class.text-white]="tipoFiltro() === null"
+          [class.bg-slate-100]="tipoFiltro() !== null" [class.text-slate-600]="tipoFiltro() !== null">
+          Todos
+        </button>
+        <button (click)="tipoFiltro.set('O')"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+          [class.bg-indigo-600]="tipoFiltro() === 'O'" [class.text-white]="tipoFiltro() === 'O'"
+          [class.bg-slate-100]="tipoFiltro() !== 'O'" [class.text-slate-600]="tipoFiltro() !== 'O'">
+          Obligatorios
+        </button>
+        <button (click)="tipoFiltro.set('E')"
+          class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
+          [class.bg-amber-500]="tipoFiltro() === 'E'" [class.text-white]="tipoFiltro() === 'E'"
+          [class.bg-slate-100]="tipoFiltro() !== 'E'" [class.text-slate-600]="tipoFiltro() !== 'E'">
+          Electivos
+        </button>
+      </div>
+    }
+
+    <!-- Total -->
+    @if (plan()) {
+      <div class="ml-auto text-sm text-slate-500">
+        <span class="font-bold text-slate-800">{{ cursosFiltrados.length }}</span>
+        @if (cicloFiltro() !== null || tipoFiltro() !== null) { de {{ plan()!.total }} }
+        curso{{ plan()!.total !== 1 ? 's' : '' }}
+      </div>
+    }
+  </div>
+
+  <!-- Tabla de cursos -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    @if (loading()) {
+      <div class="flex items-center justify-center py-16">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    } @else if ((plan()?.cursos?.length ?? 0) === 0) {
+      <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+        <svg class="w-14 h-14 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="text-sm font-semibold text-slate-500">No hay plan de estudios cargado</p>
+        <p class="text-xs mt-1 text-slate-400">Descarga la plantilla, complétala e impórtala</p>
+      </div>
+    } @else {
+      <table class="w-full">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest w-12">Ciclo</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest w-28">Código</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Nombre del Curso</th>
+            <th class="px-6 py-4 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Área</th>
+            <th class="px-6 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest w-24">Tipo</th>
+            <th class="px-6 py-4 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest w-20">Créditos</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (curso of cursosFiltrados; track curso.id) {
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-3.5 text-center">
+                @if (curso.ciclo) {
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+                    {{ curso.ciclo }}
+                  </span>
+                } @else {
+                  <span class="text-slate-300 text-xs">-</span>
+                }
+              </td>
+              <td class="px-6 py-3.5">
+                <span class="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
+                  {{ curso.codigo_curso }}
+                </span>
+              </td>
+              <td class="px-6 py-3.5">
+                <span class="text-sm font-medium text-slate-800">{{ curso.nombre_curso }}</span>
+              </td>
+              <td class="px-6 py-3.5">
+                @if (curso.area) {
+                  <app-badge color="slate" size="sm">{{ curso.area }}</app-badge>
+                } @else {
+                  <span class="text-slate-300 text-xs">-</span>
+                }
+              </td>
+              <td class="px-6 py-3.5 text-center">
+                @if (curso.tipo === 'O') {
+                  <app-badge color="indigo" size="sm">Obligatorio</app-badge>
+                } @else {
+                  <app-badge color="amber" size="sm">Electivo</app-badge>
+                }
+              </td>
+              <td class="px-6 py-3.5 text-center">
+                @if (curso.creditos) {
+                  <span class="text-sm font-bold text-slate-700">{{ curso.creditos }}</span>
+                } @else {
+                  <span class="text-slate-300 text-xs">-</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>
+
+<!-- Modal Confirmar Limpiar -->
+@if (confirmarLimpiar()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+      <div class="flex flex-col items-center px-6 pt-8 pb-4">
+        <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold text-slate-800 text-center">¿Limpiar plan de estudios?</h2>
+        <p class="mt-2 text-sm text-slate-500 text-center leading-relaxed">
+          Se eliminarán los <strong>{{ plan()?.total }}</strong> cursos del plan de
+          <strong>{{ getNombreEscuela() }}</strong>. Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="px-6 pb-6 pt-2 flex gap-3">
+        <button
+          (click)="cancelarLimpiar()"
+          class="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+          Cancelar
+        </button>
+        <button
+          (click)="limpiarPlan()"
+          class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors">
+          Sí, limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Resultado Importación -->
+@if (importResultado()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50" (click)="cerrarImportResultado()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-800">Resultado de la importación</h2>
+        <button (click)="cerrarImportResultado()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Resumen -->
+      <div class="px-6 py-4 grid grid-cols-3 gap-3 border-b border-slate-100">
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-slate-700">{{ importResultado()!.resumen.total }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Total filas</div>
+        </div>
+        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-emerald-600">{{ importResultado()!.resumen.importados }}</div>
+          <div class="text-xs text-emerald-600 mt-0.5">Importados</div>
+        </div>
+        <div class="bg-red-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-red-500">{{ importResultado()!.resumen.errores }}</div>
+          <div class="text-xs text-red-500 mt-0.5">Errores</div>
+        </div>
+      </div>
+
+      <!-- Detalle -->
+      @if (importResultado()!.resultados.length > 0) {
+        <div class="overflow-y-auto flex-1 px-6 py-3">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 uppercase tracking-wide border-b border-slate-100">
+                <th class="pb-2 w-12">Fila</th>
+                <th class="pb-2">Código</th>
+                <th class="pb-2 w-24">Estado</th>
+                <th class="pb-2">Mensaje</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              @for (fila of importResultado()!.resultados; track fila.fila) {
+                <tr>
+                  <td class="py-1.5 text-slate-400 text-xs">{{ fila.fila }}</td>
+                  <td class="py-1.5 font-mono text-slate-700">{{ fila.codigo }}</td>
+                  <td class="py-1.5">
+                    @if (fila.estado === 'importado') {
+                      <span class="text-xs font-medium text-emerald-600">Importado</span>
+                    } @else {
+                      <span class="text-xs font-medium text-red-500">Error</span>
+                    }
+                  </td>
+                  <td class="py-1.5 text-slate-500 text-xs">{{ fila.mensaje }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="px-6 py-4 border-t border-slate-100">
+        <button
+          (click)="cerrarImportResultado()"
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}

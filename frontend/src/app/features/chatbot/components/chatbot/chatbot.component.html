@@ -1,0 +1,307 @@
+<div class="relative flex h-[calc(100vh-128px)] md:h-[calc(100vh-160px)] bg-gray-50 overflow-hidden">
+
+  <!-- Overlay backdrop (mobile) -->
+  @if (showMobileSidebar()) {
+    <div
+      class="absolute inset-0 z-40 bg-black/40 md:hidden"
+      (click)="showMobileSidebar.set(false)">
+    </div>
+  }
+
+  <!-- ===== SIDEBAR: Conversaciones ===== -->
+  <aside
+    [ngClass]="showMobileSidebar() ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'"
+    class="absolute md:relative z-50 md:z-auto h-full w-72 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 transition-transform duration-300">
+
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-gray-900">Asistente FII</h2>
+        <p class="text-xs text-gray-500">Secretaría Académica</p>
+      </div>
+      <div class="flex items-center gap-1">
+        <button
+          (click)="newConversation()"
+          class="p-2 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+          title="Nueva conversación">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+        <!-- Cerrar sidebar (solo mobile) -->
+        <button
+          class="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
+          (click)="showMobileSidebar.set(false)">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de conversaciones -->
+    <div class="flex-1 overflow-y-auto">
+      @if (loadingConvs()) {
+        <div class="p-4 text-center text-sm text-gray-400">Cargando...</div>
+      } @else if (conversations().length === 0) {
+        <div class="p-6 text-center">
+          <p class="text-sm text-gray-400 mb-3">No tienes conversaciones aún</p>
+          <button (click)="newConversation()" class="text-xs text-indigo-600 hover:underline">
+            Iniciar una nueva
+          </button>
+        </div>
+      } @else {
+        @for (conv of conversations(); track conv.id) {
+          <div
+            (click)="selectConversation(conv)"
+            class="group flex items-start gap-2 px-4 py-3 cursor-pointer border-b border-gray-100 hover:bg-gray-50 transition"
+            [class.bg-indigo-50]="activeConversation()?.id === conv.id"
+            [class.border-l-4]="activeConversation()?.id === conv.id"
+            [class.border-l-indigo-500]="activeConversation()?.id === conv.id">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">{{ conv.titulo }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ formatRelativeTime(conv.updated_at) }}</p>
+            </div>
+            <button
+              (click)="deleteConversation(conv.id, $event)"
+              class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition flex-shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- ===== MAIN: Chat ===== -->
+  <main class="flex-1 flex flex-col min-w-0">
+
+    @if (!activeConversation()) {
+      <!-- Empty state -->
+      <div class="flex-1 flex flex-col items-center justify-center text-center p-6 relative">
+        <!-- Botón hamburger (mobile) -->
+        <button
+          class="md:hidden absolute top-4 left-4 p-2 rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 transition shadow-sm"
+          (click)="showMobileSidebar.set(true)">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <div class="w-14 h-14 md:w-16 md:h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 md:w-8 md:h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+          </svg>
+        </div>
+        <h3 class="text-base md:text-lg font-semibold text-gray-700 mb-2">Asistente de Secretaría Académica</h3>
+        <p class="text-sm text-gray-500 max-w-xs mb-6">
+          Pregúntame sobre procesos académicos, requisitos de trámites y documentación de la FII-UNP.
+        </p>
+        <button
+          (click)="newConversation()"
+          class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm">
+          Iniciar conversación
+        </button>
+      </div>
+    } @else {
+      <!-- Chat header -->
+      <div class="px-4 md:px-6 py-3 bg-white border-b border-gray-200 flex items-center gap-3 flex-shrink-0">
+        <!-- Botón hamburger (mobile) -->
+        <button
+          class="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition flex-shrink-0"
+          (click)="showMobileSidebar.set(true)">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1 1 .03 2.7-1.36 2.7H4.16c-1.39 0-2.36-1.7-1.36-2.7L4.2 15.3" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-gray-800 truncate">{{ activeConversation()!.titulo }}</p>
+          <p class="text-xs text-gray-400">Asistente virtual FII-UNP</p>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <div class="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-6">
+
+        @if (loadingMsgs()) {
+          <div class="text-center text-sm text-gray-400 py-8">Cargando mensajes...</div>
+        }
+
+        @if (!loadingMsgs() && messages().length === 0) {
+          <!-- Mensaje de presentación del asistente -->
+          <div class="flex gap-3">
+            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            </div>
+            <div class="flex-1 max-w-[90%] md:max-w-[80%]">
+              <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-4 shadow-sm space-y-3">
+                <p class="text-sm text-gray-800 leading-relaxed">
+                  ¡Hola! Soy el asistente virtual de la <strong>Secretaría Académica de la FII-UNP</strong>.
+                </p>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                  Puedo ayudarte con información sobre:
+                </p>
+                <ul class="text-sm text-gray-600 space-y-1.5">
+                  <li class="flex items-start gap-2">
+                    <span class="text-indigo-400 mt-0.5">•</span>
+                    <span>Procesos y trámites académicos (cupos extra, retiros, convalidaciones, etc.)</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-indigo-400 mt-0.5">•</span>
+                    <span>Requisitos y documentación necesaria para cada trámite</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-indigo-400 mt-0.5">•</span>
+                    <span>Reglamentos y normas académicas de la facultad</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span class="text-indigo-400 mt-0.5">•</span>
+                    <span>Formularios y plantillas descargables para tus solicitudes</span>
+                  </li>
+                </ul>
+                <p class="text-sm text-gray-500 leading-relaxed pt-1 border-t border-gray-100">
+                  ¿En qué te puedo ayudar hoy?
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @for (msg of messages(); track msg.id) {
+          <!-- Mensaje usuario -->
+          @if (msg.role === 'user') {
+            <div class="flex justify-end">
+              <div class="max-w-[85%] md:max-w-[70%] bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3">
+                <p class="text-sm leading-relaxed whitespace-pre-wrap">{{ msg.contenido }}</p>
+                <p class="text-xs text-indigo-200 mt-1 text-right">{{ formatRelativeTime(msg.created_at) }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- Mensaje asistente -->
+          @if (msg.role === 'assistant') {
+            <div class="flex gap-3">
+              <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+              </div>
+              <div class="flex-1 max-w-[90%] md:max-w-[80%]">
+                <!-- Contenido con citas resaltadas -->
+                <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                  <p class="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                    @for (part of parseMessageParts(msg.contenido); track $index) {
+                      @if (part.isCitation) {
+                        <span class="bg-amber-50 border border-amber-200 text-amber-800 rounded px-1 py-0.5 text-xs font-medium italic">{{ part.text }}</span>
+                      } @else {
+                        {{ part.text }}
+                      }
+                    }
+                  </p>
+                </div>
+
+                <!-- Descargas -->
+                @if (msg.context_documents.length || msg.templates_sugeridos.length) {
+                  <div class="mt-2 space-y-1.5">
+
+                    @if (msg.context_documents.length) {
+                      <div class="flex flex-wrap gap-1.5 items-center">
+                        <span class="text-xs text-gray-400 font-medium">Documento:</span>
+                        @for (doc of msg.context_documents; track doc.id) {
+                          <button
+                            (click)="downloadDocument(doc, $event)"
+                            class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            {{ doc.titulo }}
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    @if (msg.templates_sugeridos.length) {
+                      <div class="flex flex-wrap gap-1.5 items-center">
+                        <span class="text-xs text-gray-400 font-medium">Formulario:</span>
+                        @for (tmpl of msg.templates_sugeridos; track tmpl.id) {
+                          <button
+                            (click)="downloadDocument(tmpl, $event)"
+                            class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            {{ tmpl.titulo }}
+                          </button>
+                        }
+                      </div>
+                    }
+
+                  </div>
+                }
+
+                <p class="text-xs text-gray-300 mt-1.5">{{ formatRelativeTime(msg.created_at) }}</p>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Typing indicator -->
+        @if (sending()) {
+          <div class="flex gap-3">
+            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+              <div class="flex gap-1 items-center h-4">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <div #messagesEnd></div>
+      </div>
+
+      <!-- Input -->
+      <div class="px-4 md:px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
+        <div class="flex gap-2 md:gap-3 items-end">
+          <textarea
+            [(ngModel)]="pregunta"
+            (keydown)="onKeyDown($event)"
+            [disabled]="sending()"
+            rows="1"
+            placeholder="Escribe tu pregunta... (Enter para enviar)"
+            class="flex-1 resize-none rounded-xl border border-gray-300 px-3 md:px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 transition max-h-32"
+            style="field-sizing: content">
+          </textarea>
+          <button
+            (click)="sendMessage()"
+            [disabled]="!pregunta.trim() || sending()"
+            class="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0 shadow-sm">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2 text-center">
+          Las respuestas se basan en la información oficial de la Secretaría Académica FII-UNP.
+        </p>
+      </div>
+    }
+  </main>
+
+</div>

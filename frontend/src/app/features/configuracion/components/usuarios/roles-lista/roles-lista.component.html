@@ -1,0 +1,123 @@
+<div class="space-y-4">
+
+  <!-- Info -->
+  <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-start gap-3">
+    <svg class="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div>
+      <p class="text-sm text-indigo-800 font-medium">Vista de solo lectura</p>
+      <p class="text-xs text-indigo-600 mt-0.5">Los roles del sistema están predefinidos. Puedes ver los permisos asignados a cada rol.</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <svg class="animate-spin w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+      <p class="text-sm text-red-700">{{ error() }}</p>
+      <button (click)="cargarRoles()" class="mt-2 text-sm text-red-600 hover:text-red-800 font-medium">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  <!-- Lista de roles -->
+  @if (!loading() && !error()) {
+    <div class="grid gap-4">
+      @for (rol of roles(); track rol.id) {
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-shadow hover:shadow-md">
+          <!-- Header del rol -->
+          <button
+            (click)="toggleExpand(rol.id)"
+            class="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <div class="flex items-center gap-4">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center"
+                [ngClass]="{
+                  'bg-indigo-100': getRolColor(rol.name) === 'indigo',
+                  'bg-purple-100': getRolColor(rol.name) === 'purple',
+                  'bg-emerald-100': getRolColor(rol.name) === 'emerald',
+                  'bg-amber-100': getRolColor(rol.name) === 'amber',
+                  'bg-cyan-100': getRolColor(rol.name) === 'cyan',
+                  'bg-slate-100': getRolColor(rol.name) === 'slate'
+                }">
+                <svg
+                  class="w-5 h-5"
+                  [ngClass]="{
+                    'text-indigo-600': getRolColor(rol.name) === 'indigo',
+                    'text-purple-600': getRolColor(rol.name) === 'purple',
+                    'text-emerald-600': getRolColor(rol.name) === 'emerald',
+                    'text-amber-600': getRolColor(rol.name) === 'amber',
+                    'text-cyan-600': getRolColor(rol.name) === 'cyan',
+                    'text-slate-600': getRolColor(rol.name) === 'slate'
+                  }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getRolIcon(rol.name)"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <h4 class="text-sm font-bold text-slate-800 capitalize">{{ rol.name }}</h4>
+                <p class="text-xs text-slate-500">{{ getRolDescription(rol.name) }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-xs text-slate-400">
+                {{ rol.permissions.length }} permiso{{ rol.permissions.length !== 1 ? 's' : '' }}
+              </span>
+              <svg
+                class="w-5 h-5 text-slate-400 transition-transform"
+                [class.rotate-180]="expandedRol() === rol.id"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </button>
+
+          <!-- Permisos (expandible) -->
+          @if (expandedRol() === rol.id) {
+            <div class="px-6 pb-4 border-t border-slate-100">
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-4 mb-2">Permisos</p>
+              @if (rol.permissions.length > 0) {
+                <div class="flex flex-wrap gap-2">
+                  @for (permiso of rol.permissions; track permiso) {
+                    <span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg font-medium">
+                      {{ permiso }}
+                    </span>
+                  }
+                </div>
+              } @else {
+                <p class="text-sm text-slate-400 italic">Sin permisos específicos asignados</p>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Estado vacío -->
+  @if (!loading() && !error() && roles().length === 0) {
+    <div class="bg-slate-50 rounded-2xl p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+      </svg>
+      <h3 class="text-lg font-bold text-slate-600 mb-2">No hay roles</h3>
+      <p class="text-sm text-slate-400">Los roles del sistema no están configurados.</p>
+    </div>
+  }
+
+</div>

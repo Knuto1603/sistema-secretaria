@@ -1,0 +1,188 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <button routerLink="/app/configuracion/knowledge-base"
+        class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">Documentos y Plantillas</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ total() }} archivos subidos</p>
+      </div>
+    </div>
+    <button (click)="showUploadForm = !showUploadForm"
+      class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+      </svg>
+      Subir documento
+    </button>
+  </div>
+
+  <!-- Upload Form -->
+  @if (showUploadForm) {
+    <div class="bg-white border border-indigo-200 rounded-xl p-5 mb-5 shadow-sm">
+      <h3 class="text-sm font-semibold text-gray-800 mb-4">Subir nuevo documento</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- File -->
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Archivo <span class="text-red-500">*</span>
+            <span class="text-gray-400 font-normal">(PDF, Word, TXT — máx. 20MB)</span>
+          </label>
+          <input type="file" accept=".pdf,.doc,.docx,.txt" (change)="onFileSelect($event)"
+            class="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+          @if (selectedFile) {
+            <p class="text-xs text-gray-500 mt-1">{{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})</p>
+          }
+        </div>
+        <!-- Título -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Título <span class="text-red-500">*</span></label>
+          <input type="text" [(ngModel)]="uploadForm.titulo" placeholder="Nombre del documento"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+        </div>
+        <!-- Descripción (a la derecha del título) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+          <input type="text" [(ngModel)]="uploadForm.descripcion" placeholder="Breve descripción del documento"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+          <p class="text-xs text-gray-400 mt-1">Los artículos se vinculan desde el editor de artículos KB.</p>
+        </div>
+        <!-- Tipo -->
+        <div class="col-span-2 flex items-center gap-3">
+          <input type="checkbox" [(ngModel)]="uploadForm.es_plantilla" id="es_plantilla"
+            class="w-4 h-4 text-indigo-600 rounded" />
+          <label for="es_plantilla" class="text-sm text-gray-700">
+            Es una plantilla descargable (formulario, solicitud, etc.)
+            — <span class="text-gray-400">No se extrae texto de las plantillas.</span>
+          </label>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-4">
+        <button (click)="showUploadForm = false"
+          class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          Cancelar
+        </button>
+        <button (click)="upload()" [disabled]="uploading() || !selectedFile || !uploadForm.titulo"
+          class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition">
+          {{ uploading() ? 'Subiendo...' : 'Subir documento' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex flex-wrap gap-3">
+    <select [(ngModel)]="filterEsPlantilla" (change)="load(1)"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      <option value="">Todos los tipos</option>
+      <option value="false">Documentos oficiales</option>
+      <option value="true">Plantillas</option>
+    </select>
+    <select [(ngModel)]="filterActivo" (change)="load(1)"
+      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      <option value="">Todos</option>
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+    </select>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    @if (loading()) {
+      <div class="p-8 text-center text-gray-400 text-sm">Cargando...</div>
+    } @else if (documents().length === 0) {
+      <div class="p-8 text-center text-gray-400 text-sm">No hay documentos.</div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Documento</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Artículo KB</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Tipo</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Procesado</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-600">Estado</th>
+            <th class="px-4 py-3 text-right font-medium text-gray-600">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (doc of documents(); track doc.id) {
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-4 py-3">
+                <p class="font-medium text-gray-800">{{ doc.titulo }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ doc.original_filename }} · {{ formatSize(doc.size_bytes) }}</p>
+              </td>
+              <td class="px-4 py-3 text-gray-600 text-xs">
+                {{ docArticlesLabel(doc) }}
+              </td>
+              <td class="px-4 py-3">
+                <span [class]="'text-xs px-2 py-0.5 rounded-full font-medium ' + (doc.es_plantilla ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700')">
+                  {{ doc.es_plantilla ? 'Plantilla' : 'Documento' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                @if (doc.es_plantilla) {
+                  <span class="text-xs text-gray-400">N/A</span>
+                } @else {
+                  <span [class]="'text-xs px-2 py-0.5 rounded-full ' + (doc.procesado ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')">
+                    {{ doc.procesado ? 'Listo' : 'Pendiente' }}
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <button (click)="toggle(doc)"
+                  [class]="'text-xs px-2 py-0.5 rounded-full font-medium cursor-pointer ' + (doc.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')">
+                  {{ doc.activo ? 'Activo' : 'Inactivo' }}
+                </button>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end gap-1.5">
+                  <!-- Descargar -->
+                  <button (click)="download(doc)"
+                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Descargar">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                  </button>
+                  <!-- Re-procesar (solo documentos) -->
+                  @if (!doc.es_plantilla) {
+                    <button (click)="reprocess(doc)"
+                      class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Re-procesar">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                      </svg>
+                    </button>
+                  }
+                  <!-- Eliminar -->
+                  <button (click)="delete(doc)"
+                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (lastPage() > 1) {
+        <app-shared-pagination
+          [currentPage]="currentPage()"
+          [lastPage]="lastPage()"
+          [total]="total()"
+          [from]="from()"
+          [to]="to()"
+          [perPage]="perPage()"
+          (pageChange)="load($event)"
+          (pageSizeChange)="load(1)">
+        </app-shared-pagination>
+      }
+    }
+  </div>
+</div>

@@ -1,0 +1,199 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <button routerLink="/app/configuracion/knowledge-base"
+        class="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">Analítica del Chatbot</h1>
+        <p class="text-sm text-gray-500">Uso e impacto de la base de conocimientos</p>
+      </div>
+    </div>
+    <!-- Período -->
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-500">Período:</span>
+      <select [(ngModel)]="days" (change)="applyDays()"
+        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+        <option [value]="7">Últimos 7 días</option>
+        <option [value]="30">Últimos 30 días</option>
+        <option [value]="90">Últimos 90 días</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6">
+    <button (click)="activeTab = 'summary'"
+      [class]="'px-4 py-2 text-sm rounded-lg font-medium transition ' + (activeTab === 'summary' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')">
+      Resumen
+    </button>
+    <button (click)="activeTab = 'topics'"
+      [class]="'px-4 py-2 text-sm rounded-lg font-medium transition ' + (activeTab === 'topics' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')">
+      Temas más consultados
+    </button>
+    <button (click)="activeTab = 'gaps'"
+      [class]="'px-4 py-2 text-sm rounded-lg font-medium transition ' + (activeTab === 'gaps' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700')">
+      Brechas de conocimiento
+    </button>
+  </div>
+
+  <!-- RESUMEN -->
+  @if (activeTab === 'summary') {
+    @if (loadingSummary()) {
+      <div class="text-center py-12 text-gray-400 text-sm">Cargando...</div>
+    } @else if (summary()) {
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <!-- Total preguntas -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-500 mb-1">Total preguntas</p>
+          <p class="text-3xl font-bold text-gray-900">{{ summary()!.total_preguntas }}</p>
+          <p class="text-xs text-gray-400 mt-1">Últimos {{ summary()!.periodo_dias }} días</p>
+        </div>
+        <!-- Respondidas con KB -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-500 mb-1">Respondidas con KB</p>
+          <p class="text-3xl font-bold text-green-600">{{ summary()!.respondidas_con_kb }}</p>
+          <p class="text-xs text-gray-400 mt-1">Tuvieron contexto de la base</p>
+        </div>
+        <!-- Tasa de cobertura -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-500 mb-2">Tasa de cobertura</p>
+          <div class="flex items-end gap-2">
+            <p class="text-3xl font-bold"
+              [class]="summary()!.tasa_cobertura_pct >= 70 ? 'text-green-600' : summary()!.tasa_cobertura_pct >= 40 ? 'text-amber-500' : 'text-red-500'">
+              {{ summary()!.tasa_cobertura_pct }}%
+            </p>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+            <div class="h-1.5 rounded-full transition-all"
+              [style.width]="summary()!.tasa_cobertura_pct + '%'"
+              [class]="summary()!.tasa_cobertura_pct >= 70 ? 'bg-green-500' : summary()!.tasa_cobertura_pct >= 40 ? 'bg-amber-400' : 'bg-red-400'">
+            </div>
+          </div>
+        </div>
+        <!-- Sin contexto -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-500 mb-1">Sin cobertura KB</p>
+          <p class="text-3xl font-bold text-red-500">{{ summary()!.sin_contexto_kb }}</p>
+          <p class="text-xs text-gray-400 mt-1">Preguntas sin respuesta en KB</p>
+        </div>
+        <!-- Tokens -->
+        <div class="bg-white border border-gray-200 rounded-xl p-5">
+          <p class="text-sm text-gray-500 mb-1">Tokens usados</p>
+          <p class="text-3xl font-bold text-indigo-600">{{ summary()!.tokens_usados | number }}</p>
+          <p class="text-xs text-gray-400 mt-1">Total del período</p>
+        </div>
+      </div>
+
+      @if (summary()!.tasa_cobertura_pct < 60) {
+        <div class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+          <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-amber-800">Cobertura baja detectada</p>
+            <p class="text-sm text-amber-700 mt-0.5">
+              Más del {{ 100 - summary()!.tasa_cobertura_pct }}% de las preguntas no tienen respuesta en la KB.
+              Revisa la pestaña "Brechas de conocimiento" para identificar qué temas agregar.
+            </p>
+          </div>
+        </div>
+      }
+    }
+  }
+
+  <!-- TEMAS MÁS CONSULTADOS -->
+  @if (activeTab === 'topics') {
+    @if (loadingTopics()) {
+      <div class="text-center py-12 text-gray-400 text-sm">Cargando...</div>
+    } @else if (topTopics().length === 0) {
+      <div class="text-center py-12 text-gray-400 text-sm">No hay datos de consultas aún.</div>
+    } @else {
+      <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-700">Top {{ topTopics().length }} temas más consultados</h3>
+        </div>
+        <div class="divide-y divide-gray-100">
+          @for (topic of topTopics(); track topic.knowledge_base_id; let i = $index) {
+            <div class="px-5 py-4 flex items-center gap-4">
+              <span class="text-lg font-bold text-gray-300 w-8 text-center">#{{ i + 1 }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <p class="text-sm font-medium text-gray-800 truncate">{{ topic.titulo }}</p>
+                  <span [class]="'text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ' + getTypeBadgeClass(topic.tipo)">
+                    {{ topic.tipo }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 bg-gray-100 rounded-full h-1.5">
+                    <div class="h-1.5 bg-indigo-500 rounded-full transition-all"
+                      [style.width]="getBarWidth(topic.consultas)"></div>
+                  </div>
+                  <span class="text-xs text-gray-500 flex-shrink-0">{{ topic.categoria }}</span>
+                </div>
+              </div>
+              <span class="text-lg font-bold text-indigo-600 w-12 text-right">{{ topic.consultas }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  <!-- BRECHAS DE CONOCIMIENTO -->
+  @if (activeTab === 'gaps') {
+    @if (loadingGaps()) {
+      <div class="text-center py-12 text-gray-400 text-sm">Cargando...</div>
+    } @else if (gaps().length === 0) {
+      <div class="bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <p class="text-green-600 font-medium text-sm mb-1">¡Excelente cobertura!</p>
+        <p class="text-gray-400 text-sm">No hay preguntas sin respuesta en el período.</p>
+      </div>
+    } @else {
+      <div class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <p class="text-sm text-blue-700">
+          Estas son las preguntas que el chatbot no pudo responder con la base de conocimientos actual.
+          Considera agregar artículos para estos temas.
+        </p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left font-medium text-gray-600">Pregunta del estudiante</th>
+              <th class="px-4 py-3 text-right font-medium text-gray-600 w-32">Fecha</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (gap of gaps(); track gap.assistant_message_id) {
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-4 py-3">
+                  <p class="text-gray-800">{{ gap.pregunta }}</p>
+                </td>
+                <td class="px-4 py-3 text-right text-gray-400 text-xs">
+                  {{ formatDate(gap.fecha) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (gapPagination() && gapPagination()!.last_page > 1) {
+          <app-shared-pagination
+            [currentPage]="gapPagination()!.current_page"
+            [lastPage]="gapPagination()!.last_page"
+            [total]="gapPagination()!.total"
+            [from]="gapFrom()"
+            [to]="gapTo()"
+            [perPage]="gapPagination()!.per_page"
+            (pageChange)="loadGaps($event)"
+            (pageSizeChange)="loadGaps(1)">
+          </app-shared-pagination>
+        }
+      </div>
+    }
+  }
+</div>

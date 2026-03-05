@@ -1,0 +1,77 @@
+<div class="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+  
+  <!-- Header del Formulario -->
+  <div class="bg-indigo-600 p-8 text-white">
+    <h2 class="text-2xl font-black tracking-tight">Solicitud de Cupo</h2>
+    <div class="mt-4 flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/20">
+      <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Curso Seleccionado</p>
+        <p class="text-sm font-bold">{{ cursoInfo().nombre }} - ({{ cursoInfo().codigo }})</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-8 space-y-6">
+    
+    @if (successMessage()) {
+      <app-alert type="success" [message]="successMessage()" />
+    }
+
+    @if (errorMessage()) {
+      <app-alert type="error" [message]="errorMessage()" />
+    }
+
+    <form [formGroup]="solicitudForm" (ngSubmit)="enviarSolicitud()" class="space-y-6">
+      
+      <!-- Campo Motivo -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Motivo de la Solicitud</label>
+        <textarea 
+          formControlName="motivo"
+          rows="4"
+          placeholder="Motivo de solictud..."
+          class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none font-medium text-slate-700"></textarea>
+        @if (solicitudForm.get('motivo')?.touched && solicitudForm.get('motivo')?.invalid) {
+          <span class="text-[10px] text-red-500 font-bold ml-1 uppercase">El motivo debe tener al menos 20 caracteres</span>
+        }
+      </div>
+
+      <!-- Campo Archivo de Sustento -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Documento de Sustento (Opcional)</label>
+        <div class="relative">
+          <input 
+            type="file" 
+            (change)="onFileChange($event)"
+            accept=".pdf,.jpg,.png"
+            class="hidden" #fileInput>
+          <div 
+            (click)="fileInput.click()"
+            class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all border-dashed">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="text-xs font-bold text-slate-500">
+              {{ solicitudForm.get('archivo_sustento')?.value ? 'Archivo seleccionado' : 'Subir PDF o Imagen (Máx 2MB)' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pad de Firma Reutilizable -->
+      <app-signature-pad (signatureSaved)="onFirmaSaved($event)" />
+
+      <!-- Botones de Acción -->
+      <div class="flex gap-4 pt-4 border-t border-slate-100">
+        <app-btn 
+          type="submit"
+          variant="primary" 
+          class="flex-grow"
+          [loading]="loading()">
+          Enviar Trámite Digital
+        </app-btn>
+      </div>
+    </form>
+  </div>
+</div>

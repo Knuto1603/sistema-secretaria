@@ -1,0 +1,423 @@
+<div class="space-y-4">
+
+  <!-- Mensaje -->
+  @if (mensaje()) {
+    <div
+      class="p-4 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+      [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+      [class.bg-red-50]="mensaje()?.tipo === 'error'"
+      [class.text-red-700]="mensaje()?.tipo === 'error'">
+      {{ mensaje()?.texto }}
+    </div>
+  }
+
+  <!-- Filtros -->
+  <div class="flex flex-wrap gap-3 items-center mb-4">
+    <!-- Búsqueda -->
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="search"
+        (keyup.enter)="buscar()"
+        placeholder="Buscar por código o nombre..."
+        class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
+    </div>
+
+    <!-- Filtro por escuela -->
+    <select
+      [(ngModel)]="escuelaFilter"
+      (change)="buscar()"
+      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todas las escuelas</option>
+      @for (escuela of escuelas; track escuela.id) {
+        <option [value]="escuela.id">{{ escuela.nombre }}</option>
+      }
+    </select>
+
+    <!-- Filtro por activación -->
+    <select
+      [(ngModel)]="cuentaActivadaFilter"
+      (change)="buscar()"
+      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todos (activación)</option>
+      <option value="true">Cuenta activada</option>
+      <option value="false">Pendiente activación</option>
+    </select>
+
+    <!-- Filtro por estado -->
+    <select
+      [(ngModel)]="activoFilter"
+      (change)="buscar()"
+      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      <option value="">Todos los estados</option>
+      <option value="true">Activos</option>
+      <option value="false">Inactivos</option>
+    </select>
+
+    <!-- Limpiar filtros -->
+    @if (search || escuelaFilter || cuentaActivadaFilter || activoFilter) {
+      <button
+        (click)="limpiarFiltros()"
+        class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+        Limpiar
+      </button>
+    }
+
+    <!-- Botones de importación (separador a la derecha) -->
+    <div class="ml-auto flex gap-2">
+      <button
+        (click)="descargarPlantilla()"
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Plantilla
+      </button>
+
+      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
+        [class.opacity-60]="importando()"
+        [class.pointer-events-none]="importando()">
+        @if (importando()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Importando...
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Importar Excel
+        }
+        <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoSeleccionado($event)" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <app-table
+    [columns]="columnas"
+    [data]="estudiantes()"
+    [loading]="loading()">
+
+    <ng-template #cellTemplate let-row let-column="column">
+
+      <!-- Código -->
+      @if (column.key === 'codigo_universitario') {
+        <span class="px-2 py-1 bg-slate-100 rounded-lg text-xs font-mono font-bold text-slate-700">
+          {{ row.codigo_universitario }}
+        </span>
+      }
+
+      <!-- Nombre -->
+      @if (column.key === 'name') {
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center">
+            <span class="text-xs font-bold text-cyan-600">{{ row.name.charAt(0).toUpperCase() }}</span>
+          </div>
+          <span class="text-sm font-semibold text-slate-800">{{ row.name }}</span>
+        </div>
+      }
+
+      <!-- Escuela -->
+      @if (column.key === 'escuela') {
+        @if (row.escuela) {
+          <app-badge color="cyan" size="sm">{{ row.escuela }}</app-badge>
+        } @else {
+          <span class="text-xs text-slate-400">-</span>
+        }
+      }
+
+      <!-- Año de ingreso -->
+      @if (column.key === 'anio_ingreso') {
+        @if (row.anio_ingreso) {
+          <span class="text-sm text-slate-600">{{ row.anio_ingreso }}</span>
+        } @else {
+          <span class="text-xs text-slate-400">-</span>
+        }
+      }
+
+      <!-- Cuenta activada -->
+      @if (column.key === 'cuenta_activada') {
+        @if (row.cuenta_activada) {
+          <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Activada
+          </span>
+        } @else {
+          <span class="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Pendiente
+          </span>
+        }
+      }
+
+      <!-- Estado -->
+      @if (column.key === 'activo') {
+        <app-badge [color]="row.activo ? 'emerald' : 'slate'">
+          {{ row.activo ? 'Activo' : 'Inactivo' }}
+        </app-badge>
+      }
+
+    </ng-template>
+
+    <!-- Acciones -->
+    <ng-template #actionsTemplate let-row>
+      <div class="flex items-center gap-2">
+        <app-btn variant="ghost" (clicked)="verDetalle(row)">
+          Ver
+        </app-btn>
+        @if (!row.cuenta_activada) {
+          <app-btn
+            variant="ghost"
+            [disabled]="reenvioEnProgreso() === row.id"
+            (clicked)="reenviarOtp(row)">
+            @if (reenvioEnProgreso() === row.id) {
+              <svg class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            }
+            Reenviar OTP
+          </app-btn>
+        }
+        <app-btn
+          [variant]="row.activo ? 'ghost' : 'primary'"
+          (clicked)="toggleActivo(row)">
+          {{ row.activo ? 'Desactivar' : 'Activar' }}
+        </app-btn>
+      </div>
+    </ng-template>
+
+  </app-table>
+
+  <!-- Paginación -->
+  @if (pagination.lastPage > 1) {
+    <app-shared-pagination
+      [currentPage]="pagination.currentPage"
+      [lastPage]="pagination.lastPage"
+      [total]="pagination.total"
+      [from]="pagination.from"
+      [to]="pagination.to"
+      [perPage]="pagination.perPage"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-shared-pagination>
+  }
+
+  <!-- Estado vacío -->
+  @if (!loading() && estudiantes().length === 0) {
+    <div class="bg-slate-50 rounded-2xl p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+      </svg>
+      <h3 class="text-lg font-bold text-slate-600 mb-2">No hay estudiantes</h3>
+      <p class="text-sm text-slate-400">
+        @if (search || escuelaFilter || cuentaActivadaFilter || activoFilter) {
+          No se encontraron estudiantes con los filtros aplicados.
+        } @else {
+          Los estudiantes aparecerán aquí cuando se registren.
+        }
+      </p>
+    </div>
+  }
+
+</div>
+
+<!-- Modal Detalle Estudiante -->
+@if (estudianteDetalle()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/50" (click)="cerrarDetalle()"></div>
+
+    <!-- Modal -->
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-800">Detalle del Estudiante</h3>
+        <button
+          (click)="cerrarDetalle()"
+          class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 space-y-4">
+        <!-- Info principal -->
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-full bg-cyan-100 flex items-center justify-center">
+            <span class="text-2xl font-bold text-cyan-600">{{ estudianteDetalle()!.name.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div>
+            <h4 class="text-xl font-bold text-slate-800">{{ estudianteDetalle()!.name }}</h4>
+            <p class="text-sm text-slate-500 font-mono">{{ estudianteDetalle()!.codigo_universitario }}</p>
+          </div>
+        </div>
+
+        <!-- Datos -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email</label>
+            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.email }}</p>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Escuela</label>
+            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.escuela || '-' }}</p>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Año de Ingreso</label>
+            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.anio_ingreso || '-' }}</p>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Estado Cuenta</label>
+            <p class="text-sm">
+              @if (estudianteDetalle()!.cuenta_activada) {
+                <span class="text-emerald-600 font-medium">Activada</span>
+              } @else {
+                <span class="text-amber-600 font-medium">Pendiente</span>
+              }
+            </p>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Password Establecido</label>
+            <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.password_set_at) }}</p>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Último OTP Enviado</label>
+            <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.ultimo_otp_enviado) }}</p>
+          </div>
+        </div>
+
+        <!-- Estados -->
+        <div class="flex gap-2">
+          <app-badge [color]="estudianteDetalle()!.activo ? 'emerald' : 'slate'" size="lg">
+            {{ estudianteDetalle()!.activo ? 'Activo' : 'Inactivo' }}
+          </app-badge>
+          @if (estudianteDetalle()!.cuenta_activada) {
+            <app-badge color="cyan" size="lg">Cuenta Activada</app-badge>
+          } @else {
+            <app-badge color="amber" size="lg">Pendiente Activación</app-badge>
+          }
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+        @if (!estudianteDetalle()!.cuenta_activada) {
+          <app-btn
+            variant="ghost"
+            [disabled]="reenvioEnProgreso() === estudianteDetalle()!.id"
+            (clicked)="reenviarOtp(estudianteDetalle()!)">
+            @if (reenvioEnProgreso() === estudianteDetalle()!.id) {
+              <svg class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            }
+            Reenviar OTP
+          </app-btn>
+        }
+        <app-btn
+          [variant]="estudianteDetalle()!.activo ? 'ghost' : 'primary'"
+          (clicked)="toggleActivo(estudianteDetalle()!)">
+          {{ estudianteDetalle()!.activo ? 'Desactivar' : 'Activar' }}
+        </app-btn>
+        <app-btn variant="ghost" (clicked)="cerrarDetalle()">Cerrar</app-btn>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Resultado Importación -->
+@if (importResultado()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50" (click)="cerrarImportResultado()"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <!-- Cabecera -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-800">Resultado de la importación</h2>
+        <button (click)="cerrarImportResultado()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Resumen -->
+      <div class="px-6 py-4 grid grid-cols-4 gap-3 border-b border-slate-100">
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-slate-700">{{ importResultado()!.resumen.total }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Total filas</div>
+        </div>
+        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-emerald-600">{{ importResultado()!.resumen.importados }}</div>
+          <div class="text-xs text-emerald-600 mt-0.5">Importados</div>
+        </div>
+        <div class="bg-amber-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-amber-600">{{ importResultado()!.resumen.omitidos }}</div>
+          <div class="text-xs text-amber-600 mt-0.5">Omitidos</div>
+        </div>
+        <div class="bg-red-50 rounded-xl p-3 text-center">
+          <div class="text-2xl font-bold text-red-500">{{ importResultado()!.resumen.errores }}</div>
+          <div class="text-xs text-red-500 mt-0.5">Errores</div>
+        </div>
+      </div>
+
+      <!-- Detalle filas con problema -->
+      @if (importResultado()!.resultados.length > 0) {
+        <div class="overflow-y-auto flex-1 px-6 py-3">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-400 uppercase tracking-wide border-b border-slate-100">
+                <th class="pb-2 w-12">Fila</th>
+                <th class="pb-2">Código</th>
+                <th class="pb-2 w-24">Estado</th>
+                <th class="pb-2">Mensaje</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              @for (fila of importResultado()!.resultados; track fila.fila) {
+                <tr class="py-1.5">
+                  <td class="py-1.5 text-slate-400 text-xs">{{ fila.fila }}</td>
+                  <td class="py-1.5 font-mono text-slate-700">{{ fila.codigo }}</td>
+                  <td class="py-1.5">
+                    @if (fila.estado === 'importado') {
+                      <span class="text-xs font-medium text-emerald-600">Importado</span>
+                    } @else if (fila.estado === 'omitido') {
+                      <span class="text-xs font-medium text-amber-600">Omitido</span>
+                    } @else {
+                      <span class="text-xs font-medium text-red-500">Error</span>
+                    }
+                  </td>
+                  <td class="py-1.5 text-slate-500 text-xs">{{ fila.mensaje }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="px-6 py-4 border-t border-slate-100">
+        <button
+          (click)="cerrarImportResultado()"
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}
