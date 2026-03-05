@@ -1,48 +1,36 @@
 ########################################################################
 # Sistema Secretaría Académica FII-UNP
-# docker-compose.yml – Listo para EasyPanel y producción
+# docker-compose.yml
 #
-# SERVICIOS:
-#   frontend   → Angular SPA en Nginx      (puerto interno 80)
-#   nginx-api  → Proxy Nginx → PHP-FPM    (puerto interno 80)
+# SERVICIOS EXPUESTOS (EasyPanel asigna el dominio):
+#   gateway    → Angular SPA + proxy /api → nginx-api (puerto 80)
+#
+# SERVICIOS INTERNOS:
+#   nginx-api  → Nginx → PHP-FPM (backend)
 #   backend    → Laravel 12 / PHP-FPM 8.2
 #   queue      → Laravel Queue Worker
 #   db         → MySQL 8.0
-#   redis      → Redis 7 (cache / sesiones)
-#
-# VARIABLES REQUERIDAS (configurar en EasyPanel o en .env):
-#   APP_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, API_URL
-#
-# USO LOCAL:
-#   cp .env.docker.example .env
-#   docker compose up -d --build
-#
-# EASYPANEL:
-#   Conectar el repo en EasyPanel → Docker Compose
-#   Exponer: frontend (puerto 80) y nginx-api (puerto 80)
-#   Configurar las variables de entorno en la UI de EasyPanel
+#   redis      → Redis 7
 ########################################################################
 
 services:
 
-  # ── Frontend Angular ──────────────────────────────────────────────
-  frontend:
+  # ── Gateway (único punto de entrada) ──────────────────────────────
+  # Sirve el Angular SPA y proxea /api/* al backend internamente.
+  # EasyPanel expone este servicio en el puerto 80 con su dominio.
+  gateway:
     build:
       context: .
-      dockerfile: docker/frontend/Dockerfile
-      args:
-        API_URL: ${API_URL:-http://localhost:8000/api}
-    ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      dockerfile: docker/gateway/Dockerfile
     networks:
       - app-network
+    depends_on:
+      - nginx-api
     restart: unless-stopped
 
-  # ── Nginx (proxy para PHP-FPM) ────────────────────────────────────
+  # ── Nginx (proxy interno para PHP-FPM) ────────────────────────────
   nginx-api:
     image: nginx:1.27-alpine
-    ports:
-      - "${API_PORT:-8000}:80"
     volumes:
       - ./docker/nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -63,7 +51,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       APP_DEBUG: ${APP_DEBUG:-false}
       APP_KEY: ${APP_KEY}
-      APP_URL: ${APP_URL:-http://localhost:8000}
+      APP_URL: ${APP_URL:-http://localhost}
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
@@ -107,7 +95,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       APP_DEBUG: ${APP_DEBUG:-false}
       APP_KEY: ${APP_KEY}
-      APP_URL: ${APP_URL:-http://localhost:8000}
+      APP_URL: ${APP_URL:-http://localhost}
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
@@ -173,6 +161,6 @@ networks:
 
 # ── Volúmenes persistentes ────────────────────────────────────────────
 volumes:
-  db-data:          # Datos de MySQL
-  redis-data:       # Datos de Redis
-  backend-storage:  # storage/ de Laravel (logs, uploads, cache)
+  db-data:
+  redis-data:
+  backend-storage:
