@@ -15,10 +15,10 @@
 
 services:
 
-  # ── Gateway (único punto de entrada) ──────────────────────────────
+  # ── Frontend / Gateway (único punto de entrada) ───────────────────
   # Sirve el Angular SPA y proxea /api/* al backend internamente.
   # EasyPanel expone este servicio en el puerto 80 con su dominio.
-  gateway:
+  frontend:
     build:
       context: .
       dockerfile: docker/gateway/Dockerfile
