@@ -26,8 +26,12 @@ services:
       - app-network
       - easypanel
     labels:
-      caddy: ${DOMAIN}
-      caddy.reverse_proxy: "{{upstreams 80}}"
+      traefik.enable: "true"
+      traefik.http.routers.secretaria-frontend.rule: "Host(`${DOMAIN}`)"
+      traefik.http.routers.secretaria-frontend.entrypoints: "websecure"
+      traefik.http.routers.secretaria-frontend.tls: "true"
+      traefik.http.routers.secretaria-frontend.tls.certresolver: "letsencrypt"
+      traefik.http.services.secretaria-frontend.loadbalancer.server.port: "80"
     depends_on:
       - nginx-api
     restart: unless-stopped
