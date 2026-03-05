@@ -25,6 +25,9 @@ services:
     networks:
       - app-network
       - easypanel
+    labels:
+      caddy: ${DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 80}}"
     depends_on:
       - nginx-api
     restart: unless-stopped
