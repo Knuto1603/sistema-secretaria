@@ -28,7 +28,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.http.routers.secretaria-frontend.rule: "Host(`${DOMAIN}`)"
-      traefik.http.routers.secretaria-frontend.entrypoints: "websecure"
+      traefik.http.routers.secretaria-frontend.entrypoints: "https"
       traefik.http.routers.secretaria-frontend.tls: "true"
       traefik.http.routers.secretaria-frontend.tls.certresolver: "letsencrypt"
       traefik.http.services.secretaria-frontend.loadbalancer.server.port: "80"
