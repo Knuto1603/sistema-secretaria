@@ -32,6 +32,8 @@ services:
       dockerfile: docker/frontend/Dockerfile
       args:
         API_URL: ${API_URL:-http://localhost:8000/api}
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
     networks:
       - app-network
     restart: unless-stopped
@@ -39,6 +41,8 @@ services:
   # ── Nginx (proxy para PHP-FPM) ────────────────────────────────────
   nginx-api:
     image: nginx:1.27-alpine
+    ports:
+      - "${API_PORT:-8000}:80"
     volumes:
       - ./docker/nginx/backend.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
