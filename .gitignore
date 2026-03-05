@@ -51,3 +51,7 @@ frontend/out-tsc/
 # Archivos temporales con rutas Windows incorrectas
 frontend/C:*
 frontend/build_output.txt
+
+# ── Solo local (no se suben al repo) ──────────────────────
+APIs/
+archivos varios/
