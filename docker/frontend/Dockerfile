@@ -18,6 +18,10 @@ RUN npm ci
 # Copiar el resto del código fuente
 COPY frontend/ .
 
+# Inyectar la URL de la API (configurable via build arg)
+ARG API_URL=http://localhost:8000/api
+RUN sed -i "s|apiUrl:.*|apiUrl: '${API_URL}'|g" src/environments/environment.ts
+
 # Compilar para producción
 # El output quedará en dist/frontend/browser/
 RUN npm run build
