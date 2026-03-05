@@ -24,6 +24,7 @@ services:
       dockerfile: docker/gateway/Dockerfile
     networks:
       - app-network
+      - easypanel
     depends_on:
       - nginx-api
     restart: unless-stopped
@@ -158,6 +159,8 @@ services:
 networks:
   app-network:
     driver: bridge
+  easypanel:
+    external: true   # Red del proxy de EasyPanel (Caddy)
 
 # ── Volúmenes persistentes ────────────────────────────────────────────
 volumes:
