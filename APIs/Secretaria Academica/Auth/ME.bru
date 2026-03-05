@@ -1,0 +1,15 @@
+meta {
+  name: ME
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{SECURITY_API}}/me
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

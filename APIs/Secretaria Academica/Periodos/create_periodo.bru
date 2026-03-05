@@ -1,0 +1,25 @@
+meta {
+  name: create_periodo
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{SECURITY_API}}/periodos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "nombre": "2025-1",
+    "fecha_inicio": "2025-04-15",
+    "fecha_fin": "2025-08-01",
+    "activo":true
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Secretaria Academica",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
