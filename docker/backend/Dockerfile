@@ -39,8 +39,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # --- Directorio de trabajo ---
 WORKDIR /var/www/html
 
-# --- Copiar todo el código primero ---
-COPY . .
+# --- Copiar código del backend y config de PHP ---
+COPY backend/ .
+COPY docker/backend/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # --- Instalar dependencias y generar autoload en un solo paso ---
 RUN git config --global --add safe.directory /var/www/html \
