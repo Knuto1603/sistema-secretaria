@@ -72,5 +72,5 @@ setup: up
 	docker compose exec backend php artisan migrate --seed
 	@echo ""
 	@echo "✓ Sistema listo"
-	@echo "  Frontend: http://localhost:4200"
+	@echo "  Frontend: http://localhost:80"
 	@echo "  Backend:  http://localhost:8000"
