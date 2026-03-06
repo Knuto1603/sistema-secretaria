@@ -130,12 +130,12 @@ class RolesAndPermissionsSeeder extends Seeder
         $decano->syncRoles([$roleDecano]);
 
         $secAcademico = User::updateOrCreate(
-            ['username' => 'sec.academico'],
+            ['username' => 'sec_academico'],
             [
                 'name' => 'Lic. María García Ruiz',
-                'email' => 'sec.academico@unp.edu.pe',
+                'email' => 'sec_academico@unp.edu.pe',
                 'tipo_usuario' => 'administrativo',
-                'username' => 'sec.academico',
+                'username' => 'sec_academico',
                 'codigo_universitario' => null,
                 'password' => Hash::make('password123'),
                 'password_set_at' => now(),
@@ -164,7 +164,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['Developer', 'Knuto', 'developer', 'admin123'],
                 ['Administrador', 'admin', 'admin', 'password123'],
                 ['Decano', 'decano', 'decano', 'password123'],
-                ['Sec. Académico', 'sec.academico', 'secretario academico', 'password123'],
+                ['Sec. Académico', 'sec_academico', 'secretario academico', 'password123'],
                 ['Secretaria', 'secretaria', 'secretaria', 'password123'],
             ]
         );
