@@ -31,6 +31,7 @@ class User extends Authenticatable
         'password',
         'password_set_at',
         'activo',
+        'ultima_actualizacion_historial',
     ];
 
     /**
@@ -53,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password_set_at' => 'datetime',
+            'ultima_actualizacion_historial' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -75,6 +77,24 @@ class User extends Authenticatable
     public function escuela(): BelongsTo
     {
         return $this->belongsTo(Escuela::class);
+    }
+
+    /**
+     * Cursos que el alumno ha aprobado (historial académico)
+     */
+    public function historialAcademico(): HasMany
+    {
+        return $this->hasMany(HistorialAcademico::class);
+    }
+
+    /**
+     * Cursos aprobados (acceso directo a través del historial)
+     */
+    public function cursosAprobados()
+    {
+        return $this->belongsToMany(Curso::class, 'historial_academico', 'user_id', 'curso_id')
+            ->withPivot('fuente')
+            ->withTimestamps();
     }
 
     // ==========================================
@@ -219,8 +239,8 @@ class User extends Authenticatable
     /**
      * Parsea el código universitario y extrae sus componentes
      * Formato: FFEGGGGNNN (10 dígitos)
-     * FF = Facultad (05 = Industrial)
-     * E = Escuela (0=Industrial, 1=Informática, 2=Mecatrónica, 3=Agroindustrial)
+     * FF = Facultad (05 = FII)
+     * E = Escuela (0=Industrial, 1=Informática, 2=Agroindustrial, 3=Mecatrónica)
      * GGGG = Año de ingreso
      * NNN = Correlativo
      */
