@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Escuela extends Model
@@ -31,6 +32,14 @@ class Escuela extends Model
     public function planEstudios(): HasMany
     {
         return $this->hasMany(PlanEstudios::class);
+    }
+
+    /**
+     * Secciones de programación académica disponibles para esta escuela
+     */
+    public function programaciones(): BelongsToMany
+    {
+        return $this->belongsToMany(ProgramacionAcademica::class, 'programacion_escuelas');
     }
 
     /**
