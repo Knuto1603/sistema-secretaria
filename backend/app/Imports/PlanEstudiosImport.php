@@ -11,7 +11,8 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class PlanEstudiosImport implements ToCollection, WithHeadingRow
 {
-    private array $resultados = [];
+    private array $resultados  = [];
+    private array $requisitosMap = []; // ['CODIGO_CURSO' => ['REQ1', 'REQ2']]
 
     public function __construct(private readonly string $escuelaCodigo) {}
 
@@ -27,6 +28,7 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
             $fila = $index + 2;
 
             try {
+
                 $codigoCurso = trim(strtoupper((string) $row['codigo_curso']));
                 $nombreCurso = isset($row['nombre_curso']) ? trim(strtoupper((string) $row['nombre_curso'])) : null;
 
@@ -65,6 +67,15 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     ]
                 );
 
+                // Guardar requisitos para resolverlos al final (todos los cursos deben existir)
+                $codigoRequisito = trim((string) ($row['codigo_requisito'] ?? ''));
+                if ($codigoRequisito !== '') {
+                    $codigos = array_values(array_filter(array_map('trim', explode(',', $codigoRequisito))));
+                    if (!empty($codigos)) {
+                        $this->requisitosMap[$codigoCurso] = $codigos;
+                    }
+                }
+
                 $this->resultados[] = [
                     'fila'    => $fila,
                     'codigo'  => $codigoCurso,
@@ -79,6 +90,24 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     'mensaje' => $e->getMessage(),
                 ];
             }
+        }
+
+        $this->resolverRequisitos();
+    }
+
+    /**
+     * Segunda pasada: sincronizar requisitos ahora que todos los cursos ya existen.
+     */
+    private function resolverRequisitos(): void
+    {
+        foreach ($this->requisitosMap as $cursoCodigo => $requisitosCodigos) {
+            $curso = Curso::where('codigo', $cursoCodigo)->first();
+            if (!$curso) {
+                continue;
+            }
+
+            $requisitoIds = Curso::whereIn('codigo', $requisitosCodigos)->pluck('id')->toArray();
+            $curso->requisitos()->sync($requisitoIds);
         }
     }
 
