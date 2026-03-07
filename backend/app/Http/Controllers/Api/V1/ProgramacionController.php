@@ -72,6 +72,43 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Programaciones elegibles para el estudiante autenticado.
+     * Filtra por escuela, ciclo estimado, historial académico y prerequisitos.
+     */
+    public function paraMi(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user || !$user->isEstudiante()) {
+                return $this->error('Solo disponible para estudiantes.', 403);
+            }
+
+            $result    = $this->service->getElegiblesParaEstudiante($user, $request);
+            $paginated = $result['paginated'];
+            $items     = $this->transformer->collection(collect($paginated->items()));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cursos disponibles para ti',
+                'data'    => [
+                    'ciclo_actual'         => $result['ciclo_actual'],
+                    'historial_registrado' => $result['historial_registrado'],
+                    'items'                => $items,
+                    'pagination'           => [
+                        'current_page' => $paginated->currentPage(),
+                        'last_page'    => $paginated->lastPage(),
+                        'per_page'     => $paginated->perPage(),
+                        'total'        => $paginated->total(),
+                    ],
+                ],
+            ]);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    /**
      * Importar programación desde reporte HTML del SIGA (PROG ACAD SEMESTRE.htm)
      */
     public function importHtml(ImportProgramacionHtmlRequest $request): JsonResponse
