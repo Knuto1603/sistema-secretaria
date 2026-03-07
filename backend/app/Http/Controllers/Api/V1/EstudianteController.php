@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Exports\EstudianteTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Estudiante\ImportAlumnosHtmlRequest;
 use App\Http\Requests\Usuario\UpdateEstudianteRequest;
+use App\Imports\AlumnosHtmlImport;
 use App\Imports\EstudianteImport;
 use App\Services\EstudianteService;
 use Illuminate\Http\JsonResponse;
@@ -129,5 +131,23 @@ class EstudianteController extends Controller
     public function downloadTemplate(): BinaryFileResponse
     {
         return Excel::download(new EstudianteTemplateExport(), 'plantilla_estudiantes.xlsx');
+    }
+
+    /**
+     * Importa estudiantes desde padrón HTML del SIGA (ALUMNOS 20260.htm)
+     */
+    public function importHtml(ImportAlumnosHtmlRequest $request): JsonResponse
+    {
+        try {
+            $importer = new AlumnosHtmlImport();
+            $importer->import($request->file('file')->getPathname());
+
+            return $this->success(
+                $importer->getResumen(),
+                'Estudiantes importados desde padrón SIGA'
+            );
+        } catch (\Exception $e) {
+            return $this->error('Error al procesar el archivo: ' . $e->getMessage(), 500);
+        }
     }
 }
