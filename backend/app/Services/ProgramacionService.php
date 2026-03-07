@@ -5,7 +5,10 @@ namespace App\Services;
 use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionImport;
+use App\Models\Curso;
+use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
+use App\Models\User;
 use App\Repositories\Contracts\PeriodoRepositoryInterface;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
 use App\Traits\ApiFilterable;
@@ -70,5 +73,78 @@ class ProgramacionService
     public function toggleLlenoManual(string $id): ?ProgramacionAcademica
     {
         return $this->programacionRepository->toggleLlenoManual($id);
+    }
+
+    /**
+     * Devuelve las programaciones elegibles para un estudiante:
+     * - Solo cursos de su escuela, hasta su ciclo actual estimado.
+     * - Si tiene historial: excluye aprobados y cursos sin prerequisitos cumplidos.
+     * - Si no tiene historial: muestra todos los cursos del plan hasta su ciclo.
+     *
+     * @return array{ciclo_actual: int, historial_registrado: bool, paginated: LengthAwarePaginator}
+     */
+    public function getElegiblesParaEstudiante(User $user, Request $request): array
+    {
+        $periodoId = $this->periodoRepository->getActiveId();
+
+        if (!$periodoId) {
+            throw new Exception('No hay un periodo académico activo.');
+        }
+
+        if (!$user->escuela_id) {
+            throw new Exception('Tu cuenta no tiene una escuela asignada. Contacta a secretaría.');
+        }
+
+        $cicloActual       = $user->cicloActual();
+        $tieneHistorial    = $user->tieneHistorial();
+
+        // Cursos del plan de estudios de la escuela hasta el ciclo actual
+        $cursoIdsEnPlan = PlanEstudios::where('escuela_id', $user->escuela_id)
+            ->where('ciclo', '<=', $cicloActual)
+            ->pluck('curso_id')
+            ->toArray();
+
+        if ($tieneHistorial) {
+            $aprobadosIds = $user->cursosAprobados()->pluck('cursos.id')->toArray();
+
+            // Solo los pendientes (no aprobados aún)
+            $pendientesIds = array_values(array_diff($cursoIdsEnPlan, $aprobadosIds));
+
+            // De los pendientes, solo aquellos cuyos prerequisitos están todos aprobados
+            $pendientesCursos = Curso::whereIn('id', $pendientesIds)->with('requisitos')->get();
+
+            $elegiblesIds = $pendientesCursos->filter(function (Curso $curso) use ($aprobadosIds) {
+                if ($curso->requisitos->isEmpty()) {
+                    return true;
+                }
+                return $curso->requisitos->every(fn($req) => in_array($req->id, $aprobadosIds));
+            })->pluck('id')->toArray();
+        } else {
+            $elegiblesIds = $cursoIdsEnPlan;
+        }
+
+        // Evitar que whereIn reciba un array vacío (resultaría en error SQL en algunos drivers)
+        $cursoIdsFiltro = !empty($elegiblesIds) ? $elegiblesIds : ['__none__'];
+
+        $query = $this->programacionRepository
+            ->getBaseQuery($periodoId, $user->escuela_id)
+            ->whereIn('programacion_academica.curso_id', $cursoIdsFiltro);
+
+        $paginated = $this->applyFiltersAndPaginate(
+            $query,
+            $request,
+            ['clave', 'grupo'],
+            [
+                'curso'   => ['nombre', 'codigo'],
+                'docente' => ['nombre_completo'],
+            ],
+            false
+        );
+
+        return [
+            'ciclo_actual'        => $cicloActual,
+            'historial_registrado' => $tieneHistorial,
+            'paginated'           => $paginated,
+        ];
     }
 }
