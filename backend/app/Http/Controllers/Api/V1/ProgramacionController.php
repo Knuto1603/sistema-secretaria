@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Programacion\ImportProgramacionHtmlRequest;
 use App\Http\Requests\Programacion\ImportProgramacionRequest;
+use App\Imports\ProgramacionHtmlImport;
 use App\Services\ProgramacionService;
 use App\Transformers\ProgramacionTransformer;
 use Illuminate\Http\JsonResponse;
@@ -66,6 +68,30 @@ class ProgramacionController extends Controller
             return $this->success(null, 'Programación importada exitosamente');
         } catch (Exception $e) {
             return $this->error('Error al procesar el Excel: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Importar programación desde reporte HTML del SIGA (PROG ACAD SEMESTRE.htm)
+     */
+    public function importHtml(ImportProgramacionHtmlRequest $request): JsonResponse
+    {
+        try {
+            $periodoId = $request->periodo_id ?? $this->service->getActivePeriodoId();
+
+            if (!$periodoId) {
+                return $this->error('No hay periodo activo ni se especificó uno.', 422);
+            }
+
+            $importer = new ProgramacionHtmlImport($periodoId);
+            $importer->import($request->file('file')->getPathname());
+
+            return $this->success(
+                $importer->getResumen(),
+                'Programación importada desde reporte SIGA'
+            );
+        } catch (Exception $e) {
+            return $this->error('Error al procesar el archivo: ' . $e->getMessage(), 500);
         }
     }
 
