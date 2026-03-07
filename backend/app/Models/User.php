@@ -285,6 +285,32 @@ class User extends Authenticatable
     }
 
     /**
+     * Estima el ciclo académico actual del estudiante basándose en su año de ingreso.
+     * Fórmula: (año_actual - año_ingreso) * 2 + (mes >= 8 ? 2 : 1), máximo 10.
+     * Semestre I = meses 1-7, Semestre II = meses 8-12.
+     */
+    public function cicloActual(): int
+    {
+        if (!$this->anio_ingreso) {
+            return 1;
+        }
+
+        $ahora        = now();
+        $semestre     = $ahora->month >= 8 ? 2 : 1;
+        $ciclo        = ($ahora->year - $this->anio_ingreso) * 2 + $semestre;
+
+        return max(1, min($ciclo, 10));
+    }
+
+    /**
+     * Indica si el estudiante ya registró su historial académico al menos una vez.
+     */
+    public function tieneHistorial(): bool
+    {
+        return $this->ultima_actualizacion_historial !== null;
+    }
+
+    /**
      * Obtiene el nombre de la escuela (para mostrar)
      */
     public function getNombreEscuela(): ?string
