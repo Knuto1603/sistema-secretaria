@@ -109,6 +109,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [ProgramacionController::class, 'show']);
         Route::post('/import', [ProgramacionController::class, 'import'])
             ->middleware('role:secretaria|admin|developer');
+        Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
+            ->middleware('role:secretaria|admin|developer');
         Route::patch('/{id}/toggle-lleno', [ProgramacionController::class, 'toggleLleno'])
             ->middleware('role:secretaria|admin|developer');
     });
@@ -171,6 +173,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [EstudianteController::class, 'index']);
             Route::get('/import/template', [EstudianteController::class, 'downloadTemplate']);
             Route::post('/import', [EstudianteController::class, 'import']);
+            Route::post('/import-html', [EstudianteController::class, 'importHtml']);
             Route::get('/{id}', [EstudianteController::class, 'show']);
             Route::put('/{id}', [EstudianteController::class, 'update']);
             Route::patch('/{id}/toggle', [EstudianteController::class, 'toggle']);
