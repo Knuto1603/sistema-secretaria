@@ -37,6 +37,13 @@ export class SolicitudListaComponent implements OnInit {
   loading = signal(false);
   paginationData = signal<PaginatedResponse<Solicitud> | null>(null);
 
+  // Estadísticas de demanda (solo admin)
+  stats = signal<{
+    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
+    total: number;
+    cursos_top: Array<{ curso: string; clave: string; total_solicitudes: number }>;
+  } | null>(null);
+
   // Filtros
   searchTerm = signal('');
   estadoFiltro = signal('');
@@ -84,9 +91,10 @@ export class SolicitudListaComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Cargar programaciones si es admin
+    // Cargar programaciones y estadísticas si es admin
     if (this.esAdmin()) {
       this.cargarProgramaciones();
+      this.cargarEstadisticas();
     }
 
     // Leer query params para filtrar por programación
@@ -96,6 +104,13 @@ export class SolicitudListaComponent implements OnInit {
         this.programacionIdFiltro.set(programacionId);
       }
       this.cargarDatos();
+    });
+  }
+
+  cargarEstadisticas(): void {
+    this.solicitudService.getEstadisticas().subscribe({
+      next: (data) => this.stats.set(data),
+      error: () => {}
     });
   }
 
