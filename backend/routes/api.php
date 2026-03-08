@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\ChatbotController;
 use App\Http\Controllers\Api\V1\CursoController;
 use App\Http\Controllers\Api\V1\DevController;
 use App\Http\Controllers\Api\V1\EstudianteController;
+use App\Http\Controllers\Api\V1\HistorialController;
 use App\Http\Controllers\Api\V1\KbDocumentController;
 use App\Http\Controllers\Api\V1\KnowledgeBaseController;
 use App\Http\Controllers\Api\V1\PeriodoController;
@@ -181,10 +182,17 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{id}/reenviar-otp', [EstudianteController::class, 'reenviarOtp']);
         });
 
+    // Historial académico del estudiante autenticado
+    Route::prefix('historial')->group(function () {
+        Route::get('/', [HistorialController::class, 'index']);
+        Route::post('/sync', [HistorialController::class, 'sync']);
+    });
+
     // Plan de Estudios
     Route::prefix('plan-estudios')
         ->group(function () {
             Route::get('/', [PlanEstudiosController::class, 'index']);          // Todos los autenticados
+            Route::get('/mi-plan', [PlanEstudiosController::class, 'miPlan']); // Plan del estudiante autenticado
             Route::get('/template', [PlanEstudiosController::class, 'downloadTemplate']); // Plantilla
 
             // Solo admin/secretaria pueden gestionar el plan
