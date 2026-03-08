@@ -107,6 +107,18 @@ export class ProgramacionService {
   }
 
   /**
+   * Importa programación desde reporte HTML del SIGA (PROG ACAD SEMESTRE.htm)
+   */
+  importarHtml(file: File, periodoId?: string): Observable<{ total: number; importados: number; errores: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (periodoId) formData.append('periodo_id', periodoId);
+    return this.http.post<{ success: boolean; data: { total: number; importados: number; errores: number } }>(
+      `${this.apiUrl}/import-html`, formData
+    ).pipe(map(r => r.data));
+  }
+
+  /**
    * Descarga la plantilla de ejemplo para importación
    */
   descargarPlantilla(): void {
