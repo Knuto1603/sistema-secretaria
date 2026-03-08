@@ -12,10 +12,12 @@ class PlanEstudiosTemplateExport implements FromArray, WithHeadings, WithTitle, 
     public function array(): array
     {
         return [
-            ['ED1292', 'ACTIVIDAD DEPORTIVA',                          '1', '2', 'O'],
-            ['SI1447', 'ALGORITMOS',                                   '1', '4', 'O'],
-            ['MA1408', 'MATEMATICA BASICA',                            '1', '4', 'O'],
-            ['II4366', 'ENERGIAS RENOVABLES',                          '7', '3', 'E'],
+            ['ED1292', 'ACTIVIDAD DEPORTIVA',  '1', '2', 'O', ''],
+            ['MA1408', 'MATEMATICA BASICA',    '1', '4', 'O', ''],
+            ['SI1447', 'ALGORITMOS',           '1', '4', 'O', ''],
+            ['MA1409', 'CALCULO I',            '2', '4', 'O', 'MA1408'],
+            ['MA1410', 'CALCULO II',           '3', '4', 'O', 'MA1409'],
+            ['II4366', 'ENERGIAS RENOVABLES',  '7', '3', 'E', ''],
         ];
     }
 
@@ -26,7 +28,8 @@ class PlanEstudiosTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'nombre_curso',
             'ciclo',
             'creditos',
-            'tipo',   // O = Obligatorio  |  E = Electivo
+            'tipo',             // O = Obligatorio  |  E = Electivo
+            'codigo_requisito', // Opcional. Si son varios: separar con coma (MA1408,FIS101)
         ];
     }
 
@@ -43,6 +46,7 @@ class PlanEstudiosTemplateExport implements FromArray, WithHeadings, WithTitle, 
             'C' => 10,
             'D' => 12,
             'E' => 10,
+            'F' => 35,
         ];
     }
 }
