@@ -33,6 +33,10 @@ class DatabaseSeeder extends Seeder
         $this->call(SystemSettingsSeeder::class);
         $this->command->newLine();
 
+        // 5. Grupos horario G1-G14
+        $this->call(GrupoHorarioSeeder::class);
+        $this->command->newLine();
+
         $this->command->info('=== Seeders completados ===');
     }
 }
