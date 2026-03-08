@@ -100,9 +100,10 @@
           class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
       </div>
 
-      <!-- Importación -->
+      <!-- Importación (solo secretaria/admin) -->
       @if (authService.hasRole('secretaria') || authService.hasRole('admin')) {
-        <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx, .xls, .csv">
+        <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
+        <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
         <app-btn
           variant="ghost"
           (clicked)="descargarPlantilla()">
@@ -110,6 +111,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
           </svg>
           Plantilla
+        </app-btn>
+        <app-btn
+          variant="ghost"
+          [loading]="isUploadingHtml()"
+          (clicked)="fileInputHtml.click()">
+          Importar SIGA
         </app-btn>
         <app-btn
           variant="success"
@@ -215,12 +222,18 @@
         } @else {
           <!-- Estudiantes: Solicitar cupo -->
           @if (row.esta_lleno) {
-            @if (isPeriodoActivo()) {
+            @if (tieneSolicitudActiva(row.id)) {
+              <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-xl tracking-widest"
+                    title="Ya tienes una solicitud activa para este curso">
+                Solicitado
+              </span>
+            } @else if (isPeriodoActivo()) {
               <app-btn variant="primary" (clicked)="solicitarCupo(row)">
                 Solicitar
               </app-btn>
             } @else {
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2" title="Solo se pueden solicitar cupos en periodos activos">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2"
+                    title="Solo se pueden solicitar cupos en periodos activos">
                 Periodo Inactivo
               </span>
             }
