@@ -39,7 +39,7 @@ class Escuela extends Model
      */
     public function programaciones(): BelongsToMany
     {
-        return $this->belongsToMany(ProgramacionAcademica::class, 'programacion_escuelas');
+        return $this->belongsToMany(ProgramacionAcademica::class, 'programacion_escuelas', 'escuela_id', 'programacion_id');
     }
 
     /**

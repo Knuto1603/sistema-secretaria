@@ -70,7 +70,7 @@ class ProgramacionAcademica extends Model
      */
     public function escuelas(): BelongsToMany
     {
-        return $this->belongsToMany(Escuela::class, 'programacion_escuelas');
+        return $this->belongsToMany(Escuela::class, 'programacion_escuelas', 'programacion_id', 'escuela_id');
     }
 
     public function aula(): BelongsTo
