@@ -179,4 +179,27 @@ export class SolicitudService {
       map(response => response.data)
     );
   }
+
+  /**
+   * Devuelve los programacion_ids donde el estudiante ya tiene solicitud activa.
+   * Usado para mostrar badge "Solicitado" en la tabla de programación.
+   */
+  getProgramacionesConSolicitudActiva(): Observable<string[]> {
+    return this.http.get<ApiResponse<string[]>>(`${this.apiUrl}/programaciones-activas`).pipe(
+      map(response => response.data)
+    );
+  }
+
+  /**
+   * Estadísticas de solicitudes (admin/secretaria)
+   */
+  getEstadisticas(): Observable<{
+    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
+    total: number;
+    cursos_top: Array<{ curso: string; clave: string; total_solicitudes: number }>;
+  }> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/estadisticas`).pipe(
+      map(response => response.data)
+    );
+  }
 }
