@@ -79,6 +79,23 @@
         Plantilla
       </button>
 
+      <!-- Importar desde SIGA (HTML) -->
+      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+        [class.opacity-60]="importandoHtml()"
+        [class.pointer-events-none]="importandoHtml()">
+        @if (importandoHtml()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Importando...
+        } @else {
+          Importar SIGA
+        }
+        <input type="file" accept=".htm,.html" class="hidden" (change)="onArchivoHtmlSeleccionado($event)" />
+      </label>
+
+      <!-- Importar Excel -->
       <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
         [class.opacity-60]="importando()"
         [class.pointer-events-none]="importando()">
@@ -98,6 +115,17 @@
         <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoSeleccionado($event)" />
       </label>
     </div>
+
+  <!-- Mensaje HTML import -->
+  @if (importHtmlMensaje()) {
+    <div class="mx-0 mt-2 px-4 py-2.5 rounded-2xl text-sm font-medium"
+      [class.bg-emerald-50]="importHtmlMensaje()!.tipo === 'success'"
+      [class.text-emerald-700]="importHtmlMensaje()!.tipo === 'success'"
+      [class.bg-red-50]="importHtmlMensaje()!.tipo === 'error'"
+      [class.text-red-700]="importHtmlMensaje()!.tipo === 'error'">
+      {{ importHtmlMensaje()!.texto }}
+    </div>
+  }
   </div>
 
   <!-- Tabla -->
