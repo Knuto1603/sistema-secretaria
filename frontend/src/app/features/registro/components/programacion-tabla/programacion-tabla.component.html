@@ -1,21 +1,75 @@
 <div class="space-y-6">
-  
+
+  <!-- Modal de onboarding de historial académico -->
+  @if (showOnboarding()) {
+    <app-historial-onboarding
+      (guardado)="onHistorialGuardado()"
+      (cerrado)="onOnboardingCerrado()">
+    </app-historial-onboarding>
+  }
+
+  <!-- Banner: historial no registrado (solo estudiantes) -->
+  @if (esEstudiante() && !historialRegistrado() && !loading()) {
+    <div class="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-3xl p-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-indigo-800">Registra tu historial académico</p>
+          <p class="text-xs text-indigo-600 mt-0.5">
+            Indica qué cursos ya aprobaste para ver solo los que te corresponden según tu ciclo.
+          </p>
+        </div>
+      </div>
+      <button
+        (click)="abrirOnboarding()"
+        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors flex-shrink-0">
+        Registrar historial
+      </button>
+    </div>
+  }
+
   <!-- Encabezado con Buscador y Acciones -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
     <div>
       <div class="flex items-center gap-3">
-        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">Programación Académica</h2>
-        @if (!isPeriodoActivo() && periodoSeleccionado()) {
+        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
+          @if (esEstudiante()) { Cursos disponibles } @else { Programación Académica }
+        </h2>
+        @if (!isPeriodoActivo() && periodoSeleccionado() && !esEstudiante()) {
           <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
             Periodo Inactivo
           </span>
         }
+        @if (esEstudiante() && cicloActual()) {
+          <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-lg">
+            Ciclo {{ cicloActual() }}
+          </span>
+        }
       </div>
-      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">Gestión de cupos y secciones</p>
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+        @if (esEstudiante()) {
+          @if (historialRegistrado()) {
+            Cursos pendientes con requisitos cumplidos ·
+            <button (click)="abrirOnboarding()" class="text-indigo-500 hover:text-indigo-700 transition-colors">
+              Actualizar historial
+            </button>
+          } @else {
+            Todos los cursos de tu escuela hasta tu ciclo actual
+          }
+        } @else {
+          Gestión de cupos y secciones
+        }
+      </p>
     </div>
 
     <div class="flex items-center gap-3">
-      <!-- Selector de Periodo -->
+      <!-- Selector de Periodo (solo admin/secretaria) -->
+      @if (!esEstudiante()) {
       <div class="relative">
         <select
           [ngModel]="periodoSeleccionado()"
@@ -34,6 +88,7 @@
           </svg>
         </div>
       </div>
+      } <!-- fin @if (!esEstudiante()) -->
 
       <!-- Buscador -->
       <div class="relative">
