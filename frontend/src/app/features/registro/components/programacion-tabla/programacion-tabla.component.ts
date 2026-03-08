@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ProgramacionService, Programacion, PaginatedResponse } from '../../services/programacion.service';
 import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
+import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -19,7 +20,8 @@ import { PaginationComponent } from '@shared/pagination/pagination.component';
     AppButtonComponent,
     AppBadgeComponent,
     AppTableComponent,
-    PaginationComponent
+    PaginationComponent,
+    HistorialOnboardingComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -29,11 +31,9 @@ export class ProgramacionTablaComponent implements OnInit {
   public authService = inject(AuthService);
   private router = inject(Router);
 
-  // Estado reactivo
   programacion = signal<Programacion[]>([]);
   paginationData = signal<PaginatedResponse<Programacion> | null>(null);
 
-  // Periodos
   periodos = signal<Periodo[]>([]);
   periodoSeleccionado = signal<string | null>(null);
 
@@ -44,7 +44,11 @@ export class ProgramacionTablaComponent implements OnInit {
   currentPage = signal(1);
   perPage = signal(10);
 
-  // Configuración de columnas para nuestra tabla genérica
+  // Estado modo estudiante
+  cicloActual = signal<number | null>(null);
+  historialRegistrado = signal<boolean>(false);
+  showOnboarding = signal(false);
+
   columnas: TableColumn[] = [
     { key: 'curso', label: 'Información del Curso' },
     { key: 'grupo', label: 'GRP' },
@@ -53,9 +57,17 @@ export class ProgramacionTablaComponent implements OnInit {
     { key: 'estado', label: 'Estado de Cupos' }
   ];
 
+  esEstudiante = computed(() => this.authService.isEstudiante());
+
   ngOnInit(): void {
-    this.cargarPeriodosYProgramacion();
+    if (this.esEstudiante()) {
+      this.cargarParaMi();
+    } else {
+      this.cargarPeriodosYProgramacion();
+    }
   }
+
+  // ─── MODO ADMINISTRADOR ──────────────────────────────────────────────────
 
   cargarPeriodosYProgramacion(): void {
     this.loadingPeriodos.set(true);
@@ -66,16 +78,13 @@ export class ProgramacionTablaComponent implements OnInit {
         this.periodos.set(periodos);
         this.loadingPeriodos.set(false);
 
-        // Seleccionar el periodo activo por defecto
         const periodoActivo = periodos.find(p => p.activo);
         if (periodoActivo) {
           this.periodoSeleccionado.set(periodoActivo.id);
         } else if (periodos.length > 0) {
-          // Si no hay activo, seleccionar el primero
           this.periodoSeleccionado.set(periodos[0].id);
         }
 
-        // Cargar programación del periodo seleccionado
         this.cargarProgramacion();
       },
       error: () => {
@@ -102,6 +111,41 @@ export class ProgramacionTablaComponent implements OnInit {
     });
   }
 
+  // ─── MODO ESTUDIANTE ─────────────────────────────────────────────────────
+
+  cargarParaMi(page: number = this.currentPage(), size: number = this.perPage()): void {
+    this.loading.set(true);
+    this.currentPage.set(page);
+    this.perPage.set(size);
+
+    this.programacionService.getParaMi(page, this.searchTerm(), size).subscribe({
+      next: (res) => {
+        this.cicloActual.set(res.cicloActual);
+        this.historialRegistrado.set(res.historialRegistrado);
+        this.programacion.set(res.paginatedData.data);
+        this.paginationData.set(res.paginatedData);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  abrirOnboarding(): void {
+    this.showOnboarding.set(true);
+  }
+
+  onHistorialGuardado(): void {
+    this.showOnboarding.set(false);
+    this.authService.patchCurrentUser({ ultima_actualizacion_historial: new Date().toISOString() });
+    this.cargarParaMi(1);
+  }
+
+  onOnboardingCerrado(): void {
+    this.showOnboarding.set(false);
+  }
+
+  // ─── EVENTOS COMUNES ─────────────────────────────────────────────────────
+
   onPeriodoChange(periodoId: string): void {
     this.periodoSeleccionado.set(periodoId);
     this.searchTerm.set('');
@@ -110,15 +154,27 @@ export class ProgramacionTablaComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
-    this.cargarProgramacion(1);
+    if (this.esEstudiante()) {
+      this.cargarParaMi(1);
+    } else {
+      this.cargarProgramacion(1);
+    }
   }
 
   handlePageChange(page: number): void {
-    this.cargarProgramacion(page);
+    if (this.esEstudiante()) {
+      this.cargarParaMi(page);
+    } else {
+      this.cargarProgramacion(page);
+    }
   }
 
   handleSizeChange(size: number): void {
-    this.cargarProgramacion(1, size);
+    if (this.esEstudiante()) {
+      this.cargarParaMi(1, size);
+    } else {
+      this.cargarProgramacion(1, size);
+    }
   }
 
   triggerImport(fileInput: HTMLInputElement): void {
@@ -157,7 +213,6 @@ export class ProgramacionTablaComponent implements OnInit {
   toggleLleno(item: Programacion): void {
     this.programacionService.toggleLleno(item.id).subscribe({
       next: (updated) => {
-        // Actualizar el item en la lista
         this.programacion.update(items =>
           items.map(p => p.id === updated.id ? updated : p)
         );
@@ -166,14 +221,13 @@ export class ProgramacionTablaComponent implements OnInit {
     });
   }
 
-  // Helper para obtener el nombre del periodo seleccionado
   getPeriodoNombre(): string {
     const periodo = this.periodos().find(p => p.id === this.periodoSeleccionado());
     return periodo?.nombre || 'Seleccionar periodo';
   }
 
-  // Verificar si el periodo seleccionado está activo
   isPeriodoActivo = computed(() => {
+    if (this.esEstudiante()) return true;
     const periodo = this.periodos().find(p => p.id === this.periodoSeleccionado());
     return periodo?.activo ?? false;
   });
