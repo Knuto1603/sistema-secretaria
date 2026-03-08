@@ -1,0 +1,138 @@
+<div class="space-y-6">
+
+  <!-- Encabezado -->
+  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <h2 class="text-xl font-black text-slate-800 tracking-tight">Grupos Horario</h2>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+      Configura los horarios de cada grupo (G1 – G14)
+    </p>
+  </div>
+
+  <!-- Mensaje feedback -->
+  @if (mensaje()) {
+    <div class="px-4 py-3 rounded-2xl text-sm font-medium"
+      [ngClass]="mensaje()!.tipo === 'success'
+        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+        : 'bg-red-50 text-red-700 border border-red-200'">
+      {{ mensaje()!.texto }}
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (loading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14]; track i) {
+        <div class="bg-slate-100 rounded-2xl h-20 animate-pulse"></div>
+      }
+    </div>
+  }
+
+  <!-- Grid de Grupos -->
+  @if (!loading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      @for (grupo of grupos(); track grupo.id) {
+        <div
+          (click)="toggleGrupo(grupo.id)"
+          class="border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md select-none"
+          [ngClass]="{
+            'border-indigo-400 shadow-indigo-100 shadow-md bg-indigo-50': grupoActivo() === grupo.id,
+            'bg-white border-slate-200': grupoActivo() !== grupo.id,
+            'opacity-50': !grupo.activo
+          }">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-lg font-black text-slate-800">{{ grupo.nombre }}</span>
+            <span class="w-2 h-2 rounded-full flex-shrink-0"
+              [ngClass]="grupo.activo ? 'bg-emerald-400' : 'bg-slate-300'">
+            </span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-medium">
+            @if (grupo.detalles.length === 0) { Sin horarios }
+            @else { {{ grupo.detalles.length }} slot{{ grupo.detalles.length !== 1 ? 's' : '' }} }
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- Panel del grupo activo -->
+    @if (grupoActivo() && getGrupoActivo()) {
+      <div class="bg-white border border-indigo-200 rounded-3xl p-6 space-y-5">
+
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-black text-slate-800">Configurar {{ getGrupoActivo()!.nombre }}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">{{ getGrupoActivo()!.descripcion || 'Sin descripción' }}</p>
+          </div>
+          <button
+            (click)="toggleActivo(getGrupoActivo()!)"
+            class="px-3 py-1.5 text-xs font-bold rounded-xl transition-colors"
+            [ngClass]="getGrupoActivo()!.activo
+              ? 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600'
+              : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'">
+            {{ getGrupoActivo()!.activo ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+
+        <!-- Slots actuales -->
+        @if (getGrupoActivo()!.detalles.length > 0) {
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Horarios configurados</p>
+            <div class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+              @for (detalle of getGrupoActivo()!.detalles; track detalle.id) {
+                <div class="flex items-center justify-between px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-10 text-center text-[10px] font-black text-indigo-600 bg-indigo-50 rounded-lg py-1 uppercase">
+                      {{ diaLabels[detalle.dia_semana] }}
+                    </span>
+                    <span class="text-sm font-semibold text-slate-700">
+                      {{ detalle.hora_inicio.substring(0, 5) }} – {{ detalle.hora_fin.substring(0, 5) }}
+                    </span>
+                  </div>
+                  <button
+                    (click)="eliminarSlot(getGrupoActivo()!.id, detalle.id)"
+                    class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-400 italic">Este grupo no tiene horarios configurados.</p>
+        }
+
+        <!-- Formulario agregar slot -->
+        <div class="bg-slate-50 rounded-2xl p-4 space-y-3">
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Agregar horario</p>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Día</label>
+              <select [(ngModel)]="nuevoSlot.dia_semana"
+                class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+                @for (dia of dias; track dia) {
+                  <option [value]="dia">{{ diaLabels[dia] }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Inicio</label>
+              <input type="time" [(ngModel)]="nuevoSlot.hora_inicio"
+                class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fin</label>
+              <input type="time" [(ngModel)]="nuevoSlot.hora_fin"
+                class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+            </div>
+            <app-btn variant="primary" [loading]="guardandoSlot()" (clicked)="agregarSlot(getGrupoActivo()!.id)">
+              Agregar
+            </app-btn>
+          </div>
+        </div>
+
+      </div>
+    }
+  }
+
+</div>
