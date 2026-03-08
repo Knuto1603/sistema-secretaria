@@ -16,6 +16,7 @@ class AuthenticatedUserDTO
         public readonly ?string $codigo_universitario,
         public readonly ?string $escuela,
         public readonly ?int $anio_ingreso,
+        public readonly ?string $ultima_actualizacion_historial,
         public readonly Collection $roles,
         public readonly Collection $permissions
     ) {}
@@ -36,6 +37,7 @@ class AuthenticatedUserDTO
             codigo_universitario: $user->codigo_universitario,
             escuela: $user->escuela?->nombre_corto,
             anio_ingreso: $user->anio_ingreso,
+            ultima_actualizacion_historial: $user->ultima_actualizacion_historial?->toIso8601String(),
             roles: $user->getRoleNames(),
             permissions: $user->getAllPermissions()->pluck('name')
         );
@@ -52,6 +54,7 @@ class AuthenticatedUserDTO
             'codigo_universitario' => $this->codigo_universitario,
             'escuela' => $this->escuela,
             'anio_ingreso' => $this->anio_ingreso,
+            'ultima_actualizacion_historial' => $this->ultima_actualizacion_historial,
             'roles' => $this->roles,
             'permissions' => $this->permissions,
         ];
