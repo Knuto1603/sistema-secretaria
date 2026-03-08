@@ -158,6 +158,41 @@ class ProgramacionController extends Controller
             $curso    = Curso::findOrFail($data['curso_id']);
             $created  = [];
 
+            // Verificar conflictos grupo+aula antes de crear cualquier sección
+            $conflictos = [];
+            foreach ($data['secciones'] as $index => $seccionData) {
+                $grupoId = $seccionData['grupo_horario_id'] ?? null;
+                $aulaId  = $seccionData['aula_id'] ?? null;
+
+                if (!$grupoId || !$aulaId) continue;
+
+                // Buscar en la BD y también en las secciones ya procesadas del mismo request
+                $ocupadaBD = ProgramacionAcademica::where('periodo_id', $data['periodo_id'])
+                    ->where('grupo_horario_id', $grupoId)
+                    ->where('aula_id', $aulaId)
+                    ->with(['curso', 'grupoHorario'])
+                    ->first();
+
+                if ($ocupadaBD) {
+                    $grupoNombreConflicto = $ocupadaBD->grupoHorario?->nombre ?? $grupoId;
+                    $conflictos[] = "Sección " . ($index + 1) . ": el {$grupoNombreConflicto} en esa aula ya está ocupado por \"{$ocupadaBD->curso?->nombre}\"";
+                    continue;
+                }
+
+                // Detectar duplicados dentro del mismo request (varias secciones con mismo grupo+aula)
+                foreach (array_slice($data['secciones'], 0, $index) as $prev) {
+                    if (($prev['grupo_horario_id'] ?? null) === $grupoId && ($prev['aula_id'] ?? null) === $aulaId) {
+                        $grupo = GrupoHorario::find($grupoId);
+                        $conflictos[] = "Sección " . ($index + 1) . ": repite el mismo grupo y aula que otra sección en este formulario ({$grupo?->nombre})";
+                        break;
+                    }
+                }
+            }
+
+            if (!empty($conflictos)) {
+                return $this->error('Conflicto de horario: ' . implode('. ', $conflictos), 422);
+            }
+
             foreach ($data['secciones'] as $index => $seccionData) {
                 $grupoNombre = null;
                 if (!empty($seccionData['grupo_horario_id'])) {
