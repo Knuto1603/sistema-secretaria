@@ -124,6 +124,49 @@ export class ProgramacionService {
   }
 
   /**
+   * Programaciones elegibles para el estudiante autenticado (endpoint /para-mi).
+   * Filtra por escuela, ciclo estimado, historial y prerequisitos.
+   */
+  getParaMi(page: number = 1, search: string = '', perPage: number = 10): Observable<{
+    cicloActual: number;
+    historialRegistrado: boolean;
+    paginatedData: PaginatedResponse<Programacion>;
+  }> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('per_page', perPage.toString());
+    if (search) params = params.set('search', search);
+
+    return this.http.get<{
+      success: boolean;
+      data: {
+        ciclo_actual: number;
+        historial_registrado: boolean;
+        items: Programacion[];
+        pagination: { current_page: number; last_page: number; per_page: number; total: number };
+      };
+    }>(`${this.apiUrl}/para-mi`, { params }).pipe(
+      map(response => {
+        const d = response.data;
+        const { current_page, last_page, per_page, total } = d.pagination;
+        return {
+          cicloActual: d.ciclo_actual,
+          historialRegistrado: d.historial_registrado,
+          paginatedData: {
+            data: d.items,
+            current_page,
+            last_page,
+            per_page,
+            total,
+            from: total > 0 ? (current_page - 1) * per_page + 1 : 0,
+            to: Math.min(current_page * per_page, total),
+          },
+        };
+      })
+    );
+  }
+
+  /**
    * Marca/desmarca un curso como lleno manualmente
    */
   toggleLleno(id: string): Observable<Programacion> {
