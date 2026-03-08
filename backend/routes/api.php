@@ -136,6 +136,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Para estudiantes - ver sus propias solicitudes
         Route::get('/mis-solicitudes', [SolicitudController::class, 'misSolicitudes']);
 
+        // Programaciones donde el estudiante ya tiene solicitud activa
+        Route::get('/programaciones-activas', [SolicitudController::class, 'programacionesActivas']);
+
+        // Estadísticas (admin/secretaria)
+        Route::get('/estadisticas', [SolicitudController::class, 'estadisticas'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
         // Crear solicitud (estudiantes)
         Route::post('/', [SolicitudController::class, 'store']);
 
