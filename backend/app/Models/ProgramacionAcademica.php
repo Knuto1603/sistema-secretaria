@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+
 class ProgramacionAcademica extends Model
 {
     use HasUuids;
@@ -18,6 +19,8 @@ class ProgramacionAcademica extends Model
         'curso_id',
         'periodo_id',
         'docente_id',
+        'aula_id',
+        'grupo_horario_id',
         'clave',
         'grupo',
         'seccion',
@@ -68,5 +71,15 @@ class ProgramacionAcademica extends Model
     public function escuelas(): BelongsToMany
     {
         return $this->belongsToMany(Escuela::class, 'programacion_escuelas');
+    }
+
+    public function aula(): BelongsTo
+    {
+        return $this->belongsTo(Aula::class, 'aula_id');
+    }
+
+    public function grupoHorario(): BelongsTo
+    {
+        return $this->belongsTo(GrupoHorario::class, 'grupo_horario_id');
     }
 }
