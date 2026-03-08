@@ -186,4 +186,23 @@ export class ProgramacionService {
       map(response => response.data)
     );
   }
+
+  /**
+   * Crea programación académica manual (una o más secciones de un curso)
+   */
+  crearProgramacion(data: {
+    periodo_id: string;
+    curso_id: string;
+    escuelas: string[];
+    secciones: Array<{
+      grupo_horario_id: string | null;
+      aula_id: string | null;
+      docente_id: string | null;
+      capacidad: number;
+    }>;
+  }): Observable<{ creadas: number }> {
+    return this.http.post<ApiResponse<{ creadas: number }>>(this.apiUrl, data).pipe(
+      map(r => r.data)
+    );
+  }
 }
