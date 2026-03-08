@@ -12,6 +12,7 @@ export interface User {
   codigo_universitario: string | null;
   escuela: string | null;
   anio_ingreso: number | null;
+  ultima_actualizacion_historial: string | null;
   roles: string[];
   permissions: string[];
 }
@@ -191,6 +192,17 @@ export class AuthService {
     localStorage.setItem('user_data', JSON.stringify(data.user));
     this.currentUser.set(data.user);
     this.isAuthenticated.set(true);
+  }
+
+  /**
+   * Actualiza un campo del usuario en la sesión local sin necesidad de re-login.
+   */
+  patchCurrentUser(patch: Partial<User>): void {
+    const user = this.currentUser();
+    if (!user) return;
+    const updated = { ...user, ...patch };
+    localStorage.setItem('user_data', JSON.stringify(updated));
+    this.currentUser.set(updated);
   }
 
   /**
