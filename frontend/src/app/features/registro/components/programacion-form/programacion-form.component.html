@@ -108,7 +108,7 @@
                 [ngClass]="escuelasSeleccionadas().has(escuela.id)
                   ? 'bg-indigo-600 border-indigo-600 text-white'
                   : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'">
-                {{ escuela.nombre }}
+                {{ escuela.nombre_corto || escuela.nombre }}
               </button>
             }
           </div>

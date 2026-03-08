@@ -14,6 +14,7 @@ import { AppButtonComponent } from '@shared/button/button.component';
 interface Escuela {
   id: string;
   nombre: string;
+  nombre_corto: string | null;
   codigo: string;
 }
 
