@@ -208,6 +208,17 @@ export class UsuarioService {
     );
   }
 
+  /**
+   * Importa estudiantes desde padrón HTML del SIGA (ALUMNOS.htm)
+   */
+  importarEstudiantesHtml(archivo: File): Observable<{ total: number; importados: number; errores: number }> {
+    const form = new FormData();
+    form.append('file', archivo);
+    return this.http.post<ApiResponse<{ total: number; importados: number; errores: number }>>(
+      `${this.baseUrl}/estudiantes/import-html`, form
+    ).pipe(map(response => response.data));
+  }
+
   descargarPlantillaEstudiantes(): void {
     this.http.get(`${this.baseUrl}/estudiantes/import/template`, { responseType: 'blob' }).subscribe(blob => {
       const url = URL.createObjectURL(blob);
