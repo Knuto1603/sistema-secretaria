@@ -129,6 +129,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Docentes (lectura, para formularios)
     Route::get('/docentes', [DocenteController::class, 'index']);
 
+    // Escuelas (lectura, para formularios)
+    Route::get('/escuelas', function () {
+        $escuelas = \App\Models\Escuela::orderBy('nombre')->get(['id', 'codigo', 'nombre', 'nombre_corto']);
+        return response()->json(['success' => true, 'data' => $escuelas]);
+    });
+
     // =============================================
     // GRUPOS HORARIO (plantillas de horario G1-G14)
     // =============================================
