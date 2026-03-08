@@ -6,10 +6,13 @@ use App\Http\Controllers\Api\V1\ChatAnalyticsController;
 use App\Http\Controllers\Api\V1\ChatbotController;
 use App\Http\Controllers\Api\V1\CursoController;
 use App\Http\Controllers\Api\V1\DevController;
+use App\Http\Controllers\Api\V1\DocenteController;
 use App\Http\Controllers\Api\V1\EstudianteController;
+use App\Http\Controllers\Api\V1\GrupoHorarioController;
 use App\Http\Controllers\Api\V1\HistorialController;
 use App\Http\Controllers\Api\V1\KbDocumentController;
 use App\Http\Controllers\Api\V1\KnowledgeBaseController;
+use App\Http\Controllers\Api\V1\PabellonController;
 use App\Http\Controllers\Api\V1\PeriodoController;
 use App\Http\Controllers\Api\V1\PlanEstudiosController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
@@ -109,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/para-mi', [ProgramacionController::class, 'paraMi']);
         Route::get('/template', [ProgramacionController::class, 'downloadTemplate']);
         Route::get('/{id}', [ProgramacionController::class, 'show']);
+        Route::post('/', [ProgramacionController::class, 'store'])
+            ->middleware('role:secretaria|admin|developer');
         Route::post('/import', [ProgramacionController::class, 'import'])
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
@@ -120,6 +125,45 @@ Route::middleware('auth:sanctum')->group(function () {
     // Ruta de cursos
     Route::get('/cursos', [CursoController::class, 'index']);
     Route::get('/cursos/{id}', [CursoController::class, 'show']);
+
+    // Docentes (lectura, para formularios)
+    Route::get('/docentes', [DocenteController::class, 'index']);
+
+    // =============================================
+    // GRUPOS HORARIO (plantillas de horario G1-G14)
+    // =============================================
+    Route::prefix('grupos-horario')->group(function () {
+        Route::get('/', [GrupoHorarioController::class, 'index']);
+
+        Route::middleware('role:secretaria|admin|developer')->group(function () {
+            Route::post('/', [GrupoHorarioController::class, 'store']);
+            Route::put('/{id}', [GrupoHorarioController::class, 'update']);
+            Route::delete('/{id}', [GrupoHorarioController::class, 'destroy']);
+            Route::patch('/{id}/toggle', [GrupoHorarioController::class, 'toggle']);
+            Route::post('/{id}/detalle', [GrupoHorarioController::class, 'addDetalle']);
+            Route::delete('/{id}/detalle/{detalleId}', [GrupoHorarioController::class, 'removeDetalle']);
+        });
+    });
+
+    // =============================================
+    // PABELLONES & AULAS
+    // =============================================
+    Route::prefix('pabellones')->group(function () {
+        Route::get('/', [PabellonController::class, 'index']);
+
+        Route::middleware('role:secretaria|admin|developer')->group(function () {
+            Route::post('/', [PabellonController::class, 'store']);
+            Route::put('/{id}', [PabellonController::class, 'update']);
+            Route::delete('/{id}', [PabellonController::class, 'destroy']);
+            Route::post('/{id}/aulas', [PabellonController::class, 'storeAula']);
+        });
+    });
+
+    Route::prefix('aulas')->middleware('role:secretaria|admin|developer')->group(function () {
+        Route::put('/{id}', [PabellonController::class, 'updateAula']);
+        Route::delete('/{id}', [PabellonController::class, 'destroyAula']);
+        Route::patch('/{id}/toggle', [PabellonController::class, 'toggleAula']);
+    });
 
     // Rutas de Tipos de Solicitud (solo admin/secretaria)
     Route::prefix('tipos-solicitud')->middleware('role:admin|secretaria|decano|secretario academico|developer')->group(function () {
