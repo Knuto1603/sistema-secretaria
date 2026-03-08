@@ -52,6 +52,16 @@ export const routes: Routes = [
         path: 'usuarios/editar/:id',
         loadComponent: () => import('./components/usuarios/administrativo-form/administrativo-form.component').then(m => m.AdministrativoFormComponent)
       },
+      // Grupos Horario
+      {
+        path: 'horarios',
+        loadComponent: () => import('./components/horarios/horarios.component').then(m => m.HorariosComponent)
+      },
+      // Pabellones y Aulas
+      {
+        path: 'aulas',
+        loadComponent: () => import('./components/aulas/aulas.component').then(m => m.AulasComponent)
+      },
       // Base de Conocimientos
       {
         path: 'knowledge-base',
