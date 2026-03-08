@@ -18,7 +18,7 @@
 
   <!-- Banner: historial no registrado (solo estudiantes) -->
   @if (esEstudiante() && !historialRegistrado() && !loading()) {
-    <div class="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-3xl p-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-3xl p-5">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
           <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@
       </div>
       <button
         (click)="abrirOnboarding()"
-        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors flex-shrink-0">
+        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
         Registrar historial
       </button>
     </div>
@@ -75,7 +75,7 @@
       </p>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-2">
       <!-- Selector de Periodo (solo admin/secretaria) -->
       @if (!esEstudiante()) {
       <div class="relative">
@@ -83,7 +83,7 @@
           [ngModel]="periodoSeleccionado()"
           (ngModelChange)="onPeriodoChange($event)"
           [disabled]="loadingPeriodos()"
-          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[180px] transition-all appearance-none cursor-pointer font-medium">
+          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:min-w-[160px] transition-all appearance-none cursor-pointer font-medium">
           @for (periodo of periodos(); track periodo.id) {
             <option [value]="periodo.id">
               {{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}
@@ -99,44 +99,36 @@
       } <!-- fin @if (!esEstudiante()) -->
 
       <!-- Buscador -->
-      <div class="relative">
+      <div class="relative flex-1 min-w-[160px]">
         <input
           type="text"
           [ngModel]="searchTerm()"
           (ngModelChange)="onSearchChange($event)"
           placeholder="Buscar curso o docente..."
-          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
+          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
       </div>
 
       <!-- Importación y creación (solo secretaria/admin/developer) -->
       @if (authService.hasRole('secretaria') || authService.hasRole('admin') || authService.hasRole('developer')) {
         <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
         <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
-        <app-btn
-          variant="ghost"
-          (clicked)="descargarPlantilla()">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-          </svg>
-          Plantilla
-        </app-btn>
-        <app-btn
-          variant="ghost"
-          [loading]="isUploadingHtml()"
-          (clicked)="fileInputHtml.click()">
-          Importar SIGA
-        </app-btn>
-        <app-btn
-          variant="success"
-          [loading]="isUploading()"
-          (clicked)="triggerImport(fileInput)">
-          Importar Excel
-        </app-btn>
-        <app-btn
-          variant="primary"
-          (clicked)="showFormProgramacion.set(true)">
-          + Nueva
-        </app-btn>
+        <div class="flex flex-wrap items-center gap-2">
+          <app-btn variant="ghost" (clicked)="descargarPlantilla()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Plantilla
+          </app-btn>
+          <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()">
+            Importar SIGA
+          </app-btn>
+          <app-btn variant="success" [loading]="isUploading()" (clicked)="triggerImport(fileInput)">
+            Importar Excel
+          </app-btn>
+          <app-btn variant="primary" (clicked)="showFormProgramacion.set(true)">
+            + Nueva
+          </app-btn>
+        </div>
       }
     </div>
   </div>
