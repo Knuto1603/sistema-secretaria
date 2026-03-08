@@ -1,5 +1,13 @@
 <div class="space-y-6">
 
+  <!-- Modal Nueva Programación -->
+  @if (showFormProgramacion()) {
+    <app-programacion-form
+      (cerrado)="showFormProgramacion.set(false)"
+      (guardado)="onProgramacionGuardada()">
+    </app-programacion-form>
+  }
+
   <!-- Modal de onboarding de historial académico -->
   @if (showOnboarding()) {
     <app-historial-onboarding
@@ -100,7 +108,7 @@
           class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
       </div>
 
-      <!-- Importación (solo secretaria/admin) -->
+      <!-- Importación y creación (solo secretaria/admin) -->
       @if (authService.hasRole('secretaria') || authService.hasRole('admin')) {
         <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
         <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
@@ -123,6 +131,11 @@
           [loading]="isUploading()"
           (clicked)="triggerImport(fileInput)">
           Importar Excel
+        </app-btn>
+        <app-btn
+          variant="primary"
+          (clicked)="showFormProgramacion.set(true)">
+          + Nueva
         </app-btn>
       }
     </div>

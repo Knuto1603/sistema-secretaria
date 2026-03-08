@@ -7,6 +7,7 @@ import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService } from '../../../solicitudes/services/solicitud.service';
 import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
+import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -23,6 +24,7 @@ import { PaginationComponent } from '@shared/pagination/pagination.component';
     AppTableComponent,
     PaginationComponent,
     HistorialOnboardingComponent,
+    ProgramacionFormComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -52,6 +54,9 @@ export class ProgramacionTablaComponent implements OnInit {
   historialRegistrado = signal<boolean>(false);
   showOnboarding = signal(false);
   programacionesConSolicitud = signal<Set<string>>(new Set());
+
+  // Modal nueva programación
+  showFormProgramacion = signal(false);
 
   columnas: TableColumn[] = [
     { key: 'curso', label: 'Información del Curso' },
@@ -240,6 +245,11 @@ export class ProgramacionTablaComponent implements OnInit {
 
   descargarPlantilla(): void {
     this.programacionService.descargarPlantilla();
+  }
+
+  onProgramacionGuardada(): void {
+    this.showFormProgramacion.set(false);
+    this.cargarProgramacion(1);
   }
 
   toggleLleno(item: Programacion): void {
