@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ProgramacionService, Programacion, PaginatedResponse } from '../../services/programacion.service';
 import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
+import { SolicitudService } from '../../../solicitudes/services/solicitud.service';
 import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
@@ -28,6 +29,7 @@ import { PaginationComponent } from '@shared/pagination/pagination.component';
 export class ProgramacionTablaComponent implements OnInit {
   private programacionService = inject(ProgramacionService);
   private periodoService = inject(PeriodoService);
+  private solicitudService = inject(SolicitudService);
   public authService = inject(AuthService);
   private router = inject(Router);
 
@@ -40,6 +42,7 @@ export class ProgramacionTablaComponent implements OnInit {
   loading = signal(false);
   loadingPeriodos = signal(false);
   isUploading = signal(false);
+  isUploadingHtml = signal(false);
   searchTerm = signal('');
   currentPage = signal(1);
   perPage = signal(10);
@@ -48,6 +51,7 @@ export class ProgramacionTablaComponent implements OnInit {
   cicloActual = signal<number | null>(null);
   historialRegistrado = signal<boolean>(false);
   showOnboarding = signal(false);
+  programacionesConSolicitud = signal<Set<string>>(new Set());
 
   columnas: TableColumn[] = [
     { key: 'curso', label: 'Información del Curso' },
@@ -127,6 +131,34 @@ export class ProgramacionTablaComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
+    });
+
+    // Cargar solicitudes activas en paralelo
+    this.solicitudService.getProgramacionesConSolicitudActiva().subscribe({
+      next: (ids) => this.programacionesConSolicitud.set(new Set(ids)),
+      error: () => {}
+    });
+  }
+
+  tieneSolicitudActiva(programacionId: string): boolean {
+    return this.programacionesConSolicitud().has(programacionId);
+  }
+
+  onHtmlFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.isUploadingHtml.set(true);
+    const periodoId = this.periodoSeleccionado() || undefined;
+    this.programacionService.importarHtml(file, periodoId).subscribe({
+      next: (res) => {
+        this.isUploadingHtml.set(false);
+        (event.target as HTMLInputElement).value = '';
+        this.cargarProgramacion(1);
+      },
+      error: () => {
+        this.isUploadingHtml.set(false);
+        (event.target as HTMLInputElement).value = '';
+      }
     });
   }
 
