@@ -39,9 +39,13 @@ export class EstudiantesListaComponent implements OnInit {
   // Modal detalle
   estudianteDetalle = signal<Estudiante | null>(null);
 
-  // Import
+  // Import Excel
   importando = signal(false);
   importResultado = signal<{ resumen: ImportResumen; resultados: ImportFila[] } | null>(null);
+
+  // Import HTML (SIGA)
+  importandoHtml = signal(false);
+  importHtmlMensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Filtros
   search = '';
@@ -225,6 +229,37 @@ export class EstudiantesListaComponent implements OnInit {
 
   cerrarImportResultado(): void {
     this.importResultado.set(null);
+  }
+
+  onArchivoHtmlSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    this.importandoHtml.set(true);
+    this.importHtmlMensaje.set(null);
+
+    this.usuarioService.importarEstudiantesHtml(archivo).subscribe({
+      next: (res) => {
+        this.importandoHtml.set(false);
+        input.value = '';
+        this.importHtmlMensaje.set({
+          tipo: 'success',
+          texto: `SIGA importado: ${res.importados} estudiantes procesados, ${res.errores} errores.`
+        });
+        if (res.importados > 0) this.cargarDatos();
+        setTimeout(() => this.importHtmlMensaje.set(null), 6000);
+      },
+      error: (err) => {
+        this.importandoHtml.set(false);
+        input.value = '';
+        this.importHtmlMensaje.set({
+          tipo: 'error',
+          texto: err.error?.message || 'Error al importar el archivo HTML.'
+        });
+        setTimeout(() => this.importHtmlMensaje.set(null), 6000);
+      }
+    });
   }
 
   private mostrarMensaje(tipo: 'success' | 'error', texto: string): void {
