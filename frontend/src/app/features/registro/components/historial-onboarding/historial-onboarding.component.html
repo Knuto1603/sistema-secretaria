@@ -1,0 +1,126 @@
+<!-- Overlay del modal -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-start justify-between p-6 border-b border-slate-100">
+      <div>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">¿Qué cursos has aprobado?</h2>
+        <p class="text-xs text-slate-400 font-medium mt-1">
+          Marca todos los cursos que ya has aprobado en {{ escuela() }}.
+          Esto nos ayuda a mostrarte solo los cursos que te corresponden.
+        </p>
+      </div>
+      <button
+        (click)="cerrado.emit()"
+        class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors ml-4 flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenido scrollable -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+
+      <!-- Estado de carga -->
+      @if (loading()) {
+        <div class="flex flex-col items-center justify-center py-16 gap-3">
+          <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-sm text-slate-400 font-medium">Cargando plan de estudios...</p>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (error()) {
+        <div class="bg-red-50 text-red-700 rounded-2xl p-4 text-sm font-medium">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Plan de estudios por ciclo -->
+      @if (!loading() && !error()) {
+        @for (ciclo of ciclos(); track ciclo.ciclo) {
+          <div class="border border-slate-200 rounded-2xl overflow-hidden">
+            <!-- Cabecera del ciclo (click para marcar/desmarcar todos) -->
+            <button
+              type="button"
+              (click)="toggleCiclo(ciclo)"
+              class="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 text-sm font-black">
+                  {{ ciclo.ciclo }}
+                </span>
+                <span class="text-sm font-bold text-slate-700">Ciclo {{ ciclo.ciclo }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {{ cicloCuantos(ciclo) }}/{{ ciclo.cursos.length }}
+                </span>
+                @if (cicloCuantos(ciclo) === ciclo.cursos.length) {
+                  <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-lg">Todo aprobado</span>
+                }
+              </div>
+            </button>
+
+            <!-- Lista de cursos -->
+            <div class="divide-y divide-slate-100">
+              @for (curso of ciclo.cursos; track curso.curso_id) {
+                <label
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    [checked]="estaAprobado(curso.curso_id)"
+                    (change)="toggleCurso(curso.curso_id)"
+                    class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer">
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm text-slate-700 font-medium">{{ curso.nombre }}</span>
+                    <span class="ml-2 text-[10px] font-mono text-slate-400">{{ curso.codigo }}</span>
+                  </div>
+                  @if (curso.tipo === 'E') {
+                    <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex-shrink-0">Electivo</span>
+                  }
+                </label>
+              }
+            </div>
+          </div>
+        }
+
+        @if (ciclos().length === 0) {
+          <div class="text-center py-12 text-slate-400 text-sm">
+            No se encontraron cursos en el plan de estudios de tu escuela.
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Footer -->
+    <div class="p-6 border-t border-slate-100 flex items-center justify-between gap-4">
+      <p class="text-sm text-slate-500">
+        <span class="font-black text-indigo-600">{{ totalAprobados }}</span>
+        curso{{ totalAprobados !== 1 ? 's' : '' }} seleccionado{{ totalAprobados !== 1 ? 's' : '' }}
+      </p>
+      <div class="flex gap-3">
+        <button
+          type="button"
+          (click)="cerrado.emit()"
+          class="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="guardar()"
+          [disabled]="saving() || loading()"
+          class="px-6 py-2.5 rounded-2xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+          @if (saving()) {
+            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Guardando...
+          } @else {
+            Guardar historial
+          }
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
