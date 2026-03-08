@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\DTOs\Solicitud\CreateSolicitudDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
+use App\Models\Solicitud;
 use App\Services\SolicitudService;
 use App\Transformers\SolicitudTransformer;
 use Illuminate\Http\JsonResponse;
@@ -92,6 +93,57 @@ class SolicitudController extends Controller
         }
 
         return $this->success($this->transformer->toArray($solicitud));
+    }
+
+    /**
+     * Devuelve los programacion_ids donde el estudiante ya tiene solicitud activa
+     * (pendiente, en_revision o aprobada). Usado para deshabilitar el botón "Solicitar".
+     */
+    public function programacionesActivas(Request $request): JsonResponse
+    {
+        $ids = Solicitud::where('user_id', $request->user()->id)
+            ->whereNotNull('programacion_id')
+            ->whereIn('estado', ['pendiente', 'en_revision', 'aprobada'])
+            ->pluck('programacion_id')
+            ->unique()
+            ->values();
+
+        return $this->success($ids, 'Programaciones con solicitud activa');
+    }
+
+    /**
+     * Estadísticas de solicitudes de cupo (para secretaría/admin).
+     * Devuelve conteos por estado y los cursos más solicitados.
+     */
+    public function estadisticas(): JsonResponse
+    {
+        $porEstado = Solicitud::selectRaw('estado, count(*) as total')
+            ->groupBy('estado')
+            ->pluck('total', 'estado');
+
+        $cursosTop = Solicitud::with('programacion.curso')
+            ->whereNotNull('programacion_id')
+            ->selectRaw('programacion_id, count(*) as total_solicitudes')
+            ->groupBy('programacion_id')
+            ->orderByDesc('total_solicitudes')
+            ->limit(8)
+            ->get()
+            ->map(fn($s) => [
+                'curso'             => $s->programacion?->curso?->nombre ?? 'N/D',
+                'clave'             => $s->programacion?->clave ?? '-',
+                'total_solicitudes' => (int) $s->total_solicitudes,
+            ]);
+
+        return $this->success([
+            'por_estado' => [
+                'pendiente'   => (int) ($porEstado['pendiente']   ?? 0),
+                'en_revision' => (int) ($porEstado['en_revision'] ?? 0),
+                'aprobada'    => (int) ($porEstado['aprobada']    ?? 0),
+                'rechazada'   => (int) ($porEstado['rechazada']   ?? 0),
+            ],
+            'total'      => (int) $porEstado->sum(),
+            'cursos_top' => $cursosTop,
+        ], 'Estadísticas de solicitudes');
     }
 
     /**
