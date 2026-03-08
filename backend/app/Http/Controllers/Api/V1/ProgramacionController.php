@@ -8,10 +8,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Programacion\ImportProgramacionHtmlRequest;
 use App\Http\Requests\Programacion\ImportProgramacionRequest;
 use App\Imports\ProgramacionHtmlImport;
+use App\Models\Curso;
+use App\Models\Escuela;
+use App\Models\GrupoHorario;
+use App\Models\ProgramacionAcademica;
 use App\Services\ProgramacionService;
 use App\Transformers\ProgramacionTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Exception;
 
@@ -129,6 +134,64 @@ class ProgramacionController extends Controller
             );
         } catch (Exception $e) {
             return $this->error('Error al procesar el archivo: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Crear programación académica manual (curso por curso)
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'periodo_id'                   => 'required|uuid|exists:periodos,id',
+            'curso_id'                     => 'required|uuid|exists:cursos,id',
+            'escuelas'                     => 'required|array|min:1',
+            'escuelas.*'                   => 'uuid|exists:escuelas,id',
+            'secciones'                    => 'required|array|min:1',
+            'secciones.*.grupo_horario_id' => 'nullable|uuid|exists:grupos_horario,id',
+            'secciones.*.aula_id'          => 'nullable|uuid|exists:aulas,id',
+            'secciones.*.docente_id'       => 'nullable|uuid|exists:docentes,id',
+            'secciones.*.capacidad'        => 'required|integer|min:1|max:500',
+        ]);
+
+        try {
+            $curso    = Curso::findOrFail($data['curso_id']);
+            $created  = [];
+
+            foreach ($data['secciones'] as $index => $seccionData) {
+                $grupoNombre = null;
+                if (!empty($seccionData['grupo_horario_id'])) {
+                    $grupoNombre = GrupoHorario::find($seccionData['grupo_horario_id'])?->nombre;
+                }
+
+                $id    = (string) Str::uuid();
+                $clave = 'M' . strtoupper(substr(str_replace('-', '', $id), 0, 8));
+
+                $prog = ProgramacionAcademica::create([
+                    'id'               => $id,
+                    'curso_id'         => $data['curso_id'],
+                    'periodo_id'       => $data['periodo_id'],
+                    'docente_id'       => $seccionData['docente_id'] ?? null,
+                    'aula_id'          => $seccionData['aula_id'] ?? null,
+                    'grupo_horario_id' => $seccionData['grupo_horario_id'] ?? null,
+                    'clave'            => $clave,
+                    'grupo'            => $grupoNombre,
+                    'seccion'          => (string) ($index + 1),
+                    'capacidad'        => $seccionData['capacidad'],
+                    'n_inscritos'      => 0,
+                    'lleno_manual'     => false,
+                ]);
+
+                $prog->escuelas()->sync($data['escuelas']);
+                $created[] = $prog->id;
+            }
+
+            return $this->success(
+                ['creadas' => count($created)],
+                count($created) . ' sección(es) de "' . $curso->nombre . '" creadas exitosamente'
+            );
+        } catch (Exception $e) {
+            return $this->error('Error al crear programación: ' . $e->getMessage(), 500);
         }
     }
 
