@@ -57,6 +57,57 @@ class PlanEstudiosController extends Controller
     }
 
     /**
+     * Devuelve el plan de estudios de la escuela del estudiante autenticado,
+     * agrupado por ciclo. Usado para el onboarding de historial académico.
+     * GET /plan-estudios/mi-plan
+     */
+    public function miPlan(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user->isEstudiante() || !$user->escuela_id) {
+            return $this->error('Solo disponible para estudiantes con escuela asignada.', 403);
+        }
+
+        if (!$user->relationLoaded('escuela')) {
+            $user->load('escuela');
+        }
+
+        $escuela = $user->escuela;
+        if (!$escuela) {
+            return $this->notFound('Escuela no encontrada.');
+        }
+
+        $cursos = PlanEstudios::with('curso')
+            ->where('escuela_id', $user->escuela_id)
+            ->orderBy('ciclo')
+            ->get()
+            ->map(fn($p) => [
+                'ciclo'    => (int) $p->ciclo,
+                'curso_id' => $p->curso_id,
+                'codigo'   => $p->curso->codigo,
+                'nombre'   => $p->curso->nombre,
+                'tipo'     => $p->tipo,
+            ]);
+
+        $ciclos = $cursos->groupBy('ciclo')
+            ->map(fn($items, $ciclo) => [
+                'ciclo'  => (int) $ciclo,
+                'cursos' => $items->values(),
+            ])
+            ->values();
+
+        return $this->success([
+            'escuela'      => [
+                'nombre'       => $escuela->nombre,
+                'nombre_corto' => $escuela->nombre_corto,
+            ],
+            'ciclos'       => $ciclos,
+            'total_cursos' => $cursos->count(),
+        ], 'Plan de estudios');
+    }
+
+    /**
      * Importa el plan de estudios de una escuela desde Excel
      * POST /plan-estudios/import
      */
