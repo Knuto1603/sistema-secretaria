@@ -24,6 +24,7 @@ class ProgramacionAcademica extends Model
         'clave',
         'grupo',
         'seccion',
+        'ciclo',
         'aula',
         'n_acta',
         'capacidad',
@@ -34,6 +35,7 @@ class ProgramacionAcademica extends Model
     protected $casts = [
         'capacidad' => 'integer',
         'n_inscritos' => 'integer',
+        'ciclo' => 'integer',
         'lleno_manual' => 'boolean',
     ];
 
