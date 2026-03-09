@@ -43,7 +43,7 @@
           <div class="flex items-center gap-4 flex-wrap">
             <div>
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sección</p>
-              <p class="text-sm font-black text-slate-700">{{ programacion().seccion }}</p>
+              <p class="text-sm font-bold text-slate-700">{{ programacion().seccion }}</p>
             </div>
             <div>
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clave</p>
@@ -64,7 +64,7 @@
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Grupo Horario</label>
             @if (grupoTextoActual && !grupoHorarioId()) {
               <p class="text-[10px] text-amber-600 font-bold mb-1">
-                Actual (texto): <span class="font-black">{{ grupoTextoActual }}</span>
+                Actual (texto): <span class="font-bold">{{ grupoTextoActual }}</span>
               </p>
             }
             <select [ngModel]="grupoHorarioId()" (ngModelChange)="grupoHorarioId.set($event)"
@@ -81,7 +81,7 @@
             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Aula</label>
             @if (aulaTextoActual && !aulaId()) {
               <p class="text-[10px] text-amber-600 font-bold mb-1">
-                Actual (texto): <span class="font-black">{{ aulaTextoActual }}</span>
+                Actual (texto): <span class="font-bold">{{ aulaTextoActual }}</span>
               </p>
             }
             <select [ngModel]="aulaId()" (ngModelChange)="onAulaChange($event)"

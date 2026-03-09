@@ -41,7 +41,7 @@
           <span class="w-3 h-3 rounded-full"
                 [class.bg-emerald-500]="h.database"
                 [class.bg-red-500]="!h.database"></span>
-          <h3 class="font-black text-slate-700 text-sm">Base de Datos</h3>
+          <h3 class="font-bold text-slate-700 text-sm">Base de Datos</h3>
         </div>
         <p class="text-lg font-black" [class.text-emerald-600]="h.database" [class.text-red-600]="!h.database">
           {{ h.database ? 'Conectada' : 'Sin conexión' }}
@@ -50,7 +50,7 @@
 
       <!-- Disco -->
       <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
-        <h3 class="font-black text-slate-700 text-sm mb-3">Espacio en Disco</h3>
+        <h3 class="font-bold text-slate-700 text-sm mb-3">Espacio en Disco</h3>
         <div class="w-full bg-slate-100 rounded-full h-3 mb-2">
           <div class="h-3 rounded-full transition-all"
                [class.bg-emerald-500]="h.disk_pct < 70"
@@ -65,13 +65,13 @@
 
       <!-- PHP -->
       <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
-        <h3 class="font-black text-slate-700 text-sm mb-1">PHP Version</h3>
+        <h3 class="font-bold text-slate-700 text-sm mb-1">PHP Version</h3>
         <p class="text-2xl font-black text-slate-800">{{ h.php_version }}</p>
       </div>
 
       <!-- Laravel -->
       <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
-        <h3 class="font-black text-slate-700 text-sm mb-1">Laravel Version</h3>
+        <h3 class="font-bold text-slate-700 text-sm mb-1">Laravel Version</h3>
         <p class="text-2xl font-black text-slate-800">{{ h.laravel_version }}</p>
         <p class="text-xs text-slate-400 mt-1 uppercase font-bold tracking-widest">{{ h.environment }}</p>
       </div>

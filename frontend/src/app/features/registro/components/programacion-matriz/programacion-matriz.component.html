@@ -40,7 +40,7 @@
     <table class="min-w-max w-full text-xs border-collapse">
       <thead>
         <tr class="bg-slate-800 text-white">
-          <th class="sticky left-0 z-20 bg-slate-800 px-4 py-3 text-left font-black uppercase tracking-widest text-[10px] min-w-[90px]">
+          <th class="sticky left-0 z-20 bg-slate-800 px-4 py-3 text-left font-semibold uppercase tracking-widest text-[10px] min-w-[90px]">
             GRP / AULA
           </th>
           @for (aula of aulas(); track trackByAula($index, aula)) {
@@ -54,8 +54,8 @@
         @for (grupo of grupos(); track trackByGrupo($index, grupo)) {
           <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
             <!-- Cabecera de grupo -->
-            <td class="sticky left-0 z-10 bg-white px-4 py-3 font-black text-slate-700 text-sm border-r border-slate-200 whitespace-nowrap">
-              <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-xl font-black text-xs">
+            <td class="sticky left-0 z-10 bg-white px-4 py-3 font-bold text-slate-700 text-sm border-r border-slate-200 whitespace-nowrap">
+              <span class="inline-flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-xl font-semibold text-xs">
                 {{ grupo }}
               </span>
             </td>
@@ -65,7 +65,7 @@
               <td class="px-2 py-2 border-r border-slate-100 align-top min-w-[140px]">
                 @for (prog of getCeldas(grupo, aula); track trackByProg($index, prog)) {
                   <div class="rounded-xl border p-2 mb-1 last:mb-0 {{ getCeldaColor(prog) }} transition-all hover:shadow-sm">
-                    <p class="font-black text-slate-800 leading-tight text-[10px] uppercase tracking-tight">
+                    <p class="font-semibold text-slate-800 leading-tight text-[10px] uppercase tracking-tight">
                       {{ prog.curso?.codigo }}
                     </p>
                     <p class="text-[10px] text-slate-600 leading-snug mt-0.5 line-clamp-2">

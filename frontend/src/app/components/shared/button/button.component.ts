@@ -15,7 +15,7 @@ export class AppButtonComponent {
   clicked = output<MouseEvent>();
 
   buttonClasses = computed(() => {
-    const base = "inline-flex items-center justify-center px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none ";
+    const base = "inline-flex items-center justify-center px-5 py-2.5 rounded-2xl text-[10px] font-semibold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none ";
     const variants = {
       primary: "bg-indigo-600 text-white hover:bg-indigo-700",
       secondary: "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50",

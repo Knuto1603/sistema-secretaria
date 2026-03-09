@@ -28,7 +28,7 @@
     <!-- Cursos más solicitados -->
     @if (stats()!.cursos_top.length > 0) {
       <div class="bg-white border border-slate-200 rounded-3xl p-5">
-        <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest mb-3">Cursos más solicitados</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3">Cursos más solicitados</h3>
         <div class="space-y-2">
           @for (item of stats()!.cursos_top; track item.clave) {
             <div class="flex items-center gap-3">
@@ -36,7 +36,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-700 font-medium truncate">{{ item.curso }}</span>
-                  <span class="ml-auto text-xs font-black text-indigo-600 flex-shrink-0">{{ item.total_solicitudes }}</span>
+                  <span class="ml-auto text-xs font-semibold text-indigo-600 flex-shrink-0">{{ item.total_solicitudes }}</span>
                 </div>
                 <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div class="h-full bg-indigo-400 rounded-full"
@@ -173,7 +173,7 @@
       <!-- Celda de Estudiante (solo admin) -->
       @if (column.key === 'estudiante') {
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-xs font-black text-indigo-600 border border-indigo-200">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-xs font-semibold text-indigo-600 border border-indigo-200">
             {{ row.user?.name?.charAt(0) || '?' }}
           </div>
           <div class="flex flex-col">
@@ -197,7 +197,7 @@
       <!-- Celda de Trámite / Curso -->
       @if (column.key === 'tramite') {
         <div class="flex flex-col">
-          <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+          <span class="text-[10px] font-semibold text-indigo-600 uppercase tracking-widest">
             {{ row.tipo_solicitud?.nombre || 'Solicitud' }}
           </span>
           <span class="text-xs font-medium text-slate-500 truncate max-w-[250px]">

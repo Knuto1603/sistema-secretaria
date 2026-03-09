@@ -48,7 +48,7 @@
               (click)="toggleCiclo(ciclo)"
               class="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left">
               <div class="flex items-center gap-3">
-                <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 text-sm font-black">
+                <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 text-sm font-bold">
                   {{ ciclo.ciclo }}
                 </span>
                 <span class="text-sm font-bold text-slate-700">Ciclo {{ ciclo.ciclo }}</span>
@@ -97,7 +97,7 @@
     <!-- Footer -->
     <div class="p-6 border-t border-slate-100 flex items-center justify-between gap-4">
       <p class="text-sm text-slate-500">
-        <span class="font-black text-indigo-600">{{ totalAprobados }}</span>
+        <span class="font-bold text-indigo-600">{{ totalAprobados }}</span>
         curso{{ totalAprobados !== 1 ? 's' : '' }} seleccionado{{ totalAprobados !== 1 ? 's' : '' }}
       </p>
       <div class="flex gap-3">

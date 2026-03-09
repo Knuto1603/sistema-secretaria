@@ -48,7 +48,7 @@
 
         <!-- Información del estudiante -->
         <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Estudiante</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Estudiante</h3>
           <div class="flex items-center gap-4">
             <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-400 to-indigo-600 flex items-center justify-center text-xl font-black text-white">
               {{ solicitud()!.user?.name?.charAt(0) || '?' }}
@@ -78,7 +78,7 @@
 
         <!-- Información del curso -->
         <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Curso Solicitado</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Curso Solicitado</h3>
           @if (solicitud()!.programacion?.curso) {
             <div class="space-y-3">
               <p class="text-lg font-bold text-slate-800">{{ solicitud()!.programacion!.curso!.nombre }}</p>
@@ -101,14 +101,14 @@
 
         <!-- Motivo de la solicitud -->
         <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Motivo de la Solicitud</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Motivo de la Solicitud</h3>
           <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{{ solicitud()!.motivo }}</p>
         </div>
 
         <!-- Archivos adjuntos -->
         @if (solicitud()!.archivo_sustento_path) {
           <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Archivo Adjunto</h3>
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Archivo Adjunto</h3>
             <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
               <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -127,7 +127,7 @@
 
         <!-- Información de la solicitud -->
         <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Información</h3>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Información</h3>
           <dl class="space-y-4">
             <div>
               <dt class="text-[10px] font-bold text-slate-400 uppercase">Tipo de Solicitud</dt>
@@ -147,7 +147,7 @@
         <!-- Panel de acciones (solo admin) -->
         @if (esAdmin()) {
           <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-            <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Gestionar Solicitud</h3>
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Gestionar Solicitud</h3>
 
             <div class="space-y-4">
               <!-- Selector de estado -->
@@ -189,7 +189,7 @@
         <!-- Observaciones existentes -->
         @if (solicitud()!.observaciones_admin) {
           <div class="bg-amber-50 p-6 rounded-3xl border border-amber-200">
-            <h3 class="text-xs font-black text-amber-700 uppercase tracking-widest mb-2">Observaciones del Revisor</h3>
+            <h3 class="text-xs font-semibold text-amber-700 uppercase tracking-widest mb-2">Observaciones del Revisor</h3>
             <p class="text-sm text-amber-800">{{ solicitud()!.observaciones_admin }}</p>
           </div>
         }

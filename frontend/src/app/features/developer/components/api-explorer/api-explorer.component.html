@@ -49,17 +49,17 @@
         <table class="w-full text-sm">
           <thead class="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest w-20">Método</th>
-              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">URI</th>
-              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Nombre</th>
-              <th class="text-left px-4 py-3 font-black text-slate-600 text-xs uppercase tracking-widest">Middleware</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-widest w-20">Método</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-widest">URI</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-widest">Nombre</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-widest">Middleware</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
             @for (route of filteredRoutes(); track $index) {
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-2.5">
-                  <span class="px-2 py-0.5 rounded font-mono text-xs font-black" [ngClass]="methodColor(route.method)">
+                  <span class="px-2 py-0.5 rounded font-mono text-xs font-semibold" [ngClass]="methodColor(route.method)">
                     {{ route.method }}
                   </span>
                 </td>

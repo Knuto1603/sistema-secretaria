@@ -8,7 +8,7 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div>
-        <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Curso Seleccionado</p>
+        <p class="text-[10px] font-semibold uppercase tracking-widest opacity-60">Curso Seleccionado</p>
         <p class="text-sm font-bold">{{ cursoInfo().nombre }} - ({{ cursoInfo().codigo }})</p>
       </div>
     </div>
@@ -28,7 +28,7 @@
       
       <!-- Campo Motivo -->
       <div class="flex flex-col gap-2">
-        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Motivo de la Solicitud</label>
+        <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest ml-1">Motivo de la Solicitud</label>
         <textarea 
           formControlName="motivo"
           rows="4"
@@ -41,7 +41,7 @@
 
       <!-- Campo Archivo de Sustento -->
       <div class="flex flex-col gap-2">
-        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Documento de Sustento (Opcional)</label>
+        <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest ml-1">Documento de Sustento (Opcional)</label>
         <div class="relative">
           <input 
             type="file" 

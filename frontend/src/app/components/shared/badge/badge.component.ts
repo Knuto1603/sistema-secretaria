@@ -18,7 +18,7 @@ export class AppBadgeComponent {
       md: "px-2.5 py-1 text-[10px]",
       lg: "px-3 py-1.5 text-xs"
     };
-    const base = `inline-flex items-center rounded-lg font-black uppercase tracking-widest ${sizes[this.size()]} `;
+    const base = `inline-flex items-center rounded-lg font-semibold uppercase tracking-widest ${sizes[this.size()]} `;
     const colors: Record<string, string> = {
       indigo: "bg-indigo-50 text-indigo-700",
       emerald: "bg-emerald-50 text-emerald-700",

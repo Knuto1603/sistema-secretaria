@@ -21,16 +21,16 @@
           type="button"
           (click)="setTab('estudiante')"
           [class]="activeTab() === 'estudiante'
-            ? 'flex-1 py-2.5 px-4 text-xs font-black uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
-            : 'flex-1 py-2.5 px-4 text-xs font-bold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
+            ? 'flex-1 py-2.5 px-4 text-xs font-semibold uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
+            : 'flex-1 py-2.5 px-4 text-xs font-semibold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
           Estudiante
         </button>
         <button
           type="button"
           (click)="setTab('administrativo')"
           [class]="activeTab() === 'administrativo'
-            ? 'flex-1 py-2.5 px-4 text-xs font-black uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
-            : 'flex-1 py-2.5 px-4 text-xs font-bold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
+            ? 'flex-1 py-2.5 px-4 text-xs font-semibold uppercase tracking-wider rounded-lg bg-white text-indigo-600 shadow-sm transition-all'
+            : 'flex-1 py-2.5 px-4 text-xs font-semibold uppercase tracking-wider rounded-lg text-slate-500 hover:text-slate-700 transition-all'">
           Administrativo
         </button>
       </div>
@@ -40,7 +40,7 @@
         <form class="space-y-5" (ngSubmit)="onLoginEstudiante()">
           <!-- Campo Código -->
           <div>
-            <label for="codigo" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+            <label for="codigo" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
               Código Universitario
             </label>
             <div class="mt-1">
@@ -59,7 +59,7 @@
 
           <!-- Campo Password -->
           <div>
-            <label for="password-est" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+            <label for="password-est" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
               Contraseña
             </label>
             <div class="mt-1">
@@ -112,7 +112,7 @@
             <button
               type="submit"
               [disabled]="isLoading()"
-              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
               @if (isLoading()) {
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -132,7 +132,7 @@
         <form class="space-y-5" (ngSubmit)="onLoginAdmin()">
           <!-- Campo Username -->
           <div>
-            <label for="username" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+            <label for="username" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
               Usuario
             </label>
             <div class="mt-1">
@@ -149,7 +149,7 @@
 
           <!-- Campo Password -->
           <div>
-            <label for="password-admin" class="block text-xs font-black text-slate-400 uppercase tracking-widest">
+            <label for="password-admin" class="block text-xs font-semibold text-slate-400 uppercase tracking-widest">
               Contraseña
             </label>
             <div class="mt-1">
@@ -179,7 +179,7 @@
             <button
               type="submit"
               [disabled]="isLoading()"
-              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
               @if (isLoading()) {
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

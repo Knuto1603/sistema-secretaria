@@ -37,8 +37,8 @@
 
         <!-- Curso -->
         <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-          <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
-          <p class="text-base font-black text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
+          <p class="text-[10px] font-semibold text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
+          <p class="text-base font-bold text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
           <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.curso?.codigo }}</p>
         </div>
 
@@ -46,15 +46,15 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clave</p>
-            <p class="text-sm font-black text-slate-700 mt-1 font-mono">{{ detalle()!.clave }}</p>
+            <p class="text-sm font-bold text-slate-700 mt-1 font-mono">{{ detalle()!.clave }}</p>
           </div>
           <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grupo</p>
-            <p class="text-sm font-black text-indigo-600 mt-1">{{ detalle()!.grupo || '—' }}</p>
+            <p class="text-sm font-bold text-indigo-600 mt-1">{{ detalle()!.grupo || '—' }}</p>
           </div>
           <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sección</p>
-            <p class="text-sm font-black text-slate-700 mt-1">{{ detalle()!.seccion || '—' }}</p>
+            <p class="text-sm font-bold text-slate-700 mt-1">{{ detalle()!.seccion || '—' }}</p>
           </div>
           <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo</p>
@@ -114,7 +114,7 @@
                 [ngClass]="detalle()!.esta_lleno ? 'bg-red-500' : 'bg-emerald-500'">
               </div>
             </div>
-            <span class="text-xs font-black text-slate-600 whitespace-nowrap">
+            <span class="text-xs font-semibold text-slate-600 whitespace-nowrap">
               {{ detalle()!.n_inscritos }} / {{ detalle()!.capacidad }}
             </span>
           </div>
