@@ -54,7 +54,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         return (bool) $prog->delete();
     }
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null): Builder
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null): Builder
     {
         $query = $this->model
             ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario'])
@@ -65,20 +65,21 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             ->orderByDesc('esta_lleno_orden')
             ->orderBy('cursos.nombre', 'asc');
 
-        if ($escuelaId) {
-            $query->whereExists(function ($sub) use ($escuelaId) {
+        if ($escuelaId || $ciclo) {
+            $query->whereExists(function ($sub) use ($escuelaId, $ciclo) {
                 $sub->from('plan_estudios')
-                    ->whereColumn('plan_estudios.curso_id', 'programacion_academica.curso_id')
-                    ->where('plan_estudios.escuela_id', $escuelaId);
+                    ->whereColumn('plan_estudios.curso_id', 'programacion_academica.curso_id');
+                if ($escuelaId) $sub->where('plan_estudios.escuela_id', $escuelaId);
+                if ($ciclo)     $sub->where('plan_estudios.ciclo', $ciclo);
             });
         }
 
         return $query;
     }
 
-    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null): Collection
+    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null): Collection
     {
-        $query = $this->getBaseQuery($periodoId, $escuelaId);
+        $query = $this->getBaseQuery($periodoId, $escuelaId, $ciclo);
 
         if ($search) {
             $query->where(function (Builder $q) use ($search) {
