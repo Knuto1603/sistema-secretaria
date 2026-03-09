@@ -3,7 +3,6 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@core/auth/services/auth.service';
 import { HistorialService, HistorialResponse, ImportPdfResumen } from '@core/services/historial.service';
-import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
 type Tab = 'datos' | 'password' | 'historial';
@@ -11,7 +10,7 @@ type Tab = 'datos' | 'password' | 'historial';
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, AppButtonComponent, AppBadgeComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, AppBadgeComponent],
   templateUrl: './perfil.component.html',
 })
 export class PerfilComponent implements OnInit {
@@ -170,10 +169,10 @@ export class PerfilComponent implements OnInit {
     return Math.min((actual - anio) * 2 + 1, 12);
   }
 
-  getNotaColor(nota: number | null): string {
+  getNotaColor(nota: number | null): 'emerald' | 'indigo' | 'slate' | 'red' | 'amber' {
     if (nota === null) return 'slate';
     if (nota > 15) return 'emerald';
-    if (nota > 10) return 'blue';
+    if (nota > 10) return 'indigo';
     return 'red';
   }
 
