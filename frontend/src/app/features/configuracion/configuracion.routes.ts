@@ -62,6 +62,12 @@ export const routes: Routes = [
         path: 'aulas',
         loadComponent: () => import('./components/aulas/aulas.component').then(m => m.AulasComponent)
       },
+      // Departamentos
+      {
+        path: 'departamentos',
+        loadComponent: () => import('./components/departamentos/departamentos.component')
+          .then(m => m.DepartamentosComponent)
+      },
       // Base de Conocimientos
       {
         path: 'knowledge-base',
