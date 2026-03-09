@@ -13,7 +13,7 @@
     [ngClass]="isSidebarOpen()
       ? 'translate-x-0 w-72'
       : '-translate-x-full md:translate-x-0 w-72 md:w-20'"
-    class="absolute md:relative z-40 md:z-30 h-full bg-indigo-950 text-white flex flex-col transition-all duration-300 ease-in-out shadow-2xl">
+    class="absolute md:relative z-40 md:z-30 h-full bg-indigo-950 text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl">
 
     <!-- Logo Area -->
     <div class="px-4 md:p-6 border-b border-white/10 h-20 flex items-center justify-between">
@@ -56,7 +56,7 @@
     <!-- User Section -->
     <div class="p-4 bg-black/20 border-t border-white/5">
       <div class="flex items-center gap-3 mb-4" *ngIf="isSidebarOpen()">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-400 to-indigo-600 flex items-center justify-center font-black text-white shadow-lg">
+        <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center font-black text-white">
           {{ user()?.name?.charAt(0) }}
         </div>
         <div class="truncate">
@@ -128,13 +128,6 @@
 
     <!-- Dynamic Content -->
     <section class="flex-grow overflow-y-auto p-6 md:p-10 relative">
-      <!-- Background Decorative Element -->
-      <div class="absolute top-0 right-0 -z-10 opacity-5">
-        <svg width="400" height="400" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="100" r="100" fill="#4F46E5" />
-        </svg>
-      </div>
-
       <!-- AQUÍ SE RENDERIZAN LAS PÁGINAS (Home, Registro, etc) -->
       <router-outlet></router-outlet>
     </section>
