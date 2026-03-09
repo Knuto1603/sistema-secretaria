@@ -65,13 +65,16 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             ->orderByDesc('esta_lleno_orden')
             ->orderBy('cursos.nombre', 'asc');
 
-        if ($escuelaId || $ciclo) {
-            $query->whereExists(function ($sub) use ($escuelaId, $ciclo) {
-                $sub->from('plan_estudios')
-                    ->whereColumn('plan_estudios.curso_id', 'programacion_academica.curso_id');
-                if ($escuelaId) $sub->where('plan_estudios.escuela_id', $escuelaId);
-                if ($ciclo)     $sub->where('plan_estudios.ciclo', $ciclo);
+        if ($escuelaId) {
+            $query->whereExists(function ($sub) use ($escuelaId) {
+                $sub->from('programacion_escuelas')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->where('programacion_escuelas.escuela_id', $escuelaId);
             });
+        }
+
+        if ($ciclo) {
+            $query->where('programacion_academica.ciclo', $ciclo);
         }
 
         return $query;
