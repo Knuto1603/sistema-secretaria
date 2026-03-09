@@ -1,11 +1,57 @@
 <div class="space-y-6">
 
-  <!-- Modal Nueva Programación (solo roles autorizados) -->
-  @if (showFormProgramacion() && (authService.hasRole('secretaria') || authService.hasRole('admin') || authService.hasRole('developer'))) {
+  <!-- Modal: Nueva Programación -->
+  @if (showFormProgramacion() && esAdmin()) {
     <app-programacion-form
       (cerrado)="showFormProgramacion.set(false)"
       (guardado)="onProgramacionGuardada()">
     </app-programacion-form>
+  }
+
+  <!-- Modal: Editar Programación -->
+  @if (programacionAEditar()) {
+    <app-programacion-edit-form
+      [programacion]="programacionAEditar()!"
+      (cerrado)="programacionAEditar.set(null)"
+      (guardado)="onEdicionGuardada($event)">
+    </app-programacion-edit-form>
+  }
+
+  <!-- Modal: Confirmar Eliminación -->
+  @if (programacionAEliminar()) {
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-800">Eliminar sección</h3>
+            <p class="text-sm text-slate-500 mt-0.5">Esta acción no se puede deshacer.</p>
+          </div>
+        </div>
+        <div class="px-4 py-3 bg-slate-50 rounded-2xl mb-5">
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Curso a eliminar</p>
+          <p class="text-sm font-bold text-slate-800 mt-1">{{ programacionAEliminar()?.curso?.nombre }}</p>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Sec {{ programacionAEliminar()?.seccion }} · Grupo {{ programacionAEliminar()?.grupo }} ·
+            {{ getAulaMostrar(programacionAEliminar()!) }}
+          </p>
+        </div>
+        @if (errorEliminar()) {
+          <p class="text-sm text-red-600 font-medium mb-4">{{ errorEliminar() }}</p>
+        }
+        <div class="flex gap-3 justify-end">
+          <app-btn variant="ghost" (clicked)="programacionAEliminar.set(null)">Cancelar</app-btn>
+          <app-btn variant="danger" [loading]="eliminando()" (clicked)="confirmarEliminar()">
+            Eliminar
+          </app-btn>
+        </div>
+      </div>
+    </div>
   }
 
   <!-- Modal de onboarding de historial académico -->
@@ -33,236 +79,328 @@
           </p>
         </div>
       </div>
-      <button
-        (click)="abrirOnboarding()"
+      <button (click)="abrirOnboarding()"
         class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
         Registrar historial
       </button>
     </div>
   }
 
-  <!-- Encabezado con Buscador y Acciones -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
-    <div>
-      <div class="flex items-center gap-3">
-        <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
-          @if (esEstudiante()) { Cursos disponibles } @else { Programación Académica }
-        </h2>
-        @if (!isPeriodoActivo() && periodoSeleccionado() && !esEstudiante()) {
-          <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
-            Periodo Inactivo
-          </span>
-        }
-        @if (esEstudiante() && cicloActual()) {
-          <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-lg">
-            Ciclo {{ cicloActual() }}
-          </span>
-        }
-      </div>
-      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
-        @if (esEstudiante()) {
-          @if (historialRegistrado()) {
-            Cursos pendientes con requisitos cumplidos ·
-            <button (click)="abrirOnboarding()" class="text-indigo-500 hover:text-indigo-700 transition-colors">
-              Actualizar historial
-            </button>
+  <!-- Encabezado -->
+  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+      <!-- Título -->
+      <div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
+            @if (esEstudiante()) { Cursos disponibles } @else { Programación Académica }
+          </h2>
+          @if (!isPeriodoActivo() && periodoSeleccionado() && !esEstudiante()) {
+            <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
+              Periodo Inactivo
+            </span>
+          }
+          @if (esEstudiante() && cicloActual()) {
+            <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-lg">
+              Ciclo {{ cicloActual() }}
+            </span>
+          }
+        </div>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+          @if (esEstudiante()) {
+            @if (historialRegistrado()) {
+              Cursos pendientes con requisitos cumplidos ·
+              <button (click)="abrirOnboarding()" class="text-indigo-500 hover:text-indigo-700 transition-colors">
+                Actualizar historial
+              </button>
+            } @else {
+              Todos los cursos de tu escuela hasta tu ciclo actual
+            }
           } @else {
-            Todos los cursos de tu escuela hasta tu ciclo actual
+            Gestión de cupos y secciones
           }
-        } @else {
-          Gestión de cupos y secciones
+        </p>
+      </div>
+
+      <!-- Controles -->
+      <div class="flex flex-wrap items-center gap-2">
+
+        <!-- Selector de Periodo (solo admin) -->
+        @if (!esEstudiante()) {
+          <div class="relative">
+            <select
+              [ngModel]="periodoSeleccionado()"
+              (ngModelChange)="onPeriodoChange($event)"
+              [disabled]="loadingPeriodos()"
+              class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[160px] transition-all">
+              @for (periodo of periodos(); track periodo.id) {
+                <option [value]="periodo.id">
+                  {{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}
+                </option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
         }
-      </p>
-    </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <!-- Selector de Periodo (solo admin/secretaria) -->
-      @if (!esEstudiante()) {
-      <div class="relative">
-        <select
-          [ngModel]="periodoSeleccionado()"
-          (ngModelChange)="onPeriodoChange($event)"
-          [disabled]="loadingPeriodos()"
-          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full sm:min-w-[160px] transition-all appearance-none cursor-pointer font-medium">
-          @for (periodo of periodos(); track periodo.id) {
-            <option [value]="periodo.id">
-              {{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}
-            </option>
-          }
-        </select>
-        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
+        <!-- Buscador -->
+        <div class="relative flex-1 min-w-[160px]">
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Buscar curso o docente..."
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
         </div>
-      </div>
-      } <!-- fin @if (!esEstudiante()) -->
 
-      <!-- Buscador -->
-      <div class="relative flex-1 min-w-[160px]">
-        <input
-          type="text"
-          [ngModel]="searchTerm()"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Buscar curso o docente..."
-          class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
-      </div>
+        <!-- Toggle vista (solo admin) -->
+        @if (!esEstudiante()) {
+          <div class="flex bg-slate-100 rounded-2xl p-1 gap-1">
+            <button
+              (click)="cambiarVista('tabla')"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all"
+              [ngClass]="vistaActiva() === 'tabla'
+                ? 'bg-white text-slate-800 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M3 6h18M3 14h18M3 18h18"></path>
+              </svg>
+            </button>
+            <button
+              (click)="cambiarVista('matriz')"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all"
+              [ngClass]="vistaActiva() === 'matriz'
+                ? 'bg-white text-slate-800 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
+              </svg>
+            </button>
+          </div>
+        }
 
-      <!-- Importación y creación (solo secretaria/admin/developer) -->
-      @if (authService.hasRole('secretaria') || authService.hasRole('admin') || authService.hasRole('developer')) {
-        <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
-        <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
-        <div class="flex flex-wrap items-center gap-2">
-          <app-btn variant="ghost" (clicked)="descargarPlantilla()">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Plantilla
-          </app-btn>
-          <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()">
-            Importar SIGA
-          </app-btn>
-          <app-btn variant="success" [loading]="isUploading()" (clicked)="triggerImport(fileInput)">
-            Importar Excel
-          </app-btn>
-          <app-btn variant="primary" (clicked)="showFormProgramacion.set(true)">
-            + Nueva
-          </app-btn>
-        </div>
-      }
+        <!-- Acciones admin -->
+        @if (esAdmin()) {
+          <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
+          <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
+          <div class="flex flex-wrap items-center gap-2">
+            <app-btn variant="ghost" (clicked)="descargarPlantilla()">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Plantilla
+            </app-btn>
+            <app-btn variant="ghost" (clicked)="exportarExcel()">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Exportar
+            </app-btn>
+            <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()">
+              SIGA
+            </app-btn>
+            <app-btn variant="success" [loading]="isUploading()" (clicked)="triggerImport(fileInput)">
+              Importar
+            </app-btn>
+            <app-btn variant="primary" (clicked)="showFormProgramacion.set(true)">
+              + Nueva
+            </app-btn>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
-  <!-- Tabla Genérica con componente de carga integrado -->
-  <app-table 
-    [columns]="columnas" 
-    [data]="programacion()" 
-    [loading]="loading()"
-  >
-    <!-- Personalización de Celdas -->
-    <ng-template #cellTemplate let-row let-column="column">
-      
-      <!-- Celda de Curso -->
-      @if (column.key === 'curso') {
-        <div class="flex flex-col">
-          <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
-          <span class="text-[10px] text-slate-400 font-bold tracking-tighter">
-            {{ row.curso?.codigo || '-' }}
+  <!-- ─── VISTA TABLA ─────────────────────────────────────────────────── -->
+  @if (vistaActiva() === 'tabla' || esEstudiante()) {
+    <app-table
+      [columns]="columnas"
+      [data]="programacion()"
+      [loading]="loading()">
+
+      <!-- Celdas -->
+      <ng-template #cellTemplate let-row let-column="column">
+
+        <!-- Curso -->
+        @if (column.key === 'curso') {
+          <div class="flex flex-col">
+            <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
+            <span class="text-[10px] text-slate-400 font-bold tracking-tighter">{{ row.curso?.codigo || '-' }}</span>
+          </div>
+        }
+
+        <!-- Grupo -->
+        @if (column.key === 'grupo') {
+          <div class="flex justify-center">
+            <span class="w-9 h-9 flex items-center justify-center bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-black text-indigo-700">
+              {{ row.grupo || '—' }}
+            </span>
+          </div>
+        }
+
+        <!-- Sección -->
+        @if (column.key === 'seccion') {
+          <div class="flex justify-center">
+            <span class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-xs font-black text-slate-600">
+              {{ row.seccion || '—' }}
+            </span>
+          </div>
+        }
+
+        <!-- Aula -->
+        @if (column.key === 'aula') {
+          <span class="text-xs font-semibold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg">
+            {{ getAulaMostrar(row) }}
           </span>
-        </div>
-      }
+        }
 
-      <!-- Celda de Grupo -->
-      @if (column.key === 'grupo') {
-        <div class="flex justify-center">
-          <span class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-black text-slate-600">
-            {{ row.grupo }}
+        <!-- Docente -->
+        @if (column.key === 'docente') {
+          <span class="text-xs font-medium text-slate-500" [ngClass]="{'italic text-slate-300': !row.docente?.nombre_completo}">
+            {{ row.docente?.nombre_completo || 'POR ASIGNAR' }}
           </span>
-        </div>
-      }
+        }
 
-           <!-- Celda de Seccion -->
-      @if (column.key === 'seccion') {
-        <div class="flex justify-center">
-          <span class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-black text-slate-600">
-            {{ row.seccion }}
-          </span>
-        </div>
-      }
-
-      <!-- Celda de Docente -->
-      @if (column.key === 'docente') {
-        <span class="text-xs font-medium text-slate-500 italic">
-          {{ row.docente?.nombre_completo || 'POR ASIGNAR' }}
-        </span>
-      }
-
-      <!-- Celda de Estado/Cupos -->
-      @if (column.key === 'estado') {
-        <div class="flex flex-col items-center gap-1">
-          <div class="flex items-center gap-2">
+        <!-- Estado / Cupos -->
+        @if (column.key === 'estado') {
+          <div class="flex flex-col items-center gap-1">
             @if (row.esta_lleno) {
-              <app-badge color="red">
-                Lleno{{ row.lleno_manual ? ' (M)' : '' }}
-              </app-badge>
+              <app-badge color="red">Lleno{{ row.lleno_manual ? ' (M)' : '' }}</app-badge>
             } @else {
               <app-badge color="emerald">Disponible</app-badge>
             }
+            <span class="text-[10px] font-bold text-slate-400">{{ row.n_inscritos }} / {{ row.capacidad }}</span>
           </div>
-          <span class="text-[10px] font-bold text-slate-400">{{ row.n_inscritos }} / {{ row.capacidad }}</span>
-        </div>
-      }
-    </ng-template>
+        }
+      </ng-template>
 
-    <!-- Acciones de la Fila -->
-    <ng-template #actionsTemplate let-row>
-      <div class="flex items-center gap-2">
-        <!-- Botón para marcar como lleno (solo secretaria/admin) -->
-        @if (authService.hasRole('secretaria') || authService.hasRole('admin')) {
-          <button
-            (click)="toggleLleno(row)"
-            [title]="row.lleno_manual ? 'Desmarcar como lleno' : 'Marcar como lleno'"
-            class="p-2 rounded-lg transition-colors"
-            [ngClass]="row.lleno_manual ? 'text-amber-600 hover:bg-amber-50' : 'text-slate-400 hover:bg-slate-100'">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              @if (row.lleno_manual) {
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      <!-- Acciones de fila -->
+      <ng-template #actionsTemplate let-row>
+        <div class="flex items-center gap-1.5">
+
+          <!-- Toggle lleno (admin/secretaria/developer) -->
+          @if (esAdmin()) {
+            <button
+              (click)="toggleLleno(row)"
+              [title]="row.lleno_manual ? 'Desmarcar como lleno' : 'Marcar como lleno'"
+              class="p-2 rounded-xl transition-colors"
+              [ngClass]="row.lleno_manual
+                ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
+                : 'text-slate-400 hover:bg-slate-100'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @if (row.lleno_manual) {
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                } @else {
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                }
+              </svg>
+            </button>
+          }
+
+          <!-- Botones admin: editar, eliminar, solicitudes -->
+          @if (esAdmin()) {
+            <!-- Editar -->
+            <button
+              (click)="abrirEditar(row)"
+              title="Editar sección"
+              class="p-2 rounded-xl text-indigo-500 hover:bg-indigo-50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+
+            <!-- Eliminar -->
+            <button
+              (click)="abrirEliminar(row)"
+              title="Eliminar sección"
+              class="p-2 rounded-xl text-red-400 hover:bg-red-50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+
+            <!-- Solicitudes -->
+            <button
+              (click)="verSolicitudesCurso(row)"
+              title="Ver solicitudes de este curso"
+              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </button>
+          }
+
+          <!-- Acciones decano (solo ver solicitudes) -->
+          @if (!esAdmin() && (authService.hasRole('decano') || authService.hasRole('secretario academico'))) {
+            <button
+              (click)="verSolicitudesCurso(row)"
+              title="Ver solicitudes"
+              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </button>
+          }
+
+          <!-- Acciones estudiante -->
+          @if (esEstudiante()) {
+            @if (row.esta_lleno) {
+              @if (tieneSolicitudActiva(row.id)) {
+                <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-xl tracking-widest">
+                  Solicitado
+                </span>
+              } @else if (isPeriodoActivo()) {
+                <app-btn variant="primary" (clicked)="solicitarCupo(row)">Solicitar</app-btn>
               } @else {
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
               }
-            </svg>
-          </button>
-        }
-
-        <!-- Acciones según rol -->
-        @if (authService.hasRole('secretaria') || authService.hasRole('admin') || authService.hasRole('decano') || authService.hasRole('secretario academico')) {
-          <!-- Secretaria/Admin: Ver solicitudes del curso -->
-          @if (row.esta_lleno) {
-            <app-btn variant="secondary" (clicked)="verSolicitudesCurso(row)">
-              Solicitudes
-            </app-btn>
-          } @else {
-            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-4">Ok</span>
-          }
-        } @else {
-          <!-- Estudiantes: Solicitar cupo -->
-          @if (row.esta_lleno) {
-            @if (tieneSolicitudActiva(row.id)) {
-              <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-xl tracking-widest"
-                    title="Ya tienes una solicitud activa para este curso">
-                Solicitado
-              </span>
-            } @else if (isPeriodoActivo()) {
-              <app-btn variant="primary" (clicked)="solicitarCupo(row)">
-                Solicitar
-              </app-btn>
             } @else {
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2"
-                    title="Solo se pueden solicitar cupos en periodos activos">
-                Periodo Inactivo
-              </span>
+              <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-3">✓ Libre</span>
             }
-          } @else {
-            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-4">Ok</span>
           }
-        }
-      </div>
-    </ng-template>
-  </app-table>
+        </div>
+      </ng-template>
+    </app-table>
 
-  <!-- Paginación Reutilizable -->
-  @if (paginationData() && !loading()) {
-    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-      <app-shared-pagination
-        [currentPage]="currentPage()"
-        [lastPage]="paginationData()!.last_page"
-        [total]="paginationData()!.total"
-        [from]="paginationData()!.from"
-        [to]="paginationData()!.to"
-        [perPage]="perPage()"
-        (pageChange)="handlePageChange($event)"
-        (pageSizeChange)="handleSizeChange($event)">
-      </app-shared-pagination>
+    <!-- Paginación -->
+    @if (paginationData() && !loading()) {
+      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+        <app-shared-pagination
+          [currentPage]="currentPage()"
+          [lastPage]="paginationData()!.last_page"
+          [total]="paginationData()!.total"
+          [from]="paginationData()!.from"
+          [to]="paginationData()!.to"
+          [perPage]="perPage()"
+          (pageChange)="handlePageChange($event)"
+          (pageSizeChange)="handleSizeChange($event)">
+        </app-shared-pagination>
+      </div>
+    }
+  }
+
+  <!-- ─── VISTA MATRIZ ─────────────────────────────────────────────────── -->
+  @if (vistaActiva() === 'matriz' && !esEstudiante()) {
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <app-programacion-matriz
+        [items]="todosLosItems()"
+        [loading]="loadingMatriz()">
+      </app-programacion-matriz>
     </div>
   }
 
