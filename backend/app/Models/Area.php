@@ -16,4 +16,9 @@ class Area extends Model
     {
         return $this->hasMany(Curso::class);
     }
+
+    public function prefijos(): HasMany
+    {
+        return $this->hasMany(AreaPrefijo::class);
+    }
 }
