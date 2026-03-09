@@ -70,7 +70,7 @@ class ProgramacionHtmlImport
         if (!is_numeric(trim($clave))) return;
 
         try {
-            $curso = Curso::updateOrCreate(
+            $curso = Curso::firstOrCreate(
                 ['codigo' => strtoupper(trim($codigoCurso))],
                 ['nombre' => strtoupper(trim($nombreCurso))]
             );
