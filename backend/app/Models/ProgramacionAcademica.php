@@ -78,6 +78,14 @@ class ProgramacionAcademica extends Model
         return $this->belongsTo(Aula::class, 'aula_id');
     }
 
+    /**
+     * Alias sin conflicto de nombre con el campo texto 'aula'
+     */
+    public function aulaRelacion(): BelongsTo
+    {
+        return $this->belongsTo(Aula::class, 'aula_id');
+    }
+
     public function grupoHorario(): BelongsTo
     {
         return $this->belongsTo(GrupoHorario::class, 'grupo_horario_id');
