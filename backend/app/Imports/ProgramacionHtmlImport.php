@@ -34,7 +34,9 @@ class ProgramacionHtmlImport
     public function import(string $filePath): void
     {
         $content = file_get_contents($filePath);
-        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        }
 
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);

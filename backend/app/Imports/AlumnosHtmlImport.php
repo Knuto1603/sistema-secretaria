@@ -17,7 +17,9 @@ class AlumnosHtmlImport
         $this->rolEstudiante = Role::where('name', 'estudiante')->where('guard_name', 'web')->first();
 
         $content = file_get_contents($filePath);
-        $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+        }
 
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
