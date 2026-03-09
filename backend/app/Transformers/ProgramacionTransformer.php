@@ -3,6 +3,7 @@
 namespace App\Transformers;
 
 use App\DTOs\Programacion\ProgramacionResponseDTO;
+use App\Models\Aula;
 use App\Models\ProgramacionAcademica;
 use Illuminate\Support\Collection;
 
@@ -10,35 +11,88 @@ class ProgramacionTransformer
 {
     public function toDTO(ProgramacionAcademica $model): ProgramacionResponseDTO
     {
+        // Aula desde relación aulaRelacion (sin conflicto de nombre con el campo texto 'aula')
+        $aulaRel  = null;
+        $aulaNombre = $model->aula; // texto del campo importado (ej: "PII-04")
+
+        if ($model->relationLoaded('aulaRelacion') && $model->aulaRelacion instanceof Aula) {
+            $aulaObj = $model->aulaRelacion;
+            $aulaRel = [
+                'id'       => $aulaObj->id,
+                'nombre'   => $aulaObj->nombre,
+                'capacidad'=> $aulaObj->capacidad,
+                'pabellon' => $aulaObj->relationLoaded('pabellon')
+                    ? ['nombre' => $aulaObj->pabellon?->nombre]
+                    : null,
+            ];
+            // Si no hay texto, usar el nombre de la relación
+            if (!$aulaNombre) {
+                $aulaNombre = $aulaObj->nombre;
+            }
+        }
+
+        // Grupo horario
+        $grupoHorario = null;
+        if ($model->relationLoaded('grupoHorario') && $model->grupoHorario) {
+            $gh = $model->grupoHorario;
+            $grupoHorario = [
+                'id'      => $gh->id,
+                'nombre'  => $gh->nombre,
+                'detalles'=> $gh->relationLoaded('detalles')
+                    ? $gh->detalles->map(fn($d) => [
+                        'dia_semana'  => $d->dia_semana,
+                        'hora_inicio' => $d->hora_inicio,
+                        'hora_fin'    => $d->hora_fin,
+                    ])->toArray()
+                    : [],
+            ];
+        }
+
+        // Escuelas (solo cuando se carguen explícitamente)
+        $escuelas = null;
+        if ($model->relationLoaded('escuelas')) {
+            $escuelas = $model->escuelas->map(fn($e) => [
+                'id'          => $e->id,
+                'nombre'      => $e->nombre,
+                'nombre_corto'=> $e->nombre_corto,
+            ])->toArray();
+        }
+
         return new ProgramacionResponseDTO(
-            id: $model->id,
-            curso_id: $model->curso_id,
-            periodo_id: $model->periodo_id,
-            docente_id: $model->docente_id,
-            clave: $model->clave,
-            grupo: $model->grupo,
-            seccion: $model->seccion,
-            aula: $model->aula,
-            n_acta: $model->n_acta,
-            capacidad: $model->capacidad,
-            n_inscritos: $model->n_inscritos,
-            lleno_manual: (bool) $model->lleno_manual,
-            esta_lleno: $model->estaLleno(),
+            id:               $model->id,
+            curso_id:         $model->curso_id,
+            periodo_id:       $model->periodo_id,
+            docente_id:       $model->docente_id,
+            grupo_horario_id: $model->grupo_horario_id,
+            aula_id:          $model->aula_id,
+            clave:            $model->clave,
+            grupo:            $model->grupo,
+            seccion:          $model->seccion,
+            aula:             $model->aula,
+            aula_nombre:      $aulaNombre,
+            n_acta:           $model->n_acta,
+            capacidad:        $model->capacidad,
+            n_inscritos:      $model->n_inscritos,
+            lleno_manual:     (bool) $model->lleno_manual,
+            esta_lleno:       $model->estaLleno(),
             curso: $model->curso ? [
-                'id' => $model->curso->id,
+                'id'     => $model->curso->id,
                 'codigo' => $model->curso->codigo,
                 'nombre' => $model->curso->nombre,
             ] : null,
             periodo: $model->periodo ? [
-                'id' => $model->periodo->id,
+                'id'     => $model->periodo->id,
                 'nombre' => $model->periodo->nombre,
                 'activo' => (bool) $model->periodo->activo,
             ] : null,
             docente: $model->docente ? [
-                'id' => $model->docente->id,
-                'nombre_completo' => $model->docente->nombre_completo,
+                'id'             => $model->docente->id,
+                'nombre_completo'=> $model->docente->nombre_completo,
             ] : null,
-            created_at: $model->created_at->toISOString()
+            aula_rel:      $aulaRel,
+            grupo_horario: $grupoHorario,
+            escuelas:      $escuelas,
+            created_at:    $model->created_at->toISOString()
         );
     }
 
