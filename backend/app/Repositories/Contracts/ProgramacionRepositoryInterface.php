@@ -5,6 +5,7 @@ namespace App\Repositories\Contracts;
 use App\Models\ProgramacionAcademica;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 interface ProgramacionRepositoryInterface
 {
@@ -14,7 +15,11 @@ interface ProgramacionRepositoryInterface
 
     public function deleteByPeriodo(string $periodoId): int;
 
+    public function delete(string $id): bool;
+
     public function getBaseQuery(string $periodoId, ?string $escuelaId = null): Builder;
+
+    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null): Collection;
 
     public function toggleLlenoManual(string $id): ?ProgramacionAcademica;
 }
