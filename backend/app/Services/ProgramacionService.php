@@ -81,6 +81,11 @@ class ProgramacionService
         return $this->programacionRepository->delete($id);
     }
 
+    public function deleteByPeriodo(string $periodoId): int
+    {
+        return $this->programacionRepository->deleteByPeriodo($periodoId);
+    }
+
     /**
      * Obtiene todas las programaciones para exportación (sin paginar)
      */
