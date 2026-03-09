@@ -87,6 +87,12 @@ export class ProgramacionTablaComponent implements OnInit {
   eliminando            = signal(false);
   errorEliminar         = signal<string | null>(null);
 
+  // Modal: Limpiar periodo (solo developer)
+  showLimpiarPeriodo      = signal(false);
+  limpiarPeriodoLoading   = signal(false);
+  limpiarPeriodoError     = signal<string | null>(null);
+  limpiarPeriodoEliminados = signal<number | null>(null);
+
   columnas: TableColumn[] = [
     { key: 'curso',   label: 'Curso' },
     { key: 'grupo',   label: 'GRP' },
@@ -97,6 +103,7 @@ export class ProgramacionTablaComponent implements OnInit {
   ];
 
   esEstudiante = computed(() => this.authService.isEstudiante());
+  esDeveloper  = computed(() => this.authService.hasRole('developer'));
   esAdmin      = computed(() =>
     this.authService.hasRole('secretaria') ||
     this.authService.hasRole('admin') ||
@@ -424,5 +431,33 @@ export class ProgramacionTablaComponent implements OnInit {
 
   getAulaMostrar(row: Programacion): string {
     return row.aula_nombre || row.aula || row.aula_rel?.nombre || '—';
+  }
+
+  abrirLimpiarPeriodo(): void {
+    this.limpiarPeriodoError.set(null);
+    this.limpiarPeriodoEliminados.set(null);
+    this.showLimpiarPeriodo.set(true);
+  }
+
+  confirmarLimpiarPeriodo(): void {
+    const periodoId = this.periodoSeleccionado();
+    if (!periodoId || this.limpiarPeriodoLoading()) return;
+
+    this.limpiarPeriodoLoading.set(true);
+    this.limpiarPeriodoError.set(null);
+
+    this.programacionService.eliminarPorPeriodo(periodoId).subscribe({
+      next: res => {
+        this.limpiarPeriodoEliminados.set(res.eliminados);
+        this.limpiarPeriodoLoading.set(false);
+        this.showLimpiarPeriodo.set(false);
+        this.cargarProgramacion(1);
+        this.todosLosItems.set([]);
+      },
+      error: err => {
+        this.limpiarPeriodoError.set(err.error?.message || 'Error al limpiar la programación del periodo');
+        this.limpiarPeriodoLoading.set(false);
+      },
+    });
   }
 }
