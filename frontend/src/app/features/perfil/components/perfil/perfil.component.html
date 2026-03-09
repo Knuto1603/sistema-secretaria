@@ -210,13 +210,12 @@
               class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
           </div>
 
-          <app-btn type="submit" variant="primary" [disabled]="loadingPassword()">
-            @if (loadingPassword()) {
-              Guardando...
-            } @else {
-              Actualizar contraseña
-            }
-          </app-btn>
+          <button
+            type="submit"
+            [disabled]="loadingPassword()"
+            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+            {{ loadingPassword() ? 'Guardando...' : 'Actualizar contraseña' }}
+          </button>
         </form>
       }
 

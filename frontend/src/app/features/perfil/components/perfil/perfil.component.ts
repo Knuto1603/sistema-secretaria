@@ -1,17 +1,17 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@core/auth/services/auth.service';
-import { HistorialService, HistorialResponse, HistorialSemestre, ImportPdfResumen } from '@core/services/historial.service';
-import { BtnComponent } from '@shared/components/btn/btn.component';
-import { BadgeComponent } from '@shared/components/badge/badge.component';
+import { HistorialService, HistorialResponse, ImportPdfResumen } from '@core/services/historial.service';
+import { AppButtonComponent } from '@shared/button/button.component';
+import { AppBadgeComponent } from '@shared/badge/badge.component';
 
 type Tab = 'datos' | 'password' | 'historial';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [CommonModule, FormsModule, BtnComponent, BadgeComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, AppButtonComponent, AppBadgeComponent],
   templateUrl: './perfil.component.html',
 })
 export class PerfilComponent implements OnInit {
