@@ -45,20 +45,16 @@
                 class="w-10 h-10 rounded-xl flex items-center justify-center"
                 [ngClass]="{
                   'bg-indigo-100': getRolColor(rol.name) === 'indigo',
-                  'bg-purple-100': getRolColor(rol.name) === 'purple',
                   'bg-emerald-100': getRolColor(rol.name) === 'emerald',
                   'bg-amber-100': getRolColor(rol.name) === 'amber',
-                  'bg-cyan-100': getRolColor(rol.name) === 'cyan',
                   'bg-slate-100': getRolColor(rol.name) === 'slate'
                 }">
                 <svg
                   class="w-5 h-5"
                   [ngClass]="{
                     'text-indigo-600': getRolColor(rol.name) === 'indigo',
-                    'text-purple-600': getRolColor(rol.name) === 'purple',
                     'text-emerald-600': getRolColor(rol.name) === 'emerald',
                     'text-amber-600': getRolColor(rol.name) === 'amber',
-                    'text-cyan-600': getRolColor(rol.name) === 'cyan',
                     'text-slate-600': getRolColor(rol.name) === 'slate'
                   }"
                   fill="none"

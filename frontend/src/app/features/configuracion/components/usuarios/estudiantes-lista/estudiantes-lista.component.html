@@ -146,8 +146,8 @@
       <!-- Nombre -->
       @if (column.key === 'name') {
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center">
-            <span class="text-xs font-bold text-cyan-600">{{ row.name.charAt(0).toUpperCase() }}</span>
+          <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+            <span class="text-xs font-bold text-indigo-600">{{ row.name.charAt(0).toUpperCase() }}</span>
           </div>
           <span class="text-sm font-semibold text-slate-800">{{ row.name }}</span>
         </div>
@@ -156,7 +156,7 @@
       <!-- Escuela -->
       @if (column.key === 'escuela') {
         @if (row.escuela) {
-          <app-badge color="cyan" size="sm">{{ row.escuela }}</app-badge>
+          <app-badge color="indigo" size="sm">{{ row.escuela }}</app-badge>
         } @else {
           <span class="text-xs text-slate-400">-</span>
         }
@@ -286,8 +286,8 @@
       <div class="p-6 space-y-4">
         <!-- Info principal -->
         <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-full bg-cyan-100 flex items-center justify-center">
-            <span class="text-2xl font-bold text-cyan-600">{{ estudianteDetalle()!.name.charAt(0).toUpperCase() }}</span>
+          <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+            <span class="text-2xl font-bold text-indigo-600">{{ estudianteDetalle()!.name.charAt(0).toUpperCase() }}</span>
           </div>
           <div>
             <h4 class="text-xl font-bold text-slate-800">{{ estudianteDetalle()!.name }}</h4>
@@ -335,7 +335,7 @@
             {{ estudianteDetalle()!.activo ? 'Activo' : 'Inactivo' }}
           </app-badge>
           @if (estudianteDetalle()!.cuenta_activada) {
-            <app-badge color="cyan" size="lg">Cuenta Activada</app-badge>
+            <app-badge color="indigo" size="lg">Cuenta Activada</app-badge>
           } @else {
             <app-badge color="amber" size="lg">Pendiente Activación</app-badge>
           }

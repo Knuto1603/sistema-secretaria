@@ -96,7 +96,7 @@ export class KbListaComponent implements OnInit {
     const map: Record<string, string> = {
       proceso:    'bg-blue-100 text-blue-700',
       faq:        'bg-green-100 text-green-700',
-      norma:      'bg-purple-100 text-purple-700',
+      norma:      'bg-slate-100 text-slate-700',
       requisito:  'bg-orange-100 text-orange-700',
       resolucion: 'bg-red-100 text-red-700',
     };

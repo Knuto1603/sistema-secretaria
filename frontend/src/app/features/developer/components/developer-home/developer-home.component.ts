@@ -32,14 +32,14 @@ export class DeveloperHomeComponent {
       description: 'Registro de toda la actividad de usuarios en el sistema.',
       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
       route: '/app/developer/activity',
-      color: 'blue',
+      color: 'indigo',
     },
     {
       title: 'Email Viewer',
       description: 'Visualiza los correos OTP enviados a los estudiantes.',
       icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
       route: '/app/developer/emails',
-      color: 'violet',
+      color: 'indigo',
     },
     {
       title: 'System Settings',
@@ -60,7 +60,7 @@ export class DeveloperHomeComponent {
       description: 'Visualiza todas las rutas API registradas en el sistema.',
       icon: 'M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
       route: '/app/developer/api-explorer',
-      color: 'cyan',
+      color: 'indigo',
     },
     {
       title: 'Impersonación',
@@ -78,11 +78,9 @@ export class DeveloperHomeComponent {
   getColorClasses(color: string): { bg: string; border: string; icon: string; hover: string } {
     const map: Record<string, { bg: string; border: string; icon: string; hover: string }> = {
       emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'text-emerald-600 bg-emerald-100', hover: 'hover:border-emerald-400 hover:shadow-emerald-100' },
-      blue:    { bg: 'bg-blue-50',    border: 'border-blue-200',    icon: 'text-blue-600 bg-blue-100',       hover: 'hover:border-blue-400 hover:shadow-blue-100' },
-      violet:  { bg: 'bg-violet-50',  border: 'border-violet-200',  icon: 'text-violet-600 bg-violet-100',   hover: 'hover:border-violet-400 hover:shadow-violet-100' },
+      indigo:  { bg: 'bg-indigo-50',  border: 'border-indigo-200',  icon: 'text-indigo-600 bg-indigo-100',   hover: 'hover:border-indigo-400 hover:shadow-indigo-100' },
       amber:   { bg: 'bg-amber-50',   border: 'border-amber-200',   icon: 'text-amber-600 bg-amber-100',     hover: 'hover:border-amber-400 hover:shadow-amber-100' },
       orange:  { bg: 'bg-orange-50',  border: 'border-orange-200',  icon: 'text-orange-600 bg-orange-100',   hover: 'hover:border-orange-400 hover:shadow-orange-100' },
-      cyan:    { bg: 'bg-cyan-50',    border: 'border-cyan-200',    icon: 'text-cyan-600 bg-cyan-100',       hover: 'hover:border-cyan-400 hover:shadow-cyan-100' },
       rose:    { bg: 'bg-rose-50',    border: 'border-rose-200',    icon: 'text-rose-600 bg-rose-100',       hover: 'hover:border-rose-400 hover:shadow-rose-100' },
     };
     return map[color] ?? map['emerald'];

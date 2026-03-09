@@ -147,10 +147,8 @@
                 class="px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all"
                 [ngClass]="{
                   'border-indigo-500 bg-indigo-50 text-indigo-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'indigo',
-                  'border-purple-500 bg-purple-50 text-purple-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'purple',
                   'border-emerald-500 bg-emerald-50 text-emerald-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'emerald',
                   'border-amber-500 bg-amber-50 text-amber-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'amber',
-                  'border-cyan-500 bg-cyan-50 text-cyan-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'cyan',
                   'border-slate-200 text-slate-600 hover:border-slate-300': !isRoleSelected(rol.name)
                 }">
                 @if (isRoleSelected(rol.name)) {

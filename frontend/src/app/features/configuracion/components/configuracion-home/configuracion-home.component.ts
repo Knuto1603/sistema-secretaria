@@ -53,14 +53,14 @@ export class ConfiguracionHomeComponent {
       description: 'Configura las plantillas horarias G1–G14 con los días y horas de cada grupo.',
       icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
       route: '/app/configuracion/horarios',
-      color: 'teal'
+      color: 'indigo'
     },
     {
       title: 'Pabellones y Aulas',
       description: 'Administra los pabellones e infraestructura de aulas disponibles para la programación.',
       icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
       route: '/app/configuracion/aulas',
-      color: 'cyan'
+      color: 'slate'
     },
     {
       title: 'Departamentos',
@@ -74,7 +74,7 @@ export class ConfiguracionHomeComponent {
       description: 'Gestiona los artículos, documentos y plantillas que usa el asistente virtual para responder a los estudiantes.',
       icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
       route: '/app/configuracion/knowledge-base',
-      color: 'violet'
+      color: 'indigo'
     }
   ];
 
@@ -108,23 +108,11 @@ export class ConfiguracionHomeComponent {
         icon: 'text-rose-600 bg-rose-100',
         hover: 'hover:border-rose-400 hover:shadow-rose-100'
       },
-      violet: {
-        bg: 'bg-violet-50',
-        border: 'border-violet-200',
-        icon: 'text-violet-600 bg-violet-100',
-        hover: 'hover:border-violet-400 hover:shadow-violet-100'
-      },
-      teal: {
-        bg: 'bg-teal-50',
-        border: 'border-teal-200',
-        icon: 'text-teal-600 bg-teal-100',
-        hover: 'hover:border-teal-400 hover:shadow-teal-100'
-      },
-      cyan: {
-        bg: 'bg-cyan-50',
-        border: 'border-cyan-200',
-        icon: 'text-cyan-600 bg-cyan-100',
-        hover: 'hover:border-cyan-400 hover:shadow-cyan-100'
+      slate: {
+        bg: 'bg-slate-50',
+        border: 'border-slate-200',
+        icon: 'text-slate-600 bg-slate-100',
+        hover: 'hover:border-slate-400 hover:shadow-slate-100'
       },
       orange: {
         bg: 'bg-orange-50',

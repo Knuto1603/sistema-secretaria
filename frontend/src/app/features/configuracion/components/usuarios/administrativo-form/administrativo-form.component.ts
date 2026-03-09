@@ -152,10 +152,10 @@ export class AdministrativoFormComponent implements OnInit {
   getRolColor(rolName: string): string {
     const colors: Record<string, string> = {
       'admin': 'indigo',
-      'developer': 'purple',
+      'developer': 'indigo',
       'secretaria': 'emerald',
       'decano': 'amber',
-      'secretario academico': 'cyan'
+      'secretario academico': 'indigo'
     };
     return colors[rolName.toLowerCase()] || 'slate';
   }
