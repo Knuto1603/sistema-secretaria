@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AreaController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\StudentAuthController;
 use App\Http\Controllers\Api\V1\ChatAnalyticsController;
@@ -136,6 +137,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Docentes (lectura, para formularios)
     Route::get('/docentes', [DocenteController::class, 'index']);
+
+    // =============================================
+    // DEPARTAMENTOS (AREAS CON PREFIJOS)
+    // =============================================
+    Route::prefix('areas')->group(function () {
+        Route::get('/', [AreaController::class, 'index']);
+        Route::middleware('role:secretaria|admin|developer')->group(function () {
+            Route::post('/', [AreaController::class, 'store']);
+            Route::put('/{id}', [AreaController::class, 'update']);
+            Route::delete('/{id}', [AreaController::class, 'destroy']);
+            Route::post('/auto-asignar', [AreaController::class, 'autoAsignar']);
+        });
+    });
 
     // Escuelas (lectura, para formularios)
     Route::get('/escuelas', function () {
