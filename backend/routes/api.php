@@ -111,12 +111,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [ProgramacionController::class, 'index']);
         Route::get('/para-mi', [ProgramacionController::class, 'paraMi']);
         Route::get('/template', [ProgramacionController::class, 'downloadTemplate']);
+        Route::get('/export', [ProgramacionController::class, 'export'])
+            ->middleware('role:secretaria|admin|developer');
         Route::get('/{id}', [ProgramacionController::class, 'show']);
         Route::post('/', [ProgramacionController::class, 'store'])
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import', [ProgramacionController::class, 'import'])
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
+            ->middleware('role:secretaria|admin|developer');
+        Route::put('/{id}', [ProgramacionController::class, 'update'])
+            ->middleware('role:secretaria|admin|developer');
+        Route::delete('/{id}', [ProgramacionController::class, 'destroy'])
             ->middleware('role:secretaria|admin|developer');
         Route::patch('/{id}/toggle-lleno', [ProgramacionController::class, 'toggleLleno'])
             ->middleware('role:secretaria|admin|developer');
