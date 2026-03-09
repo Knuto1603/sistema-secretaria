@@ -9,16 +9,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('historial_academico', function (Blueprint $table) {
-            // Eliminar unique anterior (user_id, curso_id) para permitir cursos repetidos
+            // MySQL no permite eliminar un índice usado por una FK sin soltar la FK primero
+            $table->dropForeign(['user_id']);
+            $table->dropForeign(['curso_id']);
             $table->dropUnique(['user_id', 'curso_id']);
 
-            // Datos del semestre
-            $table->string('semestre', 10)->nullable()->after('fuente');  // "2021-1", "2024-0"
-            $table->char('tipo', 1)->nullable()->after('semestre');       // O=Obligatorio, E=Electivo
-            $table->unsignedSmallInteger('creditos')->nullable()->after('tipo');
-            $table->decimal('nota', 4, 2)->nullable()->after('creditos'); // 0.00 - 20.00
+            // Re-crear las foreign keys (sin índice unique anterior)
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('curso_id')->references('id')->on('cursos')->cascadeOnDelete();
 
-            // Nueva unique: un alumno no puede tener el mismo curso en el mismo semestre dos veces
+            // Nuevos campos
+            $table->string('semestre', 10)->nullable()->after('fuente');
+            $table->char('tipo', 1)->nullable()->after('semestre');
+            $table->unsignedSmallInteger('creditos')->nullable()->after('tipo');
+            $table->decimal('nota', 4, 2)->nullable()->after('creditos');
+
+            // Nueva unique: permite el mismo curso en distintos semestres
             $table->unique(['user_id', 'curso_id', 'semestre']);
         });
     }
@@ -26,8 +32,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('historial_academico', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+            $table->dropForeign(['curso_id']);
             $table->dropUnique(['user_id', 'curso_id', 'semestre']);
             $table->dropColumn(['semestre', 'tipo', 'creditos', 'nota']);
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('curso_id')->references('id')->on('cursos')->cascadeOnDelete();
             $table->unique(['user_id', 'curso_id']);
         });
     }
