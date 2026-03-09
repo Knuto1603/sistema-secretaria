@@ -32,16 +32,14 @@ class ProgramacionController extends Controller
         try {
             $data = $request->all();
 
-            // Si el usuario es estudiante, inyectar su escuela_id para filtrar por plan
             $user = $request->user();
             if ($user && $user->tipo_usuario === 'estudiante' && $user->escuela_id) {
                 $data['escuela_id'] = $user->escuela_id;
             }
 
-            $dto = ProgramacionFilterDTO::fromRequest($data);
+            $dto    = ProgramacionFilterDTO::fromRequest($data);
             $result = $this->service->getPaginated($dto, $request);
-
-            $items = $this->transformer->collection(collect($result->items()));
+            $items  = $this->transformer->collection(collect($result->items()));
 
             return $this->paginated($items, $result, 'Lista de programación académica');
         } catch (Exception $e) {
@@ -78,7 +76,6 @@ class ProgramacionController extends Controller
 
     /**
      * Programaciones elegibles para el estudiante autenticado.
-     * Filtra por escuela, ciclo estimado, historial académico y prerequisitos.
      */
     public function paraMi(Request $request): JsonResponse
     {
@@ -114,7 +111,7 @@ class ProgramacionController extends Controller
     }
 
     /**
-     * Importar programación desde reporte HTML del SIGA (PROG ACAD SEMESTRE.htm)
+     * Importar programación desde reporte HTML del SIGA
      */
     public function importHtml(ImportProgramacionHtmlRequest $request): JsonResponse
     {
@@ -155,10 +152,10 @@ class ProgramacionController extends Controller
         ]);
 
         try {
-            $curso    = Curso::findOrFail($data['curso_id']);
-            $created  = [];
+            $curso   = Curso::findOrFail($data['curso_id']);
+            $created = [];
 
-            // Verificar conflictos grupo+aula antes de crear cualquier sección
+            // Verificar conflictos antes de crear
             $conflictos = [];
             foreach ($data['secciones'] as $index => $seccionData) {
                 $grupoId = $seccionData['grupo_horario_id'] ?? null;
@@ -166,7 +163,6 @@ class ProgramacionController extends Controller
 
                 if (!$grupoId || !$aulaId) continue;
 
-                // Buscar en la BD y también en las secciones ya procesadas del mismo request
                 $ocupadaBD = ProgramacionAcademica::where('periodo_id', $data['periodo_id'])
                     ->where('grupo_horario_id', $grupoId)
                     ->where('aula_id', $aulaId)
@@ -179,7 +175,6 @@ class ProgramacionController extends Controller
                     continue;
                 }
 
-                // Detectar duplicados dentro del mismo request (varias secciones con mismo grupo+aula)
                 foreach (array_slice($data['secciones'], 0, $index) as $prev) {
                     if (($prev['grupo_horario_id'] ?? null) === $grupoId && ($prev['aula_id'] ?? null) === $aulaId) {
                         $grupo = GrupoHorario::find($grupoId);
@@ -231,6 +226,173 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Actualizar una sección de programación académica
+     */
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $programacion = $this->service->findById($id);
+
+        if (!$programacion) {
+            return $this->notFound('Programación no encontrada');
+        }
+
+        $data = $request->validate([
+            'grupo_horario_id' => 'nullable|uuid|exists:grupos_horario,id',
+            'aula_id'          => 'nullable|uuid|exists:aulas,id',
+            'docente_id'       => 'nullable|uuid|exists:docentes,id',
+            'capacidad'        => 'required|integer|min:1|max:500',
+            'escuelas'         => 'nullable|array',
+            'escuelas.*'       => 'uuid|exists:escuelas,id',
+        ]);
+
+        try {
+            // Verificar conflicto de grupo+aula (excluyendo el mismo registro)
+            if (!empty($data['grupo_horario_id']) && !empty($data['aula_id'])) {
+                $conflicto = ProgramacionAcademica::where('periodo_id', $programacion->periodo_id)
+                    ->where('grupo_horario_id', $data['grupo_horario_id'])
+                    ->where('aula_id', $data['aula_id'])
+                    ->where('id', '!=', $id)
+                    ->with(['curso'])
+                    ->first();
+
+                if ($conflicto) {
+                    return $this->error(
+                        "Conflicto: ese grupo y aula ya están ocupados por \"{$conflicto->curso?->nombre}\"",
+                        422
+                    );
+                }
+            }
+
+            $grupoNombre = null;
+            if (!empty($data['grupo_horario_id'])) {
+                $grupoNombre = GrupoHorario::find($data['grupo_horario_id'])?->nombre;
+            }
+
+            $programacion->update([
+                'grupo_horario_id' => $data['grupo_horario_id'],
+                'aula_id'          => $data['aula_id'],
+                'docente_id'       => $data['docente_id'],
+                'capacidad'        => $data['capacidad'],
+                'grupo'            => $grupoNombre,
+            ]);
+
+            if (isset($data['escuelas'])) {
+                $programacion->escuelas()->sync($data['escuelas']);
+            }
+
+            $programacion->load(['curso', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas']);
+
+            return $this->success(
+                $this->transformer->toArray($programacion),
+                'Programación actualizada correctamente'
+            );
+        } catch (Exception $e) {
+            return $this->error('Error al actualizar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Eliminar una sección de programación académica
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        $programacion = $this->service->findById($id);
+
+        if (!$programacion) {
+            return $this->notFound('Programación no encontrada');
+        }
+
+        try {
+            $this->service->delete($id);
+            return $this->success(null, 'Programación eliminada correctamente');
+        } catch (Exception $e) {
+            return $this->error('Error al eliminar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Exportar programación a Excel con filtros actuales
+     */
+    public function export(Request $request): mixed
+    {
+        try {
+            $periodoId = $request->get('periodo_id') ?? $this->service->getActivePeriodoId();
+            $search    = $request->get('search', '');
+            $escuelaId = $request->get('escuela_id');
+
+            if (!$periodoId) {
+                return $this->error('No hay periodo activo ni se especificó uno.', 422);
+            }
+
+            $items = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId);
+
+            // Crear Excel con PhpSpreadsheet
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet       = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Programación');
+
+            // Cabeceras
+            $headers = ['CÓDIGO', 'CURSO', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
+            foreach ($headers as $i => $h) {
+                $col = chr(65 + $i);
+                $sheet->setCellValue("{$col}1", $h);
+                $sheet->getStyle("{$col}1")->getFont()->setBold(true);
+                $sheet->getStyle("{$col}1")->getFill()
+                    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FF6366F1');
+                $sheet->getStyle("{$col}1")->getFont()->getColor()->setARGB('FFFFFFFF');
+            }
+
+            // Datos
+            $row = 2;
+            foreach ($items as $prog) {
+                $aulaNombre = $prog->aula; // texto importado
+                if (!$aulaNombre && $prog->aula_id) {
+                    $aulaNombre = $prog->aulaRelacion?->nombre ?? '';
+                }
+
+                $estado = $prog->estaLleno()
+                    ? ($prog->lleno_manual ? 'LLENO (Manual)' : 'LLENO')
+                    : 'DISPONIBLE';
+
+                $sheet->setCellValue("A{$row}", $prog->curso?->codigo ?? '');
+                $sheet->setCellValue("B{$row}", $prog->curso?->nombre ?? '');
+                $sheet->setCellValue("C{$row}", $prog->grupo ?? '');
+                $sheet->setCellValue("D{$row}", $prog->seccion ?? '');
+                $sheet->setCellValue("E{$row}", $aulaNombre);
+                $sheet->setCellValue("F{$row}", $prog->docente?->nombre_completo ?? 'POR ASIGNAR');
+                $sheet->setCellValue("G{$row}", $prog->capacidad ?? 0);
+                $sheet->setCellValue("H{$row}", $prog->n_inscritos ?? 0);
+                $sheet->setCellValue("I{$row}", $estado);
+                $sheet->setCellValue("J{$row}", $prog->clave ?? '');
+
+                if ($prog->estaLleno()) {
+                    $sheet->getStyle("A{$row}:J{$row}")->getFill()
+                        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB('FFFEF2F2');
+                }
+
+                $row++;
+            }
+
+            // Autofit
+            foreach (range('A', 'J') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $tmpFile = tempnam(sys_get_temp_dir(), 'prog_export_') . '.xlsx';
+            $writer  = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save($tmpFile);
+
+            return response()->download($tmpFile, 'programacion_export.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        } catch (Exception $e) {
+            return $this->error('Error al exportar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Marcar/desmarcar un curso como lleno manualmente
      */
     public function toggleLleno(string $id): JsonResponse
@@ -255,7 +417,6 @@ class ProgramacionController extends Controller
     {
         $templatePath = storage_path('app/templates/programacion_template.xlsx');
 
-        // Si no existe el archivo, lo creamos
         if (!file_exists($templatePath)) {
             $this->createTemplate($templatePath);
         }
@@ -265,35 +426,22 @@ class ProgramacionController extends Controller
         ]);
     }
 
-    /**
-     * Crear archivo de plantilla Excel
-     */
     private function createTemplate(string $path): void
     {
-        // Asegurar que existe el directorio
         $dir = dirname($path);
         if (!is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
-        // Crear usando PhpSpreadsheet
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Programación');
 
-        // Encabezados
         $headers = [
-            'A1' => 'CODIGO',
-            'B1' => 'NOMBRE_DEL_CURSO',
-            'C1' => 'AREA',
-            'D1' => 'DOCENTE',
-            'E1' => 'CLAVE',
-            'F1' => 'GRP',
-            'G1' => 'SEC',
-            'H1' => 'AULA',
-            'I1' => 'N_ACTA',
-            'J1' => 'CAP',
-            'K1' => 'N_INSCRITOS',
+            'A1' => 'CODIGO', 'B1' => 'NOMBRE_DEL_CURSO', 'C1' => 'AREA',
+            'D1' => 'DOCENTE', 'E1' => 'CLAVE', 'F1' => 'GRP',
+            'G1' => 'SEC', 'H1' => 'AULA', 'I1' => 'N_ACTA',
+            'J1' => 'CAP', 'K1' => 'N_INSCRITOS',
         ];
 
         foreach ($headers as $cell => $value) {
@@ -304,31 +452,20 @@ class ProgramacionController extends Controller
                 ->getStartColor()->setARGB('FFE0E0E0');
         }
 
-        // Fila de ejemplo
         $example = [
-            'A2' => 'MAT101',
-            'B2' => 'CALCULO I',
-            'C2' => 'MATEMATICAS',
-            'D2' => 'GARCIA LOPEZ JUAN',
-            'E2' => '12345',
-            'F2' => 'A',
-            'G2' => '1',
-            'H2' => 'AULA-101',
-            'I2' => '001',
-            'J2' => '40',
-            'K2' => '35',
+            'A2' => 'MAT101', 'B2' => 'CALCULO I', 'C2' => 'MATEMATICAS',
+            'D2' => 'GARCIA LOPEZ JUAN', 'E2' => '12345', 'F2' => 'A',
+            'G2' => '1', 'H2' => 'AULA-101', 'I2' => '001', 'J2' => '40', 'K2' => '35',
         ];
 
         foreach ($example as $cell => $value) {
             $sheet->setCellValue($cell, $value);
         }
 
-        // Ajustar ancho de columnas
         foreach (range('A', 'K') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        // Guardar
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save($path);
     }
