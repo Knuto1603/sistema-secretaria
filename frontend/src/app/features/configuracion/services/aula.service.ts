@@ -5,7 +5,7 @@ import { environment } from '@env/environment';
 
 export interface Aula {
   id: string;
-  pabellon_id: string;
+  pabellon_id: string | null;
   nombre: string;
   capacidad: number;
   activo: boolean;
@@ -50,7 +50,11 @@ export class AulaService {
     return this.http.post<ApiResponse<Aula>>(`${this.apiUrl}/${pabellonId}/aulas`, data).pipe(map(r => r.data));
   }
 
-  actualizarAula(id: string, data: Partial<Omit<Aula, 'id' | 'pabellon_id'>>): Observable<Aula> {
+  getAulasHuerfanas(): Observable<Aula[]> {
+    return this.http.get<ApiResponse<Aula[]>>(`${this.aulasUrl}/huerfanas`).pipe(map(r => r.data));
+  }
+
+  actualizarAula(id: string, data: Partial<Omit<Aula, 'id'>>): Observable<Aula> {
     return this.http.put<ApiResponse<Aula>>(`${this.aulasUrl}/${id}`, data).pipe(map(r => r.data));
   }
 
