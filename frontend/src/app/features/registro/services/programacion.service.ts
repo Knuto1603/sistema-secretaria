@@ -254,4 +254,10 @@ export class ProgramacionService {
       .patch<ApiResponse<Programacion>>(`${this.apiUrl}/${id}/toggle-lleno`, {})
       .pipe(map(response => response.data));
   }
+
+  eliminarPorPeriodo(periodoId: string): Observable<{ eliminados: number }> {
+    return this.http
+      .delete<ApiResponse<{ eliminados: number }>>(`${this.apiUrl}/periodo/${periodoId}`)
+      .pipe(map(r => r.data));
+  }
 }
