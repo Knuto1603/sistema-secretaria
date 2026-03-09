@@ -1,0 +1,153 @@
+<!-- Overlay -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
+      <div>
+        <h2 class="text-lg font-black text-slate-800">Detalle de Sección</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Información completa</p>
+      </div>
+      <button (click)="cerrado.emit()"
+        class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="flex-1 flex items-center justify-center py-16">
+        <svg class="w-8 h-8 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="flex-1 flex items-center justify-center">
+        <p class="text-sm text-red-600 font-medium">{{ error() }}</p>
+      </div>
+    }
+
+    @if (!loading() && detalle()) {
+      <div class="flex-1 overflow-y-auto px-7 py-5 space-y-5">
+
+        <!-- Curso -->
+        <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+          <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
+          <p class="text-base font-black text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
+          <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.curso?.codigo }}</p>
+        </div>
+
+        <!-- Grid de datos principales -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clave</p>
+            <p class="text-sm font-black text-slate-700 mt-1 font-mono">{{ detalle()!.clave }}</p>
+          </div>
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grupo</p>
+            <p class="text-sm font-black text-indigo-600 mt-1">{{ detalle()!.grupo || '—' }}</p>
+          </div>
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sección</p>
+            <p class="text-sm font-black text-slate-700 mt-1">{{ detalle()!.seccion || '—' }}</p>
+          </div>
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo</p>
+            <p class="text-xs font-bold text-slate-600 mt-1 leading-snug">{{ detalle()!.periodo?.nombre || '—' }}</p>
+          </div>
+        </div>
+
+        <!-- Aula y Docente -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Aula</p>
+            <p class="text-sm font-bold text-slate-700">{{ aulaNombre(detalle()!) }}</p>
+            @if (detalle()!.aula_rel?.pabellon) {
+              <p class="text-xs text-slate-400 mt-0.5">{{ detalle()!.aula_rel!.pabellon!.nombre }}</p>
+            }
+          </div>
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Docente</p>
+            <p class="text-sm font-bold text-slate-700" [ngClass]="{'italic text-slate-300': !detalle()!.docente?.nombre_completo}">
+              {{ detalle()!.docente?.nombre_completo || 'POR ASIGNAR' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Horario -->
+        <div class="px-4 py-3 bg-slate-50 rounded-2xl">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Horario</p>
+          @if (detalle()!.grupo_horario?.detalles?.length) {
+            <div class="flex flex-wrap gap-2">
+              @for (slot of detalle()!.grupo_horario!.detalles; track $index) {
+                <span class="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl">
+                  {{ diaNombre(slot.dia_semana) }} {{ slot.hora_inicio.substring(0,5) }}–{{ slot.hora_fin.substring(0,5) }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="text-xs text-slate-400 italic">Sin horario asignado</p>
+          }
+        </div>
+
+        <!-- Cupos -->
+        <div class="px-4 py-3 bg-slate-50 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cupos</p>
+            <div class="flex items-center gap-2">
+              @if (detalle()!.esta_lleno) {
+                <app-badge color="red">Lleno{{ detalle()!.lleno_manual ? ' (Manual)' : '' }}</app-badge>
+              } @else {
+                <app-badge color="emerald">Disponible</app-badge>
+              }
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div class="h-2 rounded-full transition-all"
+                [style.width.%]="ocupacion"
+                [ngClass]="detalle()!.esta_lleno ? 'bg-red-500' : 'bg-emerald-500'">
+              </div>
+            </div>
+            <span class="text-xs font-black text-slate-600 whitespace-nowrap">
+              {{ detalle()!.n_inscritos }} / {{ detalle()!.capacidad }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Escuelas -->
+        @if (detalle()!.escuelas?.length) {
+          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Escuelas habilitadas</p>
+            <div class="flex flex-wrap gap-2">
+              @for (esc of detalle()!.escuelas!; track esc.id) {
+                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl">
+                  {{ esc.nombre_corto || esc.nombre }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-3 px-7 py-5 border-t border-slate-100">
+        <app-btn variant="ghost" (clicked)="cerrado.emit()">Cerrar</app-btn>
+        <app-btn variant="primary" (clicked)="editar.emit(detalle()!)">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Editar
+        </app-btn>
+      </div>
+    }
+
+  </div>
+</div>
