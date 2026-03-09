@@ -7,16 +7,18 @@ use App\Models\Curso;
 use App\Models\Docente;
 use App\Models\Escuela;
 use App\Models\GrupoHorario;
+use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use DOMDocument;
 use DOMXPath;
 
 class ProgramacionHtmlImport
 {
-    private array $resultados   = [];
+    private array $resultados    = [];
     private array $escuelasCache = [];
-    private array $grupoCache   = [];
-    private array $aulaCache    = [];
+    private array $grupoCache    = [];
+    private array $aulaCache     = [];
+    private array $cicloCache    = []; // "curso_id:escuela_id" → ciclo
 
     public function __construct(private readonly string $periodoId)
     {
@@ -101,6 +103,16 @@ class ProgramacionHtmlImport
             $escuelaIds = $this->resolverEscuelas($escuelasText);
             $programacion->escuelas()->sync($escuelaIds);
 
+            // Ciclo: consultar plan_estudios usando la primera escuela
+            $ciclo = null;
+            if (!empty($escuelaIds)) {
+                $ciclo = $this->resolverCiclo($curso->id, $escuelaIds[0]);
+            }
+            if ($ciclo !== null) {
+                $programacion->ciclo = $ciclo;
+                $programacion->save();
+            }
+
             $this->resultados[] = [
                 'clave'    => $clave,
                 'curso'    => $nombreCurso,
@@ -177,6 +189,20 @@ class ProgramacionHtmlImport
         if (str_contains($upper, 'INFORMATIC')) return '1';
         if (str_contains($upper, 'INDUSTRIAL')) return '0';
         return null;
+    }
+
+    private function resolverCiclo(string $cursoId, string $escuelaId): ?int
+    {
+        $key = "{$cursoId}:{$escuelaId}";
+
+        if (!array_key_exists($key, $this->cicloCache)) {
+            $plan = PlanEstudios::where('curso_id', $cursoId)
+                ->where('escuela_id', $escuelaId)
+                ->first(['ciclo']);
+            $this->cicloCache[$key] = $plan?->ciclo;
+        }
+
+        return $this->cicloCache[$key];
     }
 
     public function getResultados(): array { return $this->resultados; }
