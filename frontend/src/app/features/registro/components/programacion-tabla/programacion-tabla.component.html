@@ -8,6 +8,15 @@
     </app-programacion-form>
   }
 
+  <!-- Modal: Detalle Programación -->
+  @if (programacionDetalleId()) {
+    <app-programacion-detalle
+      [id]="programacionDetalleId()!"
+      (cerrado)="programacionDetalleId.set(null)"
+      (editar)="onDetalleEditar($event)">
+    </app-programacion-detalle>
+  }
+
   <!-- Modal: Editar Programación -->
   @if (programacionAEditar()) {
     <app-programacion-edit-form
@@ -148,6 +157,47 @@
           </div>
         }
 
+        <!-- Filtros: Escuela y Ciclo (solo admin) -->
+        @if (!esEstudiante()) {
+          <!-- Escuela -->
+          <div class="relative">
+            <select
+              [ngModel]="escuelaSeleccionada()"
+              (ngModelChange)="onEscuelaChange($event)"
+              class="pl-4 pr-10 py-2.5 text-sm border rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
+              [ngClass]="escuelaSeleccionada() ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+              <option value="">Todas las escuelas</option>
+              @for (e of escuelas(); track e.id) {
+                <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Ciclo -->
+          <div class="relative">
+            <select
+              [ngModel]="cicloSeleccionado()"
+              (ngModelChange)="onCicloChange($event)"
+              class="pl-4 pr-10 py-2.5 text-sm border rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[110px] transition-all"
+              [ngClass]="cicloSeleccionado() ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+              <option [value]="null">Todos los ciclos</option>
+              @for (c of ciclos; track c) {
+                <option [value]="c">Ciclo {{ c }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+        }
+
         <!-- Buscador -->
         <div class="relative flex-1 min-w-[160px]">
           <input
@@ -157,6 +207,17 @@
             placeholder="Buscar curso o docente..."
             class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
         </div>
+
+        <!-- Botón limpiar filtros -->
+        @if (hayFiltrosActivos()) {
+          <button (click)="limpiarFiltros()"
+            class="px-3 py-2.5 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Limpiar
+          </button>
+        }
 
         <!-- Toggle vista (solo admin) -->
         @if (!esEstudiante()) {
@@ -308,8 +369,21 @@
             </button>
           }
 
-          <!-- Botones admin: editar, eliminar, solicitudes -->
+          <!-- Botones admin: ver, editar, eliminar, solicitudes -->
           @if (esAdmin()) {
+            <!-- Ver detalle -->
+            <button
+              (click)="abrirDetalle(row)"
+              title="Ver detalle"
+              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+
             <!-- Editar -->
             <button
               (click)="abrirEditar(row)"

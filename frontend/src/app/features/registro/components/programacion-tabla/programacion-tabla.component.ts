@@ -10,10 +10,14 @@ import { HistorialOnboardingComponent } from '../historial-onboarding/historial-
 import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
 import { ProgramacionEditFormComponent } from '../programacion-edit-form/programacion-edit-form.component';
 import { ProgramacionMatrizComponent } from '../programacion-matriz/programacion-matriz.component';
+import { ProgramacionDetalleComponent } from '../programacion-detalle/programacion-detalle.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { environment } from '@env/environment';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -31,6 +35,7 @@ type VistaActiva = 'tabla' | 'matriz';
     ProgramacionFormComponent,
     ProgramacionEditFormComponent,
     ProgramacionMatrizComponent,
+    ProgramacionDetalleComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -38,6 +43,7 @@ export class ProgramacionTablaComponent implements OnInit {
   private programacionService = inject(ProgramacionService);
   private periodoService      = inject(PeriodoService);
   private solicitudService    = inject(SolicitudService);
+  private http                = inject(HttpClient);
   public  authService         = inject(AuthService);
   private router              = inject(Router);
 
@@ -61,6 +67,12 @@ export class ProgramacionTablaComponent implements OnInit {
   // Vista
   vistaActiva = signal<VistaActiva>('tabla');
 
+  // Filtros adicionales (admin)
+  escuelas           = signal<Array<{ id: string; nombre: string; nombre_corto: string | null }>>([]);
+  escuelaSeleccionada = signal<string>('');
+  cicloSeleccionado   = signal<number | null>(null);
+  ciclos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
   // Estado modo estudiante
   cicloActual              = signal<number | null>(null);
   historialRegistrado      = signal<boolean>(false);
@@ -68,11 +80,12 @@ export class ProgramacionTablaComponent implements OnInit {
   programacionesConSolicitud = signal<Set<string>>(new Set());
 
   // Modales
-  showFormProgramacion = signal(false);
-  programacionAEditar  = signal<Programacion | null>(null);
+  showFormProgramacion  = signal(false);
+  programacionAEditar   = signal<Programacion | null>(null);
   programacionAEliminar = signal<Programacion | null>(null);
-  eliminando           = signal(false);
-  errorEliminar        = signal<string | null>(null);
+  programacionDetalleId = signal<string | null>(null);
+  eliminando            = signal(false);
+  errorEliminar         = signal<string | null>(null);
 
   columnas: TableColumn[] = [
     { key: 'curso',   label: 'Curso' },
@@ -95,7 +108,17 @@ export class ProgramacionTablaComponent implements OnInit {
       this.cargarParaMi();
     } else {
       this.cargarPeriodosYProgramacion();
+      this.cargarEscuelas();
     }
+  }
+
+  cargarEscuelas(): void {
+    this.http.get<{ success: boolean; data: Array<{ id: string; nombre: string; nombre_corto: string | null }> }>(
+      `${environment.apiUrl}/escuelas`
+    ).pipe(map(r => r.data)).subscribe({
+      next: escuelas => this.escuelas.set(escuelas),
+      error: () => {},
+    });
   }
 
   // ─── MODO ADMINISTRADOR ──────────────────────────────────────────────────
@@ -129,7 +152,10 @@ export class ProgramacionTablaComponent implements OnInit {
 
     const periodoId = this.periodoSeleccionado() || undefined;
 
-    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId).subscribe({
+    const escuelaId = this.escuelaSeleccionada() || undefined;
+    const ciclo     = this.cicloSeleccionado() || undefined;
+
+    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo).subscribe({
       next: res => {
         this.programacion.set(res.data);
         this.paginationData.set(res);
@@ -144,8 +170,9 @@ export class ProgramacionTablaComponent implements OnInit {
     if (!periodoId) return;
 
     this.loadingMatriz.set(true);
-    // Cargar hasta 1000 items para la matriz
-    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId).subscribe({
+    const escuelaId = this.escuelaSeleccionada() || undefined;
+    const ciclo     = this.cicloSeleccionado() || undefined;
+    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId, escuelaId, ciclo).subscribe({
       next: res => {
         this.todosLosItems.set(res.data);
         this.loadingMatriz.set(false);
@@ -190,6 +217,15 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   // ─── EDITAR / ELIMINAR ───────────────────────────────────────────────────
+
+  abrirDetalle(item: Programacion): void {
+    this.programacionDetalleId.set(item.id);
+  }
+
+  onDetalleEditar(prog: Programacion): void {
+    this.programacionDetalleId.set(null);
+    this.programacionAEditar.set(prog);
+  }
 
   abrirEditar(item: Programacion): void {
     this.programacionAEditar.set(item);
@@ -269,9 +305,15 @@ export class ProgramacionTablaComponent implements OnInit {
   exportarExcel(): void {
     this.programacionService.exportarExcel(
       this.periodoSeleccionado() || undefined,
-      this.searchTerm() || undefined
+      this.searchTerm() || undefined,
+      this.escuelaSeleccionada() || undefined,
+      this.cicloSeleccionado() || undefined
     );
   }
+
+  hayFiltrosActivos = computed(() =>
+    !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado())
+  );
 
   // ─── ONBOARDING ──────────────────────────────────────────────────────────
 
@@ -290,6 +332,28 @@ export class ProgramacionTablaComponent implements OnInit {
   onPeriodoChange(periodoId: string): void {
     this.periodoSeleccionado.set(periodoId);
     this.searchTerm.set('');
+    this.todosLosItems.set([]);
+    this.cargarProgramacion(1);
+  }
+
+  onEscuelaChange(escuelaId: string): void {
+    this.escuelaSeleccionada.set(escuelaId);
+    this.todosLosItems.set([]);
+    this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+  }
+
+  onCicloChange(ciclo: string): void {
+    this.cicloSeleccionado.set(ciclo ? parseInt(ciclo) : null);
+    this.todosLosItems.set([]);
+    this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+  }
+
+  limpiarFiltros(): void {
+    this.searchTerm.set('');
+    this.escuelaSeleccionada.set('');
+    this.cicloSeleccionado.set(null);
     this.todosLosItems.set([]);
     this.cargarProgramacion(1);
   }
