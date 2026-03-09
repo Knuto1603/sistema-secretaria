@@ -57,6 +57,64 @@
     </div>
   }
 
+  <!-- ─── Aulas sin pabellón ──────────────────────────────────────────── -->
+  @if (!loading() && aulasHuerfanas().length > 0) {
+    <div class="bg-amber-50 border border-amber-200 rounded-3xl overflow-hidden shadow-sm">
+      <div class="flex items-center gap-3 px-6 py-4 border-b border-amber-200">
+        <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-xl flex-shrink-0">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="font-bold text-amber-800">Aulas sin pabellón asignado</span>
+          <span class="ml-2 text-xs text-amber-600 font-medium">
+            {{ aulasHuerfanas().length }} aula{{ aulasHuerfanas().length !== 1 ? 's' : '' }} creadas al importar programación
+          </span>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 space-y-3">
+        @for (aula of aulasHuerfanas(); track aula.id) {
+          <div class="flex flex-wrap items-center gap-3 py-2 border-b border-amber-100 last:border-0">
+            <!-- Info aula -->
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <span class="text-sm font-bold text-slate-700">{{ aula.nombre }}</span>
+              <span class="text-xs text-slate-400 font-medium">{{ aula.capacidad }} cupos</span>
+            </div>
+
+            <!-- Selector pabellón -->
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <select
+                  [(ngModel)]="pabellonSeleccionado[aula.id]"
+                  class="pl-3 pr-8 py-1.5 text-sm border border-amber-300 rounded-xl bg-white focus:ring-2 focus:ring-amber-500 outline-none appearance-none cursor-pointer font-medium min-w-[160px]">
+                  <option value="">Seleccionar pabellón...</option>
+                  @for (p of pabellones(); track p.id) {
+                    <option [value]="p.id">{{ p.nombre }}</option>
+                  }
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <app-btn
+                variant="primary"
+                [loading]="aulaAsignando() === aula.id"
+                (clicked)="asignarPabellonAula(aula)">
+                Asignar
+              </app-btn>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   @for (pabellon of pabellones(); track pabellon.id) {
     <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
 
