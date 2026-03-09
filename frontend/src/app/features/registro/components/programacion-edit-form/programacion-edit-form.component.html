@@ -61,7 +61,12 @@
 
           <!-- Grupo -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Grupo Horario</label>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Grupo Horario</label>
+            @if (grupoTextoActual && !grupoHorarioId()) {
+              <p class="text-[10px] text-amber-600 font-bold mb-1">
+                Actual (texto): <span class="font-black">{{ grupoTextoActual }}</span>
+              </p>
+            }
             <select [ngModel]="grupoHorarioId()" (ngModelChange)="grupoHorarioId.set($event)"
               class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
               <option value="">Sin grupo</option>
@@ -73,7 +78,12 @@
 
           <!-- Aula -->
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Aula</label>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Aula</label>
+            @if (aulaTextoActual && !aulaId()) {
+              <p class="text-[10px] text-amber-600 font-bold mb-1">
+                Actual (texto): <span class="font-black">{{ aulaTextoActual }}</span>
+              </p>
+            }
             <select [ngModel]="aulaId()" (ngModelChange)="onAulaChange($event)"
               class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
               <option value="">Sin aula</option>

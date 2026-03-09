@@ -60,6 +60,10 @@ export class ProgramacionEditFormComponent implements OnInit {
   docenteNombre    = signal<string>('');
   showDocenteDropdown = signal(false);
 
+  // Valores de texto actuales (para mostrar cuando FK es null)
+  grupoTextoActual  = '';
+  aulaTextoActual   = '';
+
   ngOnInit(): void {
     const prog = this.programacion();
 
@@ -67,9 +71,13 @@ export class ProgramacionEditFormComponent implements OnInit {
     this.grupoHorarioId.set(prog.grupo_horario_id ?? '');
     this.aulaId.set(prog.aula_id ?? '');
     this.capacidad.set(prog.capacidad ?? 30);
-    this.docenteId.set(prog.docente_id ?? null);
+    this.docenteId.set(prog.docente_id ?? prog.docente?.id ?? null);
     this.docenteBusqueda = prog.docente?.nombre_completo ?? '';
     this.docenteNombre.set(prog.docente?.nombre_completo ?? '');
+
+    // Guardar textos actuales para mostrar como referencia cuando FK es null
+    this.grupoTextoActual = prog.grupo || '';
+    this.aulaTextoActual  = prog.aula_nombre || prog.aula || prog.aula_rel?.nombre || '';
 
     forkJoin({
       grupos:    this.horarioService.getGrupos(),
