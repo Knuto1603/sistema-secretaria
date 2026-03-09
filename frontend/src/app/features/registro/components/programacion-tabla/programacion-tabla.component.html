@@ -26,6 +26,40 @@
     </app-programacion-edit-form>
   }
 
+  <!-- Modal: Limpiar Periodo (solo developer) -->
+  @if (showLimpiarPeriodo()) {
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-800">Limpiar programación del periodo</h3>
+            <p class="text-sm text-slate-500 mt-0.5">Esta acción eliminará <strong>todos</strong> los cursos del periodo seleccionado.</p>
+          </div>
+        </div>
+        <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl mb-5">
+          <p class="text-xs font-bold text-red-600 uppercase tracking-widest">Periodo a limpiar</p>
+          <p class="text-sm font-bold text-slate-800 mt-1">{{ getPeriodoNombre() }}</p>
+          <p class="text-xs text-red-500 mt-1">Se eliminarán todas las secciones programadas. Esta acción no se puede deshacer.</p>
+        </div>
+        @if (limpiarPeriodoError()) {
+          <p class="text-sm text-red-600 font-medium mb-4">{{ limpiarPeriodoError() }}</p>
+        }
+        <div class="flex gap-3 justify-end">
+          <app-btn variant="ghost" (clicked)="showLimpiarPeriodo.set(false)">Cancelar</app-btn>
+          <app-btn variant="danger" [loading]="limpiarPeriodoLoading()" (clicked)="confirmarLimpiarPeriodo()">
+            Sí, limpiar todo
+          </app-btn>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Modal: Confirmar Eliminación -->
   @if (programacionAEliminar()) {
     <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -252,6 +286,15 @@
           <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
           <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
           <div class="flex flex-wrap items-center gap-2">
+            @if (esDeveloper()) {
+              <app-btn variant="danger" (clicked)="abrirLimpiarPeriodo()">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Limpiar periodo
+              </app-btn>
+            }
             <app-btn variant="ghost" (clicked)="descargarPlantilla()">
               <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -293,9 +336,18 @@
 
         <!-- Curso -->
         @if (column.key === 'curso') {
-          <div class="flex flex-col">
+          <div class="flex flex-col gap-1">
             <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
             <span class="text-[10px] text-slate-400 font-bold tracking-tighter">{{ row.curso?.codigo || '-' }}</span>
+            @if (row.escuelas?.length) {
+              <div class="flex flex-wrap gap-1">
+                @for (e of row.escuelas; track e.id) {
+                  <span class="px-1.5 py-0.5 bg-violet-50 text-violet-600 text-[9px] font-bold rounded-md border border-violet-100 leading-none">
+                    {{ e.nombre_corto || e.nombre }}
+                  </span>
+                }
+              </div>
+            }
           </div>
         }
 
