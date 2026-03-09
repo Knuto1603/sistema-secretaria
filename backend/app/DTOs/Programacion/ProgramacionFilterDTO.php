@@ -8,7 +8,8 @@ class ProgramacionFilterDTO
         public readonly ?string $periodo_id,
         public readonly ?string $search,
         public readonly ?int    $per_page,
-        public readonly ?string $escuela_id = null, // null = sin restricción de plan
+        public readonly ?string $escuela_id = null,
+        public readonly ?int    $ciclo      = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -18,6 +19,7 @@ class ProgramacionFilterDTO
             search:     $data['search'] ?? null,
             per_page:   isset($data['per_page']) ? (int) $data['per_page'] : null,
             escuela_id: $data['escuela_id'] ?? null,
+            ciclo:      isset($data['ciclo']) ? (int) $data['ciclo'] : null,
         );
     }
 }
