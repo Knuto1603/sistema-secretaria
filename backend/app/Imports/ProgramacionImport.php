@@ -47,6 +47,22 @@ class ProgramacionImport implements ToCollection, WithHeadingRow
         });
     }
 
+    private function romanToInt(?string $roman): ?int
+    {
+        if (!$roman || trim($roman) === '') return null;
+        $map = ['I'=>1,'V'=>5,'X'=>10,'L'=>50,'C'=>100,'D'=>500,'M'=>1000];
+        $roman = strtoupper(trim($roman));
+        $result = 0;
+        $prev = 0;
+        foreach (array_reverse(str_split($roman)) as $char) {
+            $val = $map[$char] ?? 0;
+            if ($val < $prev) $result -= $val;
+            else              $result += $val;
+            $prev = $val;
+        }
+        return $result > 0 ? $result : null;
+    }
+
     private function normalizar(string $texto): string
     {
         $texto = strtoupper(trim($texto));
@@ -158,6 +174,7 @@ class ProgramacionImport implements ToCollection, WithHeadingRow
             $grupoHorarioId = $this->resolverGrupo($grupoNombreTexto);
             $aulaId         = $this->resolverAula($aulaNombreTexto);
             $escuelaId      = $this->resolverEscuela($escuelaNombre);
+            $cicloInt       = $this->romanToInt($row['ciclo'] ?? null);
 
             $docente = null;
             if ($docenteNombre && strtoupper(trim($docenteNombre)) !== 'POR ASIGNAR') {
@@ -176,6 +193,7 @@ class ProgramacionImport implements ToCollection, WithHeadingRow
                 'clave'            => $row['clave'] ?? 'S/N',
                 'grupo'            => $grupoNombreTexto ? strtoupper(trim($grupoNombreTexto)) : 'A',
                 'seccion'          => $row['sec'] ?? null,
+                'ciclo'            => $cicloInt,
                 'aula'             => $aulaNombreTexto ? strtoupper(trim($aulaNombreTexto)) : null,
                 'n_acta'           => $row['n_acta'] ?? null,
                 'capacidad'        => $capacidad,
