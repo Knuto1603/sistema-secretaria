@@ -2,19 +2,32 @@
 
 namespace App\Imports;
 
+use App\Models\Aula;
 use App\Models\Curso;
 use App\Models\Docente;
 use App\Models\Escuela;
+use App\Models\GrupoHorario;
 use App\Models\ProgramacionAcademica;
 use DOMDocument;
 use DOMXPath;
 
 class ProgramacionHtmlImport
 {
-    private array $resultados = [];
+    private array $resultados   = [];
     private array $escuelasCache = [];
+    private array $grupoCache   = [];
+    private array $aulaCache    = [];
 
-    public function __construct(private readonly string $periodoId) {}
+    public function __construct(private readonly string $periodoId)
+    {
+        GrupoHorario::all(['id', 'nombre'])->each(function ($g) {
+            $this->grupoCache[strtoupper(trim($g->nombre))] = $g->id;
+        });
+
+        Aula::all(['id', 'nombre'])->each(function ($a) {
+            $this->aulaCache[strtoupper(trim($a->nombre))] = $a->id;
+        });
+    }
 
     public function import(string $filePath): void
     {
@@ -36,7 +49,6 @@ class ProgramacionHtmlImport
 
     private function processRow(\DOMElement $row, DOMXPath $xpath): void
     {
-        // Extraer texto de todos los FONT con color de datos (000080)
         $dataValues = [];
         foreach ($xpath->query('.//font', $row) as $font) {
             if (strtolower($font->getAttribute('color')) === '000080') {
@@ -47,17 +59,11 @@ class ProgramacionHtmlImport
             }
         }
 
-        // Estructura esperada: clave, codigo, nombre, grp, secc, aula, docente, cap, n_inscritos, escuelas
-        if (count($dataValues) < 10) {
-            return;
-        }
+        if (count($dataValues) < 10) return;
 
         [$clave, $codigoCurso, $nombreCurso, $grupo, $seccion, $aula, $nombreDocente, $capacidad, $nInscritos, $escuelasText] = $dataValues;
 
-        // La clave debe ser numérica para ser una fila de datos real
-        if (!is_numeric(trim($clave))) {
-            return;
-        }
+        if (!is_numeric(trim($clave))) return;
 
         try {
             $curso = Curso::updateOrCreate(
@@ -71,16 +77,24 @@ class ProgramacionHtmlImport
                 $docente = Docente::firstOrCreate(['nombre_completo' => $docenteNorm]);
             }
 
+            $grupoHorarioId = $this->resolverGrupo($grupo);
+            $aulaId         = $this->resolverAula($aula);
+
+            $cap = (int) $capacidad;
+            if ($cap <= 0) $cap = 40;
+
             $programacion = ProgramacionAcademica::updateOrCreate(
                 ['clave' => trim($clave), 'periodo_id' => $this->periodoId],
                 [
-                    'curso_id'    => $curso->id,
-                    'docente_id'  => $docente?->id,
-                    'grupo'       => $grupo,
-                    'seccion'     => $seccion,
-                    'aula'        => $aula,
-                    'capacidad'   => (int) $capacidad,
-                    'n_inscritos' => (int) $nInscritos,
+                    'curso_id'         => $curso->id,
+                    'docente_id'       => $docente?->id,
+                    'grupo_horario_id' => $grupoHorarioId,
+                    'aula_id'          => $aulaId,
+                    'grupo'            => strtoupper(trim($grupo)),
+                    'seccion'          => $seccion,
+                    'aula'             => strtoupper(trim($aula)),
+                    'capacidad'        => $cap,
+                    'n_inscritos'      => (int) $nInscritos,
                 ]
             );
 
@@ -103,14 +117,44 @@ class ProgramacionHtmlImport
         }
     }
 
+    private function resolverGrupo(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+
+        $key = strtoupper(trim($nombre));
+        if (isset($this->grupoCache[$key])) return $this->grupoCache[$key];
+
+        $grupo = GrupoHorario::firstOrCreate(
+            ['nombre' => $key],
+            ['descripcion' => null, 'activo' => true]
+        );
+
+        $this->grupoCache[$key] = $grupo->id;
+        return $grupo->id;
+    }
+
+    private function resolverAula(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+
+        $key = strtoupper(trim($nombre));
+        if (isset($this->aulaCache[$key])) return $this->aulaCache[$key];
+
+        $aula = Aula::firstOrCreate(
+            ['nombre' => $key],
+            ['pabellon_id' => null, 'capacidad' => 40, 'activo' => true]
+        );
+
+        $this->aulaCache[$key] = $aula->id;
+        return $aula->id;
+    }
+
     private function resolverEscuelas(string $texto): array
     {
         $ids = [];
         foreach (explode('/', $texto) as $parte) {
             $code = $this->mapEscuelaToCode(trim($parte));
-            if ($code === null) {
-                continue;
-            }
+            if ($code === null) continue;
 
             if (!array_key_exists($code, $this->escuelasCache)) {
                 $escuela = Escuela::where('codigo', $code)->first();
@@ -125,9 +169,6 @@ class ProgramacionHtmlImport
         return array_unique($ids);
     }
 
-    /**
-     * Más específico primero para evitar que "INDUSTRIAL" coincida con "AGROINDUSTRIAL".
-     */
     private function mapEscuelaToCode(string $nombre): ?string
     {
         $upper = strtoupper($nombre);
@@ -138,10 +179,7 @@ class ProgramacionHtmlImport
         return null;
     }
 
-    public function getResultados(): array
-    {
-        return $this->resultados;
-    }
+    public function getResultados(): array { return $this->resultados; }
 
     public function getResumen(): array
     {
