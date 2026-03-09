@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <h2 class="text-xl font-black text-slate-800 tracking-tight">Configuración del Sistema</h2>
     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
       Administra los parámetros generales del sistema
@@ -13,7 +13,7 @@
     @for (card of cards; track card.route) {
       <div
         (click)="navigateTo(card.route)"
-        class="bg-white p-6 rounded-3xl border cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg group"
+        class="bg-white p-6 rounded-2xl border cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg group"
         [ngClass]="[getColorClasses(card.color).border, getColorClasses(card.color).hover]">
 
         <!-- Icono -->

@@ -27,7 +27,7 @@
 
     <!-- Cursos más solicitados -->
     @if (stats()!.cursos_top.length > 0) {
-      <div class="bg-white border border-slate-200 rounded-3xl p-5">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5">
         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3">Cursos más solicitados</h3>
         <div class="space-y-2">
           @for (item of stats()!.cursos_top; track item.clave) {
@@ -52,7 +52,7 @@
   }
 
   <!-- Encabezado con filtros -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-4">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-4">
     <div>
       <h2 class="text-xl font-black text-slate-800 tracking-tight">
         {{ esAdmin() ? 'Gestión de Solicitudes' : 'Mis Solicitudes' }}
@@ -145,7 +145,7 @@
       </div>
       <button
         (click)="limpiarFiltroCurso()"
-        class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 rounded-xl transition-colors">
+        class="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 rounded-lg transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
@@ -173,7 +173,7 @@
       <!-- Celda de Estudiante (solo admin) -->
       @if (column.key === 'estudiante') {
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-xs font-semibold text-indigo-600 border border-indigo-200">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-xs font-semibold text-indigo-600 border border-indigo-200">
             {{ row.user?.name?.charAt(0) || '?' }}
           </div>
           <div class="flex flex-col">
@@ -230,7 +230,7 @@
 
   <!-- Paginación -->
   @if (paginationData() && !loading()) {
-    <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       <app-shared-pagination
         [currentPage]="currentPage()"
         [lastPage]="paginationData()!.last_page"
@@ -246,7 +246,7 @@
 
   <!-- Estado vacío -->
   @if (!loading() && solicitudes().length === 0) {
-    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center">
+    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
       <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
       </svg>

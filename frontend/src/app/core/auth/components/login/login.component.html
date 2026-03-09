@@ -13,10 +13,10 @@
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-    <div class="bg-white py-8 px-6 shadow-2xl shadow-slate-200 rounded-3xl border border-slate-100 sm:px-10">
+    <div class="bg-white py-8 px-6 shadow-2xl shadow-slate-200 rounded-2xl border border-slate-100 sm:px-10">
 
       <!-- Tabs -->
-      <div class="flex mb-6 bg-slate-100 rounded-xl p-1">
+      <div class="flex mb-6 bg-slate-100 rounded-lg p-1">
         <button
           type="button"
           (click)="setTab('estudiante')"
@@ -51,7 +51,7 @@
                 [(ngModel)]="estudianteCredentials.codigo"
                 maxlength="10"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50 font-mono tracking-widest"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50 font-mono tracking-widest"
                 placeholder="0512021002">
             </div>
             <p class="mt-1 text-[10px] text-slate-400">10 dígitos numéricos</p>
@@ -69,7 +69,7 @@
                 type="password"
                 [(ngModel)]="estudianteCredentials.password"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
                 placeholder="••••••••">
             </div>
           </div>
@@ -86,7 +86,7 @@
 
           <!-- Alerta de Error -->
           @if (errorMessage()) {
-            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg flex items-start gap-3">
               <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -96,7 +96,7 @@
 
           <!-- Prompt de activación -->
           @if (requiresActivation()) {
-            <div class="bg-amber-50 border border-amber-100 text-amber-700 p-4 rounded-xl">
+            <div class="bg-amber-50 border border-amber-100 text-amber-700 p-4 rounded-lg">
               <p class="text-xs font-bold mb-3">Tu cuenta necesita ser activada.</p>
               <button
                 type="button"
@@ -112,7 +112,7 @@
             <button
               type="submit"
               [disabled]="isLoading()"
-              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
               @if (isLoading()) {
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -142,7 +142,7 @@
                 type="text"
                 [(ngModel)]="adminCredentials.username"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
                 placeholder="nombre.usuario">
             </div>
           </div>
@@ -159,14 +159,14 @@
                 type="password"
                 [(ngModel)]="adminCredentials.password"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
                 placeholder="••••••••">
             </div>
           </div>
 
           <!-- Alerta de Error -->
           @if (errorMessage()) {
-            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg flex items-start gap-3">
               <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -179,7 +179,7 @@
             <button
               type="submit"
               [disabled]="isLoading()"
-              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+              class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
               @if (isLoading()) {
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

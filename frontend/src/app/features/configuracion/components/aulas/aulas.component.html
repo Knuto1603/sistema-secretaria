@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
     <div>
       <h2 class="text-xl font-black text-slate-800 tracking-tight">Pabellones y Aulas</h2>
       <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
@@ -25,11 +25,11 @@
 
   <!-- Formulario nuevo pabellón -->
   @if (mostrarFormPabellon()) {
-    <div class="bg-white border border-indigo-200 rounded-2xl p-5 flex items-end gap-3">
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-end gap-3">
       <div class="flex-1">
         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre del Pabellón</label>
         <input type="text" [(ngModel)]="nombrePabellon" placeholder="Ej: Pabellón A, Bloque 3..."
-          class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+          class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
       <app-btn variant="success" [loading]="guardandoPabellon()" (clicked)="crearPabellon()">Crear</app-btn>
       <app-btn variant="ghost" (clicked)="mostrarFormPabellon.set(false)">Cancelar</app-btn>
@@ -47,7 +47,7 @@
 
   <!-- Lista de pabellones -->
   @if (!loading() && pabellones().length === 0) {
-    <div class="bg-white border border-slate-200 rounded-3xl p-12 text-center">
+    <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center">
       <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
@@ -59,10 +59,10 @@
 
   <!-- ─── Aulas sin pabellón ──────────────────────────────────────────── -->
   @if (!loading() && aulasHuerfanas().length > 0) {
-    <div class="bg-amber-50 border border-amber-200 rounded-3xl overflow-hidden shadow-sm">
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm">
       <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-amber-200">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-xl flex-shrink-0">
+          <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-lg flex-shrink-0">
             <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
@@ -94,7 +94,7 @@
               <div class="relative">
                 <select
                   [(ngModel)]="pabellonSeleccionado[aula.id]"
-                  class="pl-3 pr-8 py-1.5 text-sm border border-amber-300 rounded-xl bg-white focus:ring-2 focus:ring-amber-500 outline-none appearance-none cursor-pointer font-medium min-w-[160px]">
+                  class="pl-3 pr-8 py-1.5 text-sm border border-amber-300 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 outline-none appearance-none cursor-pointer font-medium min-w-[160px]">
                   <option value="">Seleccionar pabellón...</option>
                   @for (p of pabellones(); track p.id) {
                     <option [value]="p.id">{{ p.nombre }}</option>
@@ -121,7 +121,7 @@
   }
 
   @for (pabellon of pabellones(); track pabellon.id) {
-    <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
 
       <!-- Cabecera pabellón -->
       <div
@@ -170,9 +170,9 @@
                 @if (aulaEditando()?.id === aula.id) {
                   <div class="flex items-center gap-3 py-3">
                     <input type="text" [(ngModel)]="aulaEditData.nombre" placeholder="Nombre aula"
-                      class="px-3 py-1.5 text-sm border border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none w-28 font-medium">
+                      class="px-3 py-1.5 text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-28 font-medium">
                     <input type="number" [(ngModel)]="aulaEditData.capacidad" min="1" max="500"
-                      class="px-3 py-1.5 text-sm border border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none w-24 font-medium">
+                      class="px-3 py-1.5 text-sm border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none w-24 font-medium">
                     <span class="text-xs text-slate-400">cupos</span>
                     <app-btn variant="success" (clicked)="guardarEdicionAula()">Guardar</app-btn>
                     <app-btn variant="ghost" (clicked)="aulaEditando.set(null)">Cancelar</app-btn>
@@ -232,12 +232,12 @@
               <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre</label>
                 <input type="text" [(ngModel)]="nuevaAula.nombre" placeholder="Ej: A-101"
-                  class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium w-32">
+                  class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium w-32">
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capacidad</label>
                 <input type="number" [(ngModel)]="nuevaAula.capacidad" min="1" max="500"
-                  class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium w-24">
+                  class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium w-24">
               </div>
               <app-btn variant="success" [loading]="guardandoAula()" (clicked)="crearAula(pabellon.id)">Agregar</app-btn>
               <app-btn variant="ghost" (clicked)="aulaFormPabellon.set(null)">Cancelar</app-btn>

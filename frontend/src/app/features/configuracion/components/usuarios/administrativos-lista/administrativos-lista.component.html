@@ -25,14 +25,14 @@
           [(ngModel)]="search"
           (keyup.enter)="buscar()"
           placeholder="Buscar por nombre, usuario o email..."
-          class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
+          class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
       </div>
 
       <!-- Filtro por rol -->
       <select
         [(ngModel)]="rolFilter"
         (change)="buscar()"
-        class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         <option value="">Todos los roles</option>
         @for (rol of roles(); track rol.id) {
           <option [value]="rol.name">{{ rol.name }}</option>
@@ -43,7 +43,7 @@
       <select
         [(ngModel)]="activoFilter"
         (change)="buscar()"
-        class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         <option value="">Todos los estados</option>
         <option value="true">Activos</option>
         <option value="false">Inactivos</option>
@@ -53,7 +53,7 @@
       @if (search || rolFilter || activoFilter) {
         <button
           (click)="limpiarFiltros()"
-          class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+          class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
           Limpiar
         </button>
       }

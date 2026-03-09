@@ -13,11 +13,11 @@
   }
 
   <!-- Encabezado -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <div class="flex items-center gap-4">
       <button
         (click)="volver()"
-        class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+        class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
         <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -35,7 +35,7 @@
       <!-- Descargar plantilla -->
       <button
         (click)="descargarPlantilla()"
-        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -45,7 +45,7 @@
 
       <!-- Importar Excel -->
       <label
-        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
         [class.opacity-60]="importando()"
         [class.pointer-events-none]="importando()">
         @if (importando()) {
@@ -68,7 +68,7 @@
       <button
         (click)="pedirConfirmacionLimpiar()"
         [disabled]="eliminando() || (plan()?.total ?? 0) === 0"
-        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-600 border border-red-200 hover:bg-red-50 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-600 border border-red-200 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
         @if (eliminando()) {
           <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -86,7 +86,7 @@
   </div>
 
   <!-- Selector de escuela + filtro ciclo -->
-  <div class="bg-white px-6 py-4 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
+  <div class="bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
     <div class="flex items-center gap-3">
       <label class="text-xs font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
         Escuela Profesional
@@ -94,7 +94,7 @@
       <select
         [(ngModel)]="escuelaSeleccionada"
         (ngModelChange)="onEscuelaChange()"
-        class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50">
+        class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50">
         @for (e of escuelas; track e.codigo) {
           <option [value]="e.codigo">{{ e.nombre }}</option>
         }
@@ -164,7 +164,7 @@
   </div>
 
   <!-- Tabla de cursos -->
-  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
     @if (loading()) {
       <div class="flex items-center justify-center py-16">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -260,12 +260,12 @@
       <div class="px-6 pb-6 pt-2 flex gap-3">
         <button
           (click)="cancelarLimpiar()"
-          class="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+          class="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
           Cancelar
         </button>
         <button
           (click)="limpiarPlan()"
-          class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors">
+          class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
           Sí, limpiar
         </button>
       </div>
@@ -290,15 +290,15 @@
 
       <!-- Resumen -->
       <div class="px-6 py-4 grid grid-cols-3 gap-3 border-b border-slate-100">
-        <div class="bg-slate-50 rounded-xl p-3 text-center">
+        <div class="bg-slate-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-slate-700">{{ importResultado()!.resumen.total }}</div>
           <div class="text-xs text-slate-500 mt-0.5">Total filas</div>
         </div>
-        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+        <div class="bg-emerald-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-emerald-600">{{ importResultado()!.resumen.importados }}</div>
           <div class="text-xs text-emerald-600 mt-0.5">Importados</div>
         </div>
-        <div class="bg-red-50 rounded-xl p-3 text-center">
+        <div class="bg-red-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-red-500">{{ importResultado()!.resumen.errores }}</div>
           <div class="text-xs text-red-500 mt-0.5">Errores</div>
         </div>
@@ -339,7 +339,7 @@
       <div class="px-6 py-4 border-t border-slate-100">
         <button
           (click)="cerrarImportResultado()"
-          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
           Aceptar
         </button>
       </div>

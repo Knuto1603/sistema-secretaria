@@ -15,7 +15,7 @@
 
   <!-- Toast -->
   @if (toast(); as t) {
-    <div class="mb-4 px-4 py-3 rounded-xl text-sm font-bold border"
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm font-bold border"
          [class.bg-emerald-50]="t.tipo === 'success'"
          [class.border-emerald-200]="t.tipo === 'success'"
          [class.text-emerald-700]="t.tipo === 'success'"
@@ -37,7 +37,7 @@
           <p class="text-sm text-slate-500 mt-1">Ejecuta <code class="bg-slate-100 px-1 rounded text-xs">cache:clear</code>, <code class="bg-slate-100 px-1 rounded text-xs">config:clear</code> y <code class="bg-slate-100 px-1 rounded text-xs">view:clear</code>.</p>
         </div>
         <button (click)="clearCache()" [disabled]="loadingCache()"
-          class="shrink-0 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors flex items-center gap-2">
+          class="shrink-0 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors flex items-center gap-2">
           @if (loadingCache()) {
             <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           }
@@ -54,7 +54,7 @@
           <p class="text-sm text-slate-500 mt-1">Vacía el contenido de los archivos <code class="bg-slate-100 px-1 rounded text-xs">*.log</code> en <code class="bg-slate-100 px-1 rounded text-xs">storage/logs/</code>.</p>
         </div>
         <button (click)="clearLogs()" [disabled]="loadingLogs()"
-          class="shrink-0 px-5 py-2.5 bg-red-500 text-white text-sm font-bold rounded-xl hover:bg-red-600 disabled:opacity-50 transition-colors flex items-center gap-2">
+          class="shrink-0 px-5 py-2.5 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors flex items-center gap-2">
           @if (loadingLogs()) {
             <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           }

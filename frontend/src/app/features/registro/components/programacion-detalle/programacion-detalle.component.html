@@ -1,6 +1,6 @@
 <!-- Overlay -->
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
@@ -9,7 +9,7 @@
         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Información completa</p>
       </div>
       <button (click)="cerrado.emit()"
-        class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+        class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
@@ -85,7 +85,7 @@
           @if (detalle()!.grupo_horario?.detalles?.length) {
             <div class="flex flex-wrap gap-2">
               @for (slot of detalle()!.grupo_horario!.detalles; track $index) {
-                <span class="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl">
+                <span class="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg">
                   {{ diaNombre(slot.dia_semana) }} {{ slot.hora_inicio.substring(0,5) }}–{{ slot.hora_fin.substring(0,5) }}
                 </span>
               }
@@ -126,7 +126,7 @@
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Escuelas habilitadas</p>
             <div class="flex flex-wrap gap-2">
               @for (esc of detalle()!.escuelas!; track esc.id) {
-                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl">
+                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg">
                   {{ esc.nombre_corto || esc.nombre }}
                 </span>
               }

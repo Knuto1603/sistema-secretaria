@@ -45,7 +45,7 @@
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-    <div class="bg-white py-8 px-6 shadow-2xl shadow-slate-200 rounded-3xl border border-slate-100 sm:px-10">
+    <div class="bg-white py-8 px-6 shadow-2xl shadow-slate-200 rounded-2xl border border-slate-100 sm:px-10">
 
       <!-- PASO 1: CÓDIGO -->
       @if (currentStep() === 'codigo') {
@@ -68,14 +68,14 @@
                 pattern="[0-9]*"
                 inputmode="numeric"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50 font-mono tracking-widest text-center text-lg"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50 font-mono tracking-widest text-center text-lg"
                 placeholder="2024000001">
             </div>
             <p class="mt-1 text-[10px] text-slate-400 text-center">10 dígitos numéricos</p>
           </div>
 
           @if (errorMessage()) {
-            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg flex items-start gap-3">
               <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -86,7 +86,7 @@
           <button
             type="submit"
             [disabled]="isLoading() || codigo.length !== 10"
-            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
             @if (isLoading()) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -111,7 +111,7 @@
         </div>
 
         @if (successMessage()) {
-          <div class="bg-emerald-50 border border-emerald-100 text-emerald-600 p-3 rounded-xl mb-4 flex items-center gap-2">
+          <div class="bg-emerald-50 border border-emerald-100 text-emerald-600 p-3 rounded-lg mb-4 flex items-center gap-2">
             <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
@@ -133,13 +133,13 @@
                 pattern="[0-9]*"
                 inputmode="numeric"
                 required
-                class="appearance-none block w-full px-4 py-4 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-slate-50/50 font-mono tracking-[0.5em] text-center text-2xl font-bold"
+                class="appearance-none block w-full px-4 py-4 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-slate-50/50 font-mono tracking-[0.5em] text-center text-2xl font-bold"
                 placeholder="000000">
             </div>
           </div>
 
           @if (errorMessage()) {
-            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg flex items-start gap-3">
               <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -150,7 +150,7 @@
           <button
             type="submit"
             [disabled]="isLoading() || otp.length !== 6"
-            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all uppercase tracking-widest">
             @if (isLoading()) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -212,7 +212,7 @@
                 name="password"
                 required
                 minlength="8"
-                class="appearance-none block w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                class="appearance-none block w-full px-4 py-3 pr-12 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
                 placeholder="Mínimo 8 caracteres">
               <button
                 type="button"
@@ -242,13 +242,13 @@
                 [(ngModel)]="passwordConfirmation"
                 name="passwordConfirmation"
                 required
-                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
+                class="appearance-none block w-full px-4 py-3 border border-slate-200 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all bg-slate-50/50"
                 placeholder="Repite tu contraseña">
             </div>
           </div>
 
           @if (errorMessage()) {
-            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3">
+            <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-lg flex items-start gap-3">
               <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
@@ -259,7 +259,7 @@
           <button
             type="submit"
             [disabled]="isLoading() || password.length < 8 || password !== passwordConfirmation"
-            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all uppercase tracking-widest">
+            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all uppercase tracking-widest">
             @if (isLoading()) {
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

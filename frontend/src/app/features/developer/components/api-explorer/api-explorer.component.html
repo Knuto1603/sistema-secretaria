@@ -17,7 +17,7 @@
       </p>
     </div>
     <button (click)="load()" [disabled]="loading()"
-      class="ml-auto px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50">
+      class="ml-auto px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
       Actualizar
     </button>
   </div>
@@ -26,9 +26,9 @@
   <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm flex gap-3">
     <input [value]="filterUri()" (input)="filterUri.set($any($event.target).value)"
       placeholder="Filtrar por URI..."
-      class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
     <select [value]="filterMethod()" (change)="filterMethod.set($any($event.target).value)"
-      class="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+      class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
       <option value="">Todos los métodos</option>
       <option>GET</option>
       <option>POST</option>

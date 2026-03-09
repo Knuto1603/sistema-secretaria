@@ -29,7 +29,7 @@
   <!-- Modal: Limpiar Periodo (solo developer) -->
   @if (showLimpiarPeriodo()) {
     <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7">
         <div class="flex items-center gap-4 mb-5">
           <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@
   <!-- Modal: Confirmar Eliminación -->
   @if (programacionAEliminar()) {
     <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7">
         <div class="flex items-center gap-4 mb-5">
           <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +107,7 @@
 
   <!-- Banner: historial no registrado (solo estudiantes) -->
   @if (esEstudiante() && !historialRegistrado() && !loading()) {
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-3xl p-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
           <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@
   }
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
       <!-- Título -->
@@ -279,7 +279,7 @@
           <div class="flex bg-slate-100 rounded-2xl p-1 gap-1">
             <button
               (click)="cambiarVista('tabla')"
-              class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all"
+              class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
               [ngClass]="vistaActiva() === 'tabla'
                 ? 'bg-white text-slate-800 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'">
@@ -290,7 +290,7 @@
             </button>
             <button
               (click)="cambiarVista('matriz')"
-              class="px-3 py-1.5 text-xs font-bold rounded-xl transition-all"
+              class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
               [ngClass]="vistaActiva() === 'matriz'
                 ? 'bg-white text-slate-800 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'">
@@ -396,7 +396,7 @@
         <!-- Grupo -->
         @if (column.key === 'grupo') {
           <div class="flex justify-center">
-            <span class="w-9 h-9 flex items-center justify-center bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-700">
+            <span class="w-9 h-9 flex items-center justify-center bg-indigo-50 border border-indigo-100 rounded-lg text-xs font-semibold text-indigo-700">
               {{ row.grupo || '—' }}
             </span>
           </div>
@@ -405,7 +405,7 @@
         <!-- Sección -->
         @if (column.key === 'seccion') {
           <div class="flex justify-center">
-            <span class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-xs font-semibold text-slate-600">
+            <span class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-semibold text-slate-600">
               {{ row.seccion || '—' }}
             </span>
           </div>
@@ -447,7 +447,7 @@
             <button
               (click)="toggleLleno(row)"
               [title]="row.lleno_manual ? 'Desmarcar como lleno' : 'Marcar como lleno'"
-              class="p-2 rounded-xl transition-colors"
+              class="p-2 rounded-lg transition-colors"
               [ngClass]="row.lleno_manual
                 ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
                 : 'text-slate-400 hover:bg-slate-100'">
@@ -469,7 +469,7 @@
             <button
               (click)="abrirDetalle(row)"
               title="Ver detalle"
-              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+              class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -482,7 +482,7 @@
             <button
               (click)="abrirEditar(row)"
               title="Editar sección"
-              class="p-2 rounded-xl text-indigo-500 hover:bg-indigo-50 transition-colors">
+              class="p-2 rounded-lg text-indigo-500 hover:bg-indigo-50 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -493,7 +493,7 @@
             <button
               (click)="abrirEliminar(row)"
               title="Eliminar sección"
-              class="p-2 rounded-xl text-red-400 hover:bg-red-50 transition-colors">
+              class="p-2 rounded-lg text-red-400 hover:bg-red-50 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -504,7 +504,7 @@
             <button
               (click)="verSolicitudesCurso(row)"
               title="Ver solicitudes de este curso"
-              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+              class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -517,7 +517,7 @@
             <button
               (click)="verSolicitudesCurso(row)"
               title="Ver solicitudes"
-              class="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+              class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -529,7 +529,7 @@
           @if (esEstudiante()) {
             @if (row.esta_lleno) {
               @if (tieneSolicitudActiva(row.id)) {
-                <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-xl tracking-widest">
+                <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
                   Solicitado
                 </span>
               } @else if (isPeriodoActivo()) {
@@ -547,7 +547,7 @@
 
     <!-- Paginación -->
     @if (paginationData() && !loading()) {
-      <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <app-shared-pagination
           [currentPage]="currentPage()"
           [lastPage]="paginationData()!.last_page"
@@ -564,7 +564,7 @@
 
   <!-- ─── VISTA MATRIZ ─────────────────────────────────────────────────── -->
   @if (vistaActiva() === 'matriz' && !esEstudiante()) {
-    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
       <app-programacion-matriz
         [items]="todosLosItems()"
         [loading]="loadingMatriz()">

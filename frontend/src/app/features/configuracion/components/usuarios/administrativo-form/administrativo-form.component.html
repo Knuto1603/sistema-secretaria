@@ -13,10 +13,10 @@
   }
 
   <!-- Encabezado -->
-  <div class="flex items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+  <div class="flex items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <button
       (click)="cancelar()"
-      class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+      class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
       <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
       </svg>
@@ -33,7 +33,7 @@
 
   <!-- Loading -->
   @if (loading()) {
-    <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center">
+    <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
       <svg class="animate-spin w-8 h-8 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -44,7 +44,7 @@
 
   <!-- Formulario -->
   @if (!loading()) {
-    <form [formGroup]="form" (ngSubmit)="guardar()" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-6 space-y-6">
 
         <!-- Nombre -->
@@ -56,7 +56,7 @@
             type="text"
             formControlName="name"
             placeholder="Ej: Juan Pérez García"
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+            class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
             [class.border-red-300]="form.get('name')?.invalid && form.get('name')?.touched">
           @if (form.get('name')?.invalid && form.get('name')?.touched) {
             <p class="mt-1 text-xs text-red-500">El nombre es requerido</p>
@@ -74,7 +74,7 @@
               type="text"
               formControlName="username"
               placeholder="Ej: jperez"
-              class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono"
+              class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors font-mono"
               [class.border-red-300]="form.get('username')?.invalid && form.get('username')?.touched">
             @if (form.get('username')?.hasError('required') && form.get('username')?.touched) {
               <p class="mt-1 text-xs text-red-500">El usuario es requerido</p>
@@ -93,7 +93,7 @@
               type="email"
               formControlName="email"
               placeholder="Ej: jperez@unp.edu.pe"
-              class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               [class.border-red-300]="form.get('email')?.invalid && form.get('email')?.touched">
             @if (form.get('email')?.invalid && form.get('email')?.touched) {
               <p class="mt-1 text-xs text-red-500">Ingrese un correo válido</p>
@@ -111,7 +111,7 @@
               [type]="showPassword() ? 'text' : 'password'"
               formControlName="password"
               placeholder="{{ isEditing ? 'Nueva contraseña (opcional)' : 'Mínimo 8 caracteres' }}"
-              class="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              class="w-full px-4 py-3 pr-12 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               [class.border-red-300]="form.get('password')?.invalid && form.get('password')?.touched">
             <button
               type="button"
@@ -144,7 +144,7 @@
               <button
                 type="button"
                 (click)="toggleRole(rol.name)"
-                class="px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all"
+                class="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all"
                 [ngClass]="{
                   'border-indigo-500 bg-indigo-50 text-indigo-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'indigo',
                   'border-emerald-500 bg-emerald-50 text-emerald-700': isRoleSelected(rol.name) && getRolColor(rol.name) === 'emerald',

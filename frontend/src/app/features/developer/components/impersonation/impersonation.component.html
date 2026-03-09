@@ -14,7 +14,7 @@
   </div>
 
   <!-- Aviso -->
-  <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4 text-sm text-rose-700 font-bold flex items-center gap-3">
+  <div class="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-4 text-sm text-rose-700 font-bold flex items-center gap-3">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
     </svg>
@@ -23,7 +23,7 @@
 
   <!-- Toast -->
   @if (toast(); as t) {
-    <div class="mb-4 px-4 py-3 rounded-xl text-sm font-bold border"
+    <div class="mb-4 px-4 py-3 rounded-lg text-sm font-bold border"
          [class.bg-emerald-50]="t.tipo === 'success'" [class.border-emerald-200]="t.tipo === 'success'" [class.text-emerald-700]="t.tipo === 'success'"
          [class.bg-red-50]="t.tipo === 'error'" [class.border-red-200]="t.tipo === 'error'" [class.text-red-700]="t.tipo === 'error'">
       {{ t.texto }}
@@ -31,7 +31,7 @@
   }
 
   <!-- Tabs -->
-  <div class="flex gap-1 bg-slate-100 p-1 rounded-xl mb-4 w-fit">
+  <div class="flex gap-1 bg-slate-100 p-1 rounded-lg mb-4 w-fit">
     <button (click)="switchTab('administrativos')"
       class="px-4 py-2 rounded-lg text-xs font-semibold transition-all"
       [class.bg-white]="activeTab() === 'administrativos'"
@@ -54,8 +54,8 @@
   <div class="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm flex gap-3">
     <input [(ngModel)]="searchTerm"
       [placeholder]="activeTab() === 'estudiantes' ? 'Buscar por nombre o código universitario...' : 'Buscar por nombre o usuario...'"
-      class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300">
-    <button (click)="load()" class="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 transition-colors">
+      class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300">
+    <button (click)="load()" class="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors">
       Buscar
     </button>
   </div>

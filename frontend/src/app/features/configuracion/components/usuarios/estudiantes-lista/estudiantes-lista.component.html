@@ -24,14 +24,14 @@
         [(ngModel)]="search"
         (keyup.enter)="buscar()"
         placeholder="Buscar por código o nombre..."
-        class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
+        class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
     </div>
 
     <!-- Filtro por escuela -->
     <select
       [(ngModel)]="escuelaFilter"
       (change)="buscar()"
-      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
       <option value="">Todas las escuelas</option>
       @for (escuela of escuelas; track escuela.id) {
         <option [value]="escuela.id">{{ escuela.nombre }}</option>
@@ -42,7 +42,7 @@
     <select
       [(ngModel)]="cuentaActivadaFilter"
       (change)="buscar()"
-      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
       <option value="">Todos (activación)</option>
       <option value="true">Cuenta activada</option>
       <option value="false">Pendiente activación</option>
@@ -52,7 +52,7 @@
     <select
       [(ngModel)]="activoFilter"
       (change)="buscar()"
-      class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+      class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
       <option value="">Todos los estados</option>
       <option value="true">Activos</option>
       <option value="false">Inactivos</option>
@@ -62,7 +62,7 @@
     @if (search || escuelaFilter || cuentaActivadaFilter || activoFilter) {
       <button
         (click)="limpiarFiltros()"
-        class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+        class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
         Limpiar
       </button>
     }
@@ -71,7 +71,7 @@
     <div class="ml-auto flex gap-2">
       <button
         (click)="descargarPlantilla()"
-        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors">
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -80,7 +80,7 @@
       </button>
 
       <!-- Importar desde SIGA (HTML) -->
-      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
         [class.opacity-60]="importandoHtml()"
         [class.pointer-events-none]="importandoHtml()">
         @if (importandoHtml()) {
@@ -96,7 +96,7 @@
       </label>
 
       <!-- Importar Excel -->
-      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
+      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors cursor-pointer"
         [class.opacity-60]="importando()"
         [class.pointer-events-none]="importando()">
         @if (importando()) {
@@ -269,13 +269,13 @@
     <div class="absolute inset-0 bg-black/50" (click)="cerrarDetalle()"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-800">Detalle del Estudiante</h3>
         <button
           (click)="cerrarDetalle()"
-          class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+          class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -387,19 +387,19 @@
 
       <!-- Resumen -->
       <div class="px-6 py-4 grid grid-cols-4 gap-3 border-b border-slate-100">
-        <div class="bg-slate-50 rounded-xl p-3 text-center">
+        <div class="bg-slate-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-slate-700">{{ importResultado()!.resumen.total }}</div>
           <div class="text-xs text-slate-500 mt-0.5">Total filas</div>
         </div>
-        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+        <div class="bg-emerald-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-emerald-600">{{ importResultado()!.resumen.importados }}</div>
           <div class="text-xs text-emerald-600 mt-0.5">Importados</div>
         </div>
-        <div class="bg-amber-50 rounded-xl p-3 text-center">
+        <div class="bg-amber-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-amber-600">{{ importResultado()!.resumen.omitidos }}</div>
           <div class="text-xs text-amber-600 mt-0.5">Omitidos</div>
         </div>
-        <div class="bg-red-50 rounded-xl p-3 text-center">
+        <div class="bg-red-50 rounded-lg p-3 text-center">
           <div class="text-2xl font-bold text-red-500">{{ importResultado()!.resumen.errores }}</div>
           <div class="text-xs text-red-500 mt-0.5">Errores</div>
         </div>
@@ -442,7 +442,7 @@
       <div class="px-6 py-4 border-t border-slate-100">
         <button
           (click)="cerrarImportResultado()"
-          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors">
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
           Aceptar
         </button>
       </div>

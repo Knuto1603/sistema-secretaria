@@ -95,7 +95,7 @@ export class KbAnalyticsComponent implements OnInit {
       requisito:  'bg-orange-100 text-orange-700',
       resolucion: 'bg-red-100 text-red-700',
     };
-    return map[tipo] ?? 'bg-gray-100 text-gray-700';
+    return map[tipo] ?? 'bg-slate-100 text-slate-700';
   }
 
   formatDate(dateStr: string): string {
