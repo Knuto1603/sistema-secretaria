@@ -62,6 +62,10 @@ export const routes: Routes = [
          path: 'developer',
          loadChildren: () => import('./features/developer/developer.routes').then(m => m.DEVELOPER_ROUTES)
        },
+       {
+         path: 'perfil',
+         loadComponent: () => import('./features/perfil/components/perfil/perfil.component').then(m => m.PerfilComponent)
+       },
        { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

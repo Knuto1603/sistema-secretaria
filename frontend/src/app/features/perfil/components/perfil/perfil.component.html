@@ -1,0 +1,342 @@
+<div class="space-y-6">
+
+  <!-- Encabezado -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+    <div class="flex items-center gap-5">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+        <span class="text-2xl font-black text-white">
+          {{ user()?.name?.charAt(0)?.toUpperCase() || '?' }}
+        </span>
+      </div>
+      <div>
+        <h1 class="text-xl font-black text-slate-800 tracking-tight">{{ user()?.name }}</h1>
+        <p class="text-sm text-slate-500 mt-0.5">
+          @if (esEstudiante()) {
+            <span class="font-mono font-bold text-indigo-600">{{ user()?.codigo_universitario }}</span>
+            <span class="mx-2 text-slate-300">·</span>
+            <span>{{ getEscuelaNombre() }}</span>
+          } @else {
+            <span class="font-mono text-slate-600">{{ user()?.username }}</span>
+            <span class="mx-2 text-slate-300">·</span>
+            <span>{{ user()?.roles?.join(', ') || 'Sin roles' }}</span>
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex border-b border-slate-100">
+      <button
+        (click)="setTab('datos')"
+        class="px-6 py-4 text-sm font-semibold transition-colors"
+        [class.text-indigo-600]="tabActiva() === 'datos'"
+        [class.border-b-2]="tabActiva() === 'datos'"
+        [class.border-indigo-600]="tabActiva() === 'datos'"
+        [class.text-slate-500]="tabActiva() !== 'datos'">
+        Mis datos
+      </button>
+      <button
+        (click)="setTab('password')"
+        class="px-6 py-4 text-sm font-semibold transition-colors"
+        [class.text-indigo-600]="tabActiva() === 'password'"
+        [class.border-b-2]="tabActiva() === 'password'"
+        [class.border-indigo-600]="tabActiva() === 'password'"
+        [class.text-slate-500]="tabActiva() !== 'password'">
+        Cambiar contraseña
+      </button>
+      @if (esEstudiante()) {
+        <button
+          (click)="setTab('historial')"
+          class="px-6 py-4 text-sm font-semibold transition-colors"
+          [class.text-indigo-600]="tabActiva() === 'historial'"
+          [class.border-b-2]="tabActiva() === 'historial'"
+          [class.border-indigo-600]="tabActiva() === 'historial'"
+          [class.text-slate-500]="tabActiva() !== 'historial'">
+          Historial académico
+          @if (historial()?.tiene_historial) {
+            <span class="ml-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">
+              {{ historial()?.total }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+
+    <div class="p-6">
+
+      <!-- Mensaje -->
+      @if (mensaje()) {
+        <div
+          class="mb-5 p-4 rounded-lg text-sm font-medium"
+          [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
+          [class.text-emerald-700]="mensaje()?.tipo === 'success'"
+          [class.bg-red-50]="mensaje()?.tipo === 'error'"
+          [class.text-red-700]="mensaje()?.tipo === 'error'">
+          {{ mensaje()?.texto }}
+        </div>
+      }
+
+      <!-- TAB: Mis datos -->
+      @if (tabActiva() === 'datos') {
+        <div class="space-y-5 max-w-lg">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nombre completo</label>
+            <p class="text-sm font-semibold text-slate-800 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+              {{ user()?.name }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Email</label>
+            <p class="text-sm text-slate-600 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+              {{ user()?.email }}
+            </p>
+          </div>
+
+          @if (esEstudiante()) {
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Código universitario</label>
+                <p class="text-sm font-mono font-bold text-indigo-600 px-3 py-2.5 bg-indigo-50 rounded-lg border border-indigo-100">
+                  {{ user()?.codigo_universitario }}
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Año de ingreso</label>
+                <p class="text-sm font-semibold text-slate-800 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                  {{ user()?.anio_ingreso ?? '-' }}
+                </p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Escuela</label>
+                <p class="text-sm font-semibold text-slate-800 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                  {{ getEscuelaNombre() }}
+                </p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Ciclo actual (estimado)</label>
+                <p class="text-sm font-semibold text-slate-800 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                  {{ getCicloActual() ?? '-' }}
+                </p>
+              </div>
+            </div>
+          } @else {
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Usuario</label>
+              <p class="text-sm font-mono text-slate-700 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                {{ user()?.username }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Roles</label>
+              <div class="flex flex-wrap gap-2 px-3 py-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                @for (rol of (user()?.roles ?? []); track rol) {
+                  <app-badge color="indigo" size="sm">{{ rol }}</app-badge>
+                }
+                @if (!user()?.roles?.length) {
+                  <span class="text-xs text-slate-400">Sin roles asignados</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TAB: Cambiar contraseña -->
+      @if (tabActiva() === 'password') {
+        <form (ngSubmit)="cambiarPassword()" class="space-y-4 max-w-sm">
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Contraseña actual</label>
+            <div class="relative">
+              <input
+                [type]="showPasswordActual ? 'text' : 'password'"
+                [(ngModel)]="passwordActual"
+                name="passwordActual"
+                placeholder="••••••••"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-10">
+              <button type="button" (click)="showPasswordActual = !showPasswordActual"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                @if (showPasswordActual) {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nueva contraseña</label>
+            <div class="relative">
+              <input
+                [type]="showPasswordNuevo ? 'text' : 'password'"
+                [(ngModel)]="passwordNuevo"
+                name="passwordNuevo"
+                placeholder="Mínimo 8 caracteres"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 pr-10">
+              <button type="button" (click)="showPasswordNuevo = !showPasswordNuevo"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                @if (showPasswordNuevo) {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                }
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Confirmar nueva contraseña</label>
+            <input
+              type="password"
+              [(ngModel)]="passwordConfirmar"
+              name="passwordConfirmar"
+              placeholder="Repite la nueva contraseña"
+              class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+
+          <app-btn type="submit" variant="primary" [disabled]="loadingPassword()">
+            @if (loadingPassword()) {
+              Guardando...
+            } @else {
+              Actualizar contraseña
+            }
+          </app-btn>
+        </form>
+      }
+
+      <!-- TAB: Historial académico -->
+      @if (tabActiva() === 'historial') {
+        <div class="space-y-6">
+
+          <!-- Acciones -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <div>
+              <p class="text-sm font-semibold text-slate-700">Importar desde PDF del SIGA</p>
+              <p class="text-xs text-slate-400 mt-0.5">Descarga tu historial del SIGA y súbelo aquí para registrar automáticamente tus cursos aprobados.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <label class="cursor-pointer">
+                <input type="file" accept=".pdf" class="hidden" (change)="onArchivoPdf($event)">
+                <span
+                  class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                  [class.opacity-60]="uploadingPdf()"
+                  [class.cursor-not-allowed]="uploadingPdf()">
+                  @if (uploadingPdf()) {
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Procesando...
+                  } @else {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Subir PDF
+                  }
+                </span>
+              </label>
+              @if (historial()?.tiene_historial) {
+                <button
+                  (click)="limpiarHistorial()"
+                  class="px-3 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                  Limpiar PDF
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Mensaje historial -->
+          @if (mensajeHistorial()) {
+            <div
+              class="p-4 rounded-lg text-sm font-medium"
+              [class.bg-emerald-50]="mensajeHistorial()?.tipo === 'success'"
+              [class.text-emerald-700]="mensajeHistorial()?.tipo === 'success'"
+              [class.bg-red-50]="mensajeHistorial()?.tipo === 'error'"
+              [class.text-red-700]="mensajeHistorial()?.tipo === 'error'">
+              {{ mensajeHistorial()?.texto }}
+            </div>
+          }
+
+          <!-- Resumen importación -->
+          @if (resumenImport()) {
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                <p class="text-2xl font-black text-emerald-700">{{ resumenImport()!.importados }}</p>
+                <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Aprobados</p>
+              </div>
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                <p class="text-2xl font-black text-amber-700">{{ resumenImport()!.omitidos }}</p>
+                <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1">Reprobados</p>
+              </div>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                <p class="text-2xl font-black text-slate-700">{{ resumenImport()!.errores }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Errores</p>
+              </div>
+            </div>
+          }
+
+          <!-- Historial por semestre -->
+          @if (loadingHistorial()) {
+            <div class="py-12 text-center text-sm text-slate-400">Cargando historial...</div>
+          } @else if (!historial()?.tiene_historial) {
+            <div class="py-12 text-center">
+              <svg class="w-14 h-14 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg>
+              <p class="text-sm font-semibold text-slate-500">Sin historial registrado</p>
+              <p class="text-xs text-slate-400 mt-1">Sube tu PDF del SIGA para registrar tus cursos aprobados.</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (sem of historial()!.por_semestre; track sem.semestre) {
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                  <!-- Cabecera semestre -->
+                  <div class="bg-slate-50 px-4 py-2.5 flex items-center justify-between border-b border-slate-100">
+                    <span class="text-xs font-black text-slate-600 uppercase tracking-widest">Semestre {{ sem.semestre }}</span>
+                    <span class="text-xs text-slate-400">{{ sem.cursos.length }} cursos</span>
+                  </div>
+                  <!-- Filas de cursos -->
+                  <div class="divide-y divide-slate-50">
+                    @for (curso of sem.cursos; track curso.id) {
+                      <div class="flex items-center gap-3 px-4 py-2.5">
+                        <span class="text-[10px] font-mono font-bold text-slate-400 w-14 flex-shrink-0">{{ curso.codigo }}</span>
+                        <span class="text-xs font-medium text-slate-700 flex-1 min-w-0 truncate">{{ curso.nombre }}</span>
+                        <span class="text-[10px] text-slate-400 flex-shrink-0">
+                          {{ getTipoLabel(curso.tipo) }} · {{ curso.creditos }} cr.
+                        </span>
+                        @if (curso.nota !== null) {
+                          <app-badge [color]="getNotaColor(curso.nota)" size="sm">
+                            {{ curso.nota | number:'1.2-2' }}
+                          </app-badge>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
+    </div>
+  </div>
+
+</div>
