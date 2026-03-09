@@ -133,7 +133,7 @@ class ProgramacionHtmlImport
     {
         if (!$nombre || trim($nombre) === '') return null;
 
-        $key = strtoupper(trim($nombre));
+        $key = $this->normalizarGrupo($nombre);
         if (isset($this->grupoCache[$key])) return $this->grupoCache[$key];
 
         $grupo = GrupoHorario::firstOrCreate(
@@ -149,7 +149,7 @@ class ProgramacionHtmlImport
     {
         if (!$nombre || trim($nombre) === '') return null;
 
-        $key = strtoupper(trim($nombre));
+        $key = $this->normalizarAula($nombre);
         if (isset($this->aulaCache[$key])) return $this->aulaCache[$key];
 
         $aula = Aula::firstOrCreate(
@@ -159,6 +159,35 @@ class ProgramacionHtmlImport
 
         $this->aulaCache[$key] = $aula->id;
         return $aula->id;
+    }
+
+    /**
+     * Normaliza el código de grupo del SIGA:
+     * "01" → "G1", "14" → "G14", "G1" → "G1"
+     */
+    private function normalizarGrupo(string $nombre): string
+    {
+        $nombre = trim($nombre);
+        if (preg_match('/^\d+$/', $nombre)) {
+            return 'G' . (int) $nombre;
+        }
+        return strtoupper($nombre);
+    }
+
+    /**
+     * Normaliza el nombre de aula del SIGA:
+     * "PII-A11-3P" → "PII-11"  (quita letra de sala y sufijo de piso)
+     * "PII-11"     → "PII-11"  (ya normalizada)
+     * "LAB-B3-2P"  → "LAB-3"
+     */
+    private function normalizarAula(string $nombre): string
+    {
+        $nombre = strtoupper(trim($nombre));
+        // Patrón: PREFIJO-[LETRA]NUMERO[-PISO]
+        if (preg_match('/^([A-Z]+)-([A-Z]?)(\d+)(?:-\d+P)?$/', $nombre, $m)) {
+            return $m[1] . '-' . $m[3];
+        }
+        return $nombre;
     }
 
     private function resolverEscuelas(string $texto): array

@@ -85,6 +85,10 @@ class GrupoHorarioController extends Controller
             'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
         ]);
 
+        if ($grupo->detalles()->where('dia_semana', $data['dia_semana'])->exists()) {
+            return $this->error("Este grupo ya tiene un horario para el día {$data['dia_semana']}.", 422);
+        }
+
         $detalle = $grupo->detalles()->create($data);
         $grupo->load('detalles');
 
@@ -101,6 +105,15 @@ class GrupoHorarioController extends Controller
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
         ]);
+
+        $existe = GrupoHorarioDetalle::where('grupo_id', $id)
+            ->where('dia_semana', $data['dia_semana'])
+            ->where('id', '!=', $detalleId)
+            ->exists();
+
+        if ($existe) {
+            return $this->error("Este grupo ya tiene un horario para el día {$data['dia_semana']}.", 422);
+        }
 
         $detalle->update($data);
 

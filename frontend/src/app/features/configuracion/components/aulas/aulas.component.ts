@@ -36,8 +36,9 @@ export class AulasComponent implements OnInit {
   aulaEditData = { nombre: '', capacidad: 30 };
 
   // Asignar aula huérfana a pabellón
-  aulaAsignando       = signal<string | null>(null); // aula id en proceso
+  aulaAsignando          = signal<string | null>(null); // aula id en proceso
   pabellonSeleccionado: Record<string, string> = {}; // aulaId -> pabellonId
+  eliminandoHuerfanas    = signal(false);
 
   ngOnInit(): void {
     this.cargar();
@@ -199,6 +200,22 @@ export class AulasComponent implements OnInit {
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al asignar aula');
         this.aulaAsignando.set(null);
+      },
+    });
+  }
+
+  eliminarHuerfanasSinCurso(): void {
+    if (!confirm('¿Eliminar todas las aulas sin pabellón que no tengan ningún curso asignado? Esta acción es irreversible.')) return;
+    this.eliminandoHuerfanas.set(true);
+    this.aulaService.eliminarHuerfanasSinCurso().subscribe({
+      next: (res) => {
+        this.eliminandoHuerfanas.set(false);
+        this.cargarHuerfanas();
+        this.mostrarMensaje('success', `${res.eliminadas} aula(s) eliminadas`);
+      },
+      error: (err) => {
+        this.eliminandoHuerfanas.set(false);
+        this.mostrarMensaje('error', err.error?.message || 'Error al eliminar');
       },
     });
   }

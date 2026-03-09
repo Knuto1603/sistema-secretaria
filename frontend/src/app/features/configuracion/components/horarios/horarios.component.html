@@ -116,7 +116,7 @@
                       <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Día</label>
                       <select [(ngModel)]="slotEditData.dia_semana"
                         class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
-                        @for (dia of dias; track dia) {
+                        @for (dia of getDiasDisponibles(getGrupoActivo()!, detalle.id); track dia) {
                           <option [value]="dia">{{ diaLabels[dia] }}</option>
                         }
                       </select>
@@ -154,12 +154,18 @@
           <div class="flex flex-wrap items-end gap-3">
             <div>
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Día</label>
-              <select [(ngModel)]="nuevoSlot.dia_semana"
-                class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
-                @for (dia of dias; track dia) {
-                  <option [value]="dia">{{ diaLabels[dia] }}</option>
-                }
-              </select>
+              @if (getDiasDisponibles(getGrupoActivo()!).length === 0) {
+                <span class="px-3 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl block">
+                  Todos los días ya configurados
+                </span>
+              } @else {
+                <select [(ngModel)]="nuevoSlot.dia_semana"
+                  class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+                  @for (dia of getDiasDisponibles(getGrupoActivo()!); track dia) {
+                    <option [value]="dia">{{ diaLabels[dia] }}</option>
+                  }
+                </select>
+              }
             </div>
             <div>
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Inicio</label>
@@ -171,7 +177,9 @@
               <input type="time" [(ngModel)]="nuevoSlot.hora_fin"
                 class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
             </div>
-            <app-btn variant="primary" [loading]="guardandoSlot()" (clicked)="agregarSlot(getGrupoActivo()!.id)">
+            <app-btn variant="primary" [loading]="guardandoSlot()"
+              [disabled]="getDiasDisponibles(getGrupoActivo()!).length === 0"
+              (clicked)="agregarSlot(getGrupoActivo()!.id)">
               Agregar
             </app-btn>
           </div>

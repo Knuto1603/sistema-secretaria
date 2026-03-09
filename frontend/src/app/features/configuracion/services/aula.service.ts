@@ -54,6 +54,10 @@ export class AulaService {
     return this.http.get<ApiResponse<Aula[]>>(`${this.aulasUrl}/huerfanas`).pipe(map(r => r.data));
   }
 
+  eliminarHuerfanasSinCurso(): Observable<{ eliminadas: number }> {
+    return this.http.delete<ApiResponse<{ eliminadas: number }>>(`${this.aulasUrl}/huerfanas-sin-curso`).pipe(map(r => r.data));
+  }
+
   actualizarAula(id: string, data: Partial<Omit<Aula, 'id'>>): Observable<Aula> {
     return this.http.put<ApiResponse<Aula>>(`${this.aulasUrl}/${id}`, data).pipe(map(r => r.data));
   }

@@ -60,19 +60,24 @@
   <!-- ─── Aulas sin pabellón ──────────────────────────────────────────── -->
   @if (!loading() && aulasHuerfanas().length > 0) {
     <div class="bg-amber-50 border border-amber-200 rounded-3xl overflow-hidden shadow-sm">
-      <div class="flex items-center gap-3 px-6 py-4 border-b border-amber-200">
-        <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-xl flex-shrink-0">
-          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
-          </svg>
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-amber-200">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-xl flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="font-bold text-amber-800">Aulas sin pabellón asignado</span>
+            <span class="ml-2 text-xs text-amber-600 font-medium">
+              {{ aulasHuerfanas().length }} aula{{ aulasHuerfanas().length !== 1 ? 's' : '' }} creadas al importar programación
+            </span>
+          </div>
         </div>
-        <div>
-          <span class="font-bold text-amber-800">Aulas sin pabellón asignado</span>
-          <span class="ml-2 text-xs text-amber-600 font-medium">
-            {{ aulasHuerfanas().length }} aula{{ aulasHuerfanas().length !== 1 ? 's' : '' }} creadas al importar programación
-          </span>
-        </div>
+        <app-btn variant="danger" [loading]="eliminandoHuerfanas()" (clicked)="eliminarHuerfanasSinCurso()">
+          Limpiar sin curso
+        </app-btn>
       </div>
 
       <div class="px-6 py-4 space-y-3">

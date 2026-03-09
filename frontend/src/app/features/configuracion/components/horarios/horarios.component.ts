@@ -49,6 +49,15 @@ export class HorariosComponent implements OnInit {
   readonly dias: Dia[] = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   readonly diaLabels = DIA_LABELS;
 
+  getDiasDisponibles(grupo: GrupoHorario, excludeDetalleId?: string): Dia[] {
+    const usados = new Set(
+      grupo.detalles
+        .filter(d => d.id !== excludeDetalleId)
+        .map(d => d.dia_semana)
+    );
+    return this.dias.filter(d => !usados.has(d));
+  }
+
   ngOnInit(): void {
     this.cargar();
   }
@@ -66,9 +75,14 @@ export class HorariosComponent implements OnInit {
   }
 
   toggleGrupo(id: string): void {
-    this.grupoActivo.set(this.grupoActivo() === id ? null : id);
-    this.nuevoSlot = { dia_semana: 'lunes', hora_inicio: '08:00', hora_fin: '10:00' };
+    const siguiente = this.grupoActivo() === id ? null : id;
+    this.grupoActivo.set(siguiente);
     this.detalleEditando.set(null);
+    if (siguiente) {
+      const grupo = this.grupos().find(g => g.id === siguiente);
+      const primerDisponible = grupo ? (this.getDiasDisponibles(grupo)[0] ?? 'lunes') : 'lunes';
+      this.nuevoSlot = { dia_semana: primerDisponible, hora_inicio: '08:00', hora_fin: '10:00' };
+    }
   }
 
   toggleActivo(grupo: GrupoHorario): void {

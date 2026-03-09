@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Aula;
 use App\Models\Pabellon;
+use App\Models\ProgramacionAcademica;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -89,6 +90,23 @@ class PabellonController extends Controller
             ->map(fn($a) => $this->formatAula($a));
 
         return $this->success($huerfanas, 'Aulas sin pabellón');
+    }
+
+    public function eliminarHuerfanasSinCurso(): JsonResponse
+    {
+        // Aulas sin pabellón Y sin ninguna programación asociada
+        $aulasEnUso = ProgramacionAcademica::select('aula_id')
+            ->whereNotNull('aula_id')
+            ->distinct();
+
+        $eliminadas = Aula::whereNull('pabellon_id')
+            ->whereNotIn('id', $aulasEnUso)
+            ->delete();
+
+        return $this->success(
+            ['eliminadas' => $eliminadas],
+            "{$eliminadas} aula(s) huérfana(s) sin curso eliminadas"
+        );
     }
 
     public function updateAula(Request $request, string $id): JsonResponse
