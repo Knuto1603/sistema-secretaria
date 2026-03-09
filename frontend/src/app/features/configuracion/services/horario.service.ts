@@ -63,6 +63,12 @@ export class HorarioService {
     );
   }
 
+  actualizarDetalle(grupoId: string, detalleId: string, detalle: Omit<GrupoHorarioDetalle, 'id'>): Observable<GrupoHorario> {
+    return this.http.put<ApiResponse<GrupoHorario>>(`${this.apiUrl}/${grupoId}/detalle/${detalleId}`, detalle).pipe(
+      map(r => r.data)
+    );
+  }
+
   eliminarDetalle(grupoId: string, detalleId: string): Observable<GrupoHorario> {
     return this.http.delete<ApiResponse<GrupoHorario>>(`${this.apiUrl}/${grupoId}/detalle/${detalleId}`).pipe(
       map(r => r.data)

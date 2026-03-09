@@ -169,6 +169,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [GrupoHorarioController::class, 'destroy']);
             Route::patch('/{id}/toggle', [GrupoHorarioController::class, 'toggle']);
             Route::post('/{id}/detalle', [GrupoHorarioController::class, 'addDetalle']);
+            Route::put('/{id}/detalle/{detalleId}', [GrupoHorarioController::class, 'updateDetalle']);
             Route::delete('/{id}/detalle/{detalleId}', [GrupoHorarioController::class, 'removeDetalle']);
         });
     });

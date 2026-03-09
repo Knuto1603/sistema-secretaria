@@ -41,6 +41,11 @@ export class HorariosComponent implements OnInit {
   nuevoSlot: NuevoSlot = { dia_semana: 'lunes', hora_inicio: '08:00', hora_fin: '10:00' };
   guardandoSlot = signal(false);
 
+  // Edición inline de slot existente
+  detalleEditando = signal<string | null>(null);
+  slotEditData: NuevoSlot = { dia_semana: 'lunes', hora_inicio: '08:00', hora_fin: '10:00' };
+  guardandoEdicion = signal(false);
+
   readonly dias: Dia[] = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   readonly diaLabels = DIA_LABELS;
 
@@ -63,6 +68,7 @@ export class HorariosComponent implements OnInit {
   toggleGrupo(id: string): void {
     this.grupoActivo.set(this.grupoActivo() === id ? null : id);
     this.nuevoSlot = { dia_semana: 'lunes', hora_inicio: '08:00', hora_fin: '10:00' };
+    this.detalleEditando.set(null);
   }
 
   toggleActivo(grupo: GrupoHorario): void {
@@ -88,6 +94,39 @@ export class HorariosComponent implements OnInit {
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al agregar horario');
         this.guardandoSlot.set(false);
+      },
+    });
+  }
+
+  editarSlot(detalle: GrupoHorarioDetalle): void {
+    this.detalleEditando.set(detalle.id);
+    this.slotEditData = {
+      dia_semana: detalle.dia_semana,
+      hora_inicio: detalle.hora_inicio.substring(0, 5),
+      hora_fin: detalle.hora_fin.substring(0, 5),
+    };
+  }
+
+  cancelarEdicion(): void {
+    this.detalleEditando.set(null);
+  }
+
+  guardarEdicionSlot(grupoId: string, detalleId: string): void {
+    if (this.slotEditData.hora_inicio >= this.slotEditData.hora_fin) {
+      this.mostrarMensaje('error', 'La hora de inicio debe ser anterior a la hora de fin');
+      return;
+    }
+    this.guardandoEdicion.set(true);
+    this.horarioService.actualizarDetalle(grupoId, detalleId, this.slotEditData).subscribe({
+      next: (actualizado) => {
+        this.actualizarGrupoLocal(actualizado);
+        this.detalleEditando.set(null);
+        this.guardandoEdicion.set(false);
+        this.mostrarMensaje('success', 'Horario actualizado');
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al actualizar horario');
+        this.guardandoEdicion.set(false);
       },
     });
   }

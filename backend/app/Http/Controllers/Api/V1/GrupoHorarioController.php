@@ -91,6 +91,24 @@ class GrupoHorarioController extends Controller
         return $this->success($this->format($grupo), 'Horario agregado');
     }
 
+    public function updateDetalle(Request $request, string $id, string $detalleId): JsonResponse
+    {
+        $detalle = GrupoHorarioDetalle::where('grupo_id', $id)->find($detalleId);
+        if (!$detalle) return $this->notFound('Horario no encontrado');
+
+        $data = $request->validate([
+            'dia_semana'  => 'required|in:lunes,martes,miercoles,jueves,viernes,sabado',
+            'hora_inicio' => 'required|date_format:H:i',
+            'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
+        ]);
+
+        $detalle->update($data);
+
+        $grupo = GrupoHorario::with('detalles')->find($id);
+
+        return $this->success($this->format($grupo), 'Horario actualizado');
+    }
+
     public function removeDetalle(string $id, string $detalleId): JsonResponse
     {
         $detalle = GrupoHorarioDetalle::where('grupo_id', $id)->find($detalleId);

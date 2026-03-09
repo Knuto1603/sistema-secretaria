@@ -78,23 +78,69 @@
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Horarios configurados</p>
             <div class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
               @for (detalle of getGrupoActivo()!.detalles; track detalle.id) {
-                <div class="flex items-center justify-between px-4 py-3">
-                  <div class="flex items-center gap-3">
-                    <span class="w-10 text-center text-[10px] font-black text-indigo-600 bg-indigo-50 rounded-lg py-1 uppercase">
-                      {{ diaLabels[detalle.dia_semana] }}
-                    </span>
-                    <span class="text-sm font-semibold text-slate-700">
-                      {{ detalle.hora_inicio.substring(0, 5) }} – {{ detalle.hora_fin.substring(0, 5) }}
-                    </span>
+                <!-- Modo vista -->
+                @if (detalleEditando() !== detalle.id) {
+                  <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <span class="w-10 text-center text-[10px] font-black text-indigo-600 bg-indigo-50 rounded-lg py-1 uppercase">
+                        {{ diaLabels[detalle.dia_semana] }}
+                      </span>
+                      <span class="text-sm font-semibold text-slate-700">
+                        {{ detalle.hora_inicio.substring(0, 5) }} – {{ detalle.hora_fin.substring(0, 5) }}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <button
+                        (click)="editarSlot(detalle)"
+                        class="p-1.5 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Editar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        (click)="eliminarSlot(getGrupoActivo()!.id, detalle.id)"
+                        class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Eliminar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    (click)="eliminarSlot(getGrupoActivo()!.id, detalle.id)"
-                    class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
+                }
+                <!-- Modo edición inline -->
+                @if (detalleEditando() === detalle.id) {
+                  <div class="flex flex-wrap items-end gap-3 px-4 py-3 bg-indigo-50">
+                    <div>
+                      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Día</label>
+                      <select [(ngModel)]="slotEditData.dia_semana"
+                        class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+                        @for (dia of dias; track dia) {
+                          <option [value]="dia">{{ diaLabels[dia] }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Inicio</label>
+                      <input type="time" [(ngModel)]="slotEditData.hora_inicio"
+                        class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fin</label>
+                      <input type="time" [(ngModel)]="slotEditData.hora_fin"
+                        class="px-3 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+                    </div>
+                    <div class="flex gap-2">
+                      <app-btn variant="primary" [loading]="guardandoEdicion()" (clicked)="guardarEdicionSlot(getGrupoActivo()!.id, detalle.id)">
+                        Guardar
+                      </app-btn>
+                      <app-btn variant="secondary" (clicked)="cancelarEdicion()">
+                        Cancelar
+                      </app-btn>
+                    </div>
+                  </div>
+                }
               }
             </div>
           </div>
