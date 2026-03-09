@@ -174,6 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('aulas')->middleware('role:secretaria|admin|developer')->group(function () {
+        Route::get('/huerfanas', [PabellonController::class, 'indexHuerfanas']);
         Route::put('/{id}', [PabellonController::class, 'updateAula']);
         Route::delete('/{id}', [PabellonController::class, 'destroyAula']);
         Route::patch('/{id}/toggle', [PabellonController::class, 'toggleAula']);
