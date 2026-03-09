@@ -20,7 +20,8 @@ export class PerfilComponent implements OnInit {
   user    = this.authService.currentUser;
   tabActiva = signal<Tab>('datos');
 
-  esEstudiante = computed(() => this.authService.isEstudiante());
+  esEstudiante    = computed(() => this.authService.isEstudiante());
+  esImpersonando  = computed(() => this.authService.isImpersonating());
 
   // Cambio de contraseña
   passwordActual     = '';
