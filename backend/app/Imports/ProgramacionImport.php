@@ -2,17 +2,18 @@
 
 namespace App\Imports;
 
-use App\Models\Area;
 use App\Models\Aula;
 use App\Models\Curso;
 use App\Models\Docente;
+use App\Models\Escuela;
 use App\Models\GrupoHorario;
 use App\Models\ProgramacionAcademica;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-class ProgramacionImport implements ToModel, WithHeadingRow
+class ProgramacionImport implements ToCollection, WithHeadingRow
 {
     protected string $periodoId;
 
@@ -22,11 +23,13 @@ class ProgramacionImport implements ToModel, WithHeadingRow
     /** @var array<string, string> Cache aula nombre → id */
     private array $aulaCache = [];
 
+    /** @var array<string, string|null> Cache nombre escuela (normalizado) → id|null */
+    private array $escuelaCache = [];
+
     public function __construct(string $periodoId)
     {
         $this->periodoId = $periodoId;
 
-        // Pre-cargar grupos y aulas existentes en cache
         GrupoHorario::all(['id', 'nombre'])->each(function ($g) {
             $this->grupoCache[strtoupper(trim($g->nombre))] = $g->id;
         });
@@ -34,19 +37,35 @@ class ProgramacionImport implements ToModel, WithHeadingRow
         Aula::all(['id', 'nombre'])->each(function ($a) {
             $this->aulaCache[strtoupper(trim($a->nombre))] = $a->id;
         });
+
+        // Pre-cargar escuelas: indexar por nombre normalizado y nombre_corto normalizado
+        Escuela::all(['id', 'nombre', 'nombre_corto'])->each(function ($e) {
+            $this->escuelaCache[$this->normalizar($e->nombre)] = $e->id;
+            if ($e->nombre_corto) {
+                $this->escuelaCache[$this->normalizar($e->nombre_corto)] = $e->id;
+            }
+        });
     }
 
-    private function sanitizeKey($key): string
+    private function normalizar(string $texto): string
+    {
+        $texto = strtoupper(trim($texto));
+        // Quitar tildes
+        $texto = str_replace(
+            ['Á','É','Í','Ó','Ú','Ñ','á','é','í','ó','ú','ñ'],
+            ['A','E','I','O','U','N','A','E','I','O','U','N'],
+            $texto
+        );
+        return $texto;
+    }
+
+    private function sanitizeKey(string $key): string
     {
         $clean = trim($key, ". ");
         $clean = str_replace(['N°', 'Nº', 'n°', 'nº'], 'n', $clean);
         return Str::slug($clean, '_');
     }
 
-    /**
-     * Busca o crea un GrupoHorario por nombre (ej: G1, G2...).
-     * Retorna el id o null si el nombre está vacío.
-     */
     private function resolverGrupo(?string $nombre): ?string
     {
         if (!$nombre || trim($nombre) === '') return null;
@@ -66,11 +85,6 @@ class ProgramacionImport implements ToModel, WithHeadingRow
         return $grupo->id;
     }
 
-    /**
-     * Busca o crea un Aula por nombre (ej: PII-04, A-26...).
-     * pabellon_id es null; el admin lo asignará desde configuración.
-     * Retorna el id o null si el nombre está vacío.
-     */
     private function resolverAula(?string $nombre): ?string
     {
         if (!$nombre || trim($nombre) === '') return null;
@@ -90,61 +104,88 @@ class ProgramacionImport implements ToModel, WithHeadingRow
         return $aula->id;
     }
 
-    public function model(array $row)
+    /**
+     * Busca el id de una escuela por su nombre (normalizado).
+     * Primero intenta match exacto; luego busca si el nombre de la escuela
+     * contiene la palabra clave del Excel (ej. "AGROINDUSTRIAL" dentro de
+     * "INGENIERIA AGROINDUSTRIAL").
+     */
+    private function resolverEscuela(?string $nombre): ?string
     {
-        $cleanRow = [];
-        foreach ($row as $key => $value) {
-            $cleanRow[$this->sanitizeKey($key)] = $value;
+        if (!$nombre || trim($nombre) === '') return null;
+
+        $key = $this->normalizar($nombre);
+
+        if (array_key_exists($key, $this->escuelaCache)) {
+            return $this->escuelaCache[$key];
         }
 
-        if (!isset($cleanRow['codigo']) || !isset($cleanRow['nombre_del_curso'])) {
-            return null;
+        // Buscar escuela cuyo nombre normalizado contiene la palabra clave
+        $encontrado = null;
+        foreach ($this->escuelaCache as $nombreNorm => $id) {
+            if (str_contains($nombreNorm, $key) || str_contains($key, $nombreNorm)) {
+                $encontrado = $id;
+                break;
+            }
         }
 
-        // Área
-        $areaName = isset($cleanRow['area']) ? trim(strtoupper($cleanRow['area'])) : 'SIN AREA';
-        $area = Area::firstOrCreate(['nombre' => $areaName]);
+        // Guardar resultado (null si no se encontró) para no repetir búsqueda
+        $this->escuelaCache[$key] = $encontrado;
+        return $encontrado;
+    }
 
-        // Docente
-        $docente = null;
-        $nombreDocente = $cleanRow['docente'] ?? null;
-        if ($nombreDocente && strtoupper(trim($nombreDocente)) !== 'POR ASIGNAR') {
-            $docente = Docente::firstOrCreate(['nombre_completo' => trim(strtoupper($nombreDocente))]);
+    public function collection(Collection $rows): void
+    {
+        foreach ($rows as $rawRow) {
+            // Normalizar keys del encabezado
+            $row = [];
+            foreach ($rawRow->toArray() as $key => $value) {
+                $row[$this->sanitizeKey((string) $key)] = $value;
+            }
+
+            $codigoRaw = $row['codigo'] ?? null;
+            if (!$codigoRaw) continue;
+
+            $curso = Curso::where('codigo', trim($codigoRaw))->first();
+            if (!$curso) continue;
+
+            // Resolver FKs
+            $grupoNombreTexto = $row['grp'] ?? null;
+            $aulaNombreTexto  = $row['aula'] ?? null;
+            $docenteNombre    = $row['docente'] ?? null;
+            $escuelaNombre    = $row['escuela'] ?? null;
+
+            $grupoHorarioId = $this->resolverGrupo($grupoNombreTexto);
+            $aulaId         = $this->resolverAula($aulaNombreTexto);
+            $escuelaId      = $this->resolverEscuela($escuelaNombre);
+
+            $docente = null;
+            if ($docenteNombre && strtoupper(trim($docenteNombre)) !== 'POR ASIGNAR') {
+                $docente = Docente::firstOrCreate(['nombre_completo' => trim(strtoupper($docenteNombre))]);
+            }
+
+            $capacidad = (int) ($row['cap'] ?? 0);
+            if ($capacidad <= 0) $capacidad = 40;
+
+            $prog = ProgramacionAcademica::create([
+                'curso_id'         => $curso->id,
+                'periodo_id'       => $this->periodoId,
+                'docente_id'       => $docente?->id,
+                'grupo_horario_id' => $grupoHorarioId,
+                'aula_id'          => $aulaId,
+                'clave'            => $row['clave'] ?? 'S/N',
+                'grupo'            => $grupoNombreTexto ? strtoupper(trim($grupoNombreTexto)) : 'A',
+                'seccion'          => $row['sec'] ?? null,
+                'aula'             => $aulaNombreTexto ? strtoupper(trim($aulaNombreTexto)) : null,
+                'n_acta'           => $row['n_acta'] ?? null,
+                'capacidad'        => $capacidad,
+                'n_inscritos'      => (int) ($row['n_inscritos'] ?? 0),
+            ]);
+
+            // Sincronizar escuela si se encontró
+            if ($escuelaId) {
+                $prog->escuelas()->sync([$escuelaId]);
+            }
         }
-
-        // Curso
-        $curso = Curso::where('codigo', trim($cleanRow['codigo']))->first();
-        if (!$curso) return null;
-
-        if (!$curso->area_id) {
-            $curso->update(['area_id' => $area->id]);
-        }
-
-        // Resolver FKs de grupo y aula
-        $grupoNombreTexto = $cleanRow['grp'] ?? null;
-        $aulaNombreTexto  = $cleanRow['aula'] ?? null;
-
-        $grupoHorarioId = $this->resolverGrupo($grupoNombreTexto);
-        $aulaId         = $this->resolverAula($aulaNombreTexto);
-        $grupoNombre    = $grupoNombreTexto ? strtoupper(trim($grupoNombreTexto)) : null;
-
-        // Capacidad: mínimo 40 si no se especifica o es 0
-        $capacidad = (int) ($cleanRow['cap'] ?? 0);
-        if ($capacidad <= 0) $capacidad = 40;
-
-        return new ProgramacionAcademica([
-            'curso_id'         => $curso->id,
-            'periodo_id'       => $this->periodoId,
-            'docente_id'       => $docente?->id,
-            'grupo_horario_id' => $grupoHorarioId,
-            'aula_id'          => $aulaId,
-            'clave'            => $cleanRow['clave'] ?? 'S/N',
-            'grupo'            => $grupoNombre ?? 'A',
-            'seccion'          => $cleanRow['sec'] ?? null,
-            'aula'             => $aulaNombreTexto ? strtoupper(trim($aulaNombreTexto)) : null,
-            'n_acta'           => $cleanRow['n_acta'] ?? null,
-            'capacidad'        => $capacidad,
-            'n_inscritos'      => (int) ($cleanRow['n_inscritos'] ?? 0),
-        ]);
     }
 }
