@@ -13,9 +13,10 @@ import { AppButtonComponent } from '@shared/button/button.component';
 export class AulasComponent implements OnInit {
   private aulaService = inject(AulaService);
 
-  pabellones = signal<Pabellon[]>([]);
-  loading = signal(false);
-  mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  pabellones      = signal<Pabellon[]>([]);
+  aulasHuerfanas  = signal<Aula[]>([]);
+  loading         = signal(false);
+  mensaje         = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Pabellón expandido
   pabellonActivo = signal<string | null>(null);
@@ -34,6 +35,10 @@ export class AulasComponent implements OnInit {
   aulaEditando = signal<Aula | null>(null);
   aulaEditData = { nombre: '', capacidad: 30 };
 
+  // Asignar aula huérfana a pabellón
+  aulaAsignando       = signal<string | null>(null); // aula id en proceso
+  pabellonSeleccionado: Record<string, string> = {}; // aulaId -> pabellonId
+
   ngOnInit(): void {
     this.cargar();
   }
@@ -41,8 +46,19 @@ export class AulasComponent implements OnInit {
   cargar(): void {
     this.loading.set(true);
     this.aulaService.getPabellones().subscribe({
-      next: (p) => { this.pabellones.set(p); this.loading.set(false); },
+      next: (p) => {
+        this.pabellones.set(p);
+        this.loading.set(false);
+        this.cargarHuerfanas();
+      },
       error: () => this.loading.set(false),
+    });
+  }
+
+  cargarHuerfanas(): void {
+    this.aulaService.getAulasHuerfanas().subscribe({
+      next: (a) => this.aulasHuerfanas.set(a),
+      error: () => {},
     });
   }
 
@@ -160,6 +176,30 @@ export class AulasComponent implements OnInit {
         this.mostrarMensaje('success', 'Aula eliminada');
       },
       error: (err) => this.mostrarMensaje('error', err.error?.message || 'No se pudo eliminar'),
+    });
+  }
+
+  asignarPabellonAula(aula: Aula): void {
+    const pabellonId = this.pabellonSeleccionado[aula.id];
+    if (!pabellonId || this.aulaAsignando() === aula.id) return;
+
+    this.aulaAsignando.set(aula.id);
+    this.aulaService.actualizarAula(aula.id, { pabellon_id: pabellonId }).subscribe({
+      next: (updated) => {
+        this.aulasHuerfanas.update(list => list.filter(a => a.id !== aula.id));
+        this.pabellones.update(list =>
+          list.map(p => p.id === pabellonId
+            ? { ...p, aulas: [...p.aulas, updated].sort((a, b) => a.nombre.localeCompare(b.nombre)) }
+            : p)
+        );
+        delete this.pabellonSeleccionado[aula.id];
+        this.aulaAsignando.set(null);
+        this.mostrarMensaje('success', `Aula "${updated.nombre}" asignada correctamente`);
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al asignar aula');
+        this.aulaAsignando.set(null);
+      },
     });
   }
 
