@@ -79,13 +79,17 @@ export class ProgramacionService {
     page: number = 1,
     search: string = '',
     perPage: number = 10,
-    periodoId?: string
+    periodoId?: string,
+    escuelaId?: string,
+    ciclo?: number
   ): Observable<PaginatedResponse<Programacion>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString());
     if (search)    params = params.set('search', search);
     if (periodoId) params = params.set('periodo_id', periodoId);
+    if (escuelaId) params = params.set('escuela_id', escuelaId);
+    if (ciclo)     params = params.set('ciclo', ciclo.toString());
 
     return this.http
       .get<ApiResponse<ApiPaginatedData<Programacion>>>(this.apiUrl, { params })
@@ -178,10 +182,12 @@ export class ProgramacionService {
     });
   }
 
-  exportarExcel(periodoId?: string, search?: string): void {
+  exportarExcel(periodoId?: string, search?: string, escuelaId?: string, ciclo?: number): void {
     let params = new HttpParams();
     if (periodoId) params = params.set('periodo_id', periodoId);
     if (search)    params = params.set('search', search);
+    if (escuelaId) params = params.set('escuela_id', escuelaId);
+    if (ciclo)     params = params.set('ciclo', ciclo.toString());
 
     this.http
       .get(`${this.apiUrl}/export`, { params, responseType: 'blob' })
