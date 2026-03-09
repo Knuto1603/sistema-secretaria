@@ -171,13 +171,13 @@ export class AdministrativosListaComponent implements OnInit {
     this.cargarDatos();
   }
 
-  getRolBadgeColor(rol: string): 'indigo' | 'emerald' | 'amber' | 'red' | 'slate' | 'cyan' | 'purple' {
-    const colors: Record<string, 'indigo' | 'emerald' | 'amber' | 'red' | 'slate' | 'cyan' | 'purple'> = {
+  getRolBadgeColor(rol: string): 'indigo' | 'emerald' | 'amber' | 'red' | 'slate' {
+    const colors: Record<string, 'indigo' | 'emerald' | 'amber' | 'red' | 'slate'> = {
       'admin': 'indigo',
-      'developer': 'purple',
+      'developer': 'indigo',
       'secretaria': 'emerald',
       'decano': 'amber',
-      'secretario academico': 'cyan',
+      'secretario academico': 'indigo',
       'estudiante': 'slate'
     };
     return colors[rol.toLowerCase()] || 'slate';
