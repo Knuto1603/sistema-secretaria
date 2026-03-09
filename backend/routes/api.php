@@ -124,6 +124,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->middleware('role:secretaria|admin|developer');
         Route::delete('/{id}', [ProgramacionController::class, 'destroy'])
             ->middleware('role:secretaria|admin|developer');
+        Route::delete('/periodo/{periodoId}', [ProgramacionController::class, 'destroyPeriodo'])
+            ->middleware('role:developer');
         Route::patch('/{id}/toggle-lleno', [ProgramacionController::class, 'toggleLleno'])
             ->middleware('role:secretaria|admin|developer');
     });
