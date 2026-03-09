@@ -81,18 +81,30 @@ class PabellonController extends Controller
         return $this->success($this->formatAula($aula), 'Aula creada', 201);
     }
 
+    public function indexHuerfanas(): JsonResponse
+    {
+        $huerfanas = Aula::whereNull('pabellon_id')
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn($a) => $this->formatAula($a));
+
+        return $this->success($huerfanas, 'Aulas sin pabellón');
+    }
+
     public function updateAula(Request $request, string $id): JsonResponse
     {
         $aula = Aula::find($id);
         if (!$aula) return $this->notFound('Aula no encontrada');
 
         $data = $request->validate([
-            'nombre'    => 'sometimes|string|max:20',
-            'capacidad' => 'sometimes|integer|min:1|max:500',
-            'activo'    => 'sometimes|boolean',
+            'nombre'      => 'sometimes|string|max:20',
+            'capacidad'   => 'sometimes|integer|min:1|max:500',
+            'activo'      => 'sometimes|boolean',
+            'pabellon_id' => 'sometimes|nullable|uuid|exists:pabellones,id',
         ]);
 
         $aula->update($data);
+        $aula->load('pabellon');
 
         return $this->success($this->formatAula($aula), 'Aula actualizada');
     }
