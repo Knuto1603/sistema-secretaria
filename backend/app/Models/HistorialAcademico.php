@@ -16,6 +16,15 @@ class HistorialAcademico extends Model
         'user_id',
         'curso_id',
         'fuente',
+        'semestre',
+        'tipo',
+        'creditos',
+        'nota',
+    ];
+
+    protected $casts = [
+        'nota'     => 'float',
+        'creditos' => 'integer',
     ];
 
     public function user(): BelongsTo

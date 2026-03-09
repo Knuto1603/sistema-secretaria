@@ -10,6 +10,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -62,5 +63,28 @@ class AuthController extends Controller
         $this->authService->logout($request->user());
 
         return $this->success(null, 'Sesión cerrada exitosamente');
+    }
+
+    /**
+     * Cambia la contraseña del usuario autenticado
+     * PATCH /me/password
+     */
+    public function cambiarPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'password_actual'        => ['required', 'string'],
+            'password_nuevo'         => ['required', 'string', 'min:8', 'confirmed'],
+            'password_nuevo_confirmation' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->password_actual, $user->password)) {
+            return $this->error('La contraseña actual es incorrecta.', 422);
+        }
+
+        $user->update(['password' => Hash::make($request->password_nuevo)]);
+
+        return $this->success(null, 'Contraseña actualizada correctamente.');
     }
 }

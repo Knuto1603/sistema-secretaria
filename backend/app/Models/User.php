@@ -93,7 +93,13 @@ class User extends Authenticatable
     public function cursosAprobados()
     {
         return $this->belongsToMany(Curso::class, 'historial_academico', 'user_id', 'curso_id')
-            ->withPivot('fuente')
+            ->withPivot('fuente', 'nota', 'semestre', 'tipo', 'creditos')
+            ->where(function ($q) {
+                // Importados del PDF: solo aprobados (nota > 10)
+                // Autoreportados (nota null): siempre se consideran aprobados
+                $q->where('nota', '>', 10)->orWhereNull('nota');
+            })
+            ->distinct()
             ->withTimestamps();
     }
 

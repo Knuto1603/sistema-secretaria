@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Rutas de autenticación
     Route::get('/me', [AuthController::class, 'me']);
+    Route::patch('/me/password', [AuthController::class, 'cambiarPassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Rutas de Periodos
@@ -268,6 +269,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('historial')->group(function () {
         Route::get('/', [HistorialController::class, 'index']);
         Route::post('/sync', [HistorialController::class, 'sync']);
+        Route::post('/importar-pdf', [HistorialController::class, 'importarPdf']);
+        Route::delete('/limpiar', [HistorialController::class, 'limpiar']);
     });
 
     // Plan de Estudios
