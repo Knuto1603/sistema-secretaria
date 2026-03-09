@@ -35,6 +35,7 @@ class ProgramacionController extends Controller
             $user = $request->user();
             if ($user && $user->tipo_usuario === 'estudiante' && $user->escuela_id) {
                 $data['escuela_id'] = $user->escuela_id;
+                unset($data['ciclo']); // el ciclo para estudiante lo maneja paraMi()
             }
 
             $dto    = ProgramacionFilterDTO::fromRequest($data);
@@ -324,7 +325,8 @@ class ProgramacionController extends Controller
                 return $this->error('No hay periodo activo ni se especificó uno.', 422);
             }
 
-            $items = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId);
+            $ciclo = $request->get('ciclo') ? (int) $request->get('ciclo') : null;
+            $items = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId, $ciclo);
 
             // Crear Excel con PhpSpreadsheet
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();

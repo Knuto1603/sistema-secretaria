@@ -35,7 +35,7 @@ class ProgramacionService
             throw new Exception('No hay un periodo académico activo.');
         }
 
-        $query = $this->programacionRepository->getBaseQuery($periodoId, $dto->escuela_id);
+        $query = $this->programacionRepository->getBaseQuery($periodoId, $dto->escuela_id, $dto->ciclo);
 
         return $this->applyFiltersAndPaginate(
             $query,
@@ -84,9 +84,9 @@ class ProgramacionService
     /**
      * Obtiene todas las programaciones para exportación (sin paginar)
      */
-    public function getAllForExport(string $periodoId, ?string $search = null, ?string $escuelaId = null): Collection
+    public function getAllForExport(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null): Collection
     {
-        return $this->programacionRepository->getAllByPeriodo($periodoId, $search, $escuelaId);
+        return $this->programacionRepository->getAllByPeriodo($periodoId, $search, $escuelaId, $ciclo);
     }
 
     /**
