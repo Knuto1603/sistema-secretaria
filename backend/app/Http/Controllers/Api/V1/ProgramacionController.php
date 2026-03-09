@@ -395,6 +395,22 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Eliminar TODA la programación de un periodo (solo developer)
+     */
+    public function destroyPeriodo(string $periodoId): JsonResponse
+    {
+        try {
+            $eliminados = $this->service->deleteByPeriodo($periodoId);
+            return $this->success(
+                ['eliminados' => $eliminados],
+                "Se eliminaron {$eliminados} secciones del periodo"
+            );
+        } catch (Exception $e) {
+            return $this->error('Error al eliminar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Marcar/desmarcar un curso como lleno manualmente
      */
     public function toggleLleno(string $id): JsonResponse
