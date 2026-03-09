@@ -184,13 +184,14 @@ export class ProgramacionService {
     });
   }
 
-  exportarExcel(periodoId?: string, search?: string, escuelaId?: string, ciclo?: number, areaId?: string): void {
+  exportarExcel(periodoId?: string, search?: string, escuelaId?: string, ciclo?: number, areaId?: string, conHorario?: boolean): void {
     let params = new HttpParams();
-    if (periodoId) params = params.set('periodo_id', periodoId);
-    if (search)    params = params.set('search', search);
-    if (escuelaId) params = params.set('escuela_id', escuelaId);
-    if (ciclo)     params = params.set('ciclo', ciclo.toString());
-    if (areaId)    params = params.set('area_id', areaId);
+    if (periodoId)   params = params.set('periodo_id', periodoId);
+    if (search)      params = params.set('search', search);
+    if (escuelaId)   params = params.set('escuela_id', escuelaId);
+    if (ciclo)       params = params.set('ciclo', ciclo.toString());
+    if (areaId)      params = params.set('area_id', areaId);
+    if (conHorario)  params = params.set('con_horario', '1');
 
     this.http
       .get(`${this.apiUrl}/export`, { params, responseType: 'blob' })

@@ -318,35 +318,51 @@ class ProgramacionController extends Controller
     public function export(Request $request): mixed
     {
         try {
-            $periodoId = $request->get('periodo_id') ?? $this->service->getActivePeriodoId();
-            $search    = $request->get('search', '');
-            $escuelaId = $request->get('escuela_id');
+            $periodoId  = $request->get('periodo_id') ?? $this->service->getActivePeriodoId();
+            $search     = $request->get('search', '');
+            $escuelaId  = $request->get('escuela_id');
+            $conHorario = (bool) $request->get('con_horario', false);
 
             if (!$periodoId) {
                 return $this->error('No hay periodo activo ni se especificó uno.', 422);
             }
 
-            $ciclo   = $request->get('ciclo') ? (int) $request->get('ciclo') : null;
-            $areaId  = $request->get('area_id');
-            $items   = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId, $ciclo, $areaId);
+            $ciclo  = $request->get('ciclo') ? (int) $request->get('ciclo') : null;
+            $areaId = $request->get('area_id');
+            $items  = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId, $ciclo, $areaId);
+
+            // Cabeceras base
+            $headers = ['CÓDIGO', 'CURSO', 'CICLO', 'ESCUELA', 'DEPARTAMENTO', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
+
+            // Días para columnas de horario (Lun-Vie)
+            $diasHorario = ['lunes' => 'LUN', 'martes' => 'MAR', 'miercoles' => 'MIÉ', 'jueves' => 'JUE', 'viernes' => 'VIE'];
+            if ($conHorario) {
+                foreach ($diasHorario as $label) {
+                    $headers[] = $label;
+                }
+            }
+
+            $colCount = count($headers);
+            // Para más de 26 columnas usamos \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex
+            $lastColIdx = $colCount; // 1-based
 
             // Crear Excel con PhpSpreadsheet
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet       = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Programación');
 
-            // Cabeceras (se agrega columna DEPARTAMENTO después de ESCUELA)
-            $headers = ['CÓDIGO', 'CURSO', 'CICLO', 'ESCUELA', 'DEPARTAMENTO', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
-            $lastCol  = chr(64 + count($headers)); // 'M' para 13 columnas
             foreach ($headers as $i => $h) {
-                $col = chr(65 + $i);
-                $sheet->setCellValue("{$col}1", $h);
-                $sheet->getStyle("{$col}1")->getFont()->setBold(true);
-                $sheet->getStyle("{$col}1")->getFill()
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 1);
+                $sheet->setCellValue("{$colLetter}1", $h);
+                $sheet->getStyle("{$colLetter}1")->getFont()->setBold(true);
+                $isHorarioCol = $conHorario && $i >= 13; // columnas de día
+                $sheet->getStyle("{$colLetter}1")->getFill()
                     ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-                    ->getStartColor()->setARGB('FF6366F1');
-                $sheet->getStyle("{$col}1")->getFont()->getColor()->setARGB('FFFFFFFF');
+                    ->getStartColor()->setARGB($isHorarioCol ? 'FF0F766E' : 'FF6366F1');
+                $sheet->getStyle("{$colLetter}1")->getFont()->getColor()->setARGB('FFFFFFFF');
             }
+
+            $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIdx);
 
             // Datos
             $row = 2;
@@ -374,8 +390,23 @@ class ProgramacionController extends Controller
                 $sheet->setCellValue("L{$row}", $estado);
                 $sheet->setCellValue("M{$row}", $prog->clave ?? '');
 
+                // Columnas de horario por día
+                if ($conHorario) {
+                    $detalles = $prog->grupoHorario?->detalles ?? collect();
+                    $colOffset = 14; // columna N = 14 (1-based)
+                    foreach (array_keys($diasHorario) as $dia) {
+                        $rangos = $detalles
+                            ->where('dia_semana', $dia)
+                            ->map(fn($d) => substr($d->hora_inicio, 0, 5) . '-' . substr($d->hora_fin, 0, 5))
+                            ->implode(' · ');
+                        $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colOffset);
+                        $sheet->setCellValue("{$colLetter}{$row}", $rangos);
+                        $colOffset++;
+                    }
+                }
+
                 if ($prog->estaLleno()) {
-                    $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getFill()
+                    $sheet->getStyle("A{$row}:{$lastColLetter}{$row}")->getFill()
                         ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                         ->getStartColor()->setARGB('FFFEF2F2');
                 }
@@ -384,8 +415,8 @@ class ProgramacionController extends Controller
             }
 
             // Autofit
-            foreach (range('A', $lastCol) as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
+            for ($i = 1; $i <= $lastColIdx; $i++) {
+                $sheet->getColumnDimensionByColumn($i)->setAutoSize(true);
             }
 
             $tmpFile = tempnam(sys_get_temp_dir(), 'prog_export_') . '.xlsx';

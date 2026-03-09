@@ -57,7 +57,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
     public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null): Builder
     {
         $query = $this->model
-            ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario', 'escuelas'])
+            ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas'])
             ->where('periodo_id', $periodoId)
             ->selectRaw('programacion_academica.*,
                 (CASE WHEN lleno_manual = 1 OR n_inscritos >= capacidad THEN 1 ELSE 0 END) as esta_lleno_orden')

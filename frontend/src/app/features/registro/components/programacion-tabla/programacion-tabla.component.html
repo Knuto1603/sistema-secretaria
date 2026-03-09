@@ -323,13 +323,34 @@
               </svg>
               Plantilla
             </app-btn>
-            <app-btn variant="ghost" (clicked)="exportarExcel()">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              Exportar
-            </app-btn>
+            <!-- Exportar + toggle horario -->
+            <div class="flex items-center gap-1.5 border border-slate-200 rounded-2xl overflow-hidden">
+              <app-btn variant="ghost" (clicked)="exportarExcel()" class="rounded-none border-0">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Exportar
+              </app-btn>
+              <button
+                (click)="exportarConHorario.set(!exportarConHorario())"
+                [title]="exportarConHorario() ? 'Quitar columnas de horario' : 'Incluir columnas Lun–Vie con horarios'"
+                class="flex items-center gap-1 px-2.5 py-2 text-[10px] font-bold uppercase tracking-wide border-l border-slate-200 transition-colors"
+                [ngClass]="exportarConHorario()
+                  ? 'bg-teal-50 text-teal-700'
+                  : 'bg-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span>Hrs</span>
+                @if (exportarConHorario()) {
+                  <svg class="w-3 h-3 text-teal-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                  </svg>
+                }
+              </button>
+            </div>
             <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()">
               SIGA
             </app-btn>

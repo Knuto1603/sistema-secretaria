@@ -323,13 +323,16 @@ export class ProgramacionTablaComponent implements OnInit {
 
   // ─── EXPORT ──────────────────────────────────────────────────────────────
 
+  exportarConHorario = signal(false);
+
   exportarExcel(): void {
     this.programacionService.exportarExcel(
       this.periodoSeleccionado() || undefined,
       this.searchTerm() || undefined,
       this.escuelaSeleccionada() || undefined,
       this.cicloSeleccionado() || undefined,
-      this.areaSeleccionada() || undefined
+      this.areaSeleccionada() || undefined,
+      this.exportarConHorario()
     );
   }
 
