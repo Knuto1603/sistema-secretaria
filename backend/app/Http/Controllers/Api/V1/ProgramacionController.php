@@ -334,7 +334,8 @@ class ProgramacionController extends Controller
             $sheet->setTitle('Programación');
 
             // Cabeceras
-            $headers = ['CÓDIGO', 'CURSO', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
+            $headers = ['CÓDIGO', 'CURSO', 'CICLO', 'ESCUELA', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
+            $lastCol  = chr(64 + count($headers)); // 'L' para 12 columnas
             foreach ($headers as $i => $h) {
                 $col = chr(65 + $i);
                 $sheet->setCellValue("{$col}1", $h);
@@ -348,28 +349,29 @@ class ProgramacionController extends Controller
             // Datos
             $row = 2;
             foreach ($items as $prog) {
-                $aulaNombre = $prog->aula; // texto importado
-                if (!$aulaNombre && $prog->aula_id) {
-                    $aulaNombre = $prog->aulaRelacion?->nombre ?? '';
-                }
-
+                $aulaNombre   = $prog->aula ?? $prog->aulaRelacion?->nombre ?? '';
+                $escuelaNombres = $prog->escuelas->isNotEmpty()
+                    ? $prog->escuelas->pluck('nombre_corto')->implode(', ')
+                    : '';
                 $estado = $prog->estaLleno()
                     ? ($prog->lleno_manual ? 'LLENO (Manual)' : 'LLENO')
                     : 'DISPONIBLE';
 
                 $sheet->setCellValue("A{$row}", $prog->curso?->codigo ?? '');
                 $sheet->setCellValue("B{$row}", $prog->curso?->nombre ?? '');
-                $sheet->setCellValue("C{$row}", $prog->grupo ?? '');
-                $sheet->setCellValue("D{$row}", $prog->seccion ?? '');
-                $sheet->setCellValue("E{$row}", $aulaNombre);
-                $sheet->setCellValue("F{$row}", $prog->docente?->nombre_completo ?? 'POR ASIGNAR');
-                $sheet->setCellValue("G{$row}", $prog->capacidad ?? 0);
-                $sheet->setCellValue("H{$row}", $prog->n_inscritos ?? 0);
-                $sheet->setCellValue("I{$row}", $estado);
-                $sheet->setCellValue("J{$row}", $prog->clave ?? '');
+                $sheet->setCellValue("C{$row}", $prog->ciclo ?? '');
+                $sheet->setCellValue("D{$row}", $escuelaNombres);
+                $sheet->setCellValue("E{$row}", $prog->grupo ?? '');
+                $sheet->setCellValue("F{$row}", $prog->seccion ?? '');
+                $sheet->setCellValue("G{$row}", $aulaNombre);
+                $sheet->setCellValue("H{$row}", $prog->docente?->nombre_completo ?? 'POR ASIGNAR');
+                $sheet->setCellValue("I{$row}", $prog->capacidad ?? 0);
+                $sheet->setCellValue("J{$row}", $prog->n_inscritos ?? 0);
+                $sheet->setCellValue("K{$row}", $estado);
+                $sheet->setCellValue("L{$row}", $prog->clave ?? '');
 
                 if ($prog->estaLleno()) {
-                    $sheet->getStyle("A{$row}:J{$row}")->getFill()
+                    $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getFill()
                         ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
                         ->getStartColor()->setARGB('FFFEF2F2');
                 }
@@ -378,7 +380,7 @@ class ProgramacionController extends Controller
             }
 
             // Autofit
-            foreach (range('A', 'J') as $col) {
+            foreach (range('A', $lastCol) as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
