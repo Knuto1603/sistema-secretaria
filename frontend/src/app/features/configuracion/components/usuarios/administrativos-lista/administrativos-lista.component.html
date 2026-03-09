@@ -68,6 +68,7 @@
   </div>
 
   <!-- Tabla -->
+  <div class="space-y-4">
   <app-table
     [columns]="columnas"
     [data]="usuarios()"
@@ -152,17 +153,20 @@
 
   <!-- Paginación -->
   @if (pagination.lastPage > 1) {
-    <app-shared-pagination
-      [currentPage]="pagination.currentPage"
-      [lastPage]="pagination.lastPage"
-      [total]="pagination.total"
-      [from]="pagination.from"
-      [to]="pagination.to"
-      [perPage]="pagination.perPage"
-      (pageChange)="onPageChange($event)"
-      (pageSizeChange)="onPageSizeChange($event)">
-    </app-shared-pagination>
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <app-shared-pagination
+        [currentPage]="pagination.currentPage"
+        [lastPage]="pagination.lastPage"
+        [total]="pagination.total"
+        [from]="pagination.from"
+        [to]="pagination.to"
+        [perPage]="pagination.perPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)">
+      </app-shared-pagination>
+    </div>
   }
+  </div>
 
   <!-- Estado vacío -->
   @if (!loading() && usuarios().length === 0) {

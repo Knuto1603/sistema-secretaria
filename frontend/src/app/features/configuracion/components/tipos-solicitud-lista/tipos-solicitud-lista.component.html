@@ -38,6 +38,7 @@
   </div>
 
   <!-- Tabla -->
+  <div class="space-y-4">
   <app-table
     [columns]="columnas"
     [data]="tipos()"
@@ -109,6 +110,7 @@
     </ng-template>
 
   </app-table>
+  </div>
 
   <!-- Estado vacío -->
   @if (!loading() && tipos().length === 0) {

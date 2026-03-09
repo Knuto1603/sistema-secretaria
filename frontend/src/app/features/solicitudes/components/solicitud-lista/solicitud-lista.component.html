@@ -155,6 +155,7 @@
   }
 
   <!-- Tabla de solicitudes -->
+  <div class="space-y-4">
   <app-table
     [columns]="columnas()"
     [data]="solicitudes()"
@@ -229,6 +230,7 @@
   </app-table>
 
   <!-- Paginación -->
+
   @if (paginationData() && !loading()) {
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       <app-shared-pagination
@@ -243,6 +245,7 @@
       </app-shared-pagination>
     </div>
   }
+  </div>
 
   <!-- Estado vacío -->
   @if (!loading() && solicitudes().length === 0) {
