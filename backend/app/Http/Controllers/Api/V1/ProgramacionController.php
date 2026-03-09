@@ -36,6 +36,7 @@ class ProgramacionController extends Controller
             if ($user && $user->tipo_usuario === 'estudiante' && $user->escuela_id) {
                 $data['escuela_id'] = $user->escuela_id;
                 unset($data['ciclo']); // el ciclo para estudiante lo maneja paraMi()
+                unset($data['area_id']); // el filtro de área no aplica para estudiantes
             }
 
             $dto    = ProgramacionFilterDTO::fromRequest($data);
@@ -325,17 +326,18 @@ class ProgramacionController extends Controller
                 return $this->error('No hay periodo activo ni se especificó uno.', 422);
             }
 
-            $ciclo = $request->get('ciclo') ? (int) $request->get('ciclo') : null;
-            $items = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId, $ciclo);
+            $ciclo   = $request->get('ciclo') ? (int) $request->get('ciclo') : null;
+            $areaId  = $request->get('area_id');
+            $items   = $this->service->getAllForExport($periodoId, $search ?: null, $escuelaId, $ciclo, $areaId);
 
             // Crear Excel con PhpSpreadsheet
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet       = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Programación');
 
-            // Cabeceras
-            $headers = ['CÓDIGO', 'CURSO', 'CICLO', 'ESCUELA', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
-            $lastCol  = chr(64 + count($headers)); // 'L' para 12 columnas
+            // Cabeceras (se agrega columna DEPARTAMENTO después de ESCUELA)
+            $headers = ['CÓDIGO', 'CURSO', 'CICLO', 'ESCUELA', 'DEPARTAMENTO', 'GRUPO', 'SEC', 'AULA', 'DOCENTE', 'CAPACIDAD', 'INSCRITOS', 'ESTADO', 'CLAVE'];
+            $lastCol  = chr(64 + count($headers)); // 'M' para 13 columnas
             foreach ($headers as $i => $h) {
                 $col = chr(65 + $i);
                 $sheet->setCellValue("{$col}1", $h);
@@ -349,10 +351,11 @@ class ProgramacionController extends Controller
             // Datos
             $row = 2;
             foreach ($items as $prog) {
-                $aulaNombre   = $prog->aula ?? $prog->aulaRelacion?->nombre ?? '';
+                $aulaNombre     = $prog->aula ?? $prog->aulaRelacion?->nombre ?? '';
                 $escuelaNombres = $prog->escuelas->isNotEmpty()
                     ? $prog->escuelas->pluck('nombre_corto')->implode(', ')
                     : '';
+                $departamento   = $prog->curso?->area?->nombre ?? '';
                 $estado = $prog->estaLleno()
                     ? ($prog->lleno_manual ? 'LLENO (Manual)' : 'LLENO')
                     : 'DISPONIBLE';
@@ -361,14 +364,15 @@ class ProgramacionController extends Controller
                 $sheet->setCellValue("B{$row}", $prog->curso?->nombre ?? '');
                 $sheet->setCellValue("C{$row}", $prog->ciclo ?? '');
                 $sheet->setCellValue("D{$row}", $escuelaNombres);
-                $sheet->setCellValue("E{$row}", $prog->grupo ?? '');
-                $sheet->setCellValue("F{$row}", $prog->seccion ?? '');
-                $sheet->setCellValue("G{$row}", $aulaNombre);
-                $sheet->setCellValue("H{$row}", $prog->docente?->nombre_completo ?? 'POR ASIGNAR');
-                $sheet->setCellValue("I{$row}", $prog->capacidad ?? 0);
-                $sheet->setCellValue("J{$row}", $prog->n_inscritos ?? 0);
-                $sheet->setCellValue("K{$row}", $estado);
-                $sheet->setCellValue("L{$row}", $prog->clave ?? '');
+                $sheet->setCellValue("E{$row}", $departamento);
+                $sheet->setCellValue("F{$row}", $prog->grupo ?? '');
+                $sheet->setCellValue("G{$row}", $prog->seccion ?? '');
+                $sheet->setCellValue("H{$row}", $aulaNombre);
+                $sheet->setCellValue("I{$row}", $prog->docente?->nombre_completo ?? 'POR ASIGNAR');
+                $sheet->setCellValue("J{$row}", $prog->capacidad ?? 0);
+                $sheet->setCellValue("K{$row}", $prog->n_inscritos ?? 0);
+                $sheet->setCellValue("L{$row}", $estado);
+                $sheet->setCellValue("M{$row}", $prog->clave ?? '');
 
                 if ($prog->estaLleno()) {
                     $sheet->getStyle("A{$row}:{$lastCol}{$row}")->getFill()
