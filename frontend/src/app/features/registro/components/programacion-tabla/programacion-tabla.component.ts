@@ -6,6 +6,7 @@ import { ProgramacionService, Programacion, PaginatedResponse } from '../../serv
 import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService } from '../../../solicitudes/services/solicitud.service';
+import { DepartamentoService, Departamento } from '../../../configuracion/services/departamento.service';
 import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
 import { ProgramacionEditFormComponent } from '../programacion-edit-form/programacion-edit-form.component';
@@ -40,12 +41,13 @@ type VistaActiva = 'tabla' | 'matriz';
   templateUrl: './programacion-tabla.component.html'
 })
 export class ProgramacionTablaComponent implements OnInit {
-  private programacionService = inject(ProgramacionService);
-  private periodoService      = inject(PeriodoService);
-  private solicitudService    = inject(SolicitudService);
-  private http                = inject(HttpClient);
-  public  authService         = inject(AuthService);
-  private router              = inject(Router);
+  private programacionService  = inject(ProgramacionService);
+  private periodoService       = inject(PeriodoService);
+  private solicitudService     = inject(SolicitudService);
+  private departamentoService  = inject(DepartamentoService);
+  private http                 = inject(HttpClient);
+  public  authService          = inject(AuthService);
+  private router               = inject(Router);
 
   programacion     = signal<Programacion[]>([]);
   paginationData   = signal<PaginatedResponse<Programacion> | null>(null);
@@ -72,6 +74,9 @@ export class ProgramacionTablaComponent implements OnInit {
   escuelaSeleccionada = signal<string>('');
   cicloSeleccionado   = signal<number | null>(null);
   ciclos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  departamentos       = signal<Departamento[]>([]);
+  areaSeleccionada    = signal<string>('');
 
   // Estado modo estudiante
   cicloActual              = signal<number | null>(null);
@@ -116,6 +121,7 @@ export class ProgramacionTablaComponent implements OnInit {
     } else {
       this.cargarPeriodosYProgramacion();
       this.cargarEscuelas();
+      this.cargarDepartamentos();
     }
   }
 
@@ -124,6 +130,13 @@ export class ProgramacionTablaComponent implements OnInit {
       `${environment.apiUrl}/escuelas`
     ).pipe(map(r => r.data)).subscribe({
       next: escuelas => this.escuelas.set(escuelas),
+      error: () => {},
+    });
+  }
+
+  cargarDepartamentos(): void {
+    this.departamentoService.getDepartamentos().subscribe({
+      next: deps => this.departamentos.set(deps),
       error: () => {},
     });
   }
@@ -158,11 +171,11 @@ export class ProgramacionTablaComponent implements OnInit {
     this.perPage.set(size);
 
     const periodoId = this.periodoSeleccionado() || undefined;
-
     const escuelaId = this.escuelaSeleccionada() || undefined;
     const ciclo     = this.cicloSeleccionado() || undefined;
+    const areaId    = this.areaSeleccionada() || undefined;
 
-    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo).subscribe({
+    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId).subscribe({
       next: res => {
         this.programacion.set(res.data);
         this.paginationData.set(res);
@@ -179,7 +192,8 @@ export class ProgramacionTablaComponent implements OnInit {
     this.loadingMatriz.set(true);
     const escuelaId = this.escuelaSeleccionada() || undefined;
     const ciclo     = this.cicloSeleccionado() || undefined;
-    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId, escuelaId, ciclo).subscribe({
+    const areaId    = this.areaSeleccionada() || undefined;
+    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId, escuelaId, ciclo, areaId).subscribe({
       next: res => {
         this.todosLosItems.set(res.data);
         this.loadingMatriz.set(false);
@@ -314,12 +328,13 @@ export class ProgramacionTablaComponent implements OnInit {
       this.periodoSeleccionado() || undefined,
       this.searchTerm() || undefined,
       this.escuelaSeleccionada() || undefined,
-      this.cicloSeleccionado() || undefined
+      this.cicloSeleccionado() || undefined,
+      this.areaSeleccionada() || undefined
     );
   }
 
   hayFiltrosActivos = computed(() =>
-    !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado())
+    !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado() || this.areaSeleccionada())
   );
 
   // ─── ONBOARDING ──────────────────────────────────────────────────────────
@@ -361,8 +376,16 @@ export class ProgramacionTablaComponent implements OnInit {
     this.searchTerm.set('');
     this.escuelaSeleccionada.set('');
     this.cicloSeleccionado.set(null);
+    this.areaSeleccionada.set('');
     this.todosLosItems.set([]);
     this.cargarProgramacion(1);
+  }
+
+  onAreaChange(areaId: string): void {
+    this.areaSeleccionada.set(areaId);
+    this.todosLosItems.set([]);
+    this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
   }
 
   onSearchChange(value: string): void {
