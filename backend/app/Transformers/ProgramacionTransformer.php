@@ -13,7 +13,7 @@ class ProgramacionTransformer
     {
         // Aula desde relación aulaRelacion (sin conflicto de nombre con el campo texto 'aula')
         $aulaRel  = null;
-        $aulaNombre = $model->aula; // texto del campo importado (ej: "PII-04")
+        $aulaNombre = null;
 
         if ($model->relationLoaded('aulaRelacion') && $model->aulaRelacion instanceof Aula) {
             $aulaObj = $model->aulaRelacion;
@@ -25,10 +25,13 @@ class ProgramacionTransformer
                     ? ['nombre' => $aulaObj->pabellon?->nombre]
                     : null,
             ];
-            // Si no hay texto, usar el nombre de la relación
-            if (!$aulaNombre) {
-                $aulaNombre = $aulaObj->nombre;
-            }
+            // Priorizar el nombre de la tabla aulas (gestionado con pabellones)
+            $aulaNombre = $aulaObj->nombre;
+        }
+
+        // Fallback al texto importado del SIGA si no hay relación
+        if (!$aulaNombre) {
+            $aulaNombre = $model->aula;
         }
 
         // Grupo horario
