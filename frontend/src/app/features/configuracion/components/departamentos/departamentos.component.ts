@@ -27,10 +27,9 @@ export class DepartamentosComponent implements OnInit {
   editando       = signal<Departamento | null>(null);
 
   // Form state
-  formNombre    = '';
-  formPrefijos: string[] = [];
-  prefijosInput = '';
-  guardando     = signal(false);
+  formNombre  = '';
+  formPrefijo = '';
+  guardando   = signal(false);
 
   // Confirmaciones
   mostrarConfirmAutoAsignar = signal(false);
@@ -53,51 +52,30 @@ export class DepartamentosComponent implements OnInit {
 
   abrirCrear(): void {
     this.editando.set(null);
-    this.formNombre    = '';
-    this.formPrefijos  = [];
-    this.prefijosInput = '';
+    this.formNombre  = '';
+    this.formPrefijo = '';
     this.mostrarForm.set(true);
   }
 
   abrirEditar(dep: Departamento): void {
     this.editando.set(dep);
-    this.formNombre    = dep.nombre;
-    this.formPrefijos  = [...dep.prefijos];
-    this.prefijosInput = '';
+    this.formNombre  = dep.nombre;
+    this.formPrefijo = dep.prefijos[0] ?? '';
     this.mostrarForm.set(true);
   }
 
   cancelarForm(): void {
     this.mostrarForm.set(false);
     this.editando.set(null);
-    this.formNombre    = '';
-    this.formPrefijos  = [];
-    this.prefijosInput = '';
-  }
-
-  agregarPrefijo(): void {
-    const val = this.prefijosInput.trim().toUpperCase();
-    if (val && !this.formPrefijos.includes(val)) {
-      this.formPrefijos = [...this.formPrefijos, val];
-    }
-    this.prefijosInput = '';
-  }
-
-  quitarPrefijo(prefijo: string): void {
-    this.formPrefijos = this.formPrefijos.filter(p => p !== prefijo);
-  }
-
-  onPrefijosKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' || event.key === ',') {
-      event.preventDefault();
-      this.agregarPrefijo();
-    }
+    this.formNombre  = '';
+    this.formPrefijo = '';
   }
 
   guardar(): void {
     if (!this.formNombre.trim() || this.guardando()) return;
 
-    const payload = { nombre: this.formNombre.trim(), prefijos: this.formPrefijos };
+    const prefijo  = this.formPrefijo.trim().toUpperCase();
+    const payload  = { nombre: this.formNombre.trim(), prefijos: prefijo ? [prefijo] : [] };
     this.guardando.set(true);
     this.limpiarMensaje();
 

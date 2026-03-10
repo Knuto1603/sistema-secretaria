@@ -113,45 +113,17 @@
             class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
         </div>
 
-        <!-- Prefijos -->
+        <!-- Prefijo -->
         <div>
           <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest mb-1.5">
-            Prefijos de código de curso
+            Prefijo de código de curso
           </label>
-          <p class="text-xs text-slate-400 mb-2">
-            Ingresa las letras que identifican cursos de este departamento (Ej: SI, IS, BD).
-            Presiona Enter o coma para agregar.
-          </p>
-
-          @if (formPrefijos.length > 0) {
-            <div class="flex flex-wrap gap-2 mb-3">
-              @for (p of formPrefijos; track p) {
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-lg">
-                  {{ p }}
-                  <button (click)="quitarPrefijo(p)"
-                    class="w-4 h-4 flex items-center justify-center text-indigo-500 hover:text-indigo-800 transition-colors rounded-full">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </span>
-              }
-            </div>
-          }
-
-          <div class="flex gap-2">
-            <input
-              type="text"
-              [(ngModel)]="prefijosInput"
-              (keydown)="onPrefijosKeydown($event)"
-              placeholder="Ej: SI"
-              maxlength="10"
-              class="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase">
-            <button (click)="agregarPrefijo()"
-              class="px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-2xl transition-colors whitespace-nowrap">
-              Agregar
-            </button>
-          </div>
+          <input
+            type="text"
+            [(ngModel)]="formPrefijo"
+            placeholder="Ej: SI"
+            maxlength="10"
+            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase">
         </div>
       </div>
 
@@ -298,33 +270,17 @@
                             class="w-full px-3 py-2 text-sm font-medium text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:font-normal placeholder:text-slate-400">
                         </div>
 
-                        <!-- Campo: Prefijos (tag input) -->
+                        <!-- Campo: Prefijo -->
                         <div class="bg-white px-5 py-4">
                           <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                            Prefijos
-                            <span class="normal-case font-normal text-slate-400 ml-1">— Enter o coma para agregar</span>
+                            Prefijo
                           </label>
-                          <!-- Tag input container -->
-                          <div class="min-h-[38px] px-2.5 py-1.5 flex flex-wrap gap-1.5 items-center border border-slate-200 rounded-lg bg-slate-50 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
-                            @for (p of formPrefijos; track p) {
-                              <span class="inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-md shrink-0">
-                                {{ p }}
-                                <button (click)="quitarPrefijo(p)"
-                                  class="w-4 h-4 flex items-center justify-center rounded hover:bg-indigo-200 transition-colors text-indigo-500 hover:text-indigo-800">
-                                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-                                  </svg>
-                                </button>
-                              </span>
-                            }
-                            <input
-                              type="text"
-                              [(ngModel)]="prefijosInput"
-                              (keydown)="onPrefijosKeydown($event)"
-                              placeholder="{{ formPrefijos.length === 0 ? 'SI, MA, AL...' : 'Agregar...' }}"
-                              maxlength="10"
-                              class="flex-1 min-w-[70px] outline-none text-sm font-bold bg-transparent uppercase text-slate-700 placeholder:font-normal placeholder:text-slate-400 placeholder:normal-case">
-                          </div>
+                          <input
+                            type="text"
+                            [(ngModel)]="formPrefijo"
+                            placeholder="Ej: SI"
+                            maxlength="10"
+                            class="w-full px-3 py-2 text-sm font-bold text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all uppercase placeholder:font-normal placeholder:text-slate-400">
                         </div>
                       </div>
 
