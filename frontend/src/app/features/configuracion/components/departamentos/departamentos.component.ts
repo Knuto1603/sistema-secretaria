@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { trigger, transition, style, animate } from '@angular/animations';
 import { DepartamentoService, Departamento } from '../../services/departamento.service';
 
 @Component({
@@ -9,17 +8,13 @@ import { DepartamentoService, Departamento } from '../../services/departamento.s
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './departamentos.component.html',
-  animations: [
-    trigger('slideDown', [
-      transition(':enter', [
-        style({ opacity: 0, transform: 'translateY(-6px)' }),
-        animate('140ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
-      ]),
-      transition(':leave', [
-        animate('100ms ease-in', style({ opacity: 0, transform: 'translateY(-4px)' })),
-      ]),
-    ]),
-  ],
+  styles: [`
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .slide-down { animation: slideDown 140ms ease-out; }
+  `],
 })
 export class DepartamentosComponent implements OnInit {
   private departamentoService = inject(DepartamentoService);
