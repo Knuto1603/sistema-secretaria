@@ -25,8 +25,8 @@ class HistorialController extends Controller
             ->map(fn($h) => [
                 'id'       => $h->id,
                 'curso_id' => $h->curso_id,
-                'codigo'   => $h->curso->codigo,
-                'nombre'   => $h->curso->nombre,
+                'codigo'   => $h->curso?->codigo,
+                'nombre'   => $h->curso?->nombre,
                 'semestre' => $h->semestre,
                 'tipo'     => $h->tipo,
                 'creditos' => $h->creditos,
