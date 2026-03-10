@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DepartamentoService, Departamento } from '../../services/departamento.service';
+import { AuthService } from '@core/auth/services/auth.service';
 
 @Component({
   selector: 'app-departamentos',
@@ -18,6 +19,7 @@ import { DepartamentoService, Departamento } from '../../services/departamento.s
 })
 export class DepartamentosComponent implements OnInit {
   private departamentoService = inject(DepartamentoService);
+  protected authService       = inject(AuthService);
 
   departamentos  = signal<Departamento[]>([]);
   loading        = signal(false);
