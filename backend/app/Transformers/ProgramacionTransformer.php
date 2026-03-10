@@ -36,6 +36,7 @@ class ProgramacionTransformer
 
         // Grupo horario
         $grupoHorario = null;
+        $grupoNombre  = null;
         if ($model->relationLoaded('grupoHorario') && $model->grupoHorario) {
             $gh = $model->grupoHorario;
             $grupoHorario = [
@@ -49,6 +50,13 @@ class ProgramacionTransformer
                     ])->toArray()
                     : [],
             ];
+            // Priorizar el nombre del catálogo de grupos sobre el texto del SIGA
+            $grupoNombre = $gh->nombre;
+        }
+
+        // Fallback al texto importado del SIGA si no hay relación
+        if (!$grupoNombre) {
+            $grupoNombre = $model->grupo;
         }
 
         // Escuelas (solo cuando se carguen explícitamente)
@@ -69,7 +77,7 @@ class ProgramacionTransformer
             grupo_horario_id: $model->grupo_horario_id,
             aula_id:          $model->aula_id,
             clave:            $model->clave,
-            grupo:            $model->grupo,
+            grupo:            $grupoNombre,
             seccion:          $model->seccion,
             aula:             $model->aula,
             aula_nombre:      $aulaNombre,
