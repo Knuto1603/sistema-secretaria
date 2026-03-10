@@ -359,6 +359,7 @@ export class ProgramacionTablaComponent implements OnInit {
     this.searchTerm.set('');
     this.todosLosItems.set([]);
     this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
   }
 
   onEscuelaChange(escuelaId: string): void {

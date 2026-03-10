@@ -569,7 +569,8 @@
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
       <app-programacion-matriz
         [items]="todosLosItems()"
-        [loading]="loadingMatriz()">
+        [loading]="loadingMatriz()"
+        (verDetalle)="programacionDetalleId.set($event)">
       </app-programacion-matriz>
     </div>
   }
