@@ -1,4 +1,4 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Programacion } from '../../services/programacion.service';
 
@@ -12,6 +12,8 @@ export class ProgramacionMatrizComponent {
   items    = input.required<Programacion[]>();
   loading  = input<boolean>(false);
 
+  verDetalle = output<string>();
+
   // Grupos ordenados G1-G14
   grupos = computed(() => {
     const gs = [...new Set(this.items().map(p => p.grupo).filter(Boolean))];
@@ -22,7 +24,7 @@ export class ProgramacionMatrizComponent {
     });
   });
 
-  // Aulas únicas (usa aula_nombre que combina texto importado + relación)
+  // Aulas únicas ordenadas
   aulas = computed(() => {
     const as = [...new Set(
       this.items()
@@ -54,6 +56,11 @@ export class ProgramacionMatrizComponent {
 
   aulaNombre(p: Programacion): string {
     return p.aula_nombre || p.aula || p.aula_rel?.nombre || '';
+  }
+
+  escuelasLabel(p: Programacion): string {
+    if (!p.escuelas?.length) return '';
+    return p.escuelas.map(e => e.nombre_corto ?? e.nombre).join(', ');
   }
 
   getCeldaColor(prog: Programacion): string {
