@@ -77,6 +77,18 @@ export class ProgramacionTablaComponent implements OnInit {
 
   departamentos       = signal<Departamento[]>([]);
   areaSeleccionada    = signal<string>('');
+  grupoSeleccionado   = signal<string>('');
+
+  // Grupos únicos disponibles (extraídos de los datos cargados)
+  grupos = computed(() => {
+    const all = [...this.programacion(), ...this.todosLosItems()];
+    const unique = [...new Set(all.map(p => p.grupo).filter(Boolean))];
+    return unique.sort((a, b) => {
+      const na = parseInt(a?.replace(/\D/g, '') || '0');
+      const nb = parseInt(b?.replace(/\D/g, '') || '0');
+      return na - nb;
+    });
+  });
 
   // Estado modo estudiante
   cicloActual              = signal<number | null>(null);
@@ -174,8 +186,9 @@ export class ProgramacionTablaComponent implements OnInit {
     const escuelaId = this.escuelaSeleccionada() || undefined;
     const ciclo     = this.cicloSeleccionado() || undefined;
     const areaId    = this.areaSeleccionada() || undefined;
+    const grupo     = this.grupoSeleccionado() || undefined;
 
-    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId).subscribe({
+    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId, grupo).subscribe({
       next: res => {
         this.programacion.set(res.data);
         this.paginationData.set(res);
@@ -193,7 +206,8 @@ export class ProgramacionTablaComponent implements OnInit {
     const escuelaId = this.escuelaSeleccionada() || undefined;
     const ciclo     = this.cicloSeleccionado() || undefined;
     const areaId    = this.areaSeleccionada() || undefined;
-    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId, escuelaId, ciclo, areaId).subscribe({
+    const grupo     = this.grupoSeleccionado() || undefined;
+    this.programacionService.getProgramacion(1, this.searchTerm(), 1000, periodoId, escuelaId, ciclo, areaId, grupo).subscribe({
       next: res => {
         this.todosLosItems.set(res.data);
         this.loadingMatriz.set(false);
@@ -337,7 +351,7 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   hayFiltrosActivos = computed(() =>
-    !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado() || this.areaSeleccionada())
+    !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado() || this.areaSeleccionada() || this.grupoSeleccionado())
   );
 
   // ─── ONBOARDING ──────────────────────────────────────────────────────────
@@ -381,12 +395,21 @@ export class ProgramacionTablaComponent implements OnInit {
     this.escuelaSeleccionada.set('');
     this.cicloSeleccionado.set(null);
     this.areaSeleccionada.set('');
+    this.grupoSeleccionado.set('');
     this.todosLosItems.set([]);
     this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
   }
 
   onAreaChange(areaId: string): void {
     this.areaSeleccionada.set(areaId);
+    this.todosLosItems.set([]);
+    this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+  }
+
+  onGrupoChange(grupo: string): void {
+    this.grupoSeleccionado.set(grupo);
     this.todosLosItems.set([]);
     this.cargarProgramacion(1);
     if (this.vistaActiva() === 'matriz') this.cargarMatriz();

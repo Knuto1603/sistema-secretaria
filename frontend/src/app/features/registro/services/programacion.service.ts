@@ -82,7 +82,8 @@ export class ProgramacionService {
     periodoId?: string,
     escuelaId?: string,
     ciclo?: number,
-    areaId?: string
+    areaId?: string,
+    grupo?: string
   ): Observable<PaginatedResponse<Programacion>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -92,6 +93,7 @@ export class ProgramacionService {
     if (escuelaId) params = params.set('escuela_id', escuelaId);
     if (ciclo)     params = params.set('ciclo', ciclo.toString());
     if (areaId)    params = params.set('area_id', areaId);
+    if (grupo)     params = params.set('grupo', grupo);
 
     return this.http
       .get<ApiResponse<ApiPaginatedData<Programacion>>>(this.apiUrl, { params })
