@@ -136,6 +136,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Ruta de cursos
     Route::get('/cursos', [CursoController::class, 'index']);
     Route::get('/cursos/{id}', [CursoController::class, 'show']);
+    Route::patch('/cursos/{id}/nombre', [CursoController::class, 'updateNombre'])
+        ->middleware('role:secretaria|admin|developer');
 
     // Docentes (lectura, para formularios)
     Route::get('/docentes', [DocenteController::class, 'index']);

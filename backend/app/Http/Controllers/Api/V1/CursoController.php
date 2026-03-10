@@ -34,4 +34,19 @@ class CursoController extends Controller
 
         return $this->success($this->transformer->toArray($curso));
     }
+
+    public function updateNombre(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+        ]);
+
+        $curso = $this->service->updateNombre($id, $request->nombre);
+
+        if (!$curso) {
+            return $this->notFound('Curso no encontrado');
+        }
+
+        return $this->success($this->transformer->toArray($curso), 'Nombre del curso actualizado');
+    }
 }

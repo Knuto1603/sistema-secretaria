@@ -31,4 +31,13 @@ class CursoService
     {
         return $this->repository->findById($id);
     }
+
+    public function updateNombre(string $id, string $nombre): ?Curso
+    {
+        $curso = $this->repository->findById($id);
+        if (!$curso) return null;
+
+        $curso->update(['nombre' => strtoupper(trim($nombre))]);
+        return $curso->fresh();
+    }
 }
