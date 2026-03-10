@@ -111,6 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rutas de Programacion Académica
     Route::prefix('programacion')->group(function () {
         Route::get('/', [ProgramacionController::class, 'index']);
+        Route::get('/grupos', [ProgramacionController::class, 'grupos']);
         Route::get('/para-mi', [ProgramacionController::class, 'paraMi']);
         Route::get('/template', [ProgramacionController::class, 'downloadTemplate']);
         Route::get('/export', [ProgramacionController::class, 'export'])

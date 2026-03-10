@@ -27,6 +27,30 @@ class ProgramacionController extends Controller
         protected ProgramacionTransformer $transformer
     ) {}
 
+    /**
+     * GET /programacion/grupos?periodo_id=xxx
+     * Devuelve los grupos únicos de un periodo (para el filtro del frontend).
+     */
+    public function grupos(Request $request): JsonResponse
+    {
+        $periodoId = $request->query('periodo_id')
+            ?? $this->service->getActivePeriodoId();
+
+        if (!$periodoId) {
+            return $this->success([], 'Sin periodo activo');
+        }
+
+        $grupos = ProgramacionAcademica::where('periodo_id', $periodoId)
+            ->whereNotNull('grupo')
+            ->distinct()
+            ->pluck('grupo')
+            ->filter()
+            ->sortBy(fn($g) => (int) preg_replace('/\D/', '', $g))
+            ->values();
+
+        return $this->success($grupos, 'Grupos del periodo');
+    }
+
     public function index(Request $request): JsonResponse
     {
         try {
