@@ -70,10 +70,9 @@ class ProgramacionHtmlImport
         if (!is_numeric(trim($clave))) return;
 
         try {
-            $curso = Curso::firstOrCreate(
-                ['codigo' => strtoupper(trim($codigoCurso))],
-                ['nombre' => strtoupper(trim($nombreCurso))]
-            );
+            // Solo buscar por código; el nombre autoritativo viene del plan de estudios
+            $curso = Curso::where('codigo', strtoupper(trim($codigoCurso)))->first();
+            if (!$curso) continue;
 
             $docente = null;
             $docenteNorm = strtoupper(trim(preg_replace('/\s+/', ' ', $nombreDocente)));
