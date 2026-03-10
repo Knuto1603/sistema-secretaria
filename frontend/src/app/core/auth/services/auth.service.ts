@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, catchError, EMPTY } from 'rxjs';
 import { environment } from '@env/environment';
 
 export interface User {
@@ -192,6 +192,18 @@ export class AuthService {
     localStorage.setItem('user_data', JSON.stringify(data.user));
     this.currentUser.set(data.user);
     this.isAuthenticated.set(true);
+  }
+
+  /**
+   * Llama a /me para refrescar los datos del usuario desde el servidor
+   * y actualiza la sesión local. Útil al iniciar la app con sesión ya activa.
+   */
+  refreshCurrentUser(): Observable<User> {
+    return this.http.get<{ success: boolean; data: User }>(`${this.apiUrl}/me`).pipe(
+      map(r => r.data),
+      tap(user => this.patchCurrentUser(user)),
+      catchError(() => EMPTY)
+    );
   }
 
   /**
