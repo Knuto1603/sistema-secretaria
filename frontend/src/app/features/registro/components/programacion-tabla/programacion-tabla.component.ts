@@ -79,16 +79,8 @@ export class ProgramacionTablaComponent implements OnInit {
   areaSeleccionada    = signal<string>('');
   grupoSeleccionado   = signal<string>('');
 
-  // Grupos únicos disponibles (extraídos de los datos cargados)
-  grupos = computed(() => {
-    const all = [...this.programacion(), ...this.todosLosItems()];
-    const unique = [...new Set(all.map(p => p.grupo).filter(Boolean))];
-    return unique.sort((a, b) => {
-      const na = parseInt(a?.replace(/\D/g, '') || '0');
-      const nb = parseInt(b?.replace(/\D/g, '') || '0');
-      return na - nb;
-    });
-  });
+  // Grupos únicos del periodo actual (cargados desde el backend)
+  grupos = signal<string[]>([]);
 
   // Estado modo estudiante
   cicloActual              = signal<number | null>(null);
@@ -137,6 +129,16 @@ export class ProgramacionTablaComponent implements OnInit {
     }
   }
 
+  cargarGrupos(periodoId: string): void {
+    this.http.get<{ success: boolean; data: string[] }>(
+      `${environment.apiUrl}/programacion/grupos`,
+      { params: { periodo_id: periodoId } }
+    ).pipe(map(r => r.data)).subscribe({
+      next: grupos => this.grupos.set(grupos),
+      error: () => {},
+    });
+  }
+
   cargarEscuelas(): void {
     this.http.get<{ success: boolean; data: Array<{ id: string; nombre: string; nombre_corto: string | null }> }>(
       `${environment.apiUrl}/escuelas`
@@ -168,6 +170,8 @@ export class ProgramacionTablaComponent implements OnInit {
         if (activo)               this.periodoSeleccionado.set(activo.id);
         else if (periodos.length) this.periodoSeleccionado.set(periodos[0].id);
 
+        const periodoId = this.periodoSeleccionado();
+        if (periodoId) this.cargarGrupos(periodoId);
         this.cargarProgramacion();
       },
       error: () => {
@@ -371,7 +375,9 @@ export class ProgramacionTablaComponent implements OnInit {
   onPeriodoChange(periodoId: string): void {
     this.periodoSeleccionado.set(periodoId);
     this.searchTerm.set('');
+    this.grupoSeleccionado.set('');
     this.todosLosItems.set([]);
+    this.cargarGrupos(periodoId);
     this.cargarProgramacion(1);
     if (this.vistaActiva() === 'matriz') this.cargarMatriz();
   }
