@@ -54,7 +54,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         return (bool) $prog->delete();
     }
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null): Builder
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null): Builder
     {
         $query = $this->model
             ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas'])
@@ -81,12 +81,16 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             $query->where('cursos.area_id', $areaId);
         }
 
+        if ($grupo) {
+            $query->where('programacion_academica.grupo', strtoupper(trim($grupo)));
+        }
+
         return $query;
     }
 
-    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null): Collection
+    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null): Collection
     {
-        $query = $this->getBaseQuery($periodoId, $escuelaId, $ciclo, $areaId);
+        $query = $this->getBaseQuery($periodoId, $escuelaId, $ciclo, $areaId, $grupo);
 
         if ($search) {
             $query->where(function (Builder $q) use ($search) {

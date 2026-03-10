@@ -17,9 +17,9 @@ interface ProgramacionRepositoryInterface
 
     public function delete(string $id): bool;
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null): Builder;
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null): Builder;
 
-    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null): Collection;
+    public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null): Collection;
 
     public function toggleLlenoManual(string $id): ?ProgramacionAcademica;
 }

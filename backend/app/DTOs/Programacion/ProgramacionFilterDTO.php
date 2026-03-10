@@ -11,6 +11,7 @@ class ProgramacionFilterDTO
         public readonly ?string $escuela_id = null,
         public readonly ?int    $ciclo      = null,
         public readonly ?string $area_id    = null,
+        public readonly ?string $grupo      = null,
     ) {}
 
     public static function fromRequest(array $data): self
@@ -22,6 +23,7 @@ class ProgramacionFilterDTO
             escuela_id: $data['escuela_id'] ?? null,
             ciclo:      isset($data['ciclo']) ? (int) $data['ciclo'] : null,
             area_id:    $data['area_id'] ?? null,
+            grupo:      $data['grupo'] ?? null,
         );
     }
 }

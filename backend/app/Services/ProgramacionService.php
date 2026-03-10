@@ -35,7 +35,7 @@ class ProgramacionService
             throw new Exception('No hay un periodo académico activo.');
         }
 
-        $query = $this->programacionRepository->getBaseQuery($periodoId, $dto->escuela_id, $dto->ciclo, $dto->area_id);
+        $query = $this->programacionRepository->getBaseQuery($periodoId, $dto->escuela_id, $dto->ciclo, $dto->area_id, $dto->grupo);
 
         return $this->applyFiltersAndPaginate(
             $query,
