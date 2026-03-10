@@ -42,6 +42,7 @@ export class PerfilComponent implements OnInit {
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   ngOnInit(): void {
+    this.authService.refreshCurrentUser().subscribe();
     if (this.esEstudiante()) {
       this.cargarHistorial();
     }
