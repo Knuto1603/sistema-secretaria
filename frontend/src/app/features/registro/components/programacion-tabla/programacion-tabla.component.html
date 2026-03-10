@@ -130,8 +130,10 @@
   }
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- Fila 1: Título + Acciones -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4">
 
       <!-- Título -->
       <div>
@@ -150,7 +152,7 @@
             </span>
           }
         </div>
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">
           @if (esEstudiante()) {
             @if (historialRegistrado()) {
               Cursos pendientes con requisitos cumplidos ·
@@ -166,134 +168,26 @@
         </p>
       </div>
 
-      <!-- Controles -->
-      <div class="flex flex-wrap items-center gap-2">
+      <!-- Acciones (derecha) -->
+      <div class="flex items-center gap-2 flex-wrap">
 
-        <!-- Selector de Periodo (solo admin) -->
+        <!-- Toggle vista tabla/matriz (solo admin) -->
         @if (!esEstudiante()) {
-          <div class="relative">
-            <select
-              [ngModel]="periodoSeleccionado()"
-              (ngModelChange)="onPeriodoChange($event)"
-              [disabled]="loadingPeriodos()"
-              class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[160px] transition-all">
-              @for (periodo of periodos(); track periodo.id) {
-                <option [value]="periodo.id">
-                  {{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}
-                </option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-        }
-
-        <!-- Filtros: Escuela y Ciclo (solo admin) -->
-        @if (!esEstudiante()) {
-          <!-- Escuela -->
-          <div class="relative">
-            <select
-              [ngModel]="escuelaSeleccionada()"
-              (ngModelChange)="onEscuelaChange($event)"
-              class="pl-4 pr-10 py-2.5 text-sm border rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
-              [ngClass]="escuelaSeleccionada() ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-              <option value="">Todas las escuelas</option>
-              @for (e of escuelas(); track e.id) {
-                <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Ciclo -->
-          <div class="relative">
-            <select
-              [ngModel]="cicloSeleccionado()"
-              (ngModelChange)="onCicloChange($event)"
-              class="pl-4 pr-10 py-2.5 text-sm border rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[110px] transition-all"
-              [ngClass]="cicloSeleccionado() ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-              <option [value]="null">Todos los ciclos</option>
-              @for (c of ciclos; track c) {
-                <option [value]="c">Ciclo {{ c }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Departamento -->
-          @if (departamentos().length > 0) {
-            <div class="relative">
-              <select
-                [ngModel]="areaSeleccionada()"
-                (ngModelChange)="onAreaChange($event)"
-                class="pl-4 pr-10 py-2.5 text-sm border rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[150px] transition-all"
-                [ngClass]="areaSeleccionada() ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-                <option value="">Todos los depts.</option>
-                @for (dep of departamentos(); track dep.id) {
-                  <option [value]="dep.id">{{ dep.nombre }}</option>
-                }
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-            </div>
-          }
-        }
-
-        <!-- Buscador -->
-        <div class="relative flex-1 min-w-[160px]">
-          <input
-            type="text"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="onSearchChange($event)"
-            placeholder="Buscar curso o docente..."
-            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
-        </div>
-
-        <!-- Botón limpiar filtros -->
-        @if (hayFiltrosActivos()) {
-          <button (click)="limpiarFiltros()"
-            class="px-3 py-2.5 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Limpiar
-          </button>
-        }
-
-        <!-- Toggle vista (solo admin) -->
-        @if (!esEstudiante()) {
-          <div class="flex bg-slate-100 rounded-2xl p-1 gap-1">
+          <div class="flex bg-slate-100 rounded-xl p-1 gap-0.5">
             <button
               (click)="cambiarVista('tabla')"
-              class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
-              [ngClass]="vistaActiva() === 'tabla'
-                ? 'bg-white text-slate-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'">
+              class="px-3 py-1.5 rounded-lg transition-all"
+              [title]="'Vista tabla'"
+              [ngClass]="vistaActiva() === 'tabla' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 10h18M3 6h18M3 14h18M3 18h18"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18"></path>
               </svg>
             </button>
             <button
               (click)="cambiarVista('matriz')"
-              class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
-              [ngClass]="vistaActiva() === 'matriz'
-                ? 'bg-white text-slate-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'">
+              class="px-3 py-1.5 rounded-lg transition-all"
+              [title]="'Vista matriz'"
+              [ngClass]="vistaActiva() === 'matriz' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
@@ -306,64 +200,214 @@
         @if (esAdmin()) {
           <input type="file" #fileInput class="hidden" (change)="onFileSelected($event)" accept=".xlsx,.xls,.csv">
           <input type="file" #fileInputHtml class="hidden" (change)="onHtmlFileSelected($event)" accept=".htm,.html">
-          <div class="flex flex-wrap items-center gap-2">
-            @if (esDeveloper()) {
-              <app-btn variant="danger" (clicked)="abrirLimpiarPeriodo()">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                Limpiar periodo
-              </app-btn>
-            }
-            <app-btn variant="ghost" (clicked)="descargarPlantilla()">
+
+          <!-- Grupo: Importar -->
+          <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden">
+            <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()" title="Importar desde SIGA (HTML)">
               <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
               </svg>
-              Plantilla
-            </app-btn>
-            <!-- Exportar + toggle horario -->
-            <div class="flex items-center gap-1.5 border border-slate-200 rounded-2xl overflow-hidden">
-              <app-btn variant="ghost" (clicked)="exportarExcel()" class="rounded-none border-0">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Exportar
-              </app-btn>
-              <button
-                (click)="exportarConHorario.set(!exportarConHorario())"
-                [title]="exportarConHorario() ? 'Quitar columnas de horario' : 'Incluir columnas Lun–Vie con horarios'"
-                class="flex items-center gap-1 px-2.5 py-2 text-[10px] font-bold uppercase tracking-wide border-l border-slate-200 transition-colors"
-                [ngClass]="exportarConHorario()
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'bg-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                <span>Hrs</span>
-                @if (exportarConHorario()) {
-                  <svg class="w-3 h-3 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                  </svg>
-                }
-              </button>
-            </div>
-            <app-btn variant="ghost" [loading]="isUploadingHtml()" (clicked)="fileInputHtml.click()">
               SIGA
             </app-btn>
-            <app-btn variant="success" [loading]="isUploading()" (clicked)="triggerImport(fileInput)">
-              Importar
+            <div class="w-px h-6 bg-slate-200"></div>
+            <app-btn variant="ghost" [loading]="isUploading()" (clicked)="triggerImport(fileInput)" title="Importar desde Excel">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Excel
             </app-btn>
-            <app-btn variant="primary" (clicked)="showFormProgramacion.set(true)">
-              + Nueva
+            <div class="w-px h-6 bg-slate-200"></div>
+            <app-btn variant="ghost" (clicked)="descargarPlantilla()" title="Descargar plantilla Excel">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
             </app-btn>
           </div>
+
+          <!-- Grupo: Exportar -->
+          <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden">
+            <app-btn variant="ghost" (clicked)="exportarExcel()" title="Exportar a Excel">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Exportar
+            </app-btn>
+            <button
+              (click)="exportarConHorario.set(!exportarConHorario())"
+              [title]="exportarConHorario() ? 'Quitar columnas de horario' : 'Incluir columnas Lun–Vie con horarios'"
+              class="flex items-center gap-1 px-2.5 py-2 text-[10px] font-bold uppercase tracking-wide border-l border-slate-200 transition-colors"
+              [ngClass]="exportarConHorario() ? 'bg-indigo-50 text-indigo-700' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              Hrs
+              @if (exportarConHorario()) {
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+              }
+            </button>
+          </div>
+
+          <!-- Nueva programación -->
+          <app-btn variant="primary" (clicked)="showFormProgramacion.set(true)">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nueva
+          </app-btn>
+
+          <!-- Limpiar periodo (solo developer) -->
+          @if (esDeveloper()) {
+            <app-btn variant="danger" (clicked)="abrirLimpiarPeriodo()" title="Eliminar toda la programación del periodo">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </app-btn>
+          }
         }
       </div>
     </div>
+
+    <!-- Fila 2: Filtros -->
+    <div class="border-t border-slate-100 px-6 py-3 bg-slate-50/50">
+      <div class="flex flex-wrap items-center gap-2">
+
+        <!-- Selector de Periodo (solo admin) -->
+        @if (!esEstudiante()) {
+          <div class="relative">
+            <select
+              [ngModel]="periodoSeleccionado()"
+              (ngModelChange)="onPeriodoChange($event)"
+              [disabled]="loadingPeriodos()"
+              class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[155px] transition-all">
+              @for (periodo of periodos(); track periodo.id) {
+                <option [value]="periodo.id">{{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Separador visual -->
+          <div class="h-6 w-px bg-slate-200"></div>
+
+          <!-- Escuela -->
+          <div class="relative">
+            <select
+              [ngModel]="escuelaSeleccionada()"
+              (ngModelChange)="onEscuelaChange($event)"
+              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px] transition-all"
+              [ngClass]="escuelaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+              <option value="">Escuela</option>
+              @for (e of escuelas(); track e.id) {
+                <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Ciclo -->
+          <div class="relative">
+            <select
+              [ngModel]="cicloSeleccionado()"
+              (ngModelChange)="onCicloChange($event)"
+              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px] transition-all"
+              [ngClass]="cicloSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+              <option [value]="null">Ciclo</option>
+              @for (c of ciclos; track c) {
+                <option [value]="c">Ciclo {{ c }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Departamento -->
+          @if (departamentos().length > 0) {
+            <div class="relative">
+              <select
+                [ngModel]="areaSeleccionada()"
+                (ngModelChange)="onAreaChange($event)"
+                class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
+                [ngClass]="areaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+                <option value="">Departamento</option>
+                @for (dep of departamentos(); track dep.id) {
+                  <option [value]="dep.id">{{ dep.nombre }}</option>
+                }
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+          }
+
+          <!-- Grupo -->
+          @if (grupos().length > 0) {
+            <div class="relative">
+              <select
+                [ngModel]="grupoSeleccionado()"
+                (ngModelChange)="onGrupoChange($event)"
+                class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[95px] transition-all"
+                [ngClass]="grupoSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+                <option value="">Grupo</option>
+                @for (g of grupos(); track g) {
+                  <option [value]="g">{{ g }}</option>
+                }
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+          }
+
+          <!-- Separador visual -->
+          <div class="h-6 w-px bg-slate-200"></div>
+        }
+
+        <!-- Buscador -->
+        <div class="relative flex-1 min-w-[160px]">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path>
+          </svg>
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Buscar curso o docente..."
+            class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
+        </div>
+
+        <!-- Botón limpiar filtros -->
+        @if (hayFiltrosActivos()) {
+          <button (click)="limpiarFiltros()"
+            class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap bg-white">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Limpiar
+          </button>
+        }
+
+      </div>
+    </div>
+
   </div>
 
   <!-- ─── VISTA TABLA ─────────────────────────────────────────────────── -->
