@@ -117,24 +117,19 @@ export class AuthService {
   /**
    * Verifica si el usuario tiene un rol específico.
    * El developer siempre retorna true (acceso total).
-   * Para estudiantes, tipo_usuario actúa como rol.
    */
   hasRole(role: string): boolean {
     if (this.isDeveloper()) return true;
-    if (this.currentUser()?.tipo_usuario === role) return true;
     return this.currentUser()?.roles.includes(role) || false;
   }
 
   /**
    * Verifica si el usuario tiene alguno de los roles especificados.
    * El developer siempre retorna true (acceso total).
-   * Para estudiantes, tipo_usuario actúa como rol.
    */
   hasAnyRole(roles: string[]): boolean {
     if (this.isDeveloper()) return true;
-    const user = this.currentUser();
-    if (user?.tipo_usuario && roles.includes(user.tipo_usuario)) return true;
-    const userRoles = user?.roles || [];
+    const userRoles = this.currentUser()?.roles || [];
     return roles.some(role => userRoles.includes(role));
   }
 
