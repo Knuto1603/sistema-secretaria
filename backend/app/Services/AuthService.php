@@ -38,6 +38,13 @@ class AuthService
             ]);
         }
 
+        // Verificar que la cuenta está activa
+        if (!$user->activo) {
+            throw ValidationException::withMessages([
+                'username' => ['Tu cuenta está desactivada. Contacta a la secretaría.'],
+            ]);
+        }
+
         // Verificar contraseña
         if (!Hash::check($dto->password, $user->password)) {
             throw ValidationException::withMessages([

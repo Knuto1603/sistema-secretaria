@@ -230,6 +230,10 @@ class StudentAuthController extends Controller
             return $this->error('Este código no corresponde a un estudiante.', 401);
         }
 
+        if (!$user->activo) {
+            return $this->error('Tu cuenta está desactivada. Contacta a la secretaría.', 403);
+        }
+
         if (!$user->hasPasswordSet()) {
             return $this->error('Debes activar tu cuenta primero.', 401, [
                 'requires_activation' => true,
