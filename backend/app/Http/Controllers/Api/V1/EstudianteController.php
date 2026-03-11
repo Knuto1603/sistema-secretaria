@@ -58,6 +58,21 @@ class EstudianteController extends Controller
     }
 
     /**
+     * Crea un nuevo estudiante
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'                 => ['required', 'string', 'max:255'],
+            'codigo_universitario' => ['required', 'digits:10', 'unique:users,codigo_universitario'],
+        ]);
+
+        $result = $this->service->create($data);
+
+        return $this->success($result, 'Estudiante creado exitosamente', 201);
+    }
+
+    /**
      * Actualiza datos de un estudiante
      */
     public function update(UpdateEstudianteRequest $request, string $id): JsonResponse

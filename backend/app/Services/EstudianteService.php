@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Transformers\UsuarioTransformer;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class EstudianteService
 {
@@ -12,6 +15,37 @@ class EstudianteService
         protected UsuarioTransformer $transformer,
         protected OtpService $otpService
     ) {}
+
+    /**
+     * Crea un nuevo estudiante y le asigna el rol Spatie correspondiente.
+     * La escuela y año de ingreso se derivan automáticamente del código.
+     */
+    public function create(array $data): array
+    {
+        return DB::transaction(function () use ($data) {
+            $codigo = $data['codigo_universitario'];
+
+            $user = User::create([
+                'name'                 => strtoupper(trim($data['name'])),
+                'tipo_usuario'         => 'estudiante',
+                'codigo_universitario' => $codigo,
+                'email'                => "{$codigo}@alumnos.unp.edu.pe",
+                'activo'               => true,
+            ]);
+
+            $user->asignarDatosDesdeCodigoUniversitario();
+
+            $rol = Role::where('name', 'estudiante')->first();
+            if ($rol) {
+                $user->assignRole($rol);
+            }
+
+            $user->load('escuela');
+            $ultimoOtp = $this->repository->getUltimoOtpEnviado($user->id);
+
+            return $this->transformer->toEstudianteArray($user, $ultimoOtp);
+        });
+    }
 
     /**
      * Lista paginada de estudiantes

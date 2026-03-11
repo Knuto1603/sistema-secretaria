@@ -259,6 +259,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin|secretario academico|developer')
         ->group(function () {
             Route::get('/', [EstudianteController::class, 'index']);
+            Route::post('/', [EstudianteController::class, 'store']);
             Route::get('/import/template', [EstudianteController::class, 'downloadTemplate']);
             Route::post('/import', [EstudianteController::class, 'import']);
             Route::post('/import-html', [EstudianteController::class, 'importHtml']);
