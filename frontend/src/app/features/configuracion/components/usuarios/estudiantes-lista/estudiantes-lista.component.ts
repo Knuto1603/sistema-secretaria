@@ -43,6 +43,12 @@ export class EstudiantesListaComponent implements OnInit {
   importando = signal(false);
   importResultado = signal<{ resumen: ImportResumen; resultados: ImportFila[] } | null>(null);
 
+  // Crear estudiante
+  mostrarFormCrear = signal(false);
+  formNombre = '';
+  formCodigo = '';
+  creando = signal(false);
+
   // Import HTML (SIGA)
   importandoHtml = signal(false);
   importHtmlMensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
@@ -129,6 +135,37 @@ export class EstudiantesListaComponent implements OnInit {
     this.activoFilter = '';
     this.pagination.currentPage = 1;
     this.cargarDatos();
+  }
+
+  abrirFormCrear(): void {
+    this.formNombre = '';
+    this.formCodigo = '';
+    this.mostrarFormCrear.set(true);
+  }
+
+  cancelarFormCrear(): void {
+    this.mostrarFormCrear.set(false);
+  }
+
+  crearEstudiante(): void {
+    if (!this.formNombre.trim() || this.formCodigo.length !== 10 || this.creando()) return;
+
+    this.creando.set(true);
+    this.usuarioService.crearEstudiante({
+      name: this.formNombre.trim(),
+      codigo_universitario: this.formCodigo.trim(),
+    }).subscribe({
+      next: () => {
+        this.creando.set(false);
+        this.mostrarFormCrear.set(false);
+        this.mostrarMensaje('success', 'Estudiante creado correctamente.');
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.creando.set(false);
+        this.mostrarMensaje('error', err.error?.message || 'Error al crear el estudiante.');
+      },
+    });
   }
 
   verDetalle(estudiante: Estudiante): void {

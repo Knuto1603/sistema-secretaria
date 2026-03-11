@@ -69,6 +69,15 @@
 
     <!-- Botones de importación (separador a la derecha) -->
     <div class="ml-auto flex gap-2">
+      <!-- Crear estudiante -->
+      <button
+        (click)="abrirFormCrear()"
+        class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo estudiante
+      </button>
       <button
         (click)="descargarPlantilla()"
         class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
@@ -115,6 +124,57 @@
         <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoSeleccionado($event)" />
       </label>
     </div>
+
+  <!-- Formulario: Nuevo estudiante -->
+  @if (mostrarFormCrear()) {
+    <div class="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
+        <div class="bg-white px-5 py-4">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Nombre completo</label>
+          <input type="text" [(ngModel)]="formNombre" placeholder="Ej: JUAN PÉREZ GARCÍA"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all uppercase placeholder:normal-case placeholder:text-slate-400">
+        </div>
+        <div class="bg-white px-5 py-4">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+            Código universitario
+            <span class="normal-case font-normal ml-1">— 10 dígitos</span>
+          </label>
+          <input type="text" [(ngModel)]="formCodigo" placeholder="Ej: 0512021002" maxlength="10"
+            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+            [class.border-red-300]="formCodigo.length > 0 && formCodigo.length !== 10">
+          @if (formCodigo.length > 0 && formCodigo.length !== 10) {
+            <p class="text-xs text-red-500 mt-1">Debe tener exactamente 10 dígitos ({{ formCodigo.length }}/10)</p>
+          }
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-5 py-3 bg-slate-50 border-t border-slate-100">
+        <p class="text-xs text-slate-400">
+          El email será <span class="font-mono text-slate-600">{{ formCodigo || '???????????' }}&#64;alumnos.unp.edu.pe</span>
+        </p>
+        <div class="flex gap-2">
+          <button (click)="cancelarFormCrear()"
+            class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button (click)="crearEstudiante()" [disabled]="!formNombre.trim() || formCodigo.length !== 10 || creando()"
+            class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-1.5">
+            @if (creando()) {
+              <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Creando...
+            } @else {
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+              Crear estudiante
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Mensaje HTML import -->
   @if (importHtmlMensaje()) {

@@ -188,6 +188,12 @@ export class UsuarioService {
     );
   }
 
+  crearEstudiante(data: { name: string; codigo_universitario: string }): Observable<Estudiante> {
+    return this.http.post<ApiResponse<Estudiante>>(`${this.baseUrl}/estudiantes`, data).pipe(
+      map(response => response.data)
+    );
+  }
+
   toggleEstudiante(id: string, activo: boolean): Observable<Estudiante> {
     return this.http.patch<ApiResponse<Estudiante>>(`${this.baseUrl}/estudiantes/${id}/toggle`, { activo }).pipe(
       map(response => response.data)
