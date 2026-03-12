@@ -9,6 +9,7 @@ use App\Http\Requests\Usuario\UpdateEstudianteRequest;
 use App\Imports\AlumnosHtmlImport;
 use App\Imports\EstudianteImport;
 use App\Services\EstudianteService;
+use App\Services\ImportHistorialesZipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -146,6 +147,31 @@ class EstudianteController extends Controller
     public function downloadTemplate(): BinaryFileResponse
     {
         return Excel::download(new EstudianteTemplateExport(), 'plantilla_estudiantes.xlsx');
+    }
+
+    /**
+     * Importa estudiantes y sus historiales desde un ZIP con archivos HTM del SIGA
+     */
+    public function importHistorialesZip(Request $request): JsonResponse
+    {
+        $request->validate([
+            'archivo' => ['required', 'file', 'mimes:zip', 'max:102400'], // máx 100MB
+        ]);
+
+        try {
+            $service = new ImportHistorialesZipService();
+            $resumen = $service->import($request->file('archivo'));
+
+            $total = $resumen['estudiantes_creados'] + $resumen['estudiantes_actualizados'];
+            $msg   = "Procesados {$total} estudiantes: {$resumen['estudiantes_creados']} nuevos, "
+                   . "{$resumen['estudiantes_actualizados']} actualizados. "
+                   . "Historial: {$resumen['historial_insertado']} insertados, "
+                   . "{$resumen['historial_actualizado']} actualizados.";
+
+            return $this->success($resumen, $msg);
+        } catch (\Exception $e) {
+            return $this->error('Error al procesar el ZIP: ' . $e->getMessage(), 500);
+        }
     }
 
     /**
