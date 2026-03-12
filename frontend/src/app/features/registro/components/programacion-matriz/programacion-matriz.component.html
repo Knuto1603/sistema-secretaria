@@ -76,7 +76,14 @@
                       {{ prog.curso?.nombre }}
                     </p>
 
-                    <!-- Escuelas -->
+                    <!-- Escuela programada -->
+                    @if (prog.escuela_programada) {
+                      <span class="inline-block mt-1 px-1.5 py-0.5 bg-violet-100 text-violet-700 text-[9px] font-bold rounded-md leading-none">
+                        {{ prog.escuela_programada.nombre_corto || prog.escuela_programada.nombre }}
+                      </span>
+                    }
+
+                    <!-- Escuelas habilitadas -->
                     @if (escuelasLabel(prog)) {
                       <p class="text-[9px] text-indigo-500 font-medium mt-1 truncate" [title]="escuelasLabel(prog)">
                         {{ escuelasLabel(prog) }}
