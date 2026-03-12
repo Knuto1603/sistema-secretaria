@@ -89,7 +89,7 @@ Route::prefix('whatsapp')->group(function () {
 // RUTAS PROTEGIDAS
 // =============================================
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
 
     // Rutas de autenticación
     Route::get('/me', [AuthController::class, 'me']);
