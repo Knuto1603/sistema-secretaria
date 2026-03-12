@@ -109,6 +109,12 @@ class UserRepository implements UserRepositoryInterface
         }
 
         $user->update(['activo' => $activo]);
+
+        // Revocar todos los tokens activos al desactivar
+        if (!$activo) {
+            $user->tokens()->delete();
+        }
+
         return $user->fresh();
     }
 
