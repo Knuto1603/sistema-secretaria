@@ -22,6 +22,19 @@ export interface EscuelaRef {
   nombre_corto: string | null;
 }
 
+export interface InscripcionEscuelaStat {
+  escuela_id: string | null;
+  nombre: string;
+  nombre_corto: string;
+  cantidad: number;
+  porcentaje: number;
+}
+
+export interface InscripcionesStats {
+  total: number;
+  por_escuela: InscripcionEscuelaStat[];
+}
+
 export interface Programacion {
   id: string;
   clave: string;
@@ -41,6 +54,7 @@ export interface Programacion {
   aula_rel?: AulaRel | null;
   grupo_horario?: GrupoHorarioRef | null;
   escuelas?: EscuelaRef[];
+  escuela_programada?: EscuelaRef | null;
   docente_id?: string | null;
 }
 
@@ -83,17 +97,19 @@ export class ProgramacionService {
     escuelaId?: string,
     ciclo?: number,
     areaId?: string,
-    grupo?: string
+    grupo?: string,
+    escuelaProgramadaId?: string
   ): Observable<PaginatedResponse<Programacion>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString());
-    if (search)    params = params.set('search', search);
-    if (periodoId) params = params.set('periodo_id', periodoId);
-    if (escuelaId) params = params.set('escuela_id', escuelaId);
-    if (ciclo)     params = params.set('ciclo', ciclo.toString());
-    if (areaId)    params = params.set('area_id', areaId);
-    if (grupo)     params = params.set('grupo', grupo);
+    if (search)              params = params.set('search', search);
+    if (periodoId)           params = params.set('periodo_id', periodoId);
+    if (escuelaId)           params = params.set('escuela_id', escuelaId);
+    if (ciclo)               params = params.set('ciclo', ciclo.toString());
+    if (areaId)              params = params.set('area_id', areaId);
+    if (grupo)               params = params.set('grupo', grupo);
+    if (escuelaProgramadaId) params = params.set('escuela_programada_id', escuelaProgramadaId);
 
     return this.http
       .get<ApiResponse<ApiPaginatedData<Programacion>>>(this.apiUrl, { params })
@@ -111,6 +127,12 @@ export class ProgramacionService {
     return this.http
       .get<ApiResponse<Programacion>>(`${this.apiUrl}/${id}`)
       .pipe(map(response => response.data));
+  }
+
+  getInscripcionesStats(id: string): Observable<InscripcionesStats> {
+    return this.http
+      .get<ApiResponse<InscripcionesStats>>(`${this.apiUrl}/${id}/inscripciones/stats`)
+      .pipe(map(r => r.data));
   }
 
   crearProgramacion(data: {

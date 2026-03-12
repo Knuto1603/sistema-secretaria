@@ -1,6 +1,6 @@
 <!-- Overlay -->
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
@@ -33,104 +33,167 @@
     }
 
     @if (!loading() && detalle()) {
-      <div class="flex-1 overflow-y-auto px-7 py-5 space-y-5">
+      <div class="flex-1 overflow-y-auto px-7 py-5 space-y-4">
 
-        <!-- Curso -->
-        <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-          <p class="text-[10px] font-semibold text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
-          <p class="text-base font-bold text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
-          <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.curso?.codigo }}</p>
+        <!-- Curso + escuela programada -->
+        <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
+            <p class="text-base font-bold text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
+            <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.curso?.codigo }}</p>
+          </div>
+          @if (detalle()!.escuela_programada) {
+            <div class="shrink-0 text-right">
+              <p class="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest mb-1">Programado para</p>
+              <span class="inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg">
+                {{ detalle()!.escuela_programada!.nombre_corto || detalle()!.escuela_programada!.nombre }}
+              </span>
+            </div>
+          }
         </div>
 
-        <!-- Grid de datos principales -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clave</p>
-            <p class="text-sm font-bold text-slate-700 mt-1 font-mono">{{ detalle()!.clave }}</p>
+        <!-- Grid datos: clave, grupo, sección, periodo, aula, docente -->
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Clave</p>
+            <p class="text-xs font-bold text-slate-700 mt-0.5 font-mono">{{ detalle()!.clave }}</p>
           </div>
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Grupo</p>
-            <p class="text-sm font-bold text-indigo-600 mt-1">{{ detalle()!.grupo || '—' }}</p>
+          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Grupo</p>
+            <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.grupo || '—' }}</p>
           </div>
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sección</p>
-            <p class="text-sm font-bold text-slate-700 mt-1">{{ detalle()!.seccion || '—' }}</p>
+          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Sección</p>
+            <p class="text-xs font-bold text-slate-700 mt-0.5">{{ detalle()!.seccion || '—' }}</p>
           </div>
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periodo</p>
-            <p class="text-xs font-bold text-slate-600 mt-1 leading-snug">{{ detalle()!.periodo?.nombre || '—' }}</p>
+          <div class="col-span-3 px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Periodo</p>
+            <p class="text-xs font-bold text-slate-600 mt-0.5">{{ detalle()!.periodo?.nombre || '—' }}</p>
           </div>
         </div>
 
         <!-- Aula y Docente -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Aula</p>
+          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Aula</p>
             <p class="text-sm font-bold text-slate-700">{{ aulaNombre(detalle()!) }}</p>
             @if (detalle()!.aula_rel?.pabellon) {
               <p class="text-xs text-slate-400 mt-0.5">{{ detalle()!.aula_rel!.pabellon!.nombre }}</p>
             }
           </div>
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Docente</p>
-            <p class="text-sm font-bold text-slate-700" [ngClass]="{'italic text-slate-300': !detalle()!.docente?.nombre_completo}">
+          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Docente</p>
+            <p class="text-sm font-bold text-slate-700"
+              [ngClass]="{'italic text-slate-300': !detalle()!.docente?.nombre_completo}">
               {{ detalle()!.docente?.nombre_completo || 'POR ASIGNAR' }}
             </p>
           </div>
         </div>
 
-        <!-- Horario -->
-        <div class="px-4 py-3 bg-slate-50 rounded-2xl">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Horario</p>
-          @if (detalle()!.grupo_horario?.detalles?.length) {
-            <div class="flex flex-wrap gap-2">
-              @for (slot of detalle()!.grupo_horario!.detalles; track $index) {
-                <span class="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg">
-                  {{ diaNombre(slot.dia_semana) }} {{ slot.hora_inicio.substring(0,5) }}–{{ slot.hora_fin.substring(0,5) }}
-                </span>
-              }
-            </div>
-          } @else {
-            <p class="text-xs text-slate-400 italic">Sin horario asignado</p>
-          }
-        </div>
+        <!-- Horario + Cupos (fila compacta) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Horario</p>
+            @if (detalle()!.grupo_horario?.detalles?.length) {
+              <div class="flex flex-wrap gap-1.5">
+                @for (slot of detalle()!.grupo_horario!.detalles; track $index) {
+                  <span class="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg">
+                    {{ diaNombre(slot.dia_semana) }} {{ slot.hora_inicio.substring(0,5) }}–{{ slot.hora_fin.substring(0,5) }}
+                  </span>
+                }
+              </div>
+            } @else {
+              <p class="text-xs text-slate-400 italic">Sin horario asignado</p>
+            }
+          </div>
 
-        <!-- Cupos -->
-        <div class="px-4 py-3 bg-slate-50 rounded-2xl">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cupos</p>
-            <div class="flex items-center gap-2">
+          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cupos</p>
               @if (detalle()!.esta_lleno) {
-                <app-badge color="red">Lleno{{ detalle()!.lleno_manual ? ' (Manual)' : '' }}</app-badge>
+                <app-badge color="red">Lleno{{ detalle()!.lleno_manual ? ' (M)' : '' }}</app-badge>
               } @else {
                 <app-badge color="emerald">Disponible</app-badge>
               }
             </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div class="h-2 rounded-full transition-all"
-                [style.width.%]="ocupacion"
-                [ngClass]="detalle()!.esta_lleno ? 'bg-red-500' : 'bg-emerald-500'">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div class="h-2 rounded-full transition-all"
+                  [style.width.%]="ocupacion"
+                  [ngClass]="detalle()!.esta_lleno ? 'bg-red-500' : 'bg-emerald-500'">
+                </div>
               </div>
+              <span class="text-xs font-semibold text-slate-600 whitespace-nowrap">
+                {{ detalle()!.n_inscritos }} / {{ detalle()!.capacidad }}
+              </span>
             </div>
-            <span class="text-xs font-semibold text-slate-600 whitespace-nowrap">
-              {{ detalle()!.n_inscritos }} / {{ detalle()!.capacidad }}
-            </span>
           </div>
         </div>
 
-        <!-- Escuelas -->
+        <!-- Escuelas habilitadas -->
         @if (detalle()!.escuelas?.length) {
-          <div class="px-4 py-3 bg-slate-50 rounded-2xl">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Escuelas habilitadas</p>
+          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Escuelas habilitadas</p>
             <div class="flex flex-wrap gap-2">
               @for (esc of detalle()!.escuelas!; track esc.id) {
-                <span class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg">
+                <span class="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg">
                   {{ esc.nombre_corto || esc.nombre }}
                 </span>
               }
             </div>
+          </div>
+        }
+
+        <!-- Inscritos por escuela (pie chart) -->
+        @if (stats() && stats()!.total > 0) {
+          <div class="px-4 py-4 bg-slate-50 rounded-xl">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+              Inscritos por escuela
+              <span class="ml-2 px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[9px]">
+                {{ stats()!.total }} total
+              </span>
+            </p>
+
+            <div class="flex items-center gap-6">
+              <!-- Donut SVG -->
+              <div class="shrink-0">
+                <svg viewBox="0 0 120 120" class="w-28 h-28">
+                  @for (seg of pieSegments(); track $index) {
+                    <circle
+                      cx="60" cy="60" r="40"
+                      fill="transparent"
+                      [attr.stroke]="seg.color"
+                      stroke-width="22"
+                      [attr.stroke-dasharray]="seg.strokeDasharray"
+                      [attr.stroke-dashoffset]="seg.strokeDashoffset"
+                      transform="rotate(-90 60 60)" />
+                  }
+                  <text x="60" y="56" text-anchor="middle" font-size="14" font-weight="800" fill="#1e293b">
+                    {{ stats()!.total }}
+                  </text>
+                  <text x="60" y="69" text-anchor="middle" font-size="8" fill="#94a3b8">inscritos</text>
+                </svg>
+              </div>
+
+              <!-- Leyenda -->
+              <div class="flex-1 space-y-1.5 min-w-0">
+                @for (seg of pieSegments(); track $index) {
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full shrink-0" [style.background]="seg.color"></div>
+                    <span class="text-xs font-medium text-slate-600 truncate min-w-0" [title]="seg.nombre">
+                      {{ seg.nombre_corto || seg.nombre }}
+                    </span>
+                    <span class="ml-auto text-xs font-bold text-slate-700 shrink-0">
+                      {{ seg.cantidad }} <span class="text-slate-400 font-normal">({{ seg.porcentaje }}%)</span>
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        } @else if (stats() && stats()!.total === 0) {
+          <div class="px-4 py-3 bg-slate-50 rounded-xl text-center">
+            <p class="text-xs text-slate-400 italic">Sin alumnos inscritos aún</p>
           </div>
         }
 

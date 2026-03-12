@@ -1,8 +1,21 @@
-import { Component, inject, OnInit, signal, output, input } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, output, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProgramacionService, Programacion } from '../../services/programacion.service';
+import { ProgramacionService, Programacion, InscripcionesStats } from '../../services/programacion.service';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
+
+const PIE_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16'];
+const CIRCUNFERENCIA = 2 * Math.PI * 40; // r=40
+
+export interface PieSegment {
+  nombre: string;
+  nombre_corto: string;
+  cantidad: number;
+  porcentaje: number;
+  color: string;
+  strokeDasharray: string;
+  strokeDashoffset: string;
+}
 
 @Component({
   selector: 'app-programacion-detalle',
@@ -18,6 +31,7 @@ export class ProgramacionDetalleComponent implements OnInit {
   editar  = output<Programacion>();
 
   detalle = signal<Programacion | null>(null);
+  stats   = signal<InscripcionesStats | null>(null);
   loading = signal(true);
   error   = signal<string | null>(null);
 
@@ -25,6 +39,11 @@ export class ProgramacionDetalleComponent implements OnInit {
     this.programacionService.getDetalleProgramacion(this.id()).subscribe({
       next:  d => { this.detalle.set(d); this.loading.set(false); },
       error: () => { this.error.set('Error al cargar detalles'); this.loading.set(false); },
+    });
+
+    this.programacionService.getInscripcionesStats(this.id()).subscribe({
+      next:  s => this.stats.set(s),
+      error: () => {},
     });
   }
 
@@ -34,12 +53,26 @@ export class ProgramacionDetalleComponent implements OnInit {
     return Math.round((d.n_inscritos / d.capacidad) * 100);
   }
 
-  getHorarioTexto(detalle: Programacion['grupo_horario']): string {
-    if (!detalle?.detalles?.length) return 'Sin horario asignado';
-    return detalle.detalles.map(d =>
-      `${this.diaNombre(d.dia_semana)} ${d.hora_inicio.substring(0,5)}–${d.hora_fin.substring(0,5)}`
-    ).join(' · ');
-  }
+  pieSegments = computed((): PieSegment[] => {
+    const s = this.stats();
+    if (!s || s.total === 0) return [];
+
+    let cumulativeArc = 0;
+    return s.por_escuela.map((item, i) => {
+      const arc    = (item.porcentaje / 100) * CIRCUNFERENCIA;
+      const offset = -cumulativeArc;
+      cumulativeArc += arc;
+      return {
+        nombre:           item.nombre,
+        nombre_corto:     item.nombre_corto,
+        cantidad:         item.cantidad,
+        porcentaje:       item.porcentaje,
+        color:            PIE_COLORS[i % PIE_COLORS.length],
+        strokeDasharray:  `${arc.toFixed(2)} ${CIRCUNFERENCIA.toFixed(2)}`,
+        strokeDashoffset: offset.toFixed(2),
+      };
+    });
+  });
 
   diaNombre(dia: string): string {
     const map: Record<string, string> = {
