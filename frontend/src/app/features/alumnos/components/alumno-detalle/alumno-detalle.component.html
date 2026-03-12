@@ -1,0 +1,276 @@
+<!-- Overlay -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100 flex-shrink-0">
+      <div>
+        <h2 class="text-lg font-black text-slate-800">Detalle del Alumno</h2>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+          Información completa
+        </p>
+      </div>
+      <button (click)="cerrado.emit()"
+        class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="flex-1 flex items-center justify-center py-20">
+        <svg class="w-8 h-8 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="flex-1 flex items-center justify-center">
+        <p class="text-sm text-red-600 font-medium">{{ error() }}</p>
+      </div>
+    }
+
+    @if (!loading() && alumno()) {
+      <!-- Identidad del alumno -->
+      <div class="px-7 py-4 bg-indigo-50 border-b border-indigo-100 flex items-center gap-4 flex-shrink-0">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+          <span class="text-xl font-black text-white">{{ alumno()!.name?.charAt(0) }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-base font-black text-slate-800 truncate">{{ alumno()!.name }}</p>
+          <p class="text-xs font-mono font-bold text-indigo-600">{{ alumno()!.codigo_universitario }}</p>
+          <p class="text-[10px] text-slate-500 mt-0.5">{{ alumno()!.email }}</p>
+        </div>
+        <div class="flex flex-col gap-1.5 items-end flex-shrink-0">
+          @if (alumno()!.activo) {
+            <app-badge color="emerald">Activo</app-badge>
+          } @else {
+            <app-badge color="red">Inactivo</app-badge>
+          }
+          @if (alumno()!.cuenta_activada) {
+            <app-badge color="indigo">Cuenta activada</app-badge>
+          } @else {
+            <app-badge color="amber">Cuenta pendiente</app-badge>
+          }
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b border-slate-100 flex-shrink-0 px-7">
+        @for (tab of [
+          {id: 'info', label: 'Información'},
+          {id: 'historial', label: 'Historial Académico'},
+          {id: 'inscripciones', label: 'Inscripciones'}
+        ]; track tab.id) {
+          <button
+            (click)="cambiarTab(tab.id === 'info' ? 'info' : tab.id === 'historial' ? 'historial' : 'inscripciones')"
+            class="px-4 py-3.5 text-xs font-bold border-b-2 transition-all -mb-px"
+            [ngClass]="tabActiva() === tab.id
+              ? 'border-indigo-500 text-indigo-600'
+              : 'border-transparent text-slate-400 hover:text-slate-600'">
+            {{ tab.label }}
+            @if (tab.id === 'historial' && historial()) {
+              <span class="ml-1.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-600 text-[9px] rounded-full">
+                {{ historial()!.total }}
+              </span>
+            }
+            @if (tab.id === 'inscripciones' && inscripciones().length) {
+              <span class="ml-1.5 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] rounded-full">
+                {{ inscripciones().length }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Contenido del tab -->
+      <div class="flex-1 overflow-y-auto px-7 py-5">
+
+        <!-- TAB: Información -->
+        @if (tabActiva() === 'info') {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Escuela</p>
+              <p class="text-sm font-bold text-slate-700">{{ alumno()!.escuela || '—' }}</p>
+            </div>
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Año de Ingreso</p>
+              <p class="text-sm font-bold text-slate-700">{{ alumno()!.anio_ingreso || '—' }}</p>
+            </div>
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email</p>
+              <p class="text-xs font-semibold text-slate-600 break-all">{{ alumno()!.email || '—' }}</p>
+            </div>
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Password establecido</p>
+              <p class="text-xs font-semibold text-slate-600">
+                {{ alumno()!.password_set_at ? (alumno()!.password_set_at! | date:'dd/MM/yyyy HH:mm') : 'No' }}
+              </p>
+            </div>
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Último OTP</p>
+              <p class="text-xs font-semibold text-slate-600">
+                {{ alumno()!.ultimo_otp_enviado ? (alumno()!.ultimo_otp_enviado! | date:'dd/MM/yyyy HH:mm') : 'Nunca' }}
+              </p>
+            </div>
+            <div class="px-4 py-3 bg-slate-50 rounded-xl">
+              <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registrado</p>
+              <p class="text-xs font-semibold text-slate-600">{{ alumno()!.created_at | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+        }
+
+        <!-- TAB: Historial Académico -->
+        @if (tabActiva() === 'historial') {
+          @if (loadingHistorial()) {
+            <div class="flex items-center justify-center py-16">
+              <svg class="w-7 h-7 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          } @else if (historial()) {
+            @if (historial()!.total === 0) {
+              <div class="text-center py-16">
+                <p class="text-sm text-slate-400 italic">Sin historial académico registrado</p>
+              </div>
+            } @else {
+              <!-- Stats rápidas -->
+              <div class="flex items-center gap-4 mb-4 flex-wrap">
+                <div class="px-3 py-2 bg-indigo-50 rounded-xl text-center">
+                  <p class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Cursos totales</p>
+                  <p class="text-lg font-black text-indigo-700">{{ historial()!.total }}</p>
+                </div>
+                <div class="px-3 py-2 bg-slate-50 rounded-xl text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Créditos</p>
+                  <p class="text-lg font-black text-slate-700">{{ totalCreditos() }}</p>
+                </div>
+                <div class="px-3 py-2 bg-slate-50 rounded-xl text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Semestres</p>
+                  <p class="text-lg font-black text-slate-700">{{ historial()!.por_semestre.length }}</p>
+                </div>
+              </div>
+
+              <!-- Por semestre -->
+              <div class="space-y-3">
+                @for (sem of historial()!.por_semestre; track sem.semestre) {
+                  <div class="rounded-xl border border-slate-100 overflow-hidden">
+                    <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                      <span class="text-xs font-black text-slate-700 uppercase tracking-widest">{{ sem.semestre }}</span>
+                      <span class="text-[10px] text-slate-400 font-medium">{{ sem.cursos.length }} curso(s)</span>
+                    </div>
+                    <div class="divide-y divide-slate-50">
+                      @for (c of sem.cursos; track c.id) {
+                        <div class="px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50/60 transition-colors">
+                          <span class="text-[10px] font-mono font-bold text-slate-400 w-16 shrink-0">
+                            {{ c.curso?.codigo || '—' }}
+                          </span>
+                          <span class="text-xs text-slate-700 flex-1 min-w-0 truncate" [title]="c.curso?.nombre">
+                            {{ c.curso?.nombre || 'Sin nombre' }}
+                          </span>
+                          <span class="text-[10px] text-slate-400 shrink-0">{{ c.creditos ?? '—' }} cr.</span>
+                          <span class="text-xs shrink-0 w-8 text-right" [ngClass]="getNotaColor(c.nota)">
+                            {{ c.nota ?? '—' }}
+                          </span>
+                          <span class="text-[9px] text-slate-400 shrink-0 w-16 text-right uppercase tracking-wide">
+                            {{ c.tipo }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Sin semestre -->
+                @if (historial()!.sin_semestre.length > 0) {
+                  <div class="rounded-xl border border-slate-100 overflow-hidden">
+                    <div class="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                      <span class="text-xs font-black text-amber-700 uppercase tracking-widest">Convalidaciones</span>
+                      <span class="text-[10px] text-amber-500 font-medium">{{ historial()!.sin_semestre.length }} curso(s)</span>
+                    </div>
+                    <div class="divide-y divide-slate-50">
+                      @for (c of historial()!.sin_semestre; track c.id) {
+                        <div class="px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50/60 transition-colors">
+                          <span class="text-[10px] font-mono font-bold text-slate-400 w-16 shrink-0">
+                            {{ c.curso?.codigo || '—' }}
+                          </span>
+                          <span class="text-xs text-slate-700 flex-1 min-w-0 truncate" [title]="c.curso?.nombre">
+                            {{ c.curso?.nombre || 'Sin nombre' }}
+                          </span>
+                          <span class="text-[10px] text-slate-400 shrink-0">{{ c.creditos ?? '—' }} cr.</span>
+                          <span class="text-xs shrink-0 w-8 text-right" [ngClass]="getNotaColor(c.nota)">
+                            {{ c.nota ?? '—' }}
+                          </span>
+                          <span class="text-[9px] text-amber-500 shrink-0 w-16 text-right uppercase tracking-wide">
+                            Convalidado
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+        }
+
+        <!-- TAB: Inscripciones -->
+        @if (tabActiva() === 'inscripciones') {
+          @if (loadingInscripciones()) {
+            <div class="flex items-center justify-center py-16">
+              <svg class="w-7 h-7 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          } @else if (inscripciones().length === 0) {
+            <div class="text-center py-16">
+              <p class="text-sm text-slate-400 italic">Sin inscripciones registradas</p>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              @for (insc of inscripciones(); track insc.id) {
+                <div class="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-800 truncate">
+                      {{ insc.programacion?.curso?.nombre || 'Sin curso' }}
+                    </p>
+                    <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span class="text-[10px] font-mono text-slate-400">{{ insc.programacion?.curso?.codigo }}</span>
+                      @if (insc.periodo) {
+                        <span class="text-[10px] font-bold text-indigo-500">{{ insc.periodo.nombre }}</span>
+                      }
+                      @if (insc.programacion?.clave) {
+                        <span class="text-[10px] text-slate-400">Clave: {{ insc.programacion!.clave }}</span>
+                      }
+                      @if (insc.programacion?.seccion) {
+                        <span class="text-[10px] text-slate-400">Sec. {{ insc.programacion!.seccion }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="shrink-0 text-right">
+                    <span class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase"
+                      [ngClass]="insc.fuente === 'siga' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'">
+                      {{ insc.fuente }}
+                    </span>
+                    <p class="text-[9px] text-slate-400 mt-0.5">{{ insc.created_at | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end px-7 py-4 border-t border-slate-100 flex-shrink-0">
+        <app-btn variant="ghost" (clicked)="cerrado.emit()">Cerrar</app-btn>
+      </div>
+    }
+
+  </div>
+</div>

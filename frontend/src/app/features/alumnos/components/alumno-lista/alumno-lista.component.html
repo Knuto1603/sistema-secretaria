@@ -1,0 +1,209 @@
+<!-- Modal Detalle -->
+@if (alumnoDetalleId()) {
+  <app-alumno-detalle
+    [id]="alumnoDetalleId()!"
+    (cerrado)="alumnoDetalleId.set(null)">
+  </app-alumno-detalle>
+}
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+  <!-- Filtros -->
+  <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+    <div class="flex flex-wrap items-center gap-2">
+
+      <!-- Búsqueda -->
+      <div class="relative flex-1 min-w-[180px]">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path>
+        </svg>
+        <input type="text"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event); cargar(1)"
+          placeholder="Buscar por nombre, código o email..."
+          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full">
+      </div>
+
+      <!-- Escuela -->
+      <div class="relative">
+        <select
+          [ngModel]="escuelaSeleccionada()"
+          (ngModelChange)="escuelaSeleccionada.set($event); cargar(1)"
+          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px]"
+          [ngClass]="escuelaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+          <option value="">Escuela</option>
+          @for (e of escuelas(); track e.id) {
+            <option [value]="e.codigo">{{ e.nombre_corto || e.nombre }}</option>
+          }
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Cuenta activada -->
+      <div class="relative">
+        <select
+          [ngModel]="cuentaActivada()"
+          (ngModelChange)="cuentaActivada.set($event); cargar(1)"
+          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px]"
+          [ngClass]="cuentaActivada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+          <option value="">Cuenta</option>
+          <option value="true">Activada</option>
+          <option value="false">Pendiente</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Estado -->
+      <div class="relative">
+        <select
+          [ngModel]="activoFiltro()"
+          (ngModelChange)="activoFiltro.set($event); cargar(1)"
+          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px]"
+          [ngClass]="activoFiltro() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
+          <option value="">Estado</option>
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </div>
+
+      @if (hayFiltros()) {
+        <button (click)="limpiarFiltros()"
+          class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-slate-200 flex items-center gap-1.5 bg-white">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Limpiar
+        </button>
+      }
+
+      @if (pagination()) {
+        <span class="ml-auto text-xs text-slate-400 font-medium whitespace-nowrap">
+          {{ pagination()!.total }} alumnos
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <app-table
+    [columns]="columnas"
+    [data]="alumnos()"
+    [loading]="loading()">
+
+    <ng-template #cellTemplate let-row let-column="column">
+
+      @if (column.key === 'codigo') {
+        <span class="text-xs font-mono font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg">
+          {{ row.codigo_universitario }}
+        </span>
+      }
+
+      @if (column.key === 'nombre') {
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-xs font-black text-indigo-600">{{ row.name?.charAt(0) }}</span>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-slate-800">{{ row.name }}</p>
+            <p class="text-[10px] text-slate-400">{{ row.email }}</p>
+          </div>
+        </div>
+      }
+
+      @if (column.key === 'escuela') {
+        @if (row.escuela) {
+          <span class="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg">
+            {{ row.escuela }}
+          </span>
+        } @else {
+          <span class="text-slate-300 text-xs italic">Sin escuela</span>
+        }
+      }
+
+      @if (column.key === 'anio') {
+        <span class="text-sm font-semibold text-slate-600">{{ row.anio_ingreso || '—' }}</span>
+      }
+
+      @if (column.key === 'cuenta') {
+        @if (row.cuenta_activada) {
+          <app-badge color="emerald">Activada</app-badge>
+        } @else {
+          <app-badge color="amber">Pendiente</app-badge>
+        }
+      }
+
+      @if (column.key === 'estado') {
+        @if (row.activo) {
+          <app-badge color="emerald">Activo</app-badge>
+        } @else {
+          <app-badge color="red">Inactivo</app-badge>
+        }
+      }
+
+    </ng-template>
+
+    <ng-template #actionsTemplate let-row>
+      <div class="flex items-center gap-1.5">
+        <!-- Ver detalle -->
+        <button
+          (click)="alumnoDetalleId.set(row.id)"
+          title="Ver detalle del alumno"
+          class="p-2 rounded-lg text-indigo-500 hover:bg-indigo-50 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+        </button>
+        <!-- Toggle activo -->
+        <button
+          (click)="onToggle(row)"
+          [title]="row.activo ? 'Desactivar alumno' : 'Activar alumno'"
+          class="p-2 rounded-lg transition-colors"
+          [ngClass]="row.activo ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            @if (row.activo) {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            } @else {
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            }
+          </svg>
+        </button>
+      </div>
+    </ng-template>
+
+  </app-table>
+
+  <!-- Paginación -->
+  @if (pagination() && !loading()) {
+    <app-shared-pagination
+      [currentPage]="currentPage()"
+      [lastPage]="pagination()!.last_page"
+      [total]="pagination()!.total"
+      [from]="paginationFrom"
+      [to]="paginationTo"
+      [perPage]="perPage()"
+      (pageChange)="cargar($event)"
+      (pageSizeChange)="perPage.set($event); cargar(1)">
+    </app-shared-pagination>
+  }
+
+</div>

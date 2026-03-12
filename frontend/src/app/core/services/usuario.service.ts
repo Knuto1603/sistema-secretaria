@@ -96,6 +96,58 @@ export interface ImportFila {
   mensaje: string;
 }
 
+export interface HistorialCurso {
+  id: string;
+  curso: { id: string; nombre: string; codigo: string } | null;
+  nota: number | null;
+  creditos: number | null;
+  tipo: string;
+  fuente: string;
+}
+
+export interface HistorialSemestre {
+  semestre: string;
+  cursos: HistorialCurso[];
+}
+
+export interface EstudianteHistorial {
+  por_semestre: HistorialSemestre[];
+  sin_semestre: HistorialCurso[];
+  total: number;
+}
+
+export interface EstudianteInscripcion {
+  id: string;
+  fuente: string;
+  periodo: { id: string; nombre: string } | null;
+  programacion: {
+    id: string;
+    clave: string;
+    seccion: string;
+    grupo: string;
+    curso: { nombre: string; codigo: string } | null;
+  } | null;
+  created_at: string;
+}
+
+export interface HistorialesZipResumen {
+  estudiantes_creados: number;
+  estudiantes_actualizados: number;
+  historial_insertado: number;
+  historial_actualizado: number;
+  errores: string[];
+}
+
+export interface InscripcionesHtmlResumen {
+  programaciones_procesadas: number;
+  inscripciones_creadas: number;
+  inscripciones_actualizadas: number;
+  alumnos_nuevos: number;
+  no_encontrados: number;
+  errores: number;
+  detalle_errores: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -234,5 +286,33 @@ export class UsuarioService {
       a.click();
       URL.revokeObjectURL(url);
     });
+  }
+
+  getEstudianteHistorial(id: string): Observable<EstudianteHistorial> {
+    return this.http
+      .get<ApiResponse<EstudianteHistorial>>(`${this.baseUrl}/estudiantes/${id}/historial`)
+      .pipe(map(r => r.data));
+  }
+
+  getEstudianteInscripciones(id: string): Observable<EstudianteInscripcion[]> {
+    return this.http
+      .get<ApiResponse<EstudianteInscripcion[]>>(`${this.baseUrl}/estudiantes/${id}/inscripciones`)
+      .pipe(map(r => r.data));
+  }
+
+  importarHistorialesZip(archivo: File): Observable<HistorialesZipResumen> {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    return this.http
+      .post<ApiResponse<HistorialesZipResumen>>(`${this.baseUrl}/estudiantes/import-historiales-zip`, form)
+      .pipe(map(r => r.data));
+  }
+
+  importarInscripcionesHtml(archivo: File): Observable<InscripcionesHtmlResumen> {
+    const form = new FormData();
+    form.append('file', archivo);
+    return this.http
+      .post<ApiResponse<InscripcionesHtmlResumen>>(`${environment.apiUrl}/programacion/inscripciones/import-html`, form)
+      .pipe(map(r => r.data));
   }
 }
