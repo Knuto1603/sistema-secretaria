@@ -29,10 +29,8 @@
         <p class="text-[10px] text-violet-500 font-bold mt-2">Tamaño máximo: 100 MB</p>
       </div>
 
-      <!-- Separador -->
-      <hr class="border-slate-100">
-
       <!-- Botón -->
+      <div class="pt-4 border-t border-slate-100">
       <input type="file" #zipInput class="hidden" accept=".zip" (change)="onZipSeleccionado($event)">
       <app-btn
         variant="primary"
@@ -45,6 +43,7 @@
         </svg>
         {{ importandoZip() ? 'Procesando ZIP...' : 'Seleccionar ZIP' }}
       </app-btn>
+      </div>
 
       <!-- Error -->
       @if (errorZip()) {
@@ -122,10 +121,8 @@
         <p class="text-[10px] text-sky-500 font-bold mt-2">Formato: .htm / .html · Máximo: 10 MB</p>
       </div>
 
-      <!-- Separador -->
-      <hr class="border-slate-100">
-
       <!-- Botón -->
+      <div class="pt-4 border-t border-slate-100">
       <input type="file" #htmlInput class="hidden" accept=".htm,.html" (change)="onHtmlSeleccionado($event)">
       <app-btn
         variant="primary"
@@ -138,6 +135,7 @@
         </svg>
         {{ importandoHtml() ? 'Procesando HTML...' : 'Seleccionar HTML' }}
       </app-btn>
+      </div>
 
       <!-- Error -->
       @if (errorHtml()) {
