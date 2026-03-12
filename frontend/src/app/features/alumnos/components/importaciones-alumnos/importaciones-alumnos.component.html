@@ -18,6 +18,7 @@
     </div>
 
     <div class="px-6 py-5 space-y-4">
+
       <!-- Descripción -->
       <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-xl">
         <p class="text-xs text-violet-700 font-medium leading-relaxed">
@@ -28,7 +29,10 @@
         <p class="text-[10px] text-violet-500 font-bold mt-2">Tamaño máximo: 100 MB</p>
       </div>
 
-      <!-- Input file -->
+      <!-- Separador -->
+      <hr class="border-slate-100">
+
+      <!-- Botón -->
       <input type="file" #zipInput class="hidden" accept=".zip" (change)="onZipSeleccionado($event)">
       <app-btn
         variant="primary"
@@ -85,6 +89,7 @@
           }
         </div>
       }
+
     </div>
   </div>
 
@@ -106,6 +111,7 @@
     </div>
 
     <div class="px-6 py-5 space-y-4">
+
       <!-- Descripción -->
       <div class="px-4 py-3 bg-sky-50 border border-sky-100 rounded-xl">
         <p class="text-xs text-sky-700 font-medium leading-relaxed">
@@ -116,7 +122,10 @@
         <p class="text-[10px] text-sky-500 font-bold mt-2">Formato: .htm / .html · Máximo: 10 MB</p>
       </div>
 
-      <!-- Input file -->
+      <!-- Separador -->
+      <hr class="border-slate-100">
+
+      <!-- Botón -->
       <input type="file" #htmlInput class="hidden" accept=".htm,.html" (change)="onHtmlSeleccionado($event)">
       <app-btn
         variant="primary"
@@ -173,6 +182,7 @@
           }
         </div>
       }
+
     </div>
   </div>
 
