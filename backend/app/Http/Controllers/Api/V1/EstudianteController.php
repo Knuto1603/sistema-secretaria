@@ -8,10 +8,12 @@ use App\Http\Requests\Estudiante\ImportAlumnosHtmlRequest;
 use App\Http\Requests\Usuario\UpdateEstudianteRequest;
 use App\Imports\AlumnosHtmlImport;
 use App\Imports\EstudianteImport;
+use App\Jobs\ProcessHistorialesZipJob;
+use App\Models\ImportJob;
 use App\Services\EstudianteService;
-use App\Services\ImportHistorialesZipService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -150,7 +152,8 @@ class EstudianteController extends Controller
     }
 
     /**
-     * Importa estudiantes y sus historiales desde un ZIP con archivos HTM del SIGA
+     * Importa estudiantes y sus historiales desde un ZIP con archivos HTM del SIGA.
+     * Despacha un job en background y retorna un job_id para consultar el estado.
      */
     public function importHistorialesZip(Request $request): JsonResponse
     {
@@ -158,20 +161,46 @@ class EstudianteController extends Controller
             'archivo' => ['required', 'file', 'mimes:zip', 'max:102400'], // máx 100MB
         ]);
 
-        try {
-            $service = new ImportHistorialesZipService();
-            $resumen = $service->import($request->file('archivo'));
+        // Guardar el ZIP en storage temporal
+        $storedPath = $request->file('archivo')->store('imports/zip_temp');
 
-            $total = $resumen['estudiantes_creados'] + $resumen['estudiantes_actualizados'];
-            $msg   = "Procesados {$total} estudiantes: {$resumen['estudiantes_creados']} nuevos, "
-                   . "{$resumen['estudiantes_actualizados']} actualizados. "
-                   . "Historial: {$resumen['historial_insertado']} insertados, "
-                   . "{$resumen['historial_actualizado']} actualizados.";
+        // Crear registro de seguimiento
+        $importJob = ImportJob::create([
+            'tipo'   => 'zip_historiales',
+            'estado' => 'pendiente',
+        ]);
 
-            return $this->success($resumen, $msg);
-        } catch (\Exception $e) {
-            return $this->error('Error al procesar el ZIP: ' . $e->getMessage(), 500);
+        // Despachar job en background
+        ProcessHistorialesZipJob::dispatch($importJob->id, $storedPath);
+
+        return $this->success(
+            ['job_id' => $importJob->id],
+            'Importación iniciada. Consulta el estado con el job_id.',
+            202
+        );
+    }
+
+    /**
+     * Consulta el estado de un import job.
+     * GET /usuarios/estudiantes/import-status/{id}
+     */
+    public function importStatus(string $id): JsonResponse
+    {
+        $job = ImportJob::find($id);
+
+        if (!$job) {
+            return $this->notFound('Import job no encontrado');
         }
+
+        return $this->success([
+            'id'             => $job->id,
+            'tipo'           => $job->tipo,
+            'estado'         => $job->estado,
+            'resultado'      => $job->resultado,
+            'error_mensaje'  => $job->error_mensaje,
+            'created_at'     => $job->created_at?->toISOString(),
+            'updated_at'     => $job->updated_at?->toISOString(),
+        ]);
     }
 
     /**

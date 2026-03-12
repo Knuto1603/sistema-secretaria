@@ -274,6 +274,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::post('/import', [EstudianteController::class, 'import']);
             Route::post('/import-html', [EstudianteController::class, 'importHtml']);
             Route::post('/import-historiales-zip', [EstudianteController::class, 'importHistorialesZip']);
+            Route::get('/import-status/{id}',      [EstudianteController::class, 'importStatus']);
             Route::get('/{id}', [EstudianteController::class, 'show']);
             Route::put('/{id}', [EstudianteController::class, 'update']);
             Route::patch('/{id}/toggle', [EstudianteController::class, 'toggle']);
