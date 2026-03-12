@@ -278,6 +278,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::put('/{id}', [EstudianteController::class, 'update']);
             Route::patch('/{id}/toggle', [EstudianteController::class, 'toggle']);
             Route::post('/{id}/reenviar-otp', [EstudianteController::class, 'reenviarOtp']);
+            Route::get('/{id}/historial',     [EstudianteController::class, 'historial']);
+            Route::get('/{id}/inscripciones', [EstudianteController::class, 'inscripciones']);
         });
 
     // Historial académico del estudiante autenticado

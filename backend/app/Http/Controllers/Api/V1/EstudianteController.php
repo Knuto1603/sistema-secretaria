@@ -191,4 +191,96 @@ class EstudianteController extends Controller
             return $this->error('Error al procesar el archivo: ' . $e->getMessage(), 500);
         }
     }
+
+    /**
+     * GET /usuarios/estudiantes/{id}/historial
+     * Historial académico de un estudiante (vista admin)
+     */
+    public function historial(string $id): JsonResponse
+    {
+        $estudiante = \App\Models\User::where('id', $id)
+            ->where('tipo_usuario', 'estudiante')
+            ->first();
+
+        if (!$estudiante) {
+            return $this->notFound('Estudiante no encontrado');
+        }
+
+        $historial = \App\Models\HistorialAcademico::where('user_id', $id)
+            ->with('curso')
+            ->orderByRaw("CASE WHEN semestre IS NULL THEN 1 ELSE 0 END")
+            ->orderBy('semestre', 'desc')
+            ->get();
+
+        $porSemestre = $historial->filter(fn($h) => !is_null($h->semestre))
+            ->groupBy('semestre')
+            ->map(fn($items, $semestre) => [
+                'semestre' => $semestre,
+                'cursos'   => $items->map(fn($h) => [
+                    'id'       => $h->id,
+                    'curso'    => $h->curso ? ['id' => $h->curso->id, 'nombre' => $h->curso->nombre, 'codigo' => $h->curso->codigo] : null,
+                    'nota'     => $h->nota,
+                    'creditos' => $h->creditos,
+                    'tipo'     => $h->tipo,
+                    'fuente'   => $h->fuente,
+                ])->values(),
+            ])->values();
+
+        $sinSemestre = $historial->filter(fn($h) => is_null($h->semestre))
+            ->map(fn($h) => [
+                'id'       => $h->id,
+                'curso'    => $h->curso ? ['id' => $h->curso->id, 'nombre' => $h->curso->nombre, 'codigo' => $h->curso->codigo] : null,
+                'nota'     => $h->nota,
+                'creditos' => $h->creditos,
+                'tipo'     => $h->tipo,
+                'fuente'   => $h->fuente,
+            ])->values();
+
+        return $this->success([
+            'por_semestre' => $porSemestre,
+            'sin_semestre' => $sinSemestre,
+            'total'        => $historial->count(),
+        ], 'Historial académico del estudiante');
+    }
+
+    /**
+     * GET /usuarios/estudiantes/{id}/inscripciones
+     * Inscripciones de un estudiante (vista admin)
+     */
+    public function inscripciones(string $id): JsonResponse
+    {
+        $estudiante = \App\Models\User::where('id', $id)
+            ->where('tipo_usuario', 'estudiante')
+            ->first();
+
+        if (!$estudiante) {
+            return $this->notFound('Estudiante no encontrado');
+        }
+
+        $inscripciones = \App\Models\Inscripcion::where('user_id', $id)
+            ->with(['programacion.curso', 'programacion.periodo', 'periodo'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($i) => [
+                'id'      => $i->id,
+                'fuente'  => $i->fuente,
+                'periodo' => $i->periodo
+                    ? ['id' => $i->periodo->id, 'nombre' => $i->periodo->nombre]
+                    : ($i->programacion?->periodo
+                        ? ['id' => $i->programacion->periodo->id, 'nombre' => $i->programacion->periodo->nombre]
+                        : null),
+                'programacion' => $i->programacion ? [
+                    'id'      => $i->programacion->id,
+                    'clave'   => $i->programacion->clave,
+                    'seccion' => $i->programacion->seccion,
+                    'grupo'   => $i->programacion->grupo,
+                    'curso'   => $i->programacion->curso
+                        ? ['nombre' => $i->programacion->curso->nombre, 'codigo' => $i->programacion->curso->codigo]
+                        : null,
+                ] : null,
+                'created_at' => $i->created_at->toISOString(),
+            ]);
+
+        return $this->success($inscripciones, 'Inscripciones del estudiante');
+    }
 }
