@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\KnowledgeBaseController;
 use App\Http\Controllers\Api\V1\PabellonController;
 use App\Http\Controllers\Api\V1\PeriodoController;
 use App\Http\Controllers\Api\V1\PlanEstudiosController;
+use App\Http\Controllers\Api\V1\InscripcionController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
 use App\Http\Controllers\Api\V1\RolController;
 use App\Http\Controllers\Api\V1\SolicitudController;
@@ -123,6 +124,15 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
             ->middleware('role:secretaria|admin|developer');
+
+        // Inscripciones por sección
+        Route::post('/inscripciones/import-html', [InscripcionController::class, 'importHtml'])
+            ->middleware('role:secretaria|admin|developer');
+        Route::get('/{id}/inscripciones', [InscripcionController::class, 'index']);
+        Route::get('/{id}/inscripciones/stats', [InscripcionController::class, 'stats']);
+        Route::delete('/{id}/inscripciones/{userId}', [InscripcionController::class, 'destroy'])
+            ->middleware('role:secretaria|admin|developer');
+
         Route::put('/{id}', [ProgramacionController::class, 'update'])
             ->middleware('role:secretaria|admin|developer');
         Route::delete('/{id}', [ProgramacionController::class, 'destroy'])
@@ -263,6 +273,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::get('/import/template', [EstudianteController::class, 'downloadTemplate']);
             Route::post('/import', [EstudianteController::class, 'import']);
             Route::post('/import-html', [EstudianteController::class, 'importHtml']);
+            Route::post('/import-historiales-zip', [EstudianteController::class, 'importHistorialesZip']);
             Route::get('/{id}', [EstudianteController::class, 'show']);
             Route::put('/{id}', [EstudianteController::class, 'update']);
             Route::patch('/{id}/toggle', [EstudianteController::class, 'toggle']);
