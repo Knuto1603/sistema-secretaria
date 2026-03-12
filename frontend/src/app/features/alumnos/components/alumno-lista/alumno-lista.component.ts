@@ -11,7 +11,6 @@ import {
 } from '@core/services/usuario.service';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
-import { AppButtonComponent } from '@shared/button/button.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
 import { AlumnoDetalleComponent } from '../alumno-detalle/alumno-detalle.component';
 
@@ -37,7 +36,6 @@ interface PaginationMeta {
     FormsModule,
     AppTableComponent,
     AppBadgeComponent,
-    AppButtonComponent,
     PaginationComponent,
     AlumnoDetalleComponent,
   ],
