@@ -138,6 +138,16 @@ export interface HistorialesZipResumen {
   errores: string[];
 }
 
+export interface ImportJobStatus {
+  id: string;
+  tipo: string;
+  estado: 'pendiente' | 'procesando' | 'completado' | 'fallido';
+  resultado: HistorialesZipResumen | null;
+  error_mensaje: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface InscripcionesHtmlResumen {
   programaciones_procesadas: number;
   inscripciones_creadas: number;
@@ -300,11 +310,17 @@ export class UsuarioService {
       .pipe(map(r => r.data));
   }
 
-  importarHistorialesZip(archivo: File): Observable<HistorialesZipResumen> {
+  importarHistorialesZip(archivo: File): Observable<{ job_id: string }> {
     const form = new FormData();
     form.append('archivo', archivo);
     return this.http
-      .post<ApiResponse<HistorialesZipResumen>>(`${this.baseUrl}/estudiantes/import-historiales-zip`, form)
+      .post<ApiResponse<{ job_id: string }>>(`${this.baseUrl}/estudiantes/import-historiales-zip`, form)
+      .pipe(map(r => r.data));
+  }
+
+  getImportJobStatus(jobId: string): Observable<ImportJobStatus> {
+    return this.http
+      .get<ApiResponse<ImportJobStatus>>(`${this.baseUrl}/estudiantes/import-status/${jobId}`)
       .pipe(map(r => r.data));
   }
 

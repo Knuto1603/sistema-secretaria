@@ -34,16 +34,27 @@
       <input type="file" #zipInput class="hidden" accept=".zip" (change)="onZipSeleccionado($event)">
       <app-btn
         variant="primary"
-        [loading]="importandoZip()"
+        [loading]="importandoZip"
         (clicked)="zipInput.click()"
         class="w-full">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
         </svg>
-        {{ importandoZip() ? 'Procesando ZIP...' : 'Seleccionar ZIP' }}
+        {{ zipMensajeBoton }}
       </app-btn>
       </div>
+
+      <!-- Estado: procesando en background -->
+      @if (zipEstado() === 'procesando') {
+        <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-xl flex items-center gap-3">
+          <svg class="w-4 h-4 text-violet-500 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <p class="text-xs text-violet-700 font-medium">Procesando archivos en el servidor... puede tardar varios minutos.</p>
+        </div>
+      }
 
       <!-- Error -->
       @if (errorZip()) {
