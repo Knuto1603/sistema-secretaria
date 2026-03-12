@@ -29,7 +29,8 @@ class ProgramacionAcademica extends Model
         'n_acta',
         'capacidad',
         'n_inscritos',
-        'lleno_manual'
+        'lleno_manual',
+        'escuela_programada_id',
     ];
 
     protected $casts = [
@@ -68,11 +69,27 @@ class ProgramacionAcademica extends Model
     }
 
     /**
-     * Escuelas que pueden inscribirse en esta sección
+     * Escuela para la que fue programado este curso
+     */
+    public function escuelaProgramada(): BelongsTo
+    {
+        return $this->belongsTo(Escuela::class, 'escuela_programada_id');
+    }
+
+    /**
+     * Escuelas habilitadas para inscribirse en esta sección
      */
     public function escuelas(): BelongsToMany
     {
         return $this->belongsToMany(Escuela::class, 'programacion_escuelas', 'programacion_id', 'escuela_id');
+    }
+
+    /**
+     * Alumnos inscritos en esta sección
+     */
+    public function inscripciones(): HasMany
+    {
+        return $this->hasMany(Inscripcion::class, 'programacion_id');
     }
 
     public function aula(): BelongsTo

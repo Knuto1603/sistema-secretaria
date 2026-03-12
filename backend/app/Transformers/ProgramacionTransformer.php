@@ -59,7 +59,7 @@ class ProgramacionTransformer
             $grupoNombre = $model->grupo;
         }
 
-        // Escuelas (solo cuando se carguen explícitamente)
+        // Escuelas habilitadas (solo cuando se carguen explícitamente)
         $escuelas = null;
         if ($model->relationLoaded('escuelas')) {
             $escuelas = $model->escuelas->map(fn($e) => [
@@ -67,6 +67,17 @@ class ProgramacionTransformer
                 'nombre'      => $e->nombre,
                 'nombre_corto'=> $e->nombre_corto,
             ])->toArray();
+        }
+
+        // Escuela programada
+        $escuelaProgramada = null;
+        if ($model->relationLoaded('escuelaProgramada') && $model->escuelaProgramada) {
+            $ep = $model->escuelaProgramada;
+            $escuelaProgramada = [
+                'id'          => $ep->id,
+                'nombre'      => $ep->nombre,
+                'nombre_corto'=> $ep->nombre_corto,
+            ];
         }
 
         return new ProgramacionResponseDTO(
@@ -102,8 +113,9 @@ class ProgramacionTransformer
             ] : null,
             aula_rel:      $aulaRel,
             grupo_horario: $grupoHorario,
-            escuelas:      $escuelas,
-            created_at:    $model->created_at->toISOString()
+            escuelas:           $escuelas,
+            escuela_programada: $escuelaProgramada,
+            created_at:         $model->created_at->toISOString()
         );
     }
 
