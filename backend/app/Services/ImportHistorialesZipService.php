@@ -94,9 +94,15 @@ class ImportHistorialesZipService
             $codigo = $parser->getCodigo();
             $nombre = $parser->getNombre();
 
+            // Fallback: el nombre del archivo ES el código universitario (ej. 0502021001.htm)
             if (!$codigo || !preg_match('/^\d{10}$/', $codigo)) {
-                $this->errores[] = "{$nombreArchivo}: no se pudo extraer código universitario.";
-                return;
+                $codigoDelArchivo = pathinfo($nombreArchivo, PATHINFO_FILENAME);
+                if (preg_match('/^\d{10}$/', $codigoDelArchivo)) {
+                    $codigo = $codigoDelArchivo;
+                } else {
+                    $this->errores[] = "{$nombreArchivo}: no se pudo extraer código universitario.";
+                    return;
+                }
             }
 
             DB::transaction(function () use ($codigo, $nombre, $parser, $nombreArchivo) {
@@ -118,14 +124,18 @@ class ImportHistorialesZipService
     {
         $existe = User::where('codigo_universitario', $codigo)->exists();
 
+        $updates = [
+            'tipo_usuario' => 'estudiante',
+            'email'        => User::generarEmailEstudiante($codigo),
+            'activo'       => true,
+        ];
+        if (!empty($nombre)) {
+            $updates['name'] = $nombre;
+        }
+
         $user = User::updateOrCreate(
             ['codigo_universitario' => $codigo],
-            [
-                'name'         => $nombre,
-                'tipo_usuario' => 'estudiante',
-                'email'        => User::generarEmailEstudiante($codigo),
-                'activo'       => true,
-            ]
+            $updates
         );
 
         $user->asignarDatosDesdeCodigoUniversitario();

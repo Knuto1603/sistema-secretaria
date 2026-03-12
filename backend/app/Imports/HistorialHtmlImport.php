@@ -42,14 +42,50 @@ class HistorialHtmlImport
 
     private function extractHeader(DOMXPath $xpath): void
     {
-        // El encabezado del alumno está en FONT SIZE=3 COLOR=000080
-        $nodes = $xpath->query('//font[@size="3" and @color="000080"]');
-        foreach ($nodes as $node) {
-            $text = trim($node->textContent);
-            if (preg_match('/^(\d{10})\s*-\s*(.+)$/', $text, $m)) {
+        // Patrón: 10 dígitos - nombre (acepta guion normal o em-dash)
+        $pattern = '/^(\d{10})\s*[-–]\s*(.+)$/u';
+
+        // 1. Intentar múltiples variantes del selector FONT (distintos formatos de color del SIGA)
+        $queries = [
+            '//font[@size="3" and @color="000080"]',
+            '//font[@size="3" and @color="#000080"]',
+            '//font[@size="3" and @color="0000FF"]',
+            '//font[@size="3" and @color="#0000FF"]',
+            '//font[@size="3"]',
+            '//font[@color="000080"]',
+            '//font[@color="#000080"]',
+        ];
+
+        foreach ($queries as $query) {
+            $nodes = $xpath->query($query);
+            foreach ($nodes as $node) {
+                $text = trim($node->textContent);
+                if (preg_match($pattern, $text, $m)) {
+                    $this->codigo = $m[1];
+                    $this->nombre = mb_convert_case(trim($m[2]), MB_CASE_TITLE, 'UTF-8');
+                    return;
+                }
+            }
+        }
+
+        // 2. Buscar el patrón en cualquier nodo de texto del documento
+        $textNodes = $xpath->query('//text()');
+        foreach ($textNodes as $textNode) {
+            $text = trim($textNode->nodeValue ?? '');
+            if (preg_match($pattern, $text, $m)) {
                 $this->codigo = $m[1];
                 $this->nombre = mb_convert_case(trim($m[2]), MB_CASE_TITLE, 'UTF-8');
                 return;
+            }
+        }
+
+        // 3. Búsqueda en texto completo del body (por si hay espacios/saltos de línea entre código y nombre)
+        $body = $xpath->query('//body');
+        if ($body->length > 0) {
+            $fullText = preg_replace('/\s+/', ' ', $body->item(0)->textContent ?? '');
+            if (preg_match('/(\d{10})\s*[-–]\s*([A-ZÁÉÍÓÚÑ][^0-9]{5,80})/u', $fullText, $m)) {
+                $this->codigo = $m[1];
+                $this->nombre = mb_convert_case(trim($m[2]), MB_CASE_TITLE, 'UTF-8');
             }
         }
     }
