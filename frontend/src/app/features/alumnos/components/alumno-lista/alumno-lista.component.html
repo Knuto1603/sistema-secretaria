@@ -6,10 +6,10 @@
   </app-alumno-detalle>
 }
 
-<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="space-y-4">
 
-  <!-- Filtros -->
-  <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+  <!-- Recuadro 1: Filtros -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
     <div class="flex flex-wrap items-center gap-2">
 
       <!-- Búsqueda -->
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- Tabla -->
+  <!-- Recuadro 2: Tabla -->
   <app-table
     [columns]="columnas"
     [data]="alumnos()"
@@ -159,7 +159,6 @@
 
     <ng-template #actionsTemplate let-row>
       <div class="flex items-center gap-1.5">
-        <!-- Ver detalle -->
         <button
           (click)="alumnoDetalleId.set(row.id)"
           title="Ver detalle del alumno"
@@ -171,7 +170,6 @@
               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
           </svg>
         </button>
-        <!-- Toggle activo -->
         <button
           (click)="onToggle(row)"
           [title]="row.activo ? 'Desactivar alumno' : 'Activar alumno'"
@@ -192,18 +190,20 @@
 
   </app-table>
 
-  <!-- Paginación -->
+  <!-- Recuadro 3: Paginación -->
   @if (pagination() && !loading()) {
-    <app-shared-pagination
-      [currentPage]="currentPage()"
-      [lastPage]="pagination()!.last_page"
-      [total]="pagination()!.total"
-      [from]="paginationFrom"
-      [to]="paginationTo"
-      [perPage]="perPage()"
-      (pageChange)="cargar($event)"
-      (pageSizeChange)="perPage.set($event); cargar(1)">
-    </app-shared-pagination>
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <app-shared-pagination
+        [currentPage]="currentPage()"
+        [lastPage]="pagination()!.last_page"
+        [total]="pagination()!.total"
+        [from]="paginationFrom"
+        [to]="paginationTo"
+        [perPage]="perPage()"
+        (pageChange)="cargar($event)"
+        (pageSizeChange)="perPage.set($event); cargar(1)">
+      </app-shared-pagination>
+    </div>
   }
 
 </div>
