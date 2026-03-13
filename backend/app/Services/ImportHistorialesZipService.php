@@ -23,6 +23,11 @@ class ImportHistorialesZipService
 
     public function import(UploadedFile $zipFile): array
     {
+        return $this->importFromPath($zipFile->getPathname());
+    }
+
+    public function importFromPath(string $zipPath): array
+    {
         $this->rolEstudiante = Role::where('name', 'estudiante')
                                    ->where('guard_name', 'web')
                                    ->first();
@@ -31,7 +36,7 @@ class ImportHistorialesZipService
         mkdir($tmpDir, 0755, true);
 
         try {
-            $this->extraerZip($zipFile->getPathname(), $tmpDir);
+            $this->extraerZip($zipPath, $tmpDir);
             $this->procesarDirectorio($tmpDir);
         } finally {
             $this->eliminarDirectorio($tmpDir);
