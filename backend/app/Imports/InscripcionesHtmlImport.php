@@ -187,26 +187,30 @@ class InscripcionesHtmlImport
 
                     if ($candidatos->count() === 1) return $candidatos->first();
 
-                    // Si hay varias secciones, afinar por clave
+                    // Varias secciones → OBLIGATORIO usar clave para no mezclar alumnos
                     if ($candidatos->count() > 1 && $clave) {
                         $match = $candidatos->firstWhere('clave', $clave);
                         if ($match) return $match;
+                        // Clave no coincide con ninguna sección → no adivinar
+                        return null;
                     }
 
-                    if ($candidatos->count() > 0) return $candidatos->first();
+                    // Sin clave y una sola sección ya se retornó arriba
+                    // Si hay varias sin clave → no adivinar
                 }
             }
         }
 
-        // 3. Código de curso + búsqueda parcial de periodo
+        // 3. Código de curso + búsqueda parcial de periodo (solo si hay 1 sección)
         if ($cursoCodigo && $semestre) {
             $curso = Curso::where('codigo', $cursoCodigo)->first();
             if ($curso) {
                 foreach (Periodo::where('nombre', 'like', "%{$semestre}%")->get() as $periodo) {
-                    $prog = ProgramacionAcademica::where('curso_id', $curso->id)
+                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->first();
-                    if ($prog) return $prog;
+                        ->get();
+                    // Solo asignar si hay exactamente 1 sección (no arriesgar mezcla)
+                    if ($candidatos->count() === 1) return $candidatos->first();
                 }
             }
         }
