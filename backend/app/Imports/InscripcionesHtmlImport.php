@@ -14,12 +14,17 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Importa inscripciones de alumnos por curso desde el reporte HTML del SIGA
- * ("ALUMNOS POR CURSO XXXXXX.htm" — un <TABLE> por curso).
+ * ("ALUMNOS POR CURSO XXXXXX.htm").
  *
- * Estrategia de matching (en orden):
- *  1. clave SIGA + periodo (nombre exacto)
- *  2. código de curso + periodo (nombre exacto)
- *  3. código de curso + periodo (búsqueda parcial por año-semestre)
+ * Estrategia de parsing:
+ *  - Lee todas las filas del documento en orden
+ *  - Detecta cabeceras de curso (SEMESTRE/CURSO/CLAVE) y bloques de alumnos
+ *  - Cuando cambia la cabecera, guarda el bloque anterior
+ *
+ * Estrategia de matching de programación (en orden):
+ *  1. clave SIGA + periodo exacto
+ *  2. código de curso + periodo exacto
+ *  3. código de curso + periodo por búsqueda parcial
  */
 class InscripcionesHtmlImport
 {
@@ -48,63 +53,118 @@ class InscripcionesHtmlImport
         $dom->loadHTML('<?xml encoding="UTF-8">' . $content);
         libxml_clear_errors();
 
-        $xpath  = new DOMXPath($dom);
-        $tables = $xpath->query('//body/table');
+        $xpath = new DOMXPath($dom);
 
-        foreach ($tables as $table) {
-            $this->procesarTabla($table, $xpath);
-        }
+        // Leer TODAS las filas del documento en orden (una sola pasada)
+        $this->parsearFilas($xpath);
     }
 
-    private function procesarTabla(\DOMElement $table, DOMXPath $xpath): void
+    /**
+     * Recorre todas las filas del documento detectando bloques de curso→alumnos.
+     * Soporta tanto "una tabla por curso" como "una tabla global".
+     */
+    private function parsearFilas(DOMXPath $xpath): void
     {
-        $clave       = null;
         $semestre    = null;
         $cursoCodigo = null;
+        $clave       = null;
         $alumnos     = [];
 
-        $rows = $xpath->query('.//tr', $table);
+        $rows = $xpath->query('//tr');
 
         foreach ($rows as $tr) {
-            $text = preg_replace('/\s+/', ' ', trim($tr->textContent));
+            $text = $this->textoFila($tr, $xpath);
+
             if ($text === '') {
                 continue;
             }
 
-            // Extraer SEMESTRE: "SEMESTRE: 2026-0" o "SEMESTRE : 2026-0"
-            if (preg_match('/SEMESTRE\s*:\s*(\S+)/i', $text, $m)) {
+            // ── Detectar SEMESTRE ───────────────────────────────────────
+            if (preg_match('/SEMESTRE\s*:?\s*(\d{4}-\d)/i', $text, $m)) {
+                // Si venía acumulando alumnos del curso anterior, guardar
+                if (!empty($alumnos) && ($semestre || $cursoCodigo || $clave)) {
+                    $this->procesarBloque($semestre, $cursoCodigo, $clave, $alumnos);
+                    $alumnos = [];
+                }
                 $semestre = trim($m[1]);
+                $cursoCodigo = null;
+                $clave       = null;
+                continue;
             }
 
-            // Extraer código de CURSO: "CURSO : AL4401 - ..." o "CURSO: AL4401"
-            if (preg_match('/CURSO\s*:\s*([A-Z]{2,3}\d{3,5})/i', $text, $m)) {
+            // ── Detectar código de CURSO: "CURSO : AL4401" o "AL4401 NOMBRE" ─
+            if (preg_match('/CURSO\s*:?\s*([A-Z]{2,3}\d{3,5})/i', $text, $m)) {
+                if (!empty($alumnos) && ($semestre || $cursoCodigo || $clave)) {
+                    $this->procesarBloque($semestre, $cursoCodigo, $clave, $alumnos);
+                    $alumnos = [];
+                }
                 $cursoCodigo = strtoupper(trim($m[1]));
+                $clave       = null;
+                continue;
             }
 
-            // Extraer CLAVE: "CLAVE : 5081 SECCION : ..."
-            if (preg_match('/CLAVE\s*:\s*(\d+)/i', $text, $m)) {
+            // ── Detectar CLAVE SIGA ─────────────────────────────────────
+            if (preg_match('/CLAVE\s*:?\s*(\d+)/i', $text, $m)) {
                 $clave = trim($m[1]);
+                continue;
             }
 
-            // Detectar fila de alumno: empieza con 10 dígitos
-            if (preg_match('/^(\d{10})\s+(.+)$/', $text, $m)) {
-                $alumnos[] = [
-                    'codigo' => $m[1],
-                    'nombre' => mb_convert_case(trim($m[2]), MB_CASE_TITLE, 'UTF-8'),
-                ];
+            // ── Detectar fila de alumno: empieza con 10 dígitos ─────────
+            // Acepta: "0502021001 NOMBRE" o con número de orden previo "1 0502021001 NOMBRE"
+            if (preg_match('/(?:^|\s)(\d{10})\s+([A-ZÁÉÍÓÚÑ][^0-9]{2,80})/u', $text, $m)) {
+                $nombre = trim($m[2]);
+                // Descartar si el "nombre" parece un DNI (solo dígitos)
+                if (!ctype_digit($nombre)) {
+                    $alumnos[] = [
+                        'codigo' => $m[1],
+                        'nombre' => mb_convert_case($nombre, MB_CASE_TITLE, 'UTF-8'),
+                    ];
+                }
             }
         }
 
-        if (empty($alumnos) || !$semestre) {
+        // Guardar el último bloque
+        if (!empty($alumnos) && ($semestre || $cursoCodigo || $clave)) {
+            $this->procesarBloque($semestre, $cursoCodigo, $clave, $alumnos);
+        }
+    }
+
+    /**
+     * Extrae el texto de una fila uniendo celdas con espacio
+     * (textContent las concatena sin separador).
+     */
+    private function textoFila(\DOMElement $tr, DOMXPath $xpath): string
+    {
+        $celdas = $xpath->query('.//td|.//th', $tr);
+        if ($celdas->length > 0) {
+            $partes = [];
+            foreach ($celdas as $td) {
+                $val = trim(preg_replace('/\s+/', ' ', $td->textContent));
+                if ($val !== '') {
+                    $partes[] = $val;
+                }
+            }
+            return implode(' ', $partes);
+        }
+        return trim(preg_replace('/\s+/', ' ', $tr->textContent));
+    }
+
+    private function procesarBloque(?string $semestre, ?string $cursoCodigo, ?string $clave, array $alumnos): void
+    {
+        if (empty($alumnos)) {
             return;
         }
 
-        // Buscar la programación usando la estrategia de múltiples niveles
+        if (!$semestre && !$cursoCodigo && !$clave) {
+            return;
+        }
+
         $programacion = $this->buscarProgramacion($clave, $cursoCodigo, $semestre);
 
         if (!$programacion) {
             $label = $cursoCodigo ?? "CLAVE {$clave}";
-            $this->noEncontrados[] = "{$label} (semestre {$semestre}): no se encontró programación académica.";
+            $sem   = $semestre ?? 'semestre desconocido';
+            $this->noEncontrados[] = "{$label} ({$sem}): no se encontró en programación académica.";
             return;
         }
 
@@ -112,25 +172,23 @@ class InscripcionesHtmlImport
     }
 
     /**
-     * Busca la programación académica con múltiples estrategias de matching.
+     * Busca la programación con 3 estrategias de matching.
      */
-    private function buscarProgramacion(?string $clave, ?string $cursoCodigo, string $semestre): ?ProgramacionAcademica
+    private function buscarProgramacion(?string $clave, ?string $cursoCodigo, ?string $semestre): ?ProgramacionAcademica
     {
-        // ── Estrategia 1: clave SIGA + periodo exacto ──────────────────
-        if ($clave) {
+        // ── Estrategia 1: clave + periodo exacto ───────────────────────
+        if ($clave && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
                 $prog = ProgramacionAcademica::where('clave', $clave)
                     ->where('periodo_id', $periodo->id)
                     ->first();
-                if ($prog) {
-                    return $prog;
-                }
+                if ($prog) return $prog;
             }
         }
 
         // ── Estrategia 2: código de curso + periodo exacto ─────────────
-        if ($cursoCodigo) {
+        if ($cursoCodigo && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
@@ -139,39 +197,28 @@ class InscripcionesHtmlImport
                         ->where('periodo_id', $periodo->id)
                         ->get();
 
-                    if ($candidatos->count() === 1) {
-                        return $candidatos->first();
-                    }
+                    if ($candidatos->count() === 1) return $candidatos->first();
 
-                    // Si hay varias secciones y tenemos la clave, intentar afinar
                     if ($candidatos->count() > 1 && $clave) {
-                        $porClave = $candidatos->firstWhere('clave', $clave);
-                        if ($porClave) {
-                            return $porClave;
-                        }
+                        $match = $candidatos->firstWhere('clave', $clave);
+                        if ($match) return $match;
                     }
 
-                    // Retornar la primera si hay varias (mismo curso, mismo periodo)
-                    if ($candidatos->count() > 0) {
-                        return $candidatos->first();
-                    }
+                    if ($candidatos->count() > 0) return $candidatos->first();
                 }
             }
         }
 
         // ── Estrategia 3: código de curso + búsqueda parcial de periodo ─
-        if ($cursoCodigo) {
+        if ($cursoCodigo && $semestre) {
             $curso = Curso::where('codigo', $cursoCodigo)->first();
             if ($curso) {
-                // Buscar periodos que contengan el semestre en el nombre
                 $periodos = Periodo::where('nombre', 'like', "%{$semestre}%")->get();
                 foreach ($periodos as $periodo) {
                     $prog = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
                         ->first();
-                    if ($prog) {
-                        return $prog;
-                    }
+                    if ($prog) return $prog;
                 }
             }
         }
@@ -179,9 +226,6 @@ class InscripcionesHtmlImport
         return null;
     }
 
-    /**
-     * Busca el periodo por nombre exacto primero, luego parcial.
-     */
     private function buscarPeriodo(string $semestre): ?Periodo
     {
         return Periodo::where('nombre', $semestre)->first()
@@ -218,7 +262,6 @@ class InscripcionesHtmlImport
                 }
             }
 
-            // Recalcular n_inscritos
             $count = Inscripcion::where('programacion_id', $programacion->id)->count();
             $programacion->update(['n_inscritos' => $count]);
         });
