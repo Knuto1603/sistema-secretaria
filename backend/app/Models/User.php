@@ -284,7 +284,11 @@ class User extends Authenticatable
             $this->escuela_id = $escuela->id;
         }
 
-        $this->anio_ingreso = $datos['anio_ingreso'];
+        // Validar que el año sea razonable (1970 – año actual)
+        $anio = $datos['anio_ingreso'];
+        if ($anio >= 1970 && $anio <= (int) date('Y')) {
+            $this->anio_ingreso = $anio;
+        }
         $this->save();
 
         return true;
