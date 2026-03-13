@@ -66,6 +66,7 @@ class InscripcionesHtmlImport
         $semestre    = null;
         $cursoCodigo = null;
         $clave       = null;
+        $seccion     = null;
         $alumnos     = [];
 
         foreach ($xpath->query('//tr') as $tr) {
@@ -78,19 +79,20 @@ class InscripcionesHtmlImport
             $hayCurso    = (bool) preg_match('/CURSO\s*:\s*([A-Z]{2,3}\d{3,5})/i', $text, $mCurso);
             $haySemestre = (bool) preg_match('/SEMESTRE\s*:\s*(\d{4}-\d)/i',       $text, $mSem);
             $hayClave    = (bool) preg_match('/CLAVE\s*:\s*(\d+)/i',               $text, $mClave);
+            $haySeccion  = (bool) preg_match('/SECCION\s*:\s*(\S+)/i',             $text, $mSeccion);
             $hayAlumno   = (bool) preg_match('/^(\d{10})\s+(.+)$/',               $text, $mAlumno);
 
             // ── Cuando aparece un nuevo CURSO, guardar el bloque anterior ──
             if ($hayCurso) {
                 $nuevoCodigo = strtoupper(trim($mCurso[1]));
                 if ($nuevoCodigo !== $cursoCodigo) {
-                    // Guardar bloque anterior si tenía alumnos
                     if (!empty($alumnos)) {
-                        $this->procesarBloque($semestre, $cursoCodigo, $clave, $alumnos);
+                        $this->procesarBloque($semestre, $cursoCodigo, $clave, $seccion, $alumnos);
                         $alumnos = [];
                     }
                     $cursoCodigo = $nuevoCodigo;
                     $clave       = null;
+                    $seccion     = null;
                 }
             }
 
@@ -100,6 +102,10 @@ class InscripcionesHtmlImport
 
             if ($hayClave) {
                 $clave = trim($mClave[1]);
+            }
+
+            if ($haySeccion) {
+                $seccion = trim($mSeccion[1]);
             }
 
             if ($hayAlumno) {
@@ -116,7 +122,7 @@ class InscripcionesHtmlImport
 
         // Guardar el último bloque
         if (!empty($alumnos)) {
-            $this->procesarBloque($semestre, $cursoCodigo, $clave, $alumnos);
+            $this->procesarBloque($semestre, $cursoCodigo, $clave, $seccion, $alumnos);
         }
     }
 
@@ -140,18 +146,19 @@ class InscripcionesHtmlImport
         return trim(preg_replace('/\s+/', ' ', $tr->textContent));
     }
 
-    private function procesarBloque(?string $semestre, ?string $cursoCodigo, ?string $clave, array $alumnos): void
+    private function procesarBloque(?string $semestre, ?string $cursoCodigo, ?string $clave, ?string $seccion, array $alumnos): void
     {
         if (empty($alumnos) || (!$semestre && !$cursoCodigo && !$clave)) {
             return;
         }
 
-        $programacion = $this->buscarProgramacion($clave, $cursoCodigo, $semestre);
+        $programacion = $this->buscarProgramacion($clave, $cursoCodigo, $seccion, $semestre);
 
         if (!$programacion) {
             $label = $cursoCodigo ?? "CLAVE {$clave}";
+            $sec   = $seccion ? " sec {$seccion}" : '';
             $sem   = $semestre ?? '?';
-            $this->noEncontrados[] = "{$label} (sem {$sem}): no se encontró en programación académica.";
+            $this->noEncontrados[] = "{$label}{$sec} (sem {$sem}): no se encontró en programación académica.";
             return;
         }
 
@@ -162,9 +169,9 @@ class InscripcionesHtmlImport
     // Búsqueda de programación con 3 estrategias
     // ─────────────────────────────────────────────────────────────
 
-    private function buscarProgramacion(?string $clave, ?string $cursoCodigo, ?string $semestre): ?ProgramacionAcademica
+    private function buscarProgramacion(?string $clave, ?string $cursoCodigo, ?string $seccion, ?string $semestre): ?ProgramacionAcademica
     {
-        // 1. Clave SIGA + periodo exacto
+        // 1. Clave SIGA + periodo exacto (más preciso)
         if ($clave && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -175,7 +182,22 @@ class InscripcionesHtmlImport
             }
         }
 
-        // 2. Código de curso + periodo exacto
+        // 2. Curso + sección + periodo (usando los 3 campos que son únicos)
+        if ($cursoCodigo && $seccion && $semestre) {
+            $periodo = $this->buscarPeriodo($semestre);
+            if ($periodo) {
+                $curso = Curso::where('codigo', $cursoCodigo)->first();
+                if ($curso) {
+                    $prog = ProgramacionAcademica::where('curso_id', $curso->id)
+                        ->where('periodo_id', $periodo->id)
+                        ->where('seccion', $seccion)
+                        ->first();
+                    if ($prog) return $prog;
+                }
+            }
+        }
+
+        // 3. Curso + periodo exacto — solo si hay 1 sección (seguro)
         if ($cursoCodigo && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -184,33 +206,22 @@ class InscripcionesHtmlImport
                     $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
                         ->get();
-
                     if ($candidatos->count() === 1) return $candidatos->first();
-
-                    // Varias secciones → OBLIGATORIO usar clave para no mezclar alumnos
-                    if ($candidatos->count() > 1 && $clave) {
-                        $match = $candidatos->firstWhere('clave', $clave);
-                        if ($match) return $match;
-                        // Clave no coincide con ninguna sección → no adivinar
-                        return null;
-                    }
-
-                    // Sin clave y una sola sección ya se retornó arriba
-                    // Si hay varias sin clave → no adivinar
+                    // Varias secciones sin poder distinguir → no adivinar
                 }
             }
         }
 
-        // 3. Código de curso + búsqueda parcial de periodo (solo si hay 1 sección)
-        if ($cursoCodigo && $semestre) {
+        // 4. Curso + sección + periodo parcial
+        if ($cursoCodigo && $seccion && $semestre) {
             $curso = Curso::where('codigo', $cursoCodigo)->first();
             if ($curso) {
                 foreach (Periodo::where('nombre', 'like', "%{$semestre}%")->get() as $periodo) {
-                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
+                    $prog = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->get();
-                    // Solo asignar si hay exactamente 1 sección (no arriesgar mezcla)
-                    if ($candidatos->count() === 1) return $candidatos->first();
+                        ->where('seccion', $seccion)
+                        ->first();
+                    if ($prog) return $prog;
                 }
             }
         }
