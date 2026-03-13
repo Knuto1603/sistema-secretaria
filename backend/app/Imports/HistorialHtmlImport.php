@@ -98,7 +98,21 @@ class HistorialHtmlImport
         $rows = $xpath->query('//table//tr');
 
         foreach ($rows as $tr) {
-            $text = preg_replace('/\s+/', ' ', trim($tr->textContent));
+            // Extraer celdas individualmente para garantizar espacio entre columnas
+            // (textContent concatena sin espacio: "CB0101ALGEBRA LINEAL" no matchea)
+            $celdas = $xpath->query('.//td|.//th', $tr);
+            if ($celdas->length > 0) {
+                $partes = [];
+                foreach ($celdas as $td) {
+                    $val = trim(preg_replace('/\s+/', ' ', $td->textContent));
+                    if ($val !== '') {
+                        $partes[] = $val;
+                    }
+                }
+                $text = implode(' ', $partes);
+            } else {
+                $text = preg_replace('/\s+/', ' ', trim($tr->textContent));
+            }
 
             if ($text === '') {
                 continue;
