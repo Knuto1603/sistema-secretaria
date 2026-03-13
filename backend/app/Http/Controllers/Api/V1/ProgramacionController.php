@@ -263,12 +263,13 @@ class ProgramacionController extends Controller
         }
 
         $data = $request->validate([
-            'grupo_horario_id' => 'nullable|uuid|exists:grupos_horario,id',
-            'aula_id'          => 'nullable|uuid|exists:aulas,id',
-            'docente_id'       => 'nullable|uuid|exists:docentes,id',
-            'capacidad'        => 'required|integer|min:1|max:500',
-            'escuelas'         => 'nullable|array',
-            'escuelas.*'       => 'uuid|exists:escuelas,id',
+            'grupo_horario_id'    => 'nullable|uuid|exists:grupos_horario,id',
+            'aula_id'             => 'nullable|uuid|exists:aulas,id',
+            'docente_id'          => 'nullable|uuid|exists:docentes,id',
+            'capacidad'           => 'required|integer|min:1|max:500',
+            'escuelas'            => 'nullable|array',
+            'escuelas.*'          => 'uuid|exists:escuelas,id',
+            'escuela_programada_id' => 'nullable|uuid|exists:escuelas,id',
         ]);
 
         try {
@@ -295,18 +296,19 @@ class ProgramacionController extends Controller
             }
 
             $programacion->update([
-                'grupo_horario_id' => $data['grupo_horario_id'],
-                'aula_id'          => $data['aula_id'],
-                'docente_id'       => $data['docente_id'],
-                'capacidad'        => $data['capacidad'],
-                'grupo'            => $grupoNombre,
+                'grupo_horario_id'    => $data['grupo_horario_id'],
+                'aula_id'             => $data['aula_id'],
+                'docente_id'          => $data['docente_id'],
+                'capacidad'           => $data['capacidad'],
+                'grupo'               => $grupoNombre,
+                'escuela_programada_id' => $data['escuela_programada_id'] ?? $programacion->escuela_programada_id,
             ]);
 
             if (isset($data['escuelas'])) {
                 $programacion->escuelas()->sync($data['escuelas']);
             }
 
-            $programacion->load(['curso', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas']);
+            $programacion->load(['curso', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada']);
 
             return $this->success(
                 $this->transformer->toArray($programacion),
