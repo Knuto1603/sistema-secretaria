@@ -154,6 +154,7 @@ export interface InscripcionesHtmlResumen {
   inscripciones_actualizadas: number;
   alumnos_nuevos: number;
   no_encontrados: number;
+  detalle_no_encontrados: string[];
   errores: number;
   detalle_errores: string[];
 }

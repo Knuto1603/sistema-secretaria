@@ -177,14 +177,26 @@
               <p class="text-[10px] text-amber-500 font-bold uppercase">No encontrados</p>
             </div>
           </div>
-          @if (resultadoHtml()!.errores > 0) {
+          @if (resultadoHtml()!.no_encontrados > 0) {
             <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
               <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
+                {{ resultadoHtml()!.no_encontrados }} sección(es) sin match en programación
+              </p>
+              <div class="space-y-1 max-h-28 overflow-y-auto">
+                @for (e of resultadoHtml()!.detalle_no_encontrados; track $index) {
+                  <p class="text-[10px] text-amber-700">{{ e }}</p>
+                }
+              </div>
+            </div>
+          }
+          @if (resultadoHtml()!.errores > 0) {
+            <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+              <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-2">
                 {{ resultadoHtml()!.errores }} error(es)
               </p>
               <div class="space-y-1 max-h-28 overflow-y-auto">
                 @for (e of resultadoHtml()!.detalle_errores; track $index) {
-                  <p class="text-[10px] text-amber-700">{{ e }}</p>
+                  <p class="text-[10px] text-red-700">{{ e }}</p>
                 }
               </div>
             </div>
