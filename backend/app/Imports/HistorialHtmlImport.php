@@ -33,10 +33,9 @@ class HistorialHtmlImport
         $xpath = new DOMXPath($dom);
 
         $this->extractHeader($xpath);
-        if (!$this->codigo) {
-            return;
-        }
 
+        // Siempre extraer cursos aunque el código no se haya encontrado en el header
+        // (el código puede venir del nombre del archivo como fallback externo)
         $this->extractCursos($xpath);
     }
 
