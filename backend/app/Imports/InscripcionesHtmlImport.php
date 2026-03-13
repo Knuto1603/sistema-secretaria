@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Curso;
+use App\Models\Escuela;
 use App\Models\Inscripcion;
 use App\Models\Periodo;
 use App\Models\ProgramacionAcademica;
@@ -16,14 +17,10 @@ use Spatie\Permission\Models\Role;
  * Importa inscripciones de alumnos por curso desde el reporte HTML del SIGA
  * ("ALUMNOS POR CURSO XXXXXX.htm").
  *
- * Estructura real del archivo:
- *   - Una <TABLE> por curso/página
- *   - Fila de cabecera: "CURSO : AL4401 - NOMBRE ... SEMESTRE: 2026-0"  (misma fila)
- *   - Fila de clave:    "CLAVE : 5081 SECCION : 01 ..."
- *   - Filas de alumnos: código (10 dígitos) + nombre
- *
- * El parser extrae TODA la info de cada fila de forma simultánea
- * para manejar el caso CURSO+SEMESTRE en la misma fila.
+ * Estrategia de dos fases:
+ *  1. parsearFilas()  → array de bloques crudos (cursoCodigo, clave, seccion, semestre, alumnos[])
+ *  2. resolverYGuardar() → infiere escuela desde códigos de alumnos, busca programacion,
+ *     agrupa bloques con el mismo programacion_id (evita duplicados) y persiste.
  */
 class InscripcionesHtmlImport
 {
@@ -35,6 +32,12 @@ class InscripcionesHtmlImport
     private array $errores                   = [];
 
     private ?Role $rolEstudiante = null;
+
+    // Cache de escuelas por código de un dígito
+    private array $escuelaCache = [];
+
+    // Cache de periodos por semestre
+    private array $periodoCache = [];
 
     public function import(string $filePath): void
     {
@@ -52,17 +55,26 @@ class InscripcionesHtmlImport
         $dom->loadHTML('<?xml encoding="UTF-8">' . $content);
         libxml_clear_errors();
 
-        $xpath = new DOMXPath($dom);
-        $this->parsearFilas($xpath);
+        $xpath  = new DOMXPath($dom);
+        $bloques = $this->parsearFilas($xpath);
+
+        $this->resolverYGuardar($bloques);
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // FASE 1: Parseo — devuelve array de bloques crudos
+    // ─────────────────────────────────────────────────────────────
 
     /**
      * Recorre TODAS las filas del documento en orden.
      * Extrae CURSO + SEMESTRE de la misma fila cuando aparecen juntos.
-     * Acumula alumnos hasta que aparece un nuevo curso, entonces guarda el bloque.
+     * Devuelve array de bloques: cada bloque = un grupo de alumnos con su curso/sección.
+     *
+     * @return array<int, array{cursoCodigo:string|null, clave:string|null, seccion:string|null, semestre:string|null, alumnos:array}>
      */
-    private function parsearFilas(DOMXPath $xpath): void
+    private function parsearFilas(DOMXPath $xpath): array
     {
+        $bloques     = [];
         $semestre    = null;
         $cursoCodigo = null;
         $clave       = null;
@@ -82,12 +94,18 @@ class InscripcionesHtmlImport
             $haySeccion  = (bool) preg_match('/SECCION\s*:\s*(\S+)/i',             $text, $mSeccion);
             $hayAlumno   = (bool) preg_match('/^(\d{10})\s+(.+)$/',               $text, $mAlumno);
 
-            // ── Cuando aparece un nuevo CURSO, guardar el bloque anterior ──
+            // ── Cuando aparece un nuevo CURSO, cerrar el bloque anterior ──
             if ($hayCurso) {
                 $nuevoCodigo = strtoupper(trim($mCurso[1]));
                 if ($nuevoCodigo !== $cursoCodigo) {
                     if (!empty($alumnos)) {
-                        $this->procesarBloque($semestre, $cursoCodigo, $clave, $seccion, $alumnos);
+                        $bloques[] = [
+                            'cursoCodigo' => $cursoCodigo,
+                            'clave'       => $clave,
+                            'seccion'     => $seccion,
+                            'semestre'    => $semestre,
+                            'alumnos'     => $alumnos,
+                        ];
                         $alumnos = [];
                     }
                     $cursoCodigo = $nuevoCodigo;
@@ -110,7 +128,6 @@ class InscripcionesHtmlImport
 
             if ($hayAlumno) {
                 $nombre = trim($mAlumno[2]);
-                // Descartar filas que parecen cabecera (e.g., "CODIGO", "NOMBRE DE ALUMNO")
                 if (!preg_match('/^(CODIGO|NOMBRE|N[°º]|DOCENTE|FACULTAD)/i', $nombre)) {
                     $alumnos[] = [
                         'codigo' => $mAlumno[1],
@@ -122,56 +139,129 @@ class InscripcionesHtmlImport
 
         // Guardar el último bloque
         if (!empty($alumnos)) {
-            $this->procesarBloque($semestre, $cursoCodigo, $clave, $seccion, $alumnos);
+            $bloques[] = [
+                'cursoCodigo' => $cursoCodigo,
+                'clave'       => $clave,
+                'seccion'     => $seccion,
+                'semestre'    => $semestre,
+                'alumnos'     => $alumnos,
+            ];
         }
+
+        return $bloques;
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // FASE 2: Resolución y persistencia con deduplicación
+    // ─────────────────────────────────────────────────────────────
 
     /**
-     * Extrae el texto de una fila uniendo celdas individuales con espacio.
-     * DOMDocument::textContent concatena sin separador, rompiendo los regex.
+     * Para cada bloque crudo:
+     *  1. Infiere la escuela desde los códigos de los alumnos.
+     *  2. Busca la programación académica con la escuela como filtro adicional.
+     *  3. Agrupa los bloques que resuelvan al mismo programacion_id (evita duplicados
+     *     cuando el mismo curso-sección aparece para varias escuelas en el mismo HTML).
+     *  4. Persiste cada grupo una sola vez.
      */
-    private function textoFila(\DOMElement $tr, DOMXPath $xpath): string
+    private function resolverYGuardar(array $bloques): void
     {
-        $celdas = $xpath->query('.//td|.//th', $tr);
-        if ($celdas->length > 0) {
-            $partes = [];
-            foreach ($celdas as $td) {
-                $val = trim(preg_replace('/\s+/', ' ', $td->textContent));
-                if ($val !== '') {
-                    $partes[] = $val;
-                }
+        // Mapa programacion_id → alumnos acumulados
+        $grupos = [];
+
+        foreach ($bloques as $bloque) {
+            if (empty($bloque['alumnos']) && !$bloque['semestre'] && !$bloque['cursoCodigo'] && !$bloque['clave']) {
+                continue;
             }
-            return implode(' ', $partes);
+
+            // Inferir escuela desde los códigos de los propios alumnos
+            $escuela = $this->escuelaDesdeCodigos($bloque['alumnos']);
+
+            $programacion = $this->buscarProgramacion(
+                $bloque['clave'],
+                $bloque['cursoCodigo'],
+                $bloque['seccion'],
+                $bloque['semestre'],
+                $escuela
+            );
+
+            if (!$programacion) {
+                $label = $bloque['cursoCodigo'] ?? "CLAVE {$bloque['clave']}";
+                $sec   = $bloque['seccion'] ? " sec {$bloque['seccion']}" : '';
+                $sem   = $bloque['semestre'] ?? '?';
+                $esc   = $escuela ? " ({$escuela->nombre_corto})" : '';
+                $this->noEncontrados[] = "{$label}{$sec}{$esc} (sem {$sem}): no se encontró en programación académica.";
+                continue;
+            }
+
+            // Agrupar por programacion_id para evitar duplicados
+            $pid = $programacion->id;
+            if (!isset($grupos[$pid])) {
+                $grupos[$pid] = [
+                    'programacion' => $programacion,
+                    'alumnos'      => [],
+                ];
+            }
+
+            // Fusionar alumnos evitando duplicados por código
+            foreach ($bloque['alumnos'] as $alumno) {
+                $grupos[$pid]['alumnos'][$alumno['codigo']] = $alumno;
+            }
         }
-        return trim(preg_replace('/\s+/', ' ', $tr->textContent));
-    }
 
-    private function procesarBloque(?string $semestre, ?string $cursoCodigo, ?string $clave, ?string $seccion, array $alumnos): void
-    {
-        if (empty($alumnos) || (!$semestre && !$cursoCodigo && !$clave)) {
-            return;
+        // Persistir cada grupo una sola vez
+        foreach ($grupos as $grupo) {
+            $this->guardarInscripciones($grupo['programacion'], array_values($grupo['alumnos']));
         }
-
-        $programacion = $this->buscarProgramacion($clave, $cursoCodigo, $seccion, $semestre);
-
-        if (!$programacion) {
-            $label = $cursoCodigo ?? "CLAVE {$clave}";
-            $sec   = $seccion ? " sec {$seccion}" : '';
-            $sem   = $semestre ?? '?';
-            $this->noEncontrados[] = "{$label}{$sec} (sem {$sem}): no se encontró en programación académica.";
-            return;
-        }
-
-        $this->guardarInscripciones($programacion, $alumnos);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Búsqueda de programación con 3 estrategias
+    // Inferencia de escuela
     // ─────────────────────────────────────────────────────────────
 
-    private function buscarProgramacion(?string $clave, ?string $cursoCodigo, ?string $seccion, ?string $semestre): ?ProgramacionAcademica
+    /**
+     * Determina la escuela mayoritaria entre los alumnos del bloque
+     * usando el dígito de posición 2 del código universitario (10 dígitos).
+     * Formato: FF E GGGG NNN  →  FF=facultad, E=escuela
+     */
+    private function escuelaDesdeCodigos(array $alumnos): ?Escuela
     {
-        // 1. Clave SIGA + periodo exacto (más preciso)
+        $conteo = [];
+        foreach ($alumnos as $alumno) {
+            $codigo = $alumno['codigo'];
+            if (strlen($codigo) !== 10 || !ctype_digit($codigo)) {
+                continue;
+            }
+            $digito = substr($codigo, 2, 1);
+            $conteo[$digito] = ($conteo[$digito] ?? 0) + 1;
+        }
+
+        if (empty($conteo)) {
+            return null;
+        }
+
+        // Usar el dígito más frecuente (mayoría)
+        arsort($conteo);
+        $digitoMayoria = array_key_first($conteo);
+
+        if (!isset($this->escuelaCache[$digitoMayoria])) {
+            $this->escuelaCache[$digitoMayoria] = Escuela::findByCodigo($digitoMayoria);
+        }
+
+        return $this->escuelaCache[$digitoMayoria];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Búsqueda de programación con escuela como filtro
+    // ─────────────────────────────────────────────────────────────
+
+    private function buscarProgramacion(
+        ?string $clave,
+        ?string $cursoCodigo,
+        ?string $seccion,
+        ?string $semestre,
+        ?Escuela $escuela
+    ): ?ProgramacionAcademica {
+        // 1. Clave SIGA + periodo exacto (más preciso, no necesita escuela)
         if ($clave && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -182,8 +272,8 @@ class InscripcionesHtmlImport
             }
         }
 
-        // 2. Curso + sección + periodo (usando los 3 campos que son únicos)
-        if ($cursoCodigo && $seccion && $semestre) {
+        // 2. Curso + sección + escuela + periodo (desambigua entre escuelas)
+        if ($cursoCodigo && $seccion && $semestre && $escuela) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
@@ -191,35 +281,53 @@ class InscripcionesHtmlImport
                     $prog = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
                         ->where('seccion', $seccion)
+                        ->where('escuela_programada_id', $escuela->id)
                         ->first();
                     if ($prog) return $prog;
                 }
             }
         }
 
-        // 3. Curso + periodo exacto — solo si hay 1 sección (seguro)
-        if ($cursoCodigo && $semestre) {
+        // 3. Curso + sección + periodo (sin filtro de escuela, solo si hay 1 resultado)
+        if ($cursoCodigo && $seccion && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
                     $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
+                        ->where('seccion', $seccion)
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
-                    // Varias secciones sin poder distinguir → no adivinar
+                    // Varias escuelas con mismo curso+sección+periodo → no adivinar
                 }
             }
         }
 
-        // 4. Curso + sección + periodo parcial
-        if ($cursoCodigo && $seccion && $semestre) {
+        // 4. Curso + periodo exacto + escuela (solo si 1 sección)
+        if ($cursoCodigo && $semestre && $escuela) {
+            $periodo = $this->buscarPeriodo($semestre);
+            if ($periodo) {
+                $curso = Curso::where('codigo', $cursoCodigo)->first();
+                if ($curso) {
+                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
+                        ->where('periodo_id', $periodo->id)
+                        ->where('escuela_programada_id', $escuela->id)
+                        ->get();
+                    if ($candidatos->count() === 1) return $candidatos->first();
+                }
+            }
+        }
+
+        // 5. Período parcial con escuela (fallback)
+        if ($cursoCodigo && $seccion && $semestre && $escuela) {
             $curso = Curso::where('codigo', $cursoCodigo)->first();
             if ($curso) {
                 foreach (Periodo::where('nombre', 'like', "%{$semestre}%")->get() as $periodo) {
                     $prog = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
                         ->where('seccion', $seccion)
+                        ->where('escuela_programada_id', $escuela->id)
                         ->first();
                     if ($prog) return $prog;
                 }
@@ -231,8 +339,12 @@ class InscripcionesHtmlImport
 
     private function buscarPeriodo(string $semestre): ?Periodo
     {
-        return Periodo::where('nombre', $semestre)->first()
-            ?? Periodo::where('nombre', 'like', "%{$semestre}%")->first();
+        if (!isset($this->periodoCache[$semestre])) {
+            $this->periodoCache[$semestre] =
+                Periodo::where('nombre', $semestre)->first()
+                ?? Periodo::where('nombre', 'like', "%{$semestre}%")->first();
+        }
+        return $this->periodoCache[$semestre];
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -287,6 +399,30 @@ class InscripcionesHtmlImport
         if (!$existe) $this->alumnosNuevos++;
 
         return $user;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Extrae el texto de una fila uniendo celdas individuales con espacio.
+     * DOMDocument::textContent concatena sin separador, rompiendo los regex.
+     */
+    private function textoFila(\DOMElement $tr, DOMXPath $xpath): string
+    {
+        $celdas = $xpath->query('.//td|.//th', $tr);
+        if ($celdas->length > 0) {
+            $partes = [];
+            foreach ($celdas as $td) {
+                $val = trim(preg_replace('/\s+/', ' ', $td->textContent));
+                if ($val !== '') {
+                    $partes[] = $val;
+                }
+            }
+            return implode(' ', $partes);
+        }
+        return trim(preg_replace('/\s+/', ' ', $tr->textContent));
     }
 
     public function getResumen(): array
