@@ -161,8 +161,18 @@ class EstudianteController extends Controller
             'archivo' => ['required', 'file', 'mimes:zip', 'max:102400'], // máx 100MB
         ]);
 
-        // Guardar el ZIP en storage temporal
-        $storedPath = $request->file('archivo')->store('imports/zip_temp');
+        // Crear el directorio si no existe y guardar el ZIP
+        Storage::disk('local')->makeDirectory('imports/zip_temp');
+
+        $storedPath = $request->file('archivo')->storeAs(
+            'imports/zip_temp',
+            uniqid('zip_', true) . '.zip',
+            'local'
+        );
+
+        if (!$storedPath) {
+            return $this->error('No se pudo almacenar el archivo ZIP temporalmente.', 500);
+        }
 
         // Crear registro de seguimiento
         $importJob = ImportJob::create([

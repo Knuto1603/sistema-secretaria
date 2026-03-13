@@ -7,7 +7,6 @@ use App\Services\ImportHistorialesZipService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
@@ -16,19 +15,15 @@ class ProcessHistorialesZipJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Tiempo máximo de ejecución en segundos (10 minutos).
-     */
+    /** Tiempo máximo de ejecución: 10 minutos. */
     public int $timeout = 600;
 
-    /**
-     * Sin reintentos automáticos.
-     */
+    /** Sin reintentos automáticos. */
     public int $tries = 1;
 
     public function __construct(
         private readonly string $importJobId,
-        private readonly string $storedPath,   // ruta relativa en storage/app
+        private readonly string $storedPath,  // path relativo al disco 'local' (storage/app/)
     ) {}
 
     public function handle(): void
@@ -42,22 +37,19 @@ class ProcessHistorialesZipJob implements ShouldQueue
         $importJob->update(['estado' => 'procesando']);
 
         try {
-            $absolutePath = storage_path('app/' . $this->storedPath);
+            // Obtener la ruta absoluta via Storage para que sea consistente
+            // independientemente del contenedor que lo ejecute
+            $absolutePath = Storage::disk('local')->path($this->storedPath);
 
             if (!file_exists($absolutePath)) {
-                throw new \Exception('El archivo ZIP temporal ya no existe.');
+                throw new \Exception(
+                    "Archivo ZIP no encontrado en: {$absolutePath}. " .
+                    "Verifica que el volumen 'backend-storage' esté montado en el servicio queue."
+                );
             }
 
-            $uploadedFile = new UploadedFile(
-                $absolutePath,
-                basename($this->storedPath),
-                'application/zip',
-                null,
-                true  // test mode: no valida que sea un archivo "real" del request
-            );
-
             $service = new ImportHistorialesZipService();
-            $resumen = $service->import($uploadedFile);
+            $resumen = $service->importFromPath($absolutePath);
 
             $importJob->update([
                 'estado'    => 'completado',
@@ -65,13 +57,13 @@ class ProcessHistorialesZipJob implements ShouldQueue
             ]);
         } catch (\Throwable $e) {
             $importJob->update([
-                'estado'         => 'fallido',
-                'error_mensaje'  => $e->getMessage(),
+                'estado'        => 'fallido',
+                'error_mensaje' => $e->getMessage(),
             ]);
         } finally {
             // Eliminar el archivo temporal del storage
-            if (Storage::exists($this->storedPath)) {
-                Storage::delete($this->storedPath);
+            if (Storage::disk('local')->exists($this->storedPath)) {
+                Storage::disk('local')->delete($this->storedPath);
             }
         }
     }
