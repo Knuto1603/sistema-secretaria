@@ -142,9 +142,23 @@
           }
         </div>
 
-        <!-- Escuelas -->
+        <!-- Escuela Programada -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escuelas</label>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Escuela Programada</label>
+          <p class="text-[10px] text-slate-400 font-medium mb-2">A qué escuela pertenece esta sección (se usa para emparejar alumnos al importar)</p>
+          <select [ngModel]="escuelaProgramadaId()" (ngModelChange)="escuelaProgramadaId.set($event)"
+            class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+            <option value="">Sin asignar</option>
+            @for (e of escuelas(); track e.id) {
+              <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Escuelas Habilitadas -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Escuelas Habilitadas</label>
+          <p class="text-[10px] text-slate-400 font-medium mb-2">Quiénes pueden inscribirse en esta sección</p>
           <div class="flex flex-wrap gap-2">
             @for (escuela of escuelas(); track escuela.id) {
               <button

@@ -159,6 +159,7 @@ export class ProgramacionService {
       docente_id: string | null;
       capacidad: number;
       escuelas?: string[];
+      escuela_programada_id?: string | null;
     }
   ): Observable<Programacion> {
     return this.http

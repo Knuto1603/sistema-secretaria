@@ -48,10 +48,11 @@ export class ProgramacionEditFormComponent implements OnInit {
   escuelas   = signal<Escuela[]>([]);
 
   // Campos editables
-  grupoHorarioId  = signal<string>('');
-  aulaId          = signal<string>('');
-  capacidad       = signal<number>(30);
+  grupoHorarioId        = signal<string>('');
+  aulaId                = signal<string>('');
+  capacidad             = signal<number>(30);
   escuelasSeleccionadas = signal<Set<string>>(new Set());
+  escuelaProgramadaId   = signal<string>('');
 
   // Búsqueda de docente
   docenteBusqueda  = '';
@@ -74,6 +75,7 @@ export class ProgramacionEditFormComponent implements OnInit {
     this.docenteId.set(prog.docente_id ?? prog.docente?.id ?? null);
     this.docenteBusqueda = prog.docente?.nombre_completo ?? '';
     this.docenteNombre.set(prog.docente?.nombre_completo ?? '');
+    this.escuelaProgramadaId.set(prog.escuela_programada?.id ?? '');
 
     // Guardar textos actuales para mostrar como referencia cuando FK es null
     this.grupoTextoActual = prog.grupo || '';
@@ -171,11 +173,12 @@ export class ProgramacionEditFormComponent implements OnInit {
 
     this.programacionService
       .actualizarProgramacion(this.programacion().id, {
-        grupo_horario_id: this.grupoHorarioId() || null,
-        aula_id:          this.aulaId() || null,
-        docente_id:       this.docenteId(),
-        capacidad:        this.capacidad(),
-        escuelas:         Array.from(this.escuelasSeleccionadas()),
+        grupo_horario_id:     this.grupoHorarioId() || null,
+        aula_id:              this.aulaId() || null,
+        docente_id:           this.docenteId(),
+        capacidad:            this.capacidad(),
+        escuelas:             Array.from(this.escuelasSeleccionadas()),
+        escuela_programada_id: this.escuelaProgramadaId() || null,
       })
       .subscribe({
         next: updated => {
