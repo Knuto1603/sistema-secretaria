@@ -3,9 +3,10 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '@core/auth/services/auth.service';
 import { HistorialService, HistorialResponse, ImportPdfResumen } from '@core/services/historial.service';
+import { ProgresoService, ProgresoAcademico } from '@core/services/progreso.service';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
-type Tab = 'datos' | 'password' | 'historial';
+type Tab = 'datos' | 'password' | 'historial' | 'progreso';
 
 @Component({
   selector: 'app-perfil',
@@ -14,8 +15,9 @@ type Tab = 'datos' | 'password' | 'historial';
   templateUrl: './perfil.component.html',
 })
 export class PerfilComponent implements OnInit {
-  private authService     = inject(AuthService);
+  private authService      = inject(AuthService);
   private historialService = inject(HistorialService);
+  private progresoService  = inject(ProgresoService);
 
   user    = this.authService.currentUser;
   tabActiva = signal<Tab>('datos');
@@ -38,6 +40,10 @@ export class PerfilComponent implements OnInit {
   mensajeHistorial = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
   resumenImport    = signal<ImportPdfResumen | null>(null);
 
+  // Progreso académico
+  progreso         = signal<ProgresoAcademico | null>(null);
+  loadingProgreso  = signal(false);
+
   // Mensaje general
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
@@ -47,11 +53,26 @@ export class PerfilComponent implements OnInit {
     }
   }
 
+  cargarProgreso(): void {
+    if (this.progreso()) return;
+    this.loadingProgreso.set(true);
+    this.progresoService.getMiProgreso().subscribe({
+      next: (data) => {
+        this.progreso.set(data);
+        this.loadingProgreso.set(false);
+      },
+      error: () => this.loadingProgreso.set(false),
+    });
+  }
+
   setTab(tab: Tab): void {
     this.tabActiva.set(tab);
     this.mensaje.set(null);
     this.mensajeHistorial.set(null);
     this.resumenImport.set(null);
+    if (tab === 'progreso' && this.esEstudiante()) {
+      this.cargarProgreso();
+    }
   }
 
   // ── Cambio de contraseña ────────────────────────────────────────────────
