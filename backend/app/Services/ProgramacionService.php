@@ -7,6 +7,7 @@ use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionImport;
 use App\Models\Curso;
 use App\Models\Inscripcion;
+use App\Models\Plan;
 use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
@@ -113,14 +114,31 @@ class ProgramacionService
         $cicloActual    = $user->cicloActual();
         $tieneHistorial = $user->tieneHistorial();
 
-        $cursoIdsEnPlan = PlanEstudios::where('escuela_id', $user->escuela_id)
-            ->where('ciclo', '<=', $cicloActual)
-            ->pluck('curso_id')
-            ->toArray();
+        // Usar plan activo si existe, fallback a escuela_id
+        $planActivo = Plan::where('escuela_id', $user->escuela_id)->where('activo', true)->first();
+
+        $query = PlanEstudios::where('ciclo', '<=', $cicloActual);
+        if ($planActivo) {
+            $query->where('plan_id', $planActivo->id);
+        } else {
+            $query->where('escuela_id', $user->escuela_id);
+        }
+        $cursoIdsEnPlan = $query->pluck('curso_id')->toArray();
 
         if ($tieneHistorial) {
-            $aprobadosIds   = $user->cursosAprobados()->pluck('cursos.id')->toArray();
-            $pendientesIds  = array_values(array_diff($cursoIdsEnPlan, $aprobadosIds));
+            $aprobadosIds = $user->cursosAprobados()->pluck('cursos.id')->toArray();
+
+            // Expandir aprobados con equivalencias
+            if (!empty($aprobadosIds)) {
+                $equivalenciaIds = Curso::whereIn('id', $aprobadosIds)
+                    ->with('equivalencias:id')
+                    ->get()
+                    ->flatMap(fn($c) => $c->equivalencias->pluck('id'))
+                    ->toArray();
+                $aprobadosIds = array_unique(array_merge($aprobadosIds, $equivalenciaIds));
+            }
+
+            $pendientesIds    = array_values(array_diff($cursoIdsEnPlan, $aprobadosIds));
             $pendientesCursos = Curso::whereIn('id', $pendientesIds)->with('requisitos')->get();
 
             $elegiblesIds = $pendientesCursos->filter(function (Curso $curso) use ($aprobadosIds) {

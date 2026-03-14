@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\KnowledgeBaseController;
 use App\Http\Controllers\Api\V1\PabellonController;
 use App\Http\Controllers\Api\V1\PeriodoController;
 use App\Http\Controllers\Api\V1\PlanEstudiosController;
+use App\Http\Controllers\Api\V1\ProgresoController;
 use App\Http\Controllers\Api\V1\InscripcionController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
 use App\Http\Controllers\Api\V1\RolController;
@@ -143,10 +144,17 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:secretaria|admin|developer');
     });
 
-    // Ruta de cursos
+    // Rutas de cursos
     Route::get('/cursos', [CursoController::class, 'index']);
     Route::get('/cursos/{id}', [CursoController::class, 'show']);
     Route::patch('/cursos/{id}/nombre', [CursoController::class, 'updateNombre'])
+        ->middleware('role:secretaria|admin|developer');
+
+    // Equivalencias de cursos
+    Route::get('/cursos/{id}/equivalencias', [CursoController::class, 'equivalencias']);
+    Route::post('/cursos/{id}/equivalencias', [CursoController::class, 'agregarEquivalencia'])
+        ->middleware('role:secretaria|admin|developer');
+    Route::delete('/cursos/{cursoId}/equivalencias/{equivalenteId}', [CursoController::class, 'eliminarEquivalencia'])
         ->middleware('role:secretaria|admin|developer');
 
     // Docentes (lectura, para formularios)
@@ -294,16 +302,36 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
     // Plan de Estudios
     Route::prefix('plan-estudios')
         ->group(function () {
-            Route::get('/', [PlanEstudiosController::class, 'index']);          // Todos los autenticados
-            Route::get('/mi-plan', [PlanEstudiosController::class, 'miPlan']); // Plan del estudiante autenticado
-            Route::get('/template', [PlanEstudiosController::class, 'downloadTemplate']); // Plantilla
+            Route::get('/', [PlanEstudiosController::class, 'index']);
+            Route::get('/mi-plan', [PlanEstudiosController::class, 'miPlan']);
+            Route::get('/template', [PlanEstudiosController::class, 'downloadTemplate']);
 
-            // Solo admin/secretaria pueden gestionar el plan
+            // Gestión de versiones (planes)
+            Route::get('/planes', [PlanEstudiosController::class, 'planes']);
+            Route::post('/planes', [PlanEstudiosController::class, 'crearPlan'])
+                ->middleware('role:admin|secretario academico|developer');
+            Route::patch('/planes/{id}/activar', [PlanEstudiosController::class, 'activarPlan'])
+                ->middleware('role:admin|secretario academico|developer');
+            Route::delete('/planes/{id}', [PlanEstudiosController::class, 'eliminarPlan'])
+                ->middleware('role:admin|secretario academico|developer');
+
+            // Importación
             Route::post('/import', [PlanEstudiosController::class, 'import'])
+                ->middleware('role:admin|secretario academico|developer');
+            Route::post('/import-pdf', [PlanEstudiosController::class, 'importPdf'])
                 ->middleware('role:admin|secretario academico|developer');
             Route::delete('/', [PlanEstudiosController::class, 'destroy'])
                 ->middleware('role:admin|secretario academico|developer');
         });
+
+    // Progreso académico
+    Route::prefix('progreso')->group(function () {
+        Route::get('/mi-progreso', [ProgresoController::class, 'miProgreso']);
+        Route::get('/{userId}', [ProgresoController::class, 'progresoAlumno'])
+            ->middleware('role:admin|secretario academico|developer');
+        Route::patch('/{userId}/egresante', [ProgresoController::class, 'toggleEgresante'])
+            ->middleware('role:admin|secretario academico|developer');
+    });
 
     // Roles (solo lectura)
     Route::prefix('roles')
