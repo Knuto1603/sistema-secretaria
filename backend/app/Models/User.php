@@ -32,6 +32,7 @@ class User extends Authenticatable
         'password_set_at',
         'activo',
         'ultima_actualizacion_historial',
+        'egresante',
     ];
 
     /**
@@ -56,6 +57,7 @@ class User extends Authenticatable
             'password_set_at' => 'datetime',
             'ultima_actualizacion_historial' => 'datetime',
             'password' => 'hashed',
+            'egresante' => 'boolean',
         ];
     }
 

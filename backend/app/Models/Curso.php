@@ -30,6 +30,19 @@ class Curso extends Model
     }
 
     /**
+     * Cursos equivalentes a este curso (bidireccional)
+     */
+    public function equivalencias(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Curso::class,
+            'curso_equivalencias',
+            'curso_id',
+            'equivalente_id'
+        )->withTimestamps();
+    }
+
+    /**
      * Cursos que son requisito previo para este curso
      */
     public function requisitos(): BelongsToMany

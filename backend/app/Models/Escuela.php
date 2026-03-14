@@ -35,6 +35,22 @@ class Escuela extends Model
     }
 
     /**
+     * Versiones de planes de estudio de esta escuela
+     */
+    public function planes(): HasMany
+    {
+        return $this->hasMany(Plan::class);
+    }
+
+    /**
+     * Obtiene el plan activo de la escuela
+     */
+    public function planActivo(): ?Plan
+    {
+        return $this->planes()->where('activo', true)->first();
+    }
+
+    /**
      * Secciones de programación académica disponibles para esta escuela
      */
     public function programaciones(): BelongsToMany

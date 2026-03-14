@@ -14,20 +14,30 @@ class PlanEstudios extends Model
 
     protected $fillable = [
         'escuela_id',
+        'plan_id',
         'curso_id',
         'ciclo',
         'creditos',
         'tipo',  // O = Obligatorio, E = Electivo
+        'horas_teoricas',
+        'horas_practicas',
     ];
 
     protected $casts = [
-        'ciclo'    => 'integer',
-        'creditos' => 'integer',
+        'ciclo'           => 'integer',
+        'creditos'        => 'integer',
+        'horas_teoricas'  => 'integer',
+        'horas_practicas' => 'integer',
     ];
 
     public function escuela(): BelongsTo
     {
         return $this->belongsTo(Escuela::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
     }
 
     public function curso(): BelongsTo
