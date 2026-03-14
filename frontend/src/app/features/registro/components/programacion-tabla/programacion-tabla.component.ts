@@ -105,12 +105,13 @@ export class ProgramacionTablaComponent implements OnInit {
   limpiarPeriodoEliminados = signal<number | null>(null);
 
   columnas: TableColumn[] = [
-    { key: 'curso',   label: 'Curso' },
-    { key: 'grupo',   label: 'GRP' },
-    { key: 'seccion', label: 'SEC' },
-    { key: 'aula',    label: 'Aula' },
-    { key: 'docente', label: 'Docente' },
-    { key: 'estado',  label: 'Cupos' },
+    { key: 'curso',             label: 'Curso' },
+    { key: 'escuela_prog',      label: 'Prog. para' },
+    { key: 'grupo',             label: 'GRP' },
+    { key: 'seccion',           label: 'SEC' },
+    { key: 'aula',              label: 'Aula' },
+    { key: 'docente',           label: 'Docente' },
+    { key: 'estado',            label: 'Cupos' },
   ];
 
   esEstudiante = computed(() => this.authService.isEstudiante());
