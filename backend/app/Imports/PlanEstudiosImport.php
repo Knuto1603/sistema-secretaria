@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Curso;
 use App\Models\Escuela;
+use App\Models\Plan;
 use App\Models\PlanEstudios;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -14,7 +15,10 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
     private array $resultados  = [];
     private array $requisitosMap = []; // ['CODIGO_CURSO' => ['REQ1', 'REQ2']]
 
-    public function __construct(private readonly string $escuelaCodigo) {}
+    public function __construct(
+        private readonly string $escuelaCodigo,
+        private readonly ?string $planId = null
+    ) {}
 
     public function collection(Collection $rows): void
     {
@@ -22,6 +26,13 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
 
         if (! $escuela) {
             throw new \InvalidArgumentException("Escuela con código '{$this->escuelaCodigo}' no encontrada.");
+        }
+
+        // Resolver plan activo si no se especificó uno
+        $planId = $this->planId;
+        if (!$planId) {
+            $plan = Plan::where('escuela_id', $escuela->id)->where('activo', true)->first();
+            $planId = $plan?->id;
         }
 
         foreach ($rows as $index => $row) {
@@ -57,15 +68,22 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     $tipo = 'O';
                 }
 
-                // Upsert: si ya existe para esta escuela, actualiza los datos
-                PlanEstudios::updateOrCreate(
-                    ['escuela_id' => $escuela->id, 'curso_id' => $curso->id],
-                    [
-                        'ciclo'    => $row['ciclo'] ?? null,
-                        'creditos' => $row['creditos'] ?? null,
-                        'tipo'     => $tipo,
-                    ]
-                );
+                $updateData = [
+                    'escuela_id' => $escuela->id,
+                    'ciclo'      => $row['ciclo'] ?? null,
+                    'creditos'   => $row['creditos'] ?? null,
+                    'tipo'       => $tipo,
+                ];
+                if ($planId) {
+                    $updateData['plan_id'] = $planId;
+                }
+
+                // Upsert: clave por plan_id+curso_id si hay plan, si no por escuela_id+curso_id
+                $whereClause = $planId
+                    ? ['plan_id' => $planId, 'curso_id' => $curso->id]
+                    : ['escuela_id' => $escuela->id, 'curso_id' => $curso->id];
+
+                PlanEstudios::updateOrCreate($whereClause, $updateData);
 
                 // Guardar requisitos para resolverlos al final (todos los cursos deben existir)
                 $codigoRequisito = trim((string) ($row['codigo_requisito'] ?? ''));
