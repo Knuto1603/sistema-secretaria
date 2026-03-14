@@ -15,8 +15,8 @@ class ProcessHistorialesZipJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** Tiempo máximo de ejecución: 10 minutos. */
-    public int $timeout = 600;
+    /** Tiempo máximo de ejecución: 30 minutos. */
+    public int $timeout = 1800;
 
     /** Sin reintentos automáticos. */
     public int $tries = 1;
