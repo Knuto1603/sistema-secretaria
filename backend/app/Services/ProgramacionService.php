@@ -6,6 +6,7 @@ use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionImport;
 use App\Models\Curso;
+use App\Models\Inscripcion;
 use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
@@ -130,11 +131,34 @@ class ProgramacionService
             $elegiblesIds = $cursoIdsEnPlan;
         }
 
+        // IDs de programaciones en las que el alumno ya está inscrito este periodo
+        $inscritosProgramacionIds = Inscripcion::where('user_id', $user->id)
+            ->where('periodo_id', $periodoId)
+            ->pluck('programacion_id')
+            ->toArray();
+
         $cursoIdsFiltro = !empty($elegiblesIds) ? $elegiblesIds : ['__none__'];
 
+        // Llamar sin filtro de escuela para poder hacer el OR correctamente;
+        // el filtro de escuela se aplica dentro del where() para que los
+        // cursos en los que el alumno YA está inscrito no sean excluidos.
         $query = $this->programacionRepository
-            ->getBaseQuery($periodoId, $user->escuela_id)
-            ->whereIn('programacion_academica.curso_id', $cursoIdsFiltro);
+            ->getBaseQuery($periodoId)
+            ->where(function ($q) use ($cursoIdsFiltro, $inscritosProgramacionIds, $user) {
+                // Rama 1: cursos elegibles habilitados para la escuela del alumno
+                $q->where(function ($inner) use ($cursoIdsFiltro, $user) {
+                    $inner->whereIn('programacion_academica.curso_id', $cursoIdsFiltro)
+                          ->whereExists(function ($sub) use ($user) {
+                              $sub->from('programacion_escuelas')
+                                  ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                                  ->where('programacion_escuelas.escuela_id', $user->escuela_id);
+                          });
+                });
+                // Rama 2: cursos en los que ya está inscrito este periodo
+                if (!empty($inscritosProgramacionIds)) {
+                    $q->orWhereIn('programacion_academica.id', $inscritosProgramacionIds);
+                }
+            });
 
         $paginated = $this->applyFiltersAndPaginate(
             $query,
