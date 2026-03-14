@@ -22,6 +22,18 @@ export interface EscuelaRef {
   nombre_corto: string | null;
 }
 
+export interface InscripcionAlumno {
+  id: string;
+  fuente: string;
+  estudiante: {
+    id: string;
+    codigo_universitario: string;
+    nombre: string;
+    escuela: { id: string; nombre: string; nombre_corto: string | null } | null;
+  } | null;
+  created_at: string;
+}
+
 export interface InscripcionEscuelaStat {
   escuela_id: string | null;
   nombre: string;
@@ -127,6 +139,18 @@ export class ProgramacionService {
     return this.http
       .get<ApiResponse<Programacion>>(`${this.apiUrl}/${id}`)
       .pipe(map(response => response.data));
+  }
+
+  getInscripciones(id: string, page = 1, perPage = 50): Observable<{
+    items: InscripcionAlumno[];
+    pagination: { current_page: number; last_page: number; total: number };
+  }> {
+    return this.http
+      .get<ApiResponse<ApiPaginatedData<InscripcionAlumno>>>(
+        `${this.apiUrl}/${id}/inscripciones`,
+        { params: new HttpParams().set('page', page).set('per_page', perPage) }
+      )
+      .pipe(map(r => ({ items: r.data.items, pagination: r.data.pagination })));
   }
 
   getInscripcionesStats(id: string): Observable<InscripcionesStats> {
