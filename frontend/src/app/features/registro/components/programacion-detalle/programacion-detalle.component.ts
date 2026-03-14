@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed, output, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProgramacionService, Programacion, InscripcionesStats } from '../../services/programacion.service';
+import { ProgramacionService, Programacion, InscripcionesStats, InscripcionAlumno } from '../../services/programacion.service';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
@@ -30,10 +30,15 @@ export class ProgramacionDetalleComponent implements OnInit {
   cerrado = output<void>();
   editar  = output<Programacion>();
 
-  detalle = signal<Programacion | null>(null);
-  stats   = signal<InscripcionesStats | null>(null);
-  loading = signal(true);
-  error   = signal<string | null>(null);
+  detalle    = signal<Programacion | null>(null);
+  stats      = signal<InscripcionesStats | null>(null);
+  alumnos    = signal<InscripcionAlumno[]>([]);
+  totalAlumnos      = signal(0);
+  paginaAlumnos     = signal(1);
+  totalPaginasAlumnos = signal(1);
+  loadingAlumnos    = signal(false);
+  loading    = signal(true);
+  error      = signal<string | null>(null);
 
   ngOnInit(): void {
     this.programacionService.getDetalleProgramacion(this.id()).subscribe({
@@ -44,6 +49,22 @@ export class ProgramacionDetalleComponent implements OnInit {
     this.programacionService.getInscripcionesStats(this.id()).subscribe({
       next:  s => this.stats.set(s),
       error: () => {},
+    });
+
+    this.cargarAlumnos(1);
+  }
+
+  cargarAlumnos(pagina: number): void {
+    this.loadingAlumnos.set(true);
+    this.programacionService.getInscripciones(this.id(), pagina, 50).subscribe({
+      next: r => {
+        this.alumnos.set(r.items);
+        this.paginaAlumnos.set(r.pagination.current_page);
+        this.totalPaginasAlumnos.set(r.pagination.last_page);
+        this.totalAlumnos.set(r.pagination.total);
+        this.loadingAlumnos.set(false);
+      },
+      error: () => this.loadingAlumnos.set(false),
     });
   }
 

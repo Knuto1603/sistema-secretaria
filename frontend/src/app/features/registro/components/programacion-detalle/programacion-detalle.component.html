@@ -197,7 +197,92 @@
           </div>
         }
 
-      </div>
+        <!-- Lista de alumnos inscritos -->
+        <div class="px-4 py-4 bg-slate-50 rounded-xl">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+              Lista de inscritos
+              @if (totalAlumnos() > 0) {
+                <span class="ml-2 px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[9px]">
+                  {{ totalAlumnos() }}
+                </span>
+              }
+            </p>
+          </div>
+
+          @if (loadingAlumnos()) {
+            <div class="flex justify-center py-4">
+              <svg class="w-5 h-5 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          } @else if (alumnos().length === 0) {
+            <p class="text-xs text-slate-400 italic text-center py-2">Sin alumnos inscritos</p>
+          } @else {
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="bg-slate-100 border-b border-slate-200">
+                    <th class="text-left px-3 py-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider">#</th>
+                    <th class="text-left px-3 py-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider">Código</th>
+                    <th class="text-left px-3 py-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider">Nombre</th>
+                    <th class="text-left px-3 py-2 text-[9px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Escuela</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of alumnos(); track a.id; let i = $index) {
+                    <tr class="border-b border-slate-100 last:border-0 hover:bg-white transition-colors">
+                      <td class="px-3 py-2 text-slate-400 font-medium">
+                        {{ (paginaAlumnos() - 1) * 50 + i + 1 }}
+                      </td>
+                      <td class="px-3 py-2 font-mono font-bold text-slate-600">
+                        {{ a.estudiante?.codigo_universitario ?? '—' }}
+                      </td>
+                      <td class="px-3 py-2 font-medium text-slate-700">
+                        {{ a.estudiante?.nombre ?? '—' }}
+                      </td>
+                      <td class="px-3 py-2 hidden sm:table-cell">
+                        @if (a.estudiante?.escuela) {
+                          <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded-md text-[9px]">
+                            {{ a.estudiante!.escuela!.nombre_corto || a.estudiante!.escuela!.nombre }}
+                          </span>
+                        } @else {
+                          <span class="text-slate-300">—</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Paginación -->
+            @if (totalPaginasAlumnos() > 1) {
+              <div class="flex items-center justify-between mt-3">
+                <span class="text-[10px] text-slate-400">
+                  Página {{ paginaAlumnos() }} de {{ totalPaginasAlumnos() }}
+                </span>
+                <div class="flex gap-2">
+                  <button
+                    [disabled]="paginaAlumnos() === 1"
+                    (click)="cargarAlumnos(paginaAlumnos() - 1)"
+                    class="px-3 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    ‹ Ant
+                  </button>
+                  <button
+                    [disabled]="paginaAlumnos() === totalPaginasAlumnos()"
+                    (click)="cargarAlumnos(paginaAlumnos() + 1)"
+                    class="px-3 py-1 text-xs font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    Sig ›
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+      </div><!-- /flex-1 overflow-y-auto -->
 
       <!-- Footer -->
       <div class="flex items-center justify-end gap-3 px-7 py-5 border-t border-slate-100">
