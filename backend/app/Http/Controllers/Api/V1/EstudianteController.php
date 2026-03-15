@@ -10,7 +10,9 @@ use App\Imports\AlumnosHtmlImport;
 use App\Imports\EstudianteImport;
 use App\Jobs\ProcessHistorialesZipJob;
 use App\Models\ImportJob;
+use App\Models\User;
 use App\Services\EstudianteService;
+use App\Services\ProgresoAcademicoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -20,7 +22,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class EstudianteController extends Controller
 {
     public function __construct(
-        protected EstudianteService $service
+        protected EstudianteService $service,
+        protected ProgresoAcademicoService $progresoService
     ) {}
 
     /**
@@ -47,7 +50,7 @@ class EstudianteController extends Controller
     }
 
     /**
-     * Obtiene un estudiante por ID
+     * Obtiene un estudiante por ID, incluyendo su progreso académico
      */
     public function show(string $id): JsonResponse
     {
@@ -57,7 +60,17 @@ class EstudianteController extends Controller
             return $this->notFound('Estudiante no encontrado');
         }
 
-        return $this->success($estudiante);
+        // Calcular progreso académico si el alumno tiene escuela
+        $progreso = null;
+        $user = User::find($id);
+        if ($user && $user->escuela_id) {
+            $progreso = $this->progresoService->calcularProgreso($user);
+        }
+
+        return $this->success(array_merge($estudiante, [
+            'egresante' => $user?->egresante ?? false,
+            'progreso'  => $progreso,
+        ]));
     }
 
     /**
