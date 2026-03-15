@@ -14,6 +14,14 @@ export interface Usuario {
   created_at: string;
 }
 
+export interface ProgresoResumen {
+  plan: { id: string; nombre: string } | null;
+  obligatorios: { requeridos: number; hechos: number; porcentaje: number };
+  electivos: { requeridos: number; hechos: number; porcentaje: number };
+  egresante_calculado: boolean;
+  egresante_manual: boolean;
+}
+
 export interface Estudiante {
   id: string;
   name: string;
@@ -23,9 +31,11 @@ export interface Estudiante {
   anio_ingreso: number | null;
   cuenta_activada: boolean;
   activo: boolean;
+  egresante: boolean;
   password_set_at: string | null;
   ultimo_otp_enviado: string | null;
   created_at: string;
+  progreso?: ProgresoResumen | null;
 }
 
 export interface CreateUsuarioDTO {
