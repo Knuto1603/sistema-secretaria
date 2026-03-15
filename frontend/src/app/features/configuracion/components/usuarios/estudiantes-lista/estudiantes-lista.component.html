@@ -333,7 +333,7 @@
     <div class="absolute inset-0 bg-black/50" (click)="cerrarDetalle()"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-800">Detalle del Estudiante</h3>
@@ -347,7 +347,7 @@
       </div>
 
       <!-- Body -->
-      <div class="p-6 space-y-4">
+      <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
         <!-- Info principal -->
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -394,7 +394,7 @@
         </div>
 
         <!-- Estados -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <app-badge [color]="estudianteDetalle()!.activo ? 'emerald' : 'slate'" size="lg">
             {{ estudianteDetalle()!.activo ? 'Activo' : 'Inactivo' }}
           </app-badge>
@@ -403,7 +403,125 @@
           } @else {
             <app-badge color="amber" size="lg">Pendiente Activación</app-badge>
           }
+          @if (estudianteDetalle()!.egresante) {
+            <app-badge color="emerald" size="lg">EGRESANTE</app-badge>
+          }
         </div>
+
+        <!-- Resultados Académicos -->
+        @if (loadingDetalle()) {
+          <div class="flex items-center justify-center py-6">
+            <svg class="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span class="ml-2 text-sm text-slate-400">Cargando resultados académicos...</span>
+          </div>
+        } @else if (estudianteDetalle()!.progreso) {
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h5 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Resultados Académicos</h5>
+              @if (estudianteDetalle()!.progreso!.plan) {
+                <span class="text-[10px] text-slate-400 font-mono">Plan: {{ estudianteDetalle()!.progreso!.plan!.nombre }}</span>
+              }
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Créditos Obligatorios -->
+              <div class="bg-indigo-50 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Obligatorios</span>
+                  @if (estudianteDetalle()!.progreso!.egresante_calculado) {
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  }
+                </div>
+                <div class="text-lg font-bold text-indigo-700">
+                  {{ estudianteDetalle()!.progreso!.obligatorios.hechos }}
+                  <span class="text-sm font-normal text-indigo-400">/ {{ estudianteDetalle()!.progreso!.obligatorios.requeridos }} cr.</span>
+                </div>
+                <div class="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-indigo-500 rounded-full transition-all"
+                    [style.width.%]="estudianteDetalle()!.progreso!.obligatorios.porcentaje"></div>
+                </div>
+                @if (estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos > 0) {
+                  <p class="text-[10px] text-indigo-400">
+                    Faltan {{ estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos }} cr.
+                  </p>
+                } @else {
+                  <p class="text-[10px] text-emerald-500 font-medium">Completos</p>
+                }
+              </div>
+
+              <!-- Créditos Electivos -->
+              <div class="bg-violet-50 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wide">Electivos</span>
+                  @if (estudianteDetalle()!.progreso!.electivos.hechos >= estudianteDetalle()!.progreso!.electivos.requeridos && estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
+                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  }
+                </div>
+                <div class="text-lg font-bold text-violet-700">
+                  {{ estudianteDetalle()!.progreso!.electivos.hechos }}
+                  <span class="text-sm font-normal text-violet-400">/ {{ estudianteDetalle()!.progreso!.electivos.requeridos }} cr.</span>
+                </div>
+                <div class="h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-violet-500 rounded-full transition-all"
+                    [style.width.%]="estudianteDetalle()!.progreso!.electivos.porcentaje"></div>
+                </div>
+                @if (estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos > 0) {
+                  <p class="text-[10px] text-violet-400">
+                    Faltan {{ estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos }} cr.
+                  </p>
+                } @else if (estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
+                  <p class="text-[10px] text-emerald-500 font-medium">Completos</p>
+                } @else {
+                  <p class="text-[10px] text-slate-400">Sin requisito electivo</p>
+                }
+              </div>
+            </div>
+
+            <!-- Marcar egresante manualmente -->
+            <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+              <div>
+                <p class="text-xs font-semibold text-slate-700">Egresante manual</p>
+                <p class="text-[10px] text-slate-400">
+                  @if (estudianteDetalle()!.progreso!.egresante_manual) {
+                    Marcado manualmente como egresante
+                  } @else if (estudianteDetalle()!.progreso!.egresante_calculado) {
+                    Egresante por créditos completados
+                  } @else {
+                    No cumple los requisitos aún
+                  }
+                </p>
+              </div>
+              <button
+                (click)="toggleEgresante(estudianteDetalle()!)"
+                [disabled]="toggleEgresanteEnProgreso() === estudianteDetalle()!.id"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                [class.bg-emerald-100]="estudianteDetalle()!.egresante"
+                [class.text-emerald-700]="estudianteDetalle()!.egresante"
+                [class.hover:bg-emerald-200]="estudianteDetalle()!.egresante"
+                [class.bg-slate-200]="!estudianteDetalle()!.egresante"
+                [class.text-slate-600]="!estudianteDetalle()!.egresante"
+                [class.hover:bg-slate-300]="!estudianteDetalle()!.egresante">
+                @if (toggleEgresanteEnProgreso() === estudianteDetalle()!.id) {
+                  <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                } @else if (estudianteDetalle()!.egresante) {
+                  Quitar egresante
+                } @else {
+                  Marcar egresante
+                }
+              </button>
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Footer -->

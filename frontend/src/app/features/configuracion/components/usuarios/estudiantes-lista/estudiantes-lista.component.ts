@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService, Estudiante, EstudianteFilters, ImportResumen, ImportFila } from '@core/services/usuario.service';
+import { ProgresoService } from '@core/services/progreso.service';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppButtonComponent } from '@shared/button/button.component';
@@ -30,14 +31,17 @@ interface Escuela {
 })
 export class EstudiantesListaComponent implements OnInit {
   private usuarioService = inject(UsuarioService);
+  private progresoService = inject(ProgresoService);
 
   estudiantes = signal<Estudiante[]>([]);
   loading = signal(false);
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
   reenvioEnProgreso = signal<string | null>(null);
+  toggleEgresanteEnProgreso = signal<string | null>(null);
 
   // Modal detalle
   estudianteDetalle = signal<Estudiante | null>(null);
+  loadingDetalle = signal(false);
 
   // Import Excel
   importando = signal(false);
@@ -170,10 +174,34 @@ export class EstudiantesListaComponent implements OnInit {
 
   verDetalle(estudiante: Estudiante): void {
     this.estudianteDetalle.set(estudiante);
+    this.loadingDetalle.set(true);
+    // Cargar detalle completo con progreso
+    this.usuarioService.getEstudianteById(estudiante.id).subscribe({
+      next: (detalle) => {
+        this.estudianteDetalle.set(detalle);
+        this.loadingDetalle.set(false);
+      },
+      error: () => this.loadingDetalle.set(false),
+    });
   }
 
   cerrarDetalle(): void {
     this.estudianteDetalle.set(null);
+  }
+
+  toggleEgresante(estudiante: Estudiante): void {
+    this.toggleEgresanteEnProgreso.set(estudiante.id);
+    this.progresoService.toggleEgresante(estudiante.id).subscribe({
+      next: (res) => {
+        const actualizado = { ...estudiante, egresante: res.egresante };
+        this.estudianteDetalle.set(actualizado);
+        this.estudiantes.update(lista =>
+          lista.map(e => e.id === estudiante.id ? actualizado : e)
+        );
+        this.toggleEgresanteEnProgreso.set(null);
+      },
+      error: () => this.toggleEgresanteEnProgreso.set(null),
+    });
   }
 
   toggleActivo(estudiante: Estudiante): void {
