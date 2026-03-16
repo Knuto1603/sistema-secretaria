@@ -14,12 +14,30 @@ export interface Usuario {
   created_at: string;
 }
 
+export interface CursoPendienteResumen {
+  ciclo: number;
+  codigo: string;
+  nombre: string;
+  creditos: number;
+}
+
+export interface CiclosPendientesResumen {
+  ciclo: number;
+  cursos: CursoPendienteResumen[];
+}
+
 export interface ProgresoResumen {
   plan: { id: string; nombre: string } | null;
-  obligatorios: { requeridos: number; hechos: number; porcentaje: number };
+  obligatorios: {
+    requeridos: number;
+    hechos: number;
+    porcentaje: number;
+    pendientes_por_ciclo?: CiclosPendientesResumen[];
+  };
   electivos: { requeridos: number; hechos: number; porcentaje: number };
   egresante_calculado: boolean;
   egresante_manual: boolean;
+  mensaje?: string;
 }
 
 export interface Estudiante {

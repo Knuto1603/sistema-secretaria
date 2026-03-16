@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UsuarioService, Estudiante, EstudianteFilters, ImportResumen, ImportFila } from '@core/services/usuario.service';
+import { forkJoin } from 'rxjs';
+import { UsuarioService, Estudiante, EstudianteFilters, EstudianteInscripcion, ImportResumen, ImportFila, CursoPendienteResumen } from '@core/services/usuario.service';
 import { ProgresoService } from '@core/services/progreso.service';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
@@ -42,6 +43,19 @@ export class EstudiantesListaComponent implements OnInit {
   // Modal detalle
   estudianteDetalle = signal<Estudiante | null>(null);
   loadingDetalle = signal(false);
+  tabDetalle = signal<'perfil' | 'progreso' | 'inscripciones'>('perfil');
+  inscripciones = signal<EstudianteInscripcion[]>([]);
+
+  inscripcionesPorPeriodo = computed(() => {
+    const map = new Map<string, { nombre: string; items: EstudianteInscripcion[] }>();
+    for (const insc of this.inscripciones()) {
+      const key  = insc.periodo?.id ?? '__sin_periodo__';
+      const nombre = insc.periodo?.nombre ?? 'Sin periodo';
+      if (!map.has(key)) map.set(key, { nombre, items: [] });
+      map.get(key)!.items.push(insc);
+    }
+    return Array.from(map.values()).reverse(); // más reciente primero
+  });
 
   // Import Excel
   importando = signal(false);
@@ -175,10 +189,16 @@ export class EstudiantesListaComponent implements OnInit {
   verDetalle(estudiante: Estudiante): void {
     this.estudianteDetalle.set(estudiante);
     this.loadingDetalle.set(true);
-    // Cargar detalle completo con progreso
-    this.usuarioService.getEstudianteById(estudiante.id).subscribe({
-      next: (detalle) => {
+    this.tabDetalle.set('perfil');
+    this.inscripciones.set([]);
+
+    forkJoin({
+      detalle:       this.usuarioService.getEstudianteById(estudiante.id),
+      inscripciones: this.usuarioService.getEstudianteInscripciones(estudiante.id),
+    }).subscribe({
+      next: ({ detalle, inscripciones }) => {
         this.estudianteDetalle.set(detalle);
+        this.inscripciones.set(inscripciones);
         this.loadingDetalle.set(false);
       },
       error: () => this.loadingDetalle.set(false),
@@ -325,6 +345,10 @@ export class EstudiantesListaComponent implements OnInit {
         setTimeout(() => this.importHtmlMensaje.set(null), 6000);
       }
     });
+  }
+
+  sumCreditos(cursos: CursoPendienteResumen[]): number {
+    return cursos.reduce((acc, c) => acc + c.creditos, 0);
   }
 
   private mostrarMensaje(tipo: 'success' | 'error', texto: string): void {

@@ -333,196 +333,318 @@
     <div class="absolute inset-0 bg-black/50" (click)="cerrarDetalle()"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden">
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-slate-800">Detalle del Estudiante</h3>
-        <button
-          (click)="cerrarDetalle()"
-          class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+            <span class="text-base font-bold text-indigo-600">{{ estudianteDetalle()!.name.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-800 leading-tight">{{ estudianteDetalle()!.name }}</h3>
+            <p class="text-xs text-slate-500 font-mono">{{ estudianteDetalle()!.codigo_universitario }}</p>
+          </div>
+        </div>
+        <button (click)="cerrarDetalle()" class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
+      <!-- Tabs -->
+      <div class="flex border-b border-slate-200 px-6 gap-1">
+        @for (tab of [
+          { key: 'perfil',        label: 'Perfil' },
+          { key: 'progreso',      label: 'Progreso académico' },
+          { key: 'inscripciones', label: 'Inscripciones' }
+        ]; track tab.key) {
+          <button
+            (click)="tabDetalle.set($any(tab.key))"
+            class="px-3 py-3 text-xs font-semibold border-b-2 transition-colors -mb-px"
+            [class.border-indigo-600]="tabDetalle() === tab.key"
+            [class.text-indigo-600]="tabDetalle() === tab.key"
+            [class.border-transparent]="tabDetalle() !== tab.key"
+            [class.text-slate-500]="tabDetalle() !== tab.key"
+            [class.hover:text-slate-700]="tabDetalle() !== tab.key">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+
       <!-- Body -->
-      <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
-        <!-- Info principal -->
-        <div class="flex items-center gap-4">
-          <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-            <span class="text-2xl font-bold text-indigo-600">{{ estudianteDetalle()!.name.charAt(0).toUpperCase() }}</span>
-          </div>
-          <div>
-            <h4 class="text-xl font-bold text-slate-800">{{ estudianteDetalle()!.name }}</h4>
-            <p class="text-sm text-slate-500 font-mono">{{ estudianteDetalle()!.codigo_universitario }}</p>
-          </div>
+      @if (loadingDetalle()) {
+        <div class="flex items-center justify-center py-16">
+          <svg class="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span class="ml-2 text-sm text-slate-400">Cargando...</span>
         </div>
+      } @else {
 
-        <!-- Datos -->
-        <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email</label>
-            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.email }}</p>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Escuela</label>
-            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.escuela || '-' }}</p>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Año de Ingreso</label>
-            <p class="text-sm text-slate-700">{{ estudianteDetalle()!.anio_ingreso || '-' }}</p>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Estado Cuenta</label>
-            <p class="text-sm">
-              @if (estudianteDetalle()!.cuenta_activada) {
-                <span class="text-emerald-600 font-medium">Activada</span>
-              } @else {
-                <span class="text-amber-600 font-medium">Pendiente</span>
-              }
-            </p>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Password Establecido</label>
-            <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.password_set_at) }}</p>
-          </div>
-          <div>
-            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Último OTP Enviado</label>
-            <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.ultimo_otp_enviado) }}</p>
-          </div>
-        </div>
-
-        <!-- Estados -->
-        <div class="flex flex-wrap gap-2">
-          <app-badge [color]="estudianteDetalle()!.activo ? 'emerald' : 'slate'" size="lg">
-            {{ estudianteDetalle()!.activo ? 'Activo' : 'Inactivo' }}
-          </app-badge>
-          @if (estudianteDetalle()!.cuenta_activada) {
-            <app-badge color="indigo" size="lg">Cuenta Activada</app-badge>
-          } @else {
-            <app-badge color="amber" size="lg">Pendiente Activación</app-badge>
-          }
-          @if (estudianteDetalle()!.egresante) {
-            <app-badge color="emerald" size="lg">EGRESANTE</app-badge>
-          }
-        </div>
-
-        <!-- Resultados Académicos -->
-        @if (loadingDetalle()) {
-          <div class="flex items-center justify-center py-6">
-            <svg class="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <span class="ml-2 text-sm text-slate-400">Cargando resultados académicos...</span>
-          </div>
-        } @else if (estudianteDetalle()!.progreso) {
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <h5 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Resultados Académicos</h5>
-              @if (estudianteDetalle()!.progreso!.plan) {
-                <span class="text-[10px] text-slate-400 font-mono">Plan: {{ estudianteDetalle()!.progreso!.plan!.nombre }}</span>
-              }
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <!-- Créditos Obligatorios -->
-              <div class="bg-indigo-50 rounded-xl p-3 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Obligatorios</span>
-                  @if (estudianteDetalle()!.progreso!.egresante_calculado) {
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  }
-                </div>
-                <div class="text-lg font-bold text-indigo-700">
-                  {{ estudianteDetalle()!.progreso!.obligatorios.hechos }}
-                  <span class="text-sm font-normal text-indigo-400">/ {{ estudianteDetalle()!.progreso!.obligatorios.requeridos }} cr.</span>
-                </div>
-                <div class="h-1.5 bg-indigo-100 rounded-full overflow-hidden">
-                  <div class="h-full bg-indigo-500 rounded-full transition-all"
-                    [style.width.%]="estudianteDetalle()!.progreso!.obligatorios.porcentaje"></div>
-                </div>
-                @if (estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos > 0) {
-                  <p class="text-[10px] text-indigo-400">
-                    Faltan {{ estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos }} cr.
-                  </p>
-                } @else {
-                  <p class="text-[10px] text-emerald-500 font-medium">Completos</p>
-                }
-              </div>
-
-              <!-- Créditos Electivos -->
-              <div class="bg-violet-50 rounded-xl p-3 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wide">Electivos</span>
-                  @if (estudianteDetalle()!.progreso!.electivos.hechos >= estudianteDetalle()!.progreso!.electivos.requeridos && estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
-                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>
-                  }
-                </div>
-                <div class="text-lg font-bold text-violet-700">
-                  {{ estudianteDetalle()!.progreso!.electivos.hechos }}
-                  <span class="text-sm font-normal text-violet-400">/ {{ estudianteDetalle()!.progreso!.electivos.requeridos }} cr.</span>
-                </div>
-                <div class="h-1.5 bg-violet-100 rounded-full overflow-hidden">
-                  <div class="h-full bg-violet-500 rounded-full transition-all"
-                    [style.width.%]="estudianteDetalle()!.progreso!.electivos.porcentaje"></div>
-                </div>
-                @if (estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos > 0) {
-                  <p class="text-[10px] text-violet-400">
-                    Faltan {{ estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos }} cr.
-                  </p>
-                } @else if (estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
-                  <p class="text-[10px] text-emerald-500 font-medium">Completos</p>
-                } @else {
-                  <p class="text-[10px] text-slate-400">Sin requisito electivo</p>
-                }
-              </div>
-            </div>
-
-            <!-- Marcar egresante manualmente -->
-            <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+        <!-- TAB: PERFIL -->
+        @if (tabDetalle() === 'perfil') {
+          <div class="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+            <!-- Datos -->
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
               <div>
-                <p class="text-xs font-semibold text-slate-700">Egresante manual</p>
-                <p class="text-[10px] text-slate-400">
-                  @if (estudianteDetalle()!.progreso!.egresante_manual) {
-                    Marcado manualmente como egresante
-                  } @else if (estudianteDetalle()!.progreso!.egresante_calculado) {
-                    Egresante por créditos completados
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email</label>
+                <p class="text-sm text-slate-700">{{ estudianteDetalle()!.email }}</p>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Escuela</label>
+                <p class="text-sm text-slate-700">{{ estudianteDetalle()!.escuela || '-' }}</p>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Año de Ingreso</label>
+                <p class="text-sm text-slate-700">{{ estudianteDetalle()!.anio_ingreso || '-' }}</p>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Estado Cuenta</label>
+                <p class="text-sm">
+                  @if (estudianteDetalle()!.cuenta_activada) {
+                    <span class="text-emerald-600 font-medium">Activada</span>
                   } @else {
-                    No cumple los requisitos aún
+                    <span class="text-amber-600 font-medium">Pendiente</span>
                   }
                 </p>
               </div>
-              <button
-                (click)="toggleEgresante(estudianteDetalle()!)"
-                [disabled]="toggleEgresanteEnProgreso() === estudianteDetalle()!.id"
-                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
-                [class.bg-emerald-100]="estudianteDetalle()!.egresante"
-                [class.text-emerald-700]="estudianteDetalle()!.egresante"
-                [class.hover:bg-emerald-200]="estudianteDetalle()!.egresante"
-                [class.bg-slate-200]="!estudianteDetalle()!.egresante"
-                [class.text-slate-600]="!estudianteDetalle()!.egresante"
-                [class.hover:bg-slate-300]="!estudianteDetalle()!.egresante">
-                @if (toggleEgresanteEnProgreso() === estudianteDetalle()!.id) {
-                  <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                } @else if (estudianteDetalle()!.egresante) {
-                  Quitar egresante
-                } @else {
-                  Marcar egresante
-                }
-              </button>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Password Establecido</label>
+                <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.password_set_at) }}</p>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Último OTP Enviado</label>
+                <p class="text-sm text-slate-700">{{ formatDate(estudianteDetalle()!.ultimo_otp_enviado) }}</p>
+              </div>
+            </div>
+
+            <!-- Badges de estado -->
+            <div class="flex flex-wrap gap-2">
+              <app-badge [color]="estudianteDetalle()!.activo ? 'emerald' : 'slate'" size="lg">
+                {{ estudianteDetalle()!.activo ? 'Activo' : 'Inactivo' }}
+              </app-badge>
+              @if (estudianteDetalle()!.cuenta_activada) {
+                <app-badge color="indigo" size="lg">Cuenta Activada</app-badge>
+              } @else {
+                <app-badge color="amber" size="lg">Pendiente Activación</app-badge>
+              }
+              @if (estudianteDetalle()!.egresante) {
+                <app-badge color="emerald" size="lg">EGRESANTE</app-badge>
+              }
             </div>
           </div>
         }
-      </div>
+
+        <!-- TAB: PROGRESO ACADÉMICO -->
+        @if (tabDetalle() === 'progreso') {
+          <div class="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+            @if (estudianteDetalle()!.progreso) {
+              <!-- Plan info -->
+              @if (estudianteDetalle()!.progreso!.plan) {
+                <div class="flex items-center gap-2 text-xs text-slate-500">
+                  <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  Plan: <span class="font-semibold text-slate-700">{{ estudianteDetalle()!.progreso!.plan!.nombre }}</span>
+                </div>
+              }
+
+              <!-- Cards resumen créditos -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Obligatorios -->
+                <div class="bg-indigo-50 rounded-xl p-4 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Obligatorios</span>
+                    @if (estudianteDetalle()!.progreso!.obligatorios.hechos >= estudianteDetalle()!.progreso!.obligatorios.requeridos) {
+                      <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    }
+                  </div>
+                  <div class="flex items-end justify-between">
+                    <div>
+                      <span class="text-2xl font-bold text-indigo-700">{{ estudianteDetalle()!.progreso!.obligatorios.hechos }}</span>
+                      <span class="text-sm text-indigo-400"> / {{ estudianteDetalle()!.progreso!.obligatorios.requeridos }} cr.</span>
+                    </div>
+                    <span class="text-sm font-bold text-indigo-600">{{ estudianteDetalle()!.progreso!.obligatorios.porcentaje }}%</span>
+                  </div>
+                  <div class="h-2 bg-indigo-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500 rounded-full transition-all"
+                      [style.width.%]="estudianteDetalle()!.progreso!.obligatorios.porcentaje"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px]">
+                    <span class="text-indigo-400">Aprobados: <strong class="text-indigo-600">{{ estudianteDetalle()!.progreso!.obligatorios.hechos }} cr.</strong></span>
+                    @if (estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos > 0) {
+                      <span class="text-rose-400">Faltan: <strong class="text-rose-500">{{ estudianteDetalle()!.progreso!.obligatorios.requeridos - estudianteDetalle()!.progreso!.obligatorios.hechos }} cr.</strong></span>
+                    } @else {
+                      <span class="text-emerald-500 font-semibold">Completos ✓</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Electivos -->
+                <div class="bg-violet-50 rounded-xl p-4 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wide">Electivos</span>
+                    @if (estudianteDetalle()!.progreso!.electivos.hechos >= estudianteDetalle()!.progreso!.electivos.requeridos && estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
+                      <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    }
+                  </div>
+                  <div class="flex items-end justify-between">
+                    <div>
+                      <span class="text-2xl font-bold text-violet-700">{{ estudianteDetalle()!.progreso!.electivos.hechos }}</span>
+                      <span class="text-sm text-violet-400"> / {{ estudianteDetalle()!.progreso!.electivos.requeridos }} cr.</span>
+                    </div>
+                    <span class="text-sm font-bold text-violet-600">{{ estudianteDetalle()!.progreso!.electivos.porcentaje }}%</span>
+                  </div>
+                  <div class="h-2 bg-violet-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-violet-500 rounded-full transition-all"
+                      [style.width.%]="estudianteDetalle()!.progreso!.electivos.porcentaje"></div>
+                  </div>
+                  <div class="flex justify-between text-[10px]">
+                    <span class="text-violet-400">Aprobados: <strong class="text-violet-600">{{ estudianteDetalle()!.progreso!.electivos.hechos }} cr.</strong></span>
+                    @if (estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos > 0) {
+                      <span class="text-rose-400">Faltan: <strong class="text-rose-500">{{ estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos }} cr.</strong></span>
+                    } @else if (estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
+                      <span class="text-emerald-500 font-semibold">Completos ✓</span>
+                    } @else {
+                      <span class="text-slate-400">Sin requisito</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cursos obligatorios pendientes por ciclo -->
+              @if (estudianteDetalle()!.progreso!.obligatorios.pendientes_por_ciclo?.length) {
+                <div class="space-y-2">
+                  <h6 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cursos obligatorios pendientes</h6>
+                  @for (cicloObj of estudianteDetalle()!.progreso!.obligatorios.pendientes_por_ciclo!; track cicloObj.ciclo) {
+                    <div class="border border-slate-100 rounded-xl overflow-hidden">
+                      <div class="bg-slate-50 px-3 py-1.5 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600">Ciclo {{ cicloObj.ciclo }}</span>
+                        <span class="text-[10px] text-slate-400">
+                          {{ sumCreditos(cicloObj.cursos) }} cr. pendientes
+                        </span>
+                      </div>
+                      <div class="divide-y divide-slate-50">
+                        @for (curso of cicloObj.cursos; track curso.codigo) {
+                          <div class="px-3 py-2 flex items-center justify-between">
+                            <div>
+                              <span class="text-xs font-mono text-slate-400 mr-2">{{ curso.codigo }}</span>
+                              <span class="text-xs text-slate-700">{{ curso.nombre }}</span>
+                            </div>
+                            <span class="text-[10px] text-rose-500 font-semibold shrink-0 ml-2">{{ curso.creditos }} cr.</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Egresante toggle -->
+              <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+                <div>
+                  <p class="text-xs font-semibold text-slate-700">Egresante manual</p>
+                  <p class="text-[10px] text-slate-400">
+                    @if (estudianteDetalle()!.progreso!.egresante_manual) {
+                      Marcado manualmente como egresante
+                    } @else if (estudianteDetalle()!.progreso!.egresante_calculado) {
+                      Egresante por créditos completados
+                    } @else {
+                      No cumple los requisitos aún
+                    }
+                  </p>
+                </div>
+                <button
+                  (click)="toggleEgresante(estudianteDetalle()!)"
+                  [disabled]="toggleEgresanteEnProgreso() === estudianteDetalle()!.id"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  [class.bg-emerald-100]="estudianteDetalle()!.egresante"
+                  [class.text-emerald-700]="estudianteDetalle()!.egresante"
+                  [class.bg-slate-200]="!estudianteDetalle()!.egresante"
+                  [class.text-slate-600]="!estudianteDetalle()!.egresante">
+                  @if (toggleEgresanteEnProgreso() === estudianteDetalle()!.id) {
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  } @else if (estudianteDetalle()!.egresante) {
+                    Quitar egresante
+                  } @else {
+                    Marcar egresante
+                  }
+                </button>
+              </div>
+
+            } @else {
+              <div class="py-10 text-center text-slate-400">
+                <svg class="w-10 h-10 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <p class="text-sm">No hay datos de progreso académico.</p>
+                <p class="text-xs mt-1">El estudiante debe tener una escuela asignada y un plan activo.</p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- TAB: INSCRIPCIONES -->
+        @if (tabDetalle() === 'inscripciones') {
+          <div class="p-6 overflow-y-auto max-h-[60vh]">
+            @if (inscripciones().length === 0) {
+              <div class="py-10 text-center text-slate-400">
+                <svg class="w-10 h-10 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <p class="text-sm">Sin inscripciones registradas.</p>
+              </div>
+            } @else {
+              <div class="space-y-4">
+                @for (grupo of inscripcionesPorPeriodo(); track grupo.nombre) {
+                  <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <!-- Cabecera del periodo -->
+                    <div class="bg-slate-50 px-4 py-2 flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-700">{{ grupo.nombre }}</span>
+                      <span class="text-[10px] text-slate-400 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                        {{ grupo.items.length }} curso{{ grupo.items.length !== 1 ? 's' : '' }}
+                      </span>
+                    </div>
+                    <!-- Cursos del periodo -->
+                    <div class="divide-y divide-slate-50">
+                      @for (insc of grupo.items; track insc.id) {
+                        <div class="px-4 py-2.5 flex items-center justify-between">
+                          <div class="min-w-0">
+                            <p class="text-sm font-medium text-slate-800 truncate">
+                              {{ insc.programacion?.curso?.nombre ?? 'Curso desconocido' }}
+                            </p>
+                            <p class="text-[10px] text-slate-400">
+                              {{ insc.programacion?.curso?.codigo }}
+                              @if (insc.programacion?.grupo) {
+                                · Grupo {{ insc.programacion!.grupo }}
+                              }
+                              @if (insc.programacion?.seccion) {
+                                · Secc. {{ insc.programacion!.seccion }}
+                              }
+                            </p>
+                          </div>
+                          <span class="text-[10px] text-slate-400 shrink-0 ml-3 capitalize">{{ insc.fuente }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+      }
 
       <!-- Footer -->
       <div class="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
@@ -533,8 +655,8 @@
             (clicked)="reenviarOtp(estudianteDetalle()!)">
             @if (reenvioEnProgreso() === estudianteDetalle()!.id) {
               <svg class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
               </svg>
             }
             Reenviar OTP
