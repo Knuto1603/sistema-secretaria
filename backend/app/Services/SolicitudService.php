@@ -57,6 +57,16 @@ class SolicitudService
                 if (!$cursoEnPlan) {
                     throw new Exception('Este curso no pertenece al plan de estudios de tu escuela profesional.');
                 }
+
+                // Verificar que la sección está habilitada para la escuela del estudiante
+                $habilitadaParaEscuela = DB::table('programacion_escuelas')
+                    ->where('programacion_id', $programacion->id)
+                    ->where('escuela_id', $user->escuela_id)
+                    ->exists();
+
+                if (!$habilitadaParaEscuela) {
+                    throw new Exception('Esta sección no está habilitada para tu escuela profesional.');
+                }
             }
 
             // Verificar si ya existe una solicitud activa para este curso
