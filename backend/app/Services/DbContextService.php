@@ -3,25 +3,31 @@
 namespace App\Services;
 
 use App\Models\Escuela;
+use App\Models\Inscripcion;
 use App\Models\Periodo;
 use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use App\Models\SystemSetting;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 /**
  * Inyecta datos vivos de la base de datos en el contexto del chatbot.
- * NO incluye información personal de alumnos ni del personal docente/administrativo.
- * Solo excepción: nombre del Decano y Secretario Académico (desde system_settings).
+ *
+ * Cuando se provee un $user estudiante, incluye su información personal
+ * (perfil, inscripciones del ciclo actual, historial académico) y filtra
+ * la programación y el plan de estudios a su escuela.
  */
 class DbContextService
 {
     /**
      * Construye el bloque de contexto de BD para la pregunta dada.
      */
-    public function buildContext(string $query): string
+    public function buildContext(string $query, ?User $user = null): string
     {
-        $blocks = [];
+        $blocks      = [];
+        $esEstudiante = $user && $user->isEstudiante();
+        $escuelaId   = $esEstudiante ? $user->escuela_id : null;
 
         // Siempre: periodo activo
         $periodoBlock = $this->buildPeriodoBlock();
@@ -35,17 +41,39 @@ class DbContextService
             $blocks[] = $autoridadesBlock;
         }
 
-        // Condicional: programación académica
+        // Si es estudiante: perfil académico personal (siempre)
+        if ($esEstudiante) {
+            $user->loadMissing('escuela');
+            $blocks[] = $this->buildEstudiantePerfilBlock($user);
+        }
+
+        // Si es estudiante y pregunta sobre sus cursos actuales
+        if ($esEstudiante && $this->querySeemsAboutMisInscripciones($query)) {
+            $inscBlock = $this->buildMisInscripcionesBlock($user);
+            if ($inscBlock) {
+                $blocks[] = $inscBlock;
+            }
+        }
+
+        // Condicional: programación académica (filtrada por escuela del estudiante)
         if ($this->querySeemsAboutCursos($query)) {
-            $progBlock = $this->buildProgramacionBlock($query);
+            $progBlock = $this->buildProgramacionBlock($query, $escuelaId);
             if ($progBlock) {
                 $blocks[] = $progBlock;
             }
         }
 
-        // Condicional: plan de estudios
+        // Si es estudiante y pregunta sobre su historial / créditos
+        if ($esEstudiante && $this->querySeemsAboutHistorial($query)) {
+            $histBlock = $this->buildMiHistorialBlock($user);
+            if ($histBlock) {
+                $blocks[] = $histBlock;
+            }
+        }
+
+        // Condicional: plan de estudios (usa la escuela del estudiante por defecto)
         if ($this->querySeemsAboutPlanEstudios($query)) {
-            $planBlock = $this->buildPlanEstudiosBlock($query);
+            $planBlock = $this->buildPlanEstudiosBlock($query, $escuelaId);
             if ($planBlock) {
                 $blocks[] = $planBlock;
             }
@@ -71,9 +99,9 @@ class DbContextService
             return "PERIODO ACTUAL: No hay periodo académico activo en este momento.";
         }
 
-        $tipo    = $this->clasificarPeriodo($periodo->nombre);
-        $inicio  = $periodo->fecha_inicio?->format('d/m/Y') ?? '—';
-        $fin     = $periodo->fecha_fin?->format('d/m/Y')    ?? '—';
+        $tipo   = $this->clasificarPeriodo($periodo->nombre);
+        $inicio = $periodo->fecha_inicio?->format('d/m/Y') ?? '—';
+        $fin    = $periodo->fecha_fin?->format('d/m/Y')    ?? '—';
 
         return <<<TEXT
             PERIODO ACADÉMICO ACTIVO (también llamado "ciclo actual" por los estudiantes):
@@ -100,15 +128,134 @@ class DbContextService
     }
 
     /**
+     * Perfil académico personal del estudiante.
+     * Se incluye siempre que haya un usuario estudiante.
+     */
+    private function buildEstudiantePerfilBlock(User $user): string
+    {
+        $escuela  = $user->escuela?->nombre ?? 'No asignada';
+        $ciclo    = $user->cicloActual();
+        $ingreso  = $user->anio_ingreso ? "Promoción {$user->anio_ingreso}" : '—';
+        $estado   = $user->activo ? 'Activo' : 'Inactivo';
+        $egresante = $user->egresante ? ' (Egresante)' : '';
+
+        return <<<TEXT
+            TU PERFIL ACADÉMICO:
+            • Nombre: {$user->name}
+            • Código: {$user->codigo_universitario}
+            • Escuela: {$escuela}
+            • {$ingreso} — Ciclo estimado: {$ciclo}{$egresante}
+            • Estado: {$estado}
+            TEXT;
+    }
+
+    /**
+     * Inscripciones del estudiante en el periodo activo actual.
+     */
+    private function buildMisInscripcionesBlock(User $user): string
+    {
+        $periodo = Periodo::where('activo', true)->first();
+        if (!$periodo) {
+            return '';
+        }
+
+        $inscripciones = Inscripcion::where('user_id', $user->id)
+            ->where('periodo_id', $periodo->id)
+            ->with(['programacion.curso'])
+            ->get();
+
+        $tipo = $this->clasificarPeriodo($periodo->nombre);
+
+        if ($inscripciones->isEmpty()) {
+            return "TUS CURSOS INSCRITOS — {$periodo->nombre} ({$tipo}):\n"
+                 . "No tienes inscripciones registradas en el sistema para este periodo.";
+        }
+
+        $lines   = ["TUS CURSOS INSCRITOS — {$periodo->nombre} ({$tipo}):"];
+        $lines[] = sprintf("%-38s %-6s %-7s %-10s %-12s",
+            'Curso', 'Grupo', 'Secc.', 'Estado', 'Aula');
+        $lines[] = str_repeat('-', 78);
+
+        foreach ($inscripciones as $i) {
+            $p = $i->programacion;
+            if (!$p) continue;
+            $estado  = $p->estaLleno() ? 'LLENO' : 'Disponible';
+            $lines[] = sprintf("%-38s %-6s %-7s %-10s %-12s",
+                Str::limit($p->curso?->nombre ?? '—', 36),
+                $p->grupo    ?? '—',
+                $p->seccion  ?? '—',
+                $estado,
+                $p->aula     ?? '—'
+            );
+        }
+
+        $count   = $inscripciones->count();
+        $lines[] = "({$count} curso(s) inscrito(s) en el sistema)";
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Historial académico resumido del estudiante.
+     */
+    private function buildMiHistorialBlock(User $user): string
+    {
+        if (!$user->tieneHistorial()) {
+            return "TU HISTORIAL ACADÉMICO:\n"
+                 . "Aún no tienes historial académico registrado en el sistema. "
+                 . "Importa tu historial desde el PDF del SIGA para ver tu progreso.";
+        }
+
+        $aprobados = $user->cursosAprobados()
+            ->withPivot('nota', 'semestre', 'creditos')
+            ->get();
+
+        if ($aprobados->isEmpty()) {
+            return "TU HISTORIAL ACADÉMICO:\nNo se encontraron cursos aprobados en tu historial.";
+        }
+
+        $totalCreditos = $aprobados->sum('pivot.creditos');
+        $totalCursos   = $aprobados->count();
+        $ultimos       = $aprobados->sortByDesc('pivot.semestre')->take(8);
+
+        $lines = [
+            "TU HISTORIAL ACADÉMICO:",
+            "• Cursos aprobados: {$totalCursos}",
+            "• Créditos aprobados: {$totalCreditos}",
+            "",
+            "Cursos aprobados más recientes:",
+            sprintf("%-42s %-8s %-8s", 'Curso', 'Nota', 'Semestre'),
+            str_repeat('-', 62),
+        ];
+
+        foreach ($ultimos as $curso) {
+            $nota    = $curso->pivot->nota !== null
+                ? number_format((float) $curso->pivot->nota, 1)
+                : 'Aprob.';
+            $lines[] = sprintf("%-42s %-8s %-8s",
+                Str::limit($curso->nombre ?? '—', 40),
+                $nota,
+                $curso->pivot->semestre ?? '—'
+            );
+        }
+
+        if ($totalCursos > 8) {
+            $lines[] = '... y ' . ($totalCursos - 8) . ' cursos más.';
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * Programación del periodo activo.
      *
      * Modo 1 — Búsqueda específica: si la pregunta menciona un curso concreto,
      *           muestra solo los cursos que coinciden (hasta 25).
+     *           Si $escuelaId se provee, filtra a secciones habilitadas para esa escuela.
      *
-     * Modo 2 — Resumen general: si la pregunta es sobre disponibilidad/horarios
-     *           en general, muestra un resumen de totales + primeros disponibles.
+     * Modo 2 — Resumen general: muestra totales + primeros cursos disponibles.
      */
-    private function buildProgramacionBlock(string $query): string
+    private function buildProgramacionBlock(string $query, ?string $escuelaId = null): string
     {
         $periodo = Periodo::where('activo', true)->first();
         if (!$periodo) {
@@ -120,21 +267,14 @@ class DbContextService
 
         // --- Modo 1: keywords coinciden con nombres de cursos ---
         if (!empty($keywords)) {
-            // Búsqueda exacta primero
-            $programaciones = $this->buscarProgramacion($periodo->id, $keywords, fuzzy: false);
+            $programaciones = $this->buscarProgramacion($periodo->id, $keywords, fuzzy: false, escuelaId: $escuelaId);
 
-            // Si no hay resultados exactos, intentar con tolerancia a typos (un carácter de diferencia)
-            // Solo se acepta el resultado fuzzy si TODOS los cursos encontrados contienen al menos
-            // 2 de los keywords (evitar falsos positivos como "computad" matcheando cursos no relacionados)
             if ($programaciones->isEmpty()) {
-                $fuzzy = $this->buscarProgramacion($periodo->id, $keywords, fuzzy: true);
-                // Validar que los resultados fuzzy son coherentes: el nombre del curso debe contener
-                // al menos una keyword con 4+ chars en común (no solo el prefijo corto)
+                $fuzzy = $this->buscarProgramacion($periodo->id, $keywords, fuzzy: true, escuelaId: $escuelaId);
                 $fuzzy = $fuzzy->filter(function ($p) use ($keywords) {
                     $nombre = strtolower($p->curso?->nombre ?? '');
                     foreach ($keywords as $kw) {
-                        // Verificar que comparten al menos 5 chars en común consecutivos
-                        $sinPrimero = mb_substr($kw, 1); // skip-first typo
+                        $sinPrimero = mb_substr($kw, 1);
                         if (mb_strlen($sinPrimero) >= 5 && str_contains($nombre, $sinPrimero)) {
                             return true;
                         }
@@ -145,9 +285,7 @@ class DbContextService
             }
 
             if ($programaciones->isNotEmpty()) {
-                $lines = ["PROGRAMACIÓN ACADÉMICA — {$periodo->nombre} ({$tipo}):"];
-                // Nota: la columna 'Clave' es interna y NO debe mostrarse al estudiante.
-                // El estudiante identifica su sección por Grupo + Sección (tal como aparece en SIGA).
+                $lines   = ["PROGRAMACIÓN ACADÉMICA — {$periodo->nombre} ({$tipo}):"];
                 $lines[] = sprintf("%-38s %-6s %-5s %-8s %-8s %-7s %-10s %-12s",
                     'Curso', 'Grupo', 'Secc.', 'Capac.', 'Inscrit.', 'Libres', 'Estado', 'Aula');
                 $lines[] = str_repeat('-', 106);
@@ -158,13 +296,13 @@ class DbContextService
                     $estado    = $p->estaLleno() ? 'LLENO' : 'Disponible';
                     $lines[]   = sprintf("%-38s %-6s %-5s %-8s %-8s %-7s %-10s %-12s",
                         Str::limit($p->curso?->nombre ?? '—', 36),
-                        $p->grupo ?? '—',
-                        $p->seccion ?? '—',
+                        $p->grupo    ?? '—',
+                        $p->seccion  ?? '—',
                         $p->capacidad ?? '—',
                         $inscritos,
                         $libres,
                         $estado,
-                        $p->aula ?? '—'
+                        $p->aula     ?? '—'
                     );
                 }
 
@@ -173,16 +311,21 @@ class DbContextService
         }
 
         // --- Modo 2: resumen general de disponibilidad ---
-        $total      = ProgramacionAcademica::where('periodo_id', $periodo->id)->count();
-        $disponibles = ProgramacionAcademica::where('periodo_id', $periodo->id)
-            ->get()
-            ->filter(fn($p) => !$p->estaLleno())
-            ->count();
-        $llenos = $total - $disponibles;
+        $baseQuery = ProgramacionAcademica::where('periodo_id', $periodo->id);
+        if ($escuelaId) {
+            $baseQuery->whereExists(function ($sub) use ($escuelaId) {
+                $sub->from('programacion_escuelas')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+            });
+        }
 
-        // Muestra los primeros cursos disponibles como ejemplo
-        $ejemplos = ProgramacionAcademica::with('curso')
-            ->where('periodo_id', $periodo->id)
+        $total      = (clone $baseQuery)->count();
+        $disponibles = (clone $baseQuery)->get()->filter(fn($p) => !$p->estaLleno())->count();
+        $llenos     = $total - $disponibles;
+
+        $ejemplos = (clone $baseQuery)
+            ->with('curso')
             ->get()
             ->filter(fn($p) => !$p->estaLleno())
             ->take(15);
@@ -201,10 +344,10 @@ class DbContextService
         foreach ($ejemplos as $p) {
             $lines[] = sprintf("%-45s %-6s %-5s %-8s %-12s",
                 Str::limit($p->curso?->nombre ?? '—', 43),
-                $p->grupo ?? '—',
-                $p->seccion ?? '—',
+                $p->grupo    ?? '—',
+                $p->seccion  ?? '—',
                 $p->capacidad ?? '—',
-                $p->aula ?? '—'
+                $p->aula     ?? '—'
             );
         }
 
@@ -214,24 +357,26 @@ class DbContextService
     /**
      * Plan de estudios desde la base de datos.
      *
-     * Detecta automáticamente si la pregunta es sobre:
-     * - Una escuela/carrera específica  → filtra por escuela
-     * - Un ciclo específico             → filtra por ciclo
-     * - Un curso específico             → filtra por keyword
-     * - General                         → muestra estructura resumida de todas las escuelas
+     * Si $defaultEscuelaId se provee (estudiante) y no se detecta escuela en la pregunta,
+     * muestra solo el plan de esa escuela.
      */
-    private function buildPlanEstudiosBlock(string $query): string
+    private function buildPlanEstudiosBlock(string $query, ?string $defaultEscuelaId = null): string
     {
         $qLower   = strtolower($query);
         $keywords = $this->extractKeywords($query);
 
-        // Detectar escuela mencionada
         $escuelaFiltro = $this->detectarEscuela($qLower);
+        $cicloFiltro   = $this->detectarCiclo($qLower);
 
-        // Detectar ciclo mencionado (e.g. "ciclo 5", "5to ciclo", "quinto")
-        $cicloFiltro = $this->detectarCiclo($qLower);
+        $escuelasQuery = Escuela::with(['planEstudios.curso']);
 
-        $escuelas = Escuela::with(['planEstudios.curso'])->get();
+        // Si no se detecta escuela por keyword y hay una por defecto (escuela del estudiante),
+        // filtrar directamente por UUID para evitar mostrar todas las escuelas.
+        if (!$escuelaFiltro && $defaultEscuelaId) {
+            $escuelasQuery->where('id', $defaultEscuelaId);
+        }
+
+        $escuelas = $escuelasQuery->get();
 
         if ($escuelas->isEmpty()) {
             return '';
@@ -240,11 +385,10 @@ class DbContextService
         $blocks = [];
 
         foreach ($escuelas as $escuela) {
-            // Filtrar por escuela si se detectó una
+            // Filtrar por keyword de escuela si se detectó alguna
             if ($escuelaFiltro) {
                 $nombreLow = strtolower($escuela->nombre);
                 $match = match($escuelaFiltro) {
-                    // "industrial" sin "agro" → solo Ingeniería Industrial
                     'industrial'     => str_contains($nombreLow, 'industrial')
                                         && !str_contains($nombreLow, 'agroindustrial'),
                     'agroindustrial' => str_contains($nombreLow, 'agroindustrial'),
@@ -260,7 +404,6 @@ class DbContextService
                 continue;
             }
 
-            // Filtrar por ciclo si se detectó
             if ($cicloFiltro) {
                 $plan = $plan->where('ciclo', $cicloFiltro);
             }
@@ -270,9 +413,8 @@ class DbContextService
             }
 
             if ($cicloFiltro) {
-                // MODO DETALLE: ciclo específico → mostrar todos los cursos de ese ciclo
-                $titulo = "Plan de Estudios — {$escuela->nombre} — Ciclo {$cicloFiltro}:";
-                $lines  = [$titulo];
+                $titulo  = "Plan de Estudios — {$escuela->nombre} — Ciclo {$cicloFiltro}:";
+                $lines   = [$titulo];
                 $lines[] = sprintf("%-8s %-45s %-6s %-8s %-12s",
                     'Código', 'Curso', 'Ciclo', 'Cred.', 'Tipo');
                 $lines[] = str_repeat('-', 82);
@@ -289,8 +431,6 @@ class DbContextService
                 }
                 $blocks[] = implode("\n", $lines);
             } else {
-                // MODO RESUMEN: sin ciclo específico → estructura general por ciclos
-                // (ignorar keywords para mostrar el plan completo de la escuela)
                 $lines    = ["Plan de Estudios — {$escuela->nombre}:"];
                 $porCiclo = $plan->groupBy('ciclo')->sortKeys();
                 foreach ($porCiclo as $ciclo => $cursos) {
@@ -343,15 +483,10 @@ class DbContextService
         return array_unique($keywords);
     }
 
-    /**
-     * Detecta si la pregunta menciona una escuela/carrera específica.
-     * Retorna un fragmento del nombre en minúsculas para hacer str_contains.
-     */
     private function detectarEscuela(string $query): ?string
     {
-        // Orden importa: verificar los más específicos primero
         $map = [
-            'agroindustrial' => 'agroindustrial', // antes de 'industrial'
+            'agroindustrial' => 'agroindustrial',
             'industrial'     => 'industrial',
             'informática'    => 'informática',
             'informatica'    => 'informática',
@@ -368,40 +503,31 @@ class DbContextService
         return null;
     }
 
-    /**
-     * Detecta número de ciclo en la pregunta.
-     * Acepta: "ciclo 5", "5to ciclo", "quinto ciclo", "5°", etc.
-     */
     private function detectarCiclo(string $query): ?int
     {
-        // Número directo: "ciclo 5", "ciclo 10"
         if (preg_match('/ciclo\s+(\d+)/i', $query, $m)) {
             return (int) $m[1];
         }
 
-        // Ordinal numérico: "5to", "5°", "5avo"
         if (preg_match('/(\d+)(?:er|do|ro|to|vo|avo|°)\s+ciclo/i', $query, $m)) {
             return (int) $m[1];
         }
 
-        // Números romanos: "V ciclo", "ciclo V", "III ciclo", "ciclo IX", etc.
         $romanos = [
             'X' => 10, 'IX' => 9, 'VIII' => 8, 'VII' => 7, 'VI' => 6,
-            'V' => 5, 'IV' => 4, 'III' => 3, 'II' => 2, 'I' => 1,
+            'V' => 5,  'IV' => 4,  'III' => 3,  'II' => 2,  'I' => 1,
         ];
-        // "V ciclo" o "ciclo V" (word boundary para no confundir con otras letras)
+
         if (preg_match('/\b(X|IX|VIII|VII|VI|V|IV|III|II|I)\s+ciclo\b/i', $query, $m)) {
             return $romanos[strtoupper($m[1])] ?? null;
         }
         if (preg_match('/\bciclo\s+(X|IX|VIII|VII|VI|V|IV|III|II|I)\b/i', $query, $m)) {
             return $romanos[strtoupper($m[1])] ?? null;
         }
-        // "mi V ciclo" o "el III ciclo" (con posesivos/artículos antes)
         if (preg_match('/\b(?:mi|el|del?|al?)\s+(X|IX|VIII|VII|VI|V|IV|III|II|I)\s+ciclo\b/i', $query, $m)) {
             return $romanos[strtoupper($m[1])] ?? null;
         }
 
-        // Ordinales escritos
         $ordinales = [
             'primer' => 1, 'primero' => 1,
             'segundo' => 2,
@@ -444,7 +570,6 @@ class DbContextService
     {
         $q = strtolower($query);
 
-        // Triggers fuertes: cualquiera de estos solos activa el bloque
         $strong = [
             'plan', 'malla', 'crédito', 'credito',
             'obligatorio', 'electivo', 'pensum', 'prerrequisito',
@@ -455,8 +580,6 @@ class DbContextService
             if (str_contains($q, $t)) return true;
         }
 
-        // "ciclo" solo activa el bloque si la pregunta también menciona un número de ciclo,
-        // una carrera o palabras curriculares — evitar activarlo con "¿en qué ciclo estamos?"
         if (str_contains($q, 'ciclo') || str_contains($q, 'semestre')) {
             $curricular = [
                 'llevar', 'ver', 'tomar', 'cursar', 'carrera', 'escuela',
@@ -465,7 +588,6 @@ class DbContextService
             foreach ($curricular as $c) {
                 if (str_contains($q, $c)) return true;
             }
-            // Si menciona un número (ej. "ciclo 5", "III ciclo") también activa
             if (preg_match('/\d+/', $q) || preg_match('/\b(I{1,3}|IV|V|VI{0,3}|IX|X)\b/i', $q)) {
                 return true;
             }
@@ -475,13 +597,59 @@ class DbContextService
     }
 
     /**
+     * Detecta si la pregunta es sobre las inscripciones personales del estudiante
+     * en el periodo actual.
+     */
+    private function querySeemsAboutMisInscripciones(string $query): bool
+    {
+        $q        = strtolower($query);
+        $triggers = [
+            'mis cursos', 'mis materias', 'estoy inscrito', 'me inscrib',
+            'qué llevo', 'que llevo', 'cuáles llevo', 'cuales llevo',
+            'qué tengo', 'que tengo este', 'mis clases', 'mi matrícula',
+            'mi matricula', 'llevo este', 'llevo ahora', 'tengo este ciclo',
+            'estoy llevando', 'estoy cursando', 'estoy matriculado',
+            'cuántos cursos llevo', 'cuantos cursos llevo',
+        ];
+        foreach ($triggers as $t) {
+            if (str_contains($q, $t)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Detecta si la pregunta es sobre el historial académico del estudiante.
+     */
+    private function querySeemsAboutHistorial(string $query): bool
+    {
+        $q        = strtolower($query);
+        $triggers = [
+            'historial', 'aprobados', 'créditos aprobados', 'creditos aprobados',
+            'mi progreso', 'qué aprobé', 'que aprobe', 'cuántos créditos', 'cuantos creditos',
+            'cursos me faltan', 'qué me falta', 'que me falta', 'cuánto me falta',
+            'cuanto me falta', 'cursos pendientes', 'mis notas anteriores',
+            'avance académico', 'avance academico', 'cuántos cursos he aprobado',
+            'cuantos cursos he aprobado',
+        ];
+        foreach ($triggers as $t) {
+            if (str_contains($q, $t)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Busca programaciones del periodo por keywords.
      * Si fuzzy=false: solo búsqueda exacta (LIKE '%keyword%').
      * Si fuzzy=true: además prueba prefijo de 8 chars y substring sin primer carácter.
+     * Si escuelaId se provee: filtra a secciones habilitadas para esa escuela.
      */
-    private function buscarProgramacion(string $periodoId, array $keywords, bool $fuzzy): \Illuminate\Support\Collection
-    {
-        return ProgramacionAcademica::with('curso')
+    private function buscarProgramacion(
+        string  $periodoId,
+        array   $keywords,
+        bool    $fuzzy,
+        ?string $escuelaId = null
+    ): \Illuminate\Support\Collection {
+        $q = ProgramacionAcademica::with('curso')
             ->where('periodo_id', $periodoId)
             ->whereHas('curso', function ($q) use ($keywords, $fuzzy) {
                 $q->where(function ($inner) use ($keywords, $fuzzy) {
@@ -490,12 +658,10 @@ class DbContextService
                               ->orWhere('codigo', 'like', "%{$kw}%");
 
                         if ($fuzzy) {
-                            // Prefijo 8 chars: "computad" matchea "computadores" y "computadoras"
                             if (mb_strlen($kw) >= 7) {
                                 $prefix = mb_substr($kw, 0, 8);
                                 $inner->orWhere('nombre', 'like', "%{$prefix}%");
                             }
-                            // Sin primer carácter: "quitectura" matchea "arquitectura"
                             if (mb_strlen($kw) >= 6) {
                                 $sinPrimero = mb_substr($kw, 1);
                                 $inner->orWhere('nombre', 'like', "%{$sinPrimero}%");
@@ -503,8 +669,16 @@ class DbContextService
                         }
                     }
                 });
-            })
-            ->limit(25)
-            ->get();
+            });
+
+        if ($escuelaId) {
+            $q->whereExists(function ($sub) use ($escuelaId) {
+                $sub->from('programacion_escuelas')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+            });
+        }
+
+        return $q->limit(25)->get();
     }
 }
