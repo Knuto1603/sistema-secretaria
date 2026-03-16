@@ -6,10 +6,11 @@ import {
   EstudianteHistorial,
   EstudianteInscripcion,
 } from '@core/services/usuario.service';
+import { ProgresoService, ProgresoAcademico, CursoPendiente } from '@core/services/progreso.service';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
-type TabDetalle = 'info' | 'historial' | 'inscripciones';
+type TabDetalle = 'info' | 'progreso' | 'historial' | 'inscripciones';
 
 @Component({
   selector: 'app-alumno-detalle',
@@ -18,19 +19,23 @@ type TabDetalle = 'info' | 'historial' | 'inscripciones';
   templateUrl: './alumno-detalle.component.html',
 })
 export class AlumnoDetalleComponent implements OnInit {
-  private service = inject(UsuarioService);
+  private service  = inject(UsuarioService);
+  private progresoService = inject(ProgresoService);
 
   id      = input.required<string>();
   cerrado = output<void>();
 
   alumno        = signal<Estudiante | null>(null);
+  progreso      = signal<ProgresoAcademico | null>(null);
   historial     = signal<EstudianteHistorial | null>(null);
   inscripciones = signal<EstudianteInscripcion[]>([]);
 
-  loading             = signal(true);
-  loadingHistorial    = signal(false);
+  loading              = signal(true);
+  loadingProgreso      = signal(false);
+  loadingHistorial     = signal(false);
   loadingInscripciones = signal(false);
-  error               = signal<string | null>(null);
+  toggleEnProgreso     = signal(false);
+  error                = signal<string | null>(null);
 
   tabActiva = signal<TabDetalle>('info');
 
@@ -43,8 +48,17 @@ export class AlumnoDetalleComponent implements OnInit {
 
   cambiarTab(tab: TabDetalle): void {
     this.tabActiva.set(tab);
-    if (tab === 'historial' && !this.historial()) this.cargarHistorial();
+    if (tab === 'progreso'      && !this.progreso())          this.cargarProgreso();
+    if (tab === 'historial'     && !this.historial())         this.cargarHistorial();
     if (tab === 'inscripciones' && !this.inscripciones().length) this.cargarInscripciones();
+  }
+
+  cargarProgreso(): void {
+    this.loadingProgreso.set(true);
+    this.progresoService.getProgresoAlumno(this.id()).subscribe({
+      next:  p => { this.progreso.set(p); this.loadingProgreso.set(false); },
+      error: () => this.loadingProgreso.set(false),
+    });
   }
 
   cargarHistorial(): void {
@@ -61,6 +75,24 @@ export class AlumnoDetalleComponent implements OnInit {
       next:  i => { this.inscripciones.set(i); this.loadingInscripciones.set(false); },
       error: () => this.loadingInscripciones.set(false),
     });
+  }
+
+  toggleEgresante(): void {
+    if (this.toggleEnProgreso()) return;
+    this.toggleEnProgreso.set(true);
+    this.progresoService.toggleEgresante(this.id()).subscribe({
+      next: res => {
+        this.alumno.update(a => a ? { ...a, egresante: res.egresante } : a);
+        const p = this.progreso();
+        if (p) this.progreso.set({ ...p, egresante_manual: res.egresante });
+        this.toggleEnProgreso.set(false);
+      },
+      error: () => this.toggleEnProgreso.set(false),
+    });
+  }
+
+  sumCreditos(cursos: CursoPendiente[]): number {
+    return cursos.reduce((acc, c) => acc + c.creditos, 0);
   }
 
   getNotaColor(nota: number | null): string {
