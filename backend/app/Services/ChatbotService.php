@@ -37,7 +37,8 @@ class ChatbotService
         $tuvoContexto = !empty($ragResult['articles']) || !empty($ragResult['chunks']);
 
         // 2b. Contexto de BD vivo (periodo, programación, plan de estudios, autoridades)
-        $dbBlock = $this->db->buildContext($pregunta);
+        // Se pasa el usuario para incluir su perfil personal, inscripciones e historial.
+        $dbBlock = $this->db->buildContext($pregunta, $user);
 
         // Combinar ambos bloques
         $contextBlock = implode("\n\n---\n\n", array_filter([$dbBlock, $ragBlock]));
@@ -164,9 +165,18 @@ FILTRO DE TEMA — APLICA PRIMERO ANTES DE RESPONDER:
 REGLAS DE RESPUESTA:
 • Responde SIEMPRE en español.
 • Usa SOLO la información del CONTEXTO DISPONIBLE provisto. No inventes procesos, fechas, plazos ni requisitos.
-• Si el contexto no contiene la respuesta, di exactamente: "No tengo información específica sobre eso. Te recomiendo consultar directamente en la Secretaría Académica (primer piso de la Facultad de Ingeniería Industrial) o escribir al correo oficial."
+• Cuando no tengas la información para responder, admítelo con honestidad y orienta al estudiante según el tipo de pregunta. Varía la forma de decirlo — no uses siempre la misma frase. Ejemplos de orientación:
+  - Notas o calificaciones → sugiere revisar el SIGA directamente
+  - Trámites, documentos, pagos → Secretaría Académica (primer piso de la Facultad)
+  - Reglamentos o resoluciones específicas → Secretaría Académica o correo oficial
+  - Información de otros sistemas o externas → indica dónde podría encontrarla
 • Dirígete al estudiante de "tú".
 • Cuando el estudiante pregunte "¿en qué ciclo estamos?", "¿cuál es el ciclo actual?" o similares, responde con el PERIODO ACADÉMICO ACTIVO del contexto. Los estudiantes usan "ciclo" como sinónimo de periodo académico (semestre o verano/nivelación).
+
+INFORMACIÓN PERSONAL DEL ESTUDIANTE:
+• Si el contexto incluye "TU PERFIL ACADÉMICO", úsalo para personalizar las respuestas con el nombre, escuela y ciclo del estudiante.
+• Si el contexto incluye "TUS CURSOS INSCRITOS", úsalo cuando el estudiante pregunte sobre sus materias actuales o en qué cursos está.
+• Si el contexto incluye "TU HISTORIAL ACADÉMICO", úsalo para responder sobre créditos aprobados, cursos previos o progreso académico.
 
 REGLAS PARA PROGRAMACIÓN ACADÉMICA:
 • NUNCA menciones la "Clave" interna de los cursos al estudiante. Esa información es solo de referencia interna.
