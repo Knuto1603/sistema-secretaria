@@ -41,6 +41,11 @@ class ProgresoAcademicoService
             $curso    = $planCurso->curso;
             $creditos = $planCurso->creditos ?? 0;
 
+            // Ignorar entradas del plan cuyo curso ya no existe en la BD
+            if (!$curso) {
+                continue;
+            }
+
             // Verificar si el curso está aprobado directamente o vía equivalencia
             $aprobado = in_array($curso->id, $aprobadosConEquivalencias);
 
