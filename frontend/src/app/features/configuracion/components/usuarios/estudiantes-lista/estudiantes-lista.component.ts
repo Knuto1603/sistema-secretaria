@@ -1,7 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { UsuarioService, Estudiante, EstudianteFilters, EstudianteInscripcion, ImportResumen, ImportFila, CursoPendienteResumen } from '@core/services/usuario.service';
 import { ProgresoService } from '@core/services/progreso.service';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -193,15 +194,14 @@ export class EstudiantesListaComponent implements OnInit {
     this.inscripciones.set([]);
 
     forkJoin({
-      detalle:       this.usuarioService.getEstudianteById(estudiante.id),
-      inscripciones: this.usuarioService.getEstudianteInscripciones(estudiante.id),
+      detalle:       this.usuarioService.getEstudianteById(estudiante.id).pipe(catchError(() => of(null))),
+      inscripciones: this.usuarioService.getEstudianteInscripciones(estudiante.id).pipe(catchError(() => of([] as EstudianteInscripcion[]))),
     }).subscribe({
       next: ({ detalle, inscripciones }) => {
-        this.estudianteDetalle.set(detalle);
+        if (detalle) this.estudianteDetalle.set(detalle);
         this.inscripciones.set(inscripciones);
         this.loadingDetalle.set(false);
       },
-      error: () => this.loadingDetalle.set(false),
     });
   }
 
