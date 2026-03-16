@@ -15,6 +15,7 @@ use App\Services\EstudianteService;
 use App\Services\ProgresoAcademicoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -61,15 +62,27 @@ class EstudianteController extends Controller
         }
 
         // Calcular progreso académico si el alumno tiene escuela
-        $progreso = null;
-        $user = User::find($id);
+        $progreso      = null;
+        $egresante     = false;
+        $progresoError = null;
+        $user          = User::find($id);
+
         if ($user && $user->escuela_id) {
-            $progreso = $this->progresoService->calcularProgreso($user);
+            try {
+                $progreso  = $this->progresoService->calcularProgreso($user);
+                $egresante = $user->egresante ?? false;
+            } catch (\Throwable $e) {
+                Log::error('calcularProgreso falló para estudiante ' . $id . ': ' . $e->getMessage(), [
+                    'exception' => $e,
+                ]);
+                $progresoError = 'No se pudo calcular el progreso académico.';
+            }
         }
 
         return $this->success(array_merge($estudiante, [
-            'egresante' => $user?->egresante ?? false,
-            'progreso'  => $progreso,
+            'egresante'      => $egresante,
+            'progreso'       => $progreso,
+            'progreso_error' => $progresoError,
         ]));
     }
 
