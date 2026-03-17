@@ -99,6 +99,38 @@ class PlanEstudiosController extends Controller
     }
 
     /**
+     * Actualiza los créditos requeridos de un plan
+     * PATCH /plan-estudios/planes/{id}
+     */
+    public function actualizarPlan(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'nombre'                        => ['sometimes', 'string', 'max:100'],
+            'total_creditos_obligatorios'   => ['sometimes', 'integer', 'min:0'],
+            'creditos_electivos_requeridos' => ['sometimes', 'integer', 'min:0'],
+        ]);
+
+        $plan = Plan::find($id);
+        if (!$plan) {
+            return $this->notFound('Plan no encontrado');
+        }
+
+        $plan->update($request->only([
+            'nombre',
+            'total_creditos_obligatorios',
+            'creditos_electivos_requeridos',
+        ]));
+
+        return $this->success([
+            'id'                            => $plan->id,
+            'nombre'                        => $plan->nombre,
+            'activo'                        => $plan->activo,
+            'total_creditos_obligatorios'   => $plan->total_creditos_obligatorios,
+            'creditos_electivos_requeridos' => $plan->creditos_electivos_requeridos,
+        ], 'Plan actualizado correctamente');
+    }
+
+    /**
      * Activa un plan (desactiva los demás de la misma escuela)
      * PATCH /plan-estudios/planes/{id}/activar
      */

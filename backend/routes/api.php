@@ -312,6 +312,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
                 ->middleware('role:admin|secretario academico|developer');
             Route::patch('/planes/{id}/activar', [PlanEstudiosController::class, 'activarPlan'])
                 ->middleware('role:admin|secretario academico|developer');
+            Route::patch('/planes/{id}', [PlanEstudiosController::class, 'actualizarPlan'])
+                ->middleware('role:admin|secretario academico|developer');
             Route::delete('/planes/{id}', [PlanEstudiosController::class, 'eliminarPlan'])
                 ->middleware('role:admin|secretario academico|developer');
 
