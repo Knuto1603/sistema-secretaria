@@ -72,7 +72,7 @@ class ProgramacionHtmlImport
         try {
             // Solo buscar por código; el nombre autoritativo viene del plan de estudios
             $curso = Curso::where('codigo', strtoupper(trim($codigoCurso)))->first();
-            if (!$curso) continue;
+            if (!$curso) return;
 
             $docente = null;
             $docenteNorm = strtoupper(trim(preg_replace('/\s+/', ' ', $nombreDocente)));
