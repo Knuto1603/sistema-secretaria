@@ -102,6 +102,14 @@ class ProgramacionHtmlImport
             );
 
             $escuelaIds = $this->resolverEscuelas($escuelasText);
+
+            // La primera escuela de la lista es la que programó el curso.
+            // Si solo hay una, esa misma es programada y habilitada.
+            $escuelaProgramadaId = $escuelaIds[0] ?? null;
+
+            $programacion->escuela_programada_id = $escuelaProgramadaId;
+            $programacion->save();
+
             $programacion->escuelas()->sync($escuelaIds);
 
             // Ciclo: consultar plan_estudios usando la primera escuela
