@@ -442,6 +442,24 @@ class PlanEstudiosController extends Controller
     }
 
     /**
+     * Debug: devuelve el texto crudo extraído del PDF (solo developer)
+     * POST /plan-estudios/debug-pdf
+     */
+    public function debugPdf(Request $request): JsonResponse
+    {
+        $request->validate(['archivo' => ['required', 'file', 'mimes:pdf', 'max:10240']]);
+
+        $parser = new \App\Imports\PlanEstudiosPdfImport();
+        $pdf    = (new \Smalot\PdfParser\Parser())->parseFile($request->file('archivo')->getPathname());
+        $text   = $pdf->getText();
+
+        return $this->success([
+            'lineas' => explode("\n", $text),
+            'raw'    => $text,
+        ], 'Texto extraído');
+    }
+
+    /**
      * Descarga la plantilla Excel para el plan de estudios
      * GET /plan-estudios/template
      */

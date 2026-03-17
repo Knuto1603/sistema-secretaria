@@ -322,6 +322,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
                 ->middleware('role:admin|secretario academico|developer');
             Route::post('/import-pdf', [PlanEstudiosController::class, 'importPdf'])
                 ->middleware('role:admin|secretario academico|developer');
+            Route::post('/debug-pdf', [PlanEstudiosController::class, 'debugPdf'])
+                ->middleware('role:developer');
             Route::delete('/', [PlanEstudiosController::class, 'destroy'])
                 ->middleware('role:admin|secretario academico|developer');
         });
