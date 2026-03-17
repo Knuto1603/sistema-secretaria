@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Curso;
 use App\Models\Docente;
 use App\Models\Escuela;
 use App\Models\GrupoHorario;
 use App\Models\Inscripcion;
 use App\Models\Periodo;
+use App\Models\Plan;
 use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use App\Models\SystemSetting;
@@ -52,7 +54,11 @@ class DbContextService
                 if ($b) $blocks[] = $b;
             }
 
-            if ($this->querySeemsAboutHistorial($query)) {
+            // Comparación plan vs. historial (bloque completo, tiene precedencia)
+            if ($this->querySeemsAboutComparacion($query)) {
+                $b = $this->buildComparacionPlanHistorialBlock($user);
+                if ($b) $blocks[] = $b;
+            } elseif ($this->querySeemsAboutHistorial($query)) {
                 $b = $this->buildMiHistorialBlock($user);
                 if ($b) $blocks[] = $b;
             }
@@ -252,6 +258,103 @@ class DbContextService
         if ($totalCursos > 8) {
             $lines[] = '... y ' . ($totalCursos - 8) . ' cursos más.';
         }
+
+        return implode("\n", $lines);
+    }
+
+    // =========================================================================
+    // BLOQUE: COMPARACIÓN PLAN DE ESTUDIOS vs. HISTORIAL (estudiante autenticado)
+    // =========================================================================
+
+    private function buildComparacionPlanHistorialBlock(User $user): string
+    {
+        if (!$user->escuela_id) {
+            return "COMPARACIÓN PLAN vs. HISTORIAL:\nNo tienes escuela asignada. Contacta a secretaría.";
+        }
+
+        if (!$user->tieneHistorial()) {
+            return "COMPARACIÓN PLAN vs. HISTORIAL:\n"
+                 . "Aún no tienes historial académico registrado en el sistema. "
+                 . "Para obtener esta comparación, importa tu historial desde el PDF del SIGA.";
+        }
+
+        // Plan activo para la escuela
+        $plan = Plan::where('escuela_id', $user->escuela_id)
+            ->where('activo', true)
+            ->first();
+
+        $planQuery = PlanEstudios::with('curso');
+        if ($plan) {
+            $planQuery->where('plan_id', $plan->id);
+        } else {
+            $planQuery->where('escuela_id', $user->escuela_id);
+        }
+        $planEntries = $planQuery->get();
+
+        if ($planEntries->isEmpty()) {
+            return "COMPARACIÓN PLAN vs. HISTORIAL:\n"
+                 . "No hay plan de estudios cargado para tu escuela. Consulta a secretaría.";
+        }
+
+        // IDs de cursos aprobados + sus equivalencias
+        $aprobados = $user->cursosAprobados()
+            ->withPivot('nota', 'semestre', 'creditos')
+            ->get();
+
+        $aprobadosIds = $aprobados->pluck('id');
+
+        if ($aprobadosIds->isNotEmpty()) {
+            $equivalenciaIds = Curso::whereIn('id', $aprobadosIds)
+                ->with('equivalencias:id')
+                ->get()
+                ->flatMap(fn($c) => $c->equivalencias->pluck('id'));
+            $aprobadosIds = $aprobadosIds->merge($equivalenciaIds)->unique();
+        }
+
+        $planNombre = $plan?->nombre ?? ($user->escuela?->nombre ?? 'Plan de estudios');
+        $lines      = ["COMPARACIÓN PLAN vs. HISTORIAL — {$planNombre}:"];
+
+        $totalOblApr = 0; $totalOblReq = 0;
+        $totalEleApr = 0; $totalEleReq = 0;
+
+        foreach ($planEntries->groupBy('ciclo')->sortKeys() as $ciclo => $cursosDeCiclo) {
+            $lines[] = "";
+            $lines[] = "── Ciclo {$ciclo} ──";
+
+            // Obligatorios primero, luego electivos
+            $ordenados = $cursosDeCiclo->sortBy(fn($c) => $c->tipo === 'E' ? 1 : 0);
+
+            foreach ($ordenados as $pe) {
+                $aprobado = $aprobadosIds->contains($pe->curso_id);
+                $tipo     = $pe->tipo === 'O' ? 'Oblig.' : 'Electiv.';
+                $marca    = $aprobado ? '[OK]' : '[--]';
+                $nombre   = Str::limit($pe->curso?->nombre ?? '—', 42);
+                $creds    = (int) ($pe->creditos ?? $pe->curso?->creditos ?? 0);
+
+                $lines[] = sprintf("  %s %-44s %s — %d cr.", $marca, $nombre, $tipo, $creds);
+
+                if ($pe->tipo === 'O') {
+                    $totalOblReq += $creds;
+                    if ($aprobado) $totalOblApr += $creds;
+                } else {
+                    $totalEleReq += $creds;
+                    if ($aprobado) $totalEleApr += $creds;
+                }
+            }
+        }
+
+        $oblPct  = $totalOblReq > 0 ? round($totalOblApr / $totalOblReq * 100) : 0;
+        $elePct  = $totalEleReq > 0 ? round($totalEleApr / $totalEleReq * 100) : 0;
+        $totApr  = $totalOblApr + $totalEleApr;
+        $totReq  = $totalOblReq + $totalEleReq;
+        $totPct  = $totReq > 0 ? round($totApr / $totReq * 100) : 0;
+
+        $lines[] = "";
+        $lines[] = "── RESUMEN ──";
+        $lines[] = "• Obligatorios : {$totalOblApr}/{$totalOblReq} cr. aprobados ({$oblPct}%)";
+        $lines[] = "• Electivos    : {$totalEleApr}/{$totalEleReq} cr. aprobados ({$elePct}%)";
+        $lines[] = "• TOTAL        : {$totApr}/{$totReq} cr. aprobados ({$totPct}%)";
+        $lines[] = "([OK] = aprobado  [--] = pendiente)";
 
         return implode("\n", $lines);
     }
@@ -790,6 +893,35 @@ class DbContextService
         foreach ($triggers as $t) {
             if (str_contains($q, $t)) return true;
         }
+        return false;
+    }
+
+    private function querySeemsAboutComparacion(string $query): bool
+    {
+        $q = strtolower($query);
+
+        // Pregunta explícita de comparación historial vs. plan
+        $triggers = [
+            'comparar', 'compararlo', 'compare', 'versus', 'vs plan',
+            'qué me falta', 'que me falta', 'cuánto me falta', 'cuanto me falta',
+            'cursos me faltan', 'cursos pendientes', 'cursos que me faltan',
+            'qué cursos me faltan', 'que cursos me faltan',
+            'faltan para graduarme', 'faltan para egresar', 'faltan para terminar',
+            'cuántos créditos me faltan', 'cuantos creditos me faltan',
+            'mi avance', 'mi progreso', 'avance académico', 'avance academico',
+            'falta para terminar', 'falta para acabar la carrera',
+            'historial con mi plan', 'historial y mi plan', 'plan de estudios',
+        ];
+
+        foreach ($triggers as $t) {
+            if (str_contains($q, $t)) return true;
+        }
+
+        // "historial" + "plan" juntos en la misma pregunta
+        if (str_contains($q, 'historial') && str_contains($q, 'plan')) return true;
+        if (str_contains($q, 'aprobados') && str_contains($q, 'plan'))  return true;
+        if (str_contains($q, 'historial') && str_contains($q, 'faltan')) return true;
+
         return false;
     }
 
