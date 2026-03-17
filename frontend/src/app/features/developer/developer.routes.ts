@@ -66,4 +66,12 @@ export const DEVELOPER_ROUTES: Routes = [
       ),
     canActivate: [developerGuard],
   },
+  {
+    path: 'pdf-debug',
+    loadComponent: () =>
+      import('./components/pdf-debug/pdf-debug.component').then(
+        m => m.PdfDebugComponent
+      ),
+    canActivate: [developerGuard],
+  },
 ];
