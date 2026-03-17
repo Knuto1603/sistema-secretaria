@@ -261,7 +261,20 @@ class InscripcionesHtmlImport
         ?string $semestre,
         ?Escuela $escuela
     ): ?ProgramacionAcademica {
-        // 1. Clave SIGA + periodo exacto (más preciso, no necesita escuela)
+        // Normalizar sección: el SIGA la devuelve como "01", pero el Excel puede
+        // haberla guardado como "1" (sin cero inicial).
+        $seccionAlt = $seccion ? ltrim($seccion, '0') ?: '0' : null;
+
+        $matchSeccion = function ($query) use ($seccion, $seccionAlt) {
+            $query->where(function ($q) use ($seccion, $seccionAlt) {
+                $q->where('seccion', $seccion);
+                if ($seccionAlt !== $seccion) {
+                    $q->orWhere('seccion', $seccionAlt);
+                }
+            });
+        };
+
+        // 1. Clave SIGA + periodo — el match más preciso, no necesita escuela
         if ($clave && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -272,23 +285,23 @@ class InscripcionesHtmlImport
             }
         }
 
-        // 2. Curso + sección + escuela + periodo (desambigua entre escuelas)
+        // 2. Curso + sección + escuela (via pivot) + periodo
         if ($cursoCodigo && $seccion && $semestre && $escuela) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
-                    $prog = ProgramacionAcademica::where('curso_id', $curso->id)
+                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->where('seccion', $seccion)
-                        ->where('escuela_programada_id', $escuela->id)
-                        ->first();
-                    if ($prog) return $prog;
+                        ->tap($matchSeccion)
+                        ->whereHas('escuelas', fn ($q) => $q->where('escuelas.id', $escuela->id))
+                        ->get();
+                    if ($candidatos->count() >= 1) return $candidatos->first();
                 }
             }
         }
 
-        // 3. Curso + sección + periodo (sin filtro de escuela, solo si hay 1 resultado)
+        // 3. Curso + sección + periodo (sin filtro de escuela, solo si 1 resultado)
         if ($cursoCodigo && $seccion && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -296,15 +309,14 @@ class InscripcionesHtmlImport
                 if ($curso) {
                     $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->where('seccion', $seccion)
+                        ->tap($matchSeccion)
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
-                    // Varias escuelas con mismo curso+sección+periodo → no adivinar
                 }
             }
         }
 
-        // 4. Curso + periodo exacto + escuela (solo si 1 sección)
+        // 4. Curso + escuela (via pivot) + periodo — solo si 1 sección de esa escuela
         if ($cursoCodigo && $semestre && $escuela) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
@@ -312,24 +324,23 @@ class InscripcionesHtmlImport
                 if ($curso) {
                     $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->where('escuela_programada_id', $escuela->id)
+                        ->whereHas('escuelas', fn ($q) => $q->where('escuelas.id', $escuela->id))
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
                 }
             }
         }
 
-        // 5. Período parcial con escuela (fallback)
-        if ($cursoCodigo && $seccion && $semestre && $escuela) {
-            $curso = Curso::where('codigo', $cursoCodigo)->first();
-            if ($curso) {
-                foreach (Periodo::where('nombre', 'like', "%{$semestre}%")->get() as $periodo) {
-                    $prog = ProgramacionAcademica::where('curso_id', $curso->id)
+        // 5. Curso + periodo — último recurso, solo si hay exactamente 1 sección total
+        if ($cursoCodigo && $semestre) {
+            $periodo = $this->buscarPeriodo($semestre);
+            if ($periodo) {
+                $curso = Curso::where('codigo', $cursoCodigo)->first();
+                if ($curso) {
+                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
                         ->where('periodo_id', $periodo->id)
-                        ->where('seccion', $seccion)
-                        ->where('escuela_programada_id', $escuela->id)
-                        ->first();
-                    if ($prog) return $prog;
+                        ->get();
+                    if ($candidatos->count() === 1) return $candidatos->first();
                 }
             }
         }
