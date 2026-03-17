@@ -153,8 +153,8 @@ class PlanEstudiosPdfImport
                 continue;
             }
 
-            // La línea debe empezar con código: 2 letras + 4 dígitos
-            if (!preg_match('/^([A-Z]{2}\d{4})\s/', $linea)) {
+            // Verificación rápida: la línea debe empezar con código de curso
+            if (!preg_match('/^[A-Z]{2}\d{4}\s/', $linea)) {
                 continue;
             }
 
@@ -174,67 +174,84 @@ class PlanEstudiosPdfImport
     }
 
     /**
-     * Intenta parsear una línea de curso probando dos formatos:
+     * Parsea una línea de curso del SIGA-UNP.
      *
-     * Formato A — TIPO en medio (PDF Industrial):
-     *   CODE  NOMBRE  [2+ espacios]  TIPO[REQS]  CRED  HT  HP
-     *   Ejemplo: "MA1435 CALCULO I    OMA1408    4 48 32"
-     *   Ejemplo: "ED1292 ACTIVIDAD DEPORTIVA    O2 0 64"
+     * Las columnas están separadas por TAB (\t):
      *
-     * Formato B — TIPO al final (PDF Agroindustrial y otros):
-     *   CODE  NOMBRE[con reqs]  CRED  HT  HP  TIPO
-     *   Ejemplo: "AG1234 NOMBRE DEL CURSO 3 32 32 O"
-     *   Ejemplo: "AG1234 NOMBRE MA1408 4 48 32 O"
+     *   Sin requisitos (2 partes):
+     *     "ED1292 ACTIVIDAD DEPORTIVA\tO2 0 64"
+     *     parte[0] = "ED1292 ACTIVIDAD DEPORTIVA"
+     *     parte[1] = "O2 0 64"  → tipo=O, cred=2, ht=0, hp=64
+     *
+     *   Con requisitos (3 partes):
+     *     "MA1435 CALCULO I\tOMA1408\t4 48 32"
+     *     parte[0] = "MA1435 CALCULO I"
+     *     parte[1] = "OMA1408"  → tipo=O, req=[MA1408]
+     *     parte[2] = "4 48 32"  → cred=4, ht=48, hp=32
+     *
+     *   Con múltiples requisitos (3 partes):
+     *     "MA2333 ALGEBRA LINEAL\tOMA1435 / MA1470\t3 32 32"
+     *
+     *   Con requisito especial (3 partes):
+     *     "ED3285 TALLER ...\tO100cred./ ED1331\t2 0 64"
+     *     "II5392 CREACION ...\tE180cred.\t3 32 32"
      *
      * @return array|null
      */
     private function parsearLineaCurso(string $linea): ?array
     {
-        // ── Formato A: TIPO antes de los números ─────────────────────────────
-        if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s{2,}([OE])(.*)$/u', $linea, $m)) {
-            $despues = $m[4];
+        $partes = explode("\t", $linea);
 
-            if (preg_match('/^\s*(\d+)\s+(\d+)\s+(\d+)\s*$/', $despues, $nums)) {
-                return [
-                    'codigo'          => $m[1],
-                    'nombre'          => trim($m[2]),
-                    'tipo'            => $m[3],
-                    'creditos'        => (int) $nums[1],
-                    'horas_teoricas'  => (int) $nums[2],
-                    'horas_practicas' => (int) $nums[3],
-                    'requisitos'      => [],
-                ];
-            }
+        if (count($partes) < 2) return null;
 
-            if (preg_match('/^(.*?)\s+(\d+)\s+(\d+)\s+(\d+)\s*$/', $despues, $nums)) {
-                preg_match_all('/\b([A-Z]{2}\d{4})\b/', $nums[1], $req);
-                return [
-                    'codigo'          => $m[1],
-                    'nombre'          => trim($m[2]),
-                    'tipo'            => $m[3],
-                    'creditos'        => (int) $nums[2],
-                    'horas_teoricas'  => (int) $nums[3],
-                    'horas_practicas' => (int) $nums[4],
-                    'requisitos'      => array_unique($req[1] ?? []),
-                ];
+        // ── Parte 0: "CODIGO NOMBRE" ──────────────────────────────────────────
+        if (!preg_match('/^([A-Z]{2}\d{4})\s+(.+)$/u', trim($partes[0]), $m)) {
+            return null;
+        }
+        $codigo = $m[1];
+        $nombre = trim($m[2]);
+
+        // ── Parte 1: empieza con TIPO (O|E) ───────────────────────────────────
+        $tipoRaw = trim($partes[1]);
+        if (!preg_match('/^([OE])(.*)$/u', $tipoRaw, $tm)) {
+            return null;
+        }
+        $tipo    = $tm[1];
+        $despues = trim($tm[2]); // texto tras el tipo en la misma columna
+
+        // ── Extraer CRED HT HP y REQUISITOS ───────────────────────────────────
+        if (count($partes) >= 3) {
+            // Tercera columna tiene los números: "4 48 32"
+            $numStr = trim($partes[2]);
+            if (!preg_match('/^(\d+)\s+(\d+)\s+(\d+)$/', $numStr, $nm)) {
+                return null;
             }
+            $creditos   = (int) $nm[1];
+            $hteorica   = (int) $nm[2];
+            $hpractica  = (int) $nm[3];
+            // $despues contiene los requisitos ("MA1408", "MA1435 / MA1470", "100cred./ ED1331", etc.)
+            preg_match_all('/\b([A-Z]{2}\d{4})\b/', $despues, $req);
+            $requisitos = array_unique($req[1] ?? []);
+        } else {
+            // Sin tercera columna: $despues tiene cred ht hp pegados al tipo ("2 0 64")
+            if (!preg_match('/^(\d+)\s+(\d+)\s+(\d+)$/', $despues, $nm)) {
+                return null;
+            }
+            $creditos   = (int) $nm[1];
+            $hteorica   = (int) $nm[2];
+            $hpractica  = (int) $nm[3];
+            $requisitos = [];
         }
 
-        // ── Formato B: TIPO al final ──────────────────────────────────────────
-        if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+([OE])\s*$/u', $linea, $m)) {
-            [$nombre, $requisitos] = $this->separarNombreRequisitos($m[2]);
-            return [
-                'codigo'          => $m[1],
-                'nombre'          => $nombre,
-                'tipo'            => $m[6],
-                'creditos'        => (int) $m[3],
-                'horas_teoricas'  => (int) $m[4],
-                'horas_practicas' => (int) $m[5],
-                'requisitos'      => $requisitos,
-            ];
-        }
-
-        return null;
+        return [
+            'codigo'          => $codigo,
+            'nombre'          => $nombre,
+            'tipo'            => $tipo,
+            'creditos'        => $creditos,
+            'horas_teoricas'  => $hteorica,
+            'horas_practicas' => $hpractica,
+            'requisitos'      => $requisitos,
+        ];
     }
 
     // =========================================================================
