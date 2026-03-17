@@ -13,7 +13,7 @@ interface ProgramacionRepositoryInterface
 
     public function findById(string $id): ?ProgramacionAcademica;
 
-    public function deleteByPeriodo(string $periodoId): int;
+    public function deleteByPeriodo(string $periodoId): array;
 
     public function delete(string $id): bool;
 

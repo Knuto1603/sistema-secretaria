@@ -7,6 +7,7 @@ use App\Repositories\Contracts\ProgramacionRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ProgramacionRepository implements ProgramacionRepositoryInterface
 {
@@ -42,16 +43,41 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             ->find($id);
     }
 
-    public function deleteByPeriodo(string $periodoId): int
+    public function deleteByPeriodo(string $periodoId): array
     {
-        return $this->model->where('periodo_id', $periodoId)->delete();
+        return DB::transaction(function () use ($periodoId) {
+            $ids = $this->model->where('periodo_id', $periodoId)->pluck('id');
+
+            if ($ids->isEmpty()) {
+                return ['programacion' => 0, 'inscripciones' => 0, 'solicitudes' => 0];
+            }
+
+            $solicitudes    = DB::table('solicitud')->whereIn('programacion_id', $ids)->delete();
+            $inscripciones  = DB::table('inscripciones')->whereIn('programacion_id', $ids)->delete();
+            DB::table('programacion_escuelas')->whereIn('programacion_id', $ids)->delete();
+
+            $programacion = $this->model->where('periodo_id', $periodoId)->delete();
+
+            return [
+                'programacion'  => $programacion,
+                'inscripciones' => $inscripciones,
+                'solicitudes'   => $solicitudes,
+            ];
+        });
     }
 
     public function delete(string $id): bool
     {
-        $prog = $this->model->find($id);
-        if (!$prog) return false;
-        return (bool) $prog->delete();
+        return DB::transaction(function () use ($id) {
+            $prog = $this->model->find($id);
+            if (!$prog) return false;
+
+            DB::table('solicitud')->where('programacion_id', $id)->delete();
+            DB::table('inscripciones')->where('programacion_id', $id)->delete();
+            DB::table('programacion_escuelas')->where('programacion_id', $id)->delete();
+
+            return (bool) $prog->delete();
+        });
     }
 
     public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null): Builder

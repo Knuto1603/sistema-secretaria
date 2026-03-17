@@ -83,7 +83,7 @@ class ProgramacionService
         return $this->programacionRepository->delete($id);
     }
 
-    public function deleteByPeriodo(string $periodoId): int
+    public function deleteByPeriodo(string $periodoId): array
     {
         return $this->programacionRepository->deleteByPeriodo($periodoId);
     }

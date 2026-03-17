@@ -463,11 +463,11 @@ class ProgramacionController extends Controller
     public function destroyPeriodo(string $periodoId): JsonResponse
     {
         try {
-            $eliminados = $this->service->deleteByPeriodo($periodoId);
-            return $this->success(
-                ['eliminados' => $eliminados],
-                "Se eliminaron {$eliminados} secciones del periodo"
-            );
+            $resultado = $this->service->deleteByPeriodo($periodoId);
+            $msg = "Se eliminaron {$resultado['programacion']} secciones";
+            if ($resultado['inscripciones'] > 0) $msg .= ", {$resultado['inscripciones']} inscripciones";
+            if ($resultado['solicitudes'] > 0)   $msg .= " y {$resultado['solicitudes']} solicitudes";
+            return $this->success($resultado, $msg);
         } catch (Exception $e) {
             return $this->error('Error al eliminar: ' . $e->getMessage(), 500);
         }
