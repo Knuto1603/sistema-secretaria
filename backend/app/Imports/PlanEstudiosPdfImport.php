@@ -4,12 +4,21 @@ namespace App\Imports;
 
 use Smalot\PdfParser\Parser;
 
+/**
+ * Parser de PDFs de Plan de Estudios del SIGA-UNP.
+ *
+ * Formato de columnas por fila de curso:
+ *   CODIGO | NOMBRE [REQUISITOS] | CRED | HT | HP | TIPO
+ *
+ * Formato de ciclo:  "CICLO: I", "CICLO: II", ...
+ *
+ * Resumen al final (puede estar en columnas separadas):
+ *   Créditos Obligatorios: 220    Créditos de Prácticas: 0
+ *   Créditos Electivos:     15    Otros Créditos:         0
+ */
 class PlanEstudiosPdfImport
 {
     /**
-     * Parsea un archivo PDF del SIGA y retorna la estructura del plan de estudios.
-     *
-     * @param  string  $filePath  Ruta al archivo PDF
      * @return array{
      *   plan_nombre: string,
      *   escuela_nombre: string,
@@ -24,19 +33,28 @@ class PlanEstudiosPdfImport
         $pdf    = $parser->parseFile($filePath);
         $text   = $pdf->getText();
 
+        [$obligatorios, $electivos] = $this->extractResumenCreditos($text);
+
         return [
             'plan_nombre'                   => $this->extractPlanNombre($text),
             'escuela_nombre'                => $this->extractEscuelaNombre($text),
-            'total_creditos_obligatorios'   => $this->extractCreditosObligatorios($text),
-            'creditos_electivos_requeridos' => $this->extractCreditosElectivos($text),
+            'total_creditos_obligatorios'   => $obligatorios,
+            'creditos_electivos_requeridos' => $electivos,
             'cursos'                        => $this->extractCursos($text),
         ];
     }
 
+    // =========================================================================
+    // EXTRACCIÓN DE CABECERA
+    // =========================================================================
+
     private function extractPlanNombre(string $text): string
     {
-        // Busca patrones como "Plan de Estudios: 2018-1" o "Plan 2018-I"
-        if (preg_match('/Plan\s+(?:de\s+Estudios[:\s]+)?(\d{4}[-\s]?\d?[IVX]*)/i', $text, $m)) {
+        // "PLAN DE ESTUDIOS 2018-1"  o  "Plan de Estudios: 2018-1"
+        if (preg_match('/PLAN\s+DE\s+ESTUDIOS\s+([\w\-]+)/iu', $text, $m)) {
+            return trim($m[1]);
+        }
+        if (preg_match('/Plan\s+(?:de\s+Estudios[:\s]+)?([\d\-]+[IVX]*)/i', $text, $m)) {
             return trim($m[1]);
         }
         return 'Plan importado';
@@ -44,102 +62,157 @@ class PlanEstudiosPdfImport
 
     private function extractEscuelaNombre(string $text): string
     {
-        // Busca líneas que contengan "Escuela" o "Ingeniería"
-        if (preg_match('/Escuela\s+(?:Profesional\s+de\s+)?([^\n\r]+)/i', $text, $m)) {
+        if (preg_match('/ESCUELA\s+([^\n\r]+)/iu', $text, $m)) {
             return trim($m[1]);
         }
-        if (preg_match('/Ingeniería\s+[^\n\r]+/i', $text, $m)) {
-            return trim($m[0]);
+        if (preg_match('/Escuela\s+(?:Profesional\s+de\s+)?([^\n\r]+)/i', $text, $m)) {
+            return trim($m[1]);
         }
         return 'Escuela desconocida';
     }
 
-    private function extractCreditosObligatorios(string $text): int
+    // =========================================================================
+    // EXTRACCIÓN DE CRÉDITOS TOTALES
+    // =========================================================================
+
+    /**
+     * Extrae los créditos obligatorios y electivos requeridos.
+     * Maneja dos formatos:
+     *   - Inline:   "Créditos Obligatorios: 220"
+     *   - Separado: etiquetas en una columna, números en otra (smalot las separa)
+     *
+     * @return array{int, int}  [obligatorios, electivos]
+     */
+    private function extractResumenCreditos(string $text): array
     {
-        if (preg_match('/Cr[eé]ditos?\s+Obligatorios?[:\s]+(\d+)/i', $text, $m)) {
-            return (int) $m[1];
+        $obligatorios = 0;
+        $electivos    = 0;
+
+        // ── Formato inline (número justo después de ":")  ────────────────────
+        if (preg_match('/Cr[eé]ditos?\s+Obligatorios?\s*:\s*(\d+)/iu', $text, $m)) {
+            $obligatorios = (int) $m[1];
         }
-        // Suma total de créditos O en la tabla
-        return 0;
+        if (preg_match('/Cr[eé]ditos?\s+Electivos?\s*:\s*(\d+)/iu', $text, $m)) {
+            $electivos = (int) $m[1];
+        }
+
+        if ($obligatorios || $electivos) {
+            return [$obligatorios, $electivos];
+        }
+
+        // ── Formato separado: etiquetas primero, luego números  ──────────────
+        // El PDF tiene 4 etiquetas consecutivas y luego 4 números.
+        // Ejemplo extraído por smalot:
+        //   Créditos Obligatorios:\nCréditos Electivos:\nCréditos de Prácticas:\nOtros Créditos:\n220\n15\n0\n0
+        if (preg_match(
+            '/Cr[eé]ditos?\s+Obligatorios?[^\d\n\r]*[\r\n\s]+'
+            . 'Cr[eé]ditos?\s+Electivos?[^\d\n\r]*[\r\n\s]+'
+            . '(?:Cr[eé]ditos?\s+de\s+Pr[aá]cticas?[^\d\n\r]*[\r\n\s]+)?'
+            . '(?:Otros?\s+Cr[eé]ditos?[^\d\n\r]*[\r\n\s]+)?'
+            . '(\d+)\D+(\d+)/isu',
+            $text,
+            $m
+        )) {
+            $obligatorios = (int) $m[1];
+            $electivos    = (int) $m[2];
+        }
+
+        return [$obligatorios, $electivos];
     }
 
-    private function extractCreditosElectivos(string $text): int
-    {
-        if (preg_match('/Cr[eé]ditos?\s+Electivos?[:\s]+(\d+)/i', $text, $m)) {
-            return (int) $m[1];
-        }
-        return 0;
-    }
+    // =========================================================================
+    // EXTRACCIÓN DE CURSOS
+    // =========================================================================
 
     private function extractCursos(string $text): array
     {
-        $cursos    = [];
+        $cursos      = [];
         $cicloActual = 0;
-
-        // Dividir en líneas para procesar
-        $lineas = preg_split('/\r\n|\r|\n/', $text);
+        $lineas      = preg_split('/\r\n|\r|\n/', $text);
 
         foreach ($lineas as $linea) {
             $linea = trim($linea);
+            if ($linea === '') continue;
 
-            // Detectar ciclo: CICLO I, CICLO II ... CICLO X
-            if (preg_match('/^\s*CICLO\s+(I{1,3}V?|VI{0,3}|IX|X|XI{0,2})\s*$/i', $linea, $m)) {
-                $cicloActual = $this->romanToInt(strtoupper(trim($m[1])));
+            // ── Detectar cambio de ciclo  ─────────────────────────────────────
+            // Soporta: "CICLO: I", "CICLO: II", "CICLO I" (sin dos puntos)
+            if (preg_match('/^CICLO\s*:?\s*(X{0,2}(?:IX|IV|V?I{0,3}))\s*$/i', $linea, $m)) {
+                $num = $this->romanToInt(strtoupper(trim($m[1])));
+                if ($num > 0) {
+                    $cicloActual = $num;
+                }
                 continue;
             }
 
-            // Detectar fila de curso: código(2 letras + 4 dígitos), nombre, horas/créditos, tipo O/E
-            // Formato típico SIGA: CB1324 CÁLCULO I 48 32 4 O CB0000
-            if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+([OE])\s*(.*)$/u', $linea, $m)) {
-                $requisitos = $this->parseRequisitos(trim($m[7]));
-                $cursos[]   = [
-                    'ciclo'          => $cicloActual ?: null,
-                    'codigo'         => $m[1],
-                    'nombre'         => trim($m[2]),
-                    'horas_teoricas' => (int) $m[3],
-                    'horas_practicas'=> (int) $m[4],
-                    'creditos'       => (int) $m[5],
-                    'tipo'           => $m[6],
-                    'requisitos'     => $requisitos,
-                ];
+            // ── Detectar fila de curso  ───────────────────────────────────────
+            // Formato: CODIGO  NOMBRE [REQUISITOS]  CRED  HT  HP  TIPO
+            // El código siempre empieza con 2 letras mayúsculas + 4 dígitos.
+            // Al final hay exactamente 3 números y una letra O/E.
+            if (!preg_match(
+                '/^([A-Z]{2}\d{4})\s+(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+([OE])\s*$/u',
+                $linea,
+                $m
+            )) {
                 continue;
             }
 
-            // Formato alternativo: código, nombre, créditos, tipo (sin horas separadas)
-            if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s+(\d+)\s+([OE])\s*(.*)$/u', $linea, $m)) {
-                $requisitos = $this->parseRequisitos(trim($m[5]));
-                $cursos[]   = [
-                    'ciclo'          => $cicloActual ?: null,
-                    'codigo'         => $m[1],
-                    'nombre'         => trim($m[2]),
-                    'horas_teoricas' => null,
-                    'horas_practicas'=> null,
-                    'creditos'       => (int) $m[3],
-                    'tipo'           => $m[4],
-                    'requisitos'     => $requisitos,
-                ];
+            [$nombre, $requisitos] = $this->separarNombreRequisitos($m[2]);
+
+            // Ignorar la fila de cabecera de tabla si llegara a coincidir
+            if (strtoupper($nombre) === 'CURSO' || strtoupper($nombre) === 'NOMBRE') {
+                continue;
             }
+
+            $cursos[] = [
+                'ciclo'           => $cicloActual ?: null,
+                'codigo'          => $m[1],
+                'nombre'          => $nombre,
+                'creditos'        => (int) $m[3],
+                'horas_teoricas'  => (int) $m[4],
+                'horas_practicas' => (int) $m[5],
+                'tipo'            => $m[6],       // 'O' | 'E'
+                'requisitos'      => $requisitos, // array de códigos
+            ];
         }
 
         return $cursos;
     }
 
-    private function parseRequisitos(string $raw): array
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    /**
+     * Separa el nombre del curso de sus prerequisitos.
+     *
+     * El texto recibido tiene la forma:
+     *   "CALCULO I"                            → nombre="CALCULO I",      reqs=[]
+     *   "CALCULO I MA1408"                     → nombre="CALCULO I",      reqs=["MA1408"]
+     *   "PROGRAMACION I SI1216 / SI1447"       → nombre="PROGRAMACION I", reqs=["SI1216","SI1447"]
+     *   "TALLER DE REDACCION 100cred./ ED1331" → nombre="TALLER DE REDACCION", reqs=["ED1331"]
+     *
+     * @return array{string, string[]}
+     */
+    private function separarNombreRequisitos(string $texto): array
     {
-        if (empty($raw)) {
-            return [];
+        // Buscar el primer código de curso (XX\d{4}) en el texto
+        if (!preg_match('/\b([A-Z]{2}\d{4})\b/', $texto, $_, PREG_OFFSET_CAPTURE)) {
+            return [trim($texto), []];
         }
 
-        $partes = preg_split('/[\s\/,]+/', $raw);
-        $codigos = [];
-        foreach ($partes as $parte) {
-            $parte = trim($parte);
-            // Solo incluir si parece un código de curso (2 letras + 4 dígitos)
-            if (preg_match('/^[A-Z]{2}\d{4}$/', $parte)) {
-                $codigos[] = $parte;
-            }
-        }
-        return $codigos;
+        $pos    = $_[0][1];
+        $nombre = substr($texto, 0, $pos);
+
+        // Limpiar notaciones especiales al final del nombre (ej. "100cred./")
+        $nombre = preg_replace('/\s+\d+\s*cred\.?\s*\/?.*$/iu', '', $nombre);
+        $nombre = trim($nombre, " \t/.-");
+
+        // Extraer todos los códigos de curso que aparecen como prerequisitos
+        $resto = substr($texto, $pos);
+        preg_match_all('/\b([A-Z]{2}\d{4})\b/', $resto, $matches);
+        $requisitos = $matches[1] ?? [];
+
+        return [$nombre, array_unique($requisitos)];
     }
 
     private function romanToInt(string $roman): int
