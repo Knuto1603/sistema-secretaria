@@ -10,9 +10,22 @@ interface ApiResponse<T> {
   data: T;
 }
 
+interface LineaDebug {
+  n: number;
+  txt: string;
+  hex: string;
+}
+
 interface DebugResult {
-  lineas: string[];
-  raw: string;
+  parsed: {
+    plan_nombre: string;
+    escuela_nombre: string;
+    total_creditos_obligatorios: number;
+    creditos_electivos_requeridos: number;
+    cursos: any[];
+  };
+  total_lineas: number;
+  lineas: LineaDebug[];
 }
 
 @Component({
@@ -28,7 +41,7 @@ export class PdfDebugComponent {
   loading = signal(false);
   resultado = signal<DebugResult | null>(null);
   error = signal<string | null>(null);
-  mostrarRaw = signal(false);
+  mostrarHex = signal(false);
 
   volver(): void {
     this.router.navigate(['/app/developer']);
@@ -62,8 +75,7 @@ export class PdfDebugComponent {
       });
   }
 
-  copiarTexto(): void {
-    const raw = this.resultado()?.raw ?? '';
-    navigator.clipboard.writeText(raw);
+  copiarJson(): void {
+    navigator.clipboard.writeText(JSON.stringify(this.resultado(), null, 2));
   }
 }

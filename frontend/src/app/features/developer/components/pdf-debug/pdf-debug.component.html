@@ -17,10 +17,6 @@
 
   <!-- Upload -->
   <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-    <p class="text-sm text-slate-600 mb-4">
-      Sube un PDF de plan de estudios para ver el texto crudo que extrae el parser, línea por línea.
-    </p>
-
     <label
       class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg cursor-pointer transition-colors w-fit"
       [class.opacity-60]="loading()"
@@ -45,51 +41,82 @@
     }
   </div>
 
-  <!-- Resultado -->
   @if (resultado()) {
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <!-- Resumen del parser -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <h3 class="text-sm font-bold text-slate-700">Resultado del parser</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-xl font-black" [class.text-emerald-600]="resultado()!.parsed.cursos.length > 0" [class.text-red-500]="resultado()!.parsed.cursos.length === 0">
+            {{ resultado()!.parsed.cursos.length }}
+          </div>
+          <div class="text-xs text-slate-500 mt-0.5">Cursos</div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-xl font-black text-slate-700">{{ resultado()!.parsed.total_creditos_obligatorios }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Cr. Obligatorios</div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-xl font-black text-slate-700">{{ resultado()!.parsed.creditos_electivos_requeridos }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Cr. Electivos</div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 text-center">
+          <div class="text-xl font-black text-slate-700">{{ resultado()!.total_lineas }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Líneas totales</div>
+        </div>
+      </div>
+      <div class="text-xs text-slate-500">
+        <span class="font-semibold">Plan:</span> {{ resultado()!.parsed.plan_nombre }} &nbsp;·&nbsp;
+        <span class="font-semibold">Escuela:</span> {{ resultado()!.parsed.escuela_nombre }}
+      </div>
+    </div>
 
-      <!-- Barra de herramientas -->
+    <!-- Tabla de líneas -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-slate-50">
         <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">
-          {{ resultado()!.lineas.length }} líneas extraídas
+          Líneas extraídas ({{ resultado()!.lineas.length }} no vacías)
         </span>
         <div class="flex gap-2">
           <button
-            (click)="mostrarRaw.set(!mostrarRaw())"
+            (click)="mostrarHex.set(!mostrarHex())"
             class="px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-200 hover:bg-white rounded-lg transition-colors">
-            {{ mostrarRaw() ? 'Ver líneas' : 'Ver raw' }}
+            {{ mostrarHex() ? 'Ocultar hex' : 'Ver hex' }}
           </button>
           <button
-            (click)="copiarTexto()"
+            (click)="copiarJson()"
             class="px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg transition-colors">
-            Copiar texto
+            Copiar JSON
           </button>
         </div>
       </div>
 
-      <!-- Vista líneas numeradas -->
-      @if (!mostrarRaw()) {
-        <div class="overflow-auto max-h-[60vh]">
-          <table class="w-full text-xs font-mono">
-            <tbody>
-              @for (linea of resultado()!.lineas; track $index) {
-                <tr class="hover:bg-slate-50 border-b border-slate-50">
-                  <td class="px-3 py-1 text-right text-slate-300 select-none w-12 border-r border-slate-100">
-                    {{ $index + 1 }}
-                  </td>
-                  <td class="px-3 py-1 text-slate-700 whitespace-pre">{{ linea || '&nbsp;' }}</td>
-                </tr>
+      <div class="overflow-auto max-h-[60vh]">
+        <table class="w-full text-xs font-mono">
+          <thead class="bg-slate-50 sticky top-0">
+            <tr class="border-b border-slate-200">
+              <th class="px-3 py-2 text-right text-slate-400 w-10">#</th>
+              <th class="px-3 py-2 text-left text-slate-500">Texto</th>
+              @if (mostrarHex()) {
+                <th class="px-3 py-2 text-left text-slate-400 w-96">Hex</th>
               }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <!-- Vista raw -->
-        <div class="overflow-auto max-h-[60vh] p-4">
-          <pre class="text-xs font-mono text-slate-700 whitespace-pre-wrap">{{ resultado()!.raw }}</pre>
-        </div>
-      }
+            </tr>
+          </thead>
+          <tbody>
+            @for (linea of resultado()!.lineas; track linea.n) {
+              <tr class="border-b border-slate-50 hover:bg-slate-50"
+                [class.bg-indigo-50]="linea.txt.endsWith('CICLO:')"
+                [class.bg-amber-50]="linea.txt.match('^[A-Z]{2}\\d{4}\\s')">
+                <td class="px-3 py-1 text-right text-slate-300 select-none">{{ linea.n }}</td>
+                <td class="px-3 py-1 text-slate-700 whitespace-pre">{{ linea.txt || '(vacía)' }}</td>
+                @if (mostrarHex()) {
+                  <td class="px-3 py-1 text-slate-400 break-all">{{ linea.hex }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
 
