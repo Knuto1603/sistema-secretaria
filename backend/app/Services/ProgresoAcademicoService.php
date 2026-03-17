@@ -39,7 +39,7 @@ class ProgresoAcademicoService
 
         foreach ($plan->cursos as $planCurso) {
             $curso    = $planCurso->curso;
-            $creditos = $planCurso->creditos ?? 0;
+            $creditos = $planCurso->creditos ?? $curso->creditos ?? 0;
 
             // Ignorar entradas del plan cuyo curso ya no existe en la BD
             if (!$curso) {
