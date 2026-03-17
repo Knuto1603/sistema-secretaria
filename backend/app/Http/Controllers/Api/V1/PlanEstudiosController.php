@@ -194,7 +194,7 @@ class PlanEstudiosController extends Controller
 
         $plan = Plan::where('escuela_id', $escuela->id)->where('activo', true)->first();
 
-        $query = PlanEstudios::with(['curso.area', 'curso.requisitos']);
+        $query = PlanEstudios::with('curso.area');
         if ($plan) {
             $query->where('plan_id', $plan->id);
         } else {
@@ -212,7 +212,7 @@ class PlanEstudiosController extends Controller
             'codigo_curso'    => $p->curso->codigo,
             'nombre_curso'    => $p->curso->nombre,
             'area'            => $p->curso->area?->nombre,
-            'requisitos'      => $p->curso->requisitos->pluck('codigo')->toArray(),
+            'requisitos'      => $p->requisitos ?? [],
         ]);
 
         return $this->success([
@@ -375,6 +375,7 @@ class PlanEstudiosController extends Controller
                             'tipo'            => $cursoDato['tipo'],
                             'horas_teoricas'  => $cursoDato['horas_teoricas'],
                             'horas_practicas' => $cursoDato['horas_practicas'],
+                            'requisitos'      => $cursoDato['requisitos'] ?? [],
                         ]
                     );
 
@@ -382,29 +383,6 @@ class PlanEstudiosController extends Controller
                 } catch (\Throwable $e) {
                     $errores[] = ['codigo' => $cursoDato['codigo'], 'error' => $e->getMessage()];
                 }
-            }
-
-            // Vincular requisitos (sync reemplaza lo que había para evitar datos stale)
-            foreach ($data['cursos'] as $cursoDato) {
-                $cursoId = $codigoMap[$cursoDato['codigo']] ?? null;
-                if (!$cursoId) {
-                    continue;
-                }
-                $requisitoIds = [];
-                foreach ($cursoDato['requisitos'] ?? [] as $reqCodigo) {
-                    // Buscar primero en los cursos importados del mismo lote, luego en BD
-                    $reqId = $codigoMap[$reqCodigo] ?? null;
-                    if (!$reqId) {
-                        // Restringir búsqueda a cursos que pertenecen a este plan
-                        $reqId = PlanEstudios::where('plan_id', $plan->id)
-                            ->whereHas('curso', fn($q) => $q->where('codigo', $reqCodigo))
-                            ->value('curso_id');
-                    }
-                    if ($reqId) {
-                        $requisitoIds[] = $reqId;
-                    }
-                }
-                Curso::find($cursoId)?->requisitos()->sync($requisitoIds);
             }
         });
 

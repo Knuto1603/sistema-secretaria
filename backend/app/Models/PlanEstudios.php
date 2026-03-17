@@ -21,6 +21,7 @@ class PlanEstudios extends Model
         'tipo',  // O = Obligatorio, E = Electivo
         'horas_teoricas',
         'horas_practicas',
+        'requisitos',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class PlanEstudios extends Model
         'creditos'        => 'integer',
         'horas_teoricas'  => 'integer',
         'horas_practicas' => 'integer',
+        'requisitos'      => 'array',
     ];
 
     public function escuela(): BelongsTo
