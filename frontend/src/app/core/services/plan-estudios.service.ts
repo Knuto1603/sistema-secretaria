@@ -14,6 +14,7 @@ export interface CursoPlan {
   codigo_curso: string;
   nombre_curso: string;
   area: string | null;
+  requisitos: string[];
 }
 
 export interface PlanVersion {

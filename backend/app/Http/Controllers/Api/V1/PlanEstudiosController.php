@@ -194,7 +194,7 @@ class PlanEstudiosController extends Controller
 
         $plan = Plan::where('escuela_id', $escuela->id)->where('activo', true)->first();
 
-        $query = PlanEstudios::with('curso.area');
+        $query = PlanEstudios::with(['curso.area', 'curso.requisitos']);
         if ($plan) {
             $query->where('plan_id', $plan->id);
         } else {
@@ -212,6 +212,7 @@ class PlanEstudiosController extends Controller
             'codigo_curso'    => $p->curso->codigo,
             'nombre_curso'    => $p->curso->nombre,
             'area'            => $p->curso->area?->nombre,
+            'requisitos'      => $p->curso->requisitos->pluck('codigo')->toArray(),
         ]);
 
         return $this->success([

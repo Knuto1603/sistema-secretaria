@@ -99,6 +99,13 @@ export class PlanEstudiosComponent implements OnInit {
   cicloFiltro = signal<number | null>(null);
   tipoFiltro = signal<'O' | 'E' | null>(null);
 
+  // Tooltip hover
+  hoveredCursoId = signal<string | null>(null);
+
+  getCursoPorCodigo(codigo: string): CursoPlan | undefined {
+    return this.plan()?.cursos.find(c => c.codigo_curso === codigo);
+  }
+
   get cursosFiltrados(): CursoPlan[] {
     let cursos = this.plan()?.cursos ?? [];
     const ciclo = this.cicloFiltro();
