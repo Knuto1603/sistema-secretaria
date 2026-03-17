@@ -384,22 +384,27 @@ class PlanEstudiosController extends Controller
                 }
             }
 
-            // Vincular requisitos
+            // Vincular requisitos (sync reemplaza lo que había para evitar datos stale)
             foreach ($data['cursos'] as $cursoDato) {
-                if (empty($cursoDato['requisitos'])) {
-                    continue;
-                }
                 $cursoId = $codigoMap[$cursoDato['codigo']] ?? null;
                 if (!$cursoId) {
                     continue;
                 }
-                $curso = Curso::find($cursoId);
-                foreach ($cursoDato['requisitos'] as $reqCodigo) {
-                    $reqId = $codigoMap[$reqCodigo] ?? Curso::where('codigo', $reqCodigo)->value('id');
-                    if ($reqId && !$curso->requisitos()->where('requisito_curso_id', $reqId)->exists()) {
-                        $curso->requisitos()->attach($reqId);
+                $requisitoIds = [];
+                foreach ($cursoDato['requisitos'] ?? [] as $reqCodigo) {
+                    // Buscar primero en los cursos importados del mismo lote, luego en BD
+                    $reqId = $codigoMap[$reqCodigo] ?? null;
+                    if (!$reqId) {
+                        // Restringir búsqueda a cursos que pertenecen a este plan
+                        $reqId = PlanEstudios::where('plan_id', $plan->id)
+                            ->whereHas('curso', fn($q) => $q->where('codigo', $reqCodigo))
+                            ->value('curso_id');
+                    }
+                    if ($reqId) {
+                        $requisitoIds[] = $reqId;
                     }
                 }
+                Curso::find($cursoId)?->requisitos()->sync($requisitoIds);
             }
         });
 
