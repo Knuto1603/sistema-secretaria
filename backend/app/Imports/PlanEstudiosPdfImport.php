@@ -145,7 +145,6 @@ class PlanEstudiosPdfImport
 
             // ── Detectar encabezado de ciclo ─────────────────────────────────
             // Formato: ICICLO:  IVCICLO:  XCICLO:  etc.
-            // El numeral romano se pega directamente a la palabra CICLO.
             if (preg_match('/^(X{0,2}(?:IX|IV|V?I{0,3}))CICLO\s*:/i', $linea, $m)) {
                 $num = $this->romanToInt(strtoupper(trim($m[1])));
                 if ($num > 0) {
@@ -154,67 +153,88 @@ class PlanEstudiosPdfImport
                 continue;
             }
 
-            // ── Detectar fila de curso ────────────────────────────────────────
-            // La línea debe empezar con un código de curso: 2 letras + 4 dígitos.
-            // Luego el nombre del curso separado por 2+ espacios del tipo (O|E).
-            // Después del tipo puede haber: nada, código(s) de requisito, o "Ncred./".
-            // Al final siempre: CRED  HT  HP  (3 números separados por espacios).
-            if (!preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s{2,}([OE])(.*)$/u', $linea, $m)) {
+            // La línea debe empezar con código: 2 letras + 4 dígitos
+            if (!preg_match('/^([A-Z]{2}\d{4})\s/', $linea)) {
                 continue;
             }
 
-            $codigo  = $m[1];
-            $nombre  = trim($m[2]);
-            $tipo    = $m[3];
-            $despues = $m[4]; // texto inmediatamente después del tipo
+            $curso = $this->parsearLineaCurso($linea);
+            if ($curso === null) continue;
 
             // Ignorar fila de cabecera de tabla
-            if (strtoupper($nombre) === 'CURSO' || strtoupper($nombre) === 'NOMBRE') {
+            if (strtoupper($curso['nombre']) === 'CURSO' || strtoupper($curso['nombre']) === 'NOMBRE') {
                 continue;
             }
 
-            // ── Extraer CRED HT HP del texto después del tipo ─────────────────
-            //
-            // Caso A — sin requisitos, tipo pegado al primer número:
-            //   "O2 0 64"  →  despues = "2 0 64"
-            //
-            // Caso B — con requisitos antes de los 3 números:
-            //   "OMA1408    4 48 32"         → despues = "MA1408    4 48 32"
-            //   "OMA1435 / MA1470    3 32 32" → despues = "MA1435 / MA1470    3 32 32"
-            //   "O100cred./ ED1331    2 0 64" → despues = "100cred./ ED1331    2 0 64"
-            //   "E180cred.    3 32 32"        → despues = "180cred.    3 32 32"
+            $curso['ciclo'] = $cicloActual ?: null;
+            $cursos[]       = $curso;
+        }
+
+        return $cursos;
+    }
+
+    /**
+     * Intenta parsear una línea de curso probando dos formatos:
+     *
+     * Formato A — TIPO en medio (PDF Industrial):
+     *   CODE  NOMBRE  [2+ espacios]  TIPO[REQS]  CRED  HT  HP
+     *   Ejemplo: "MA1435 CALCULO I    OMA1408    4 48 32"
+     *   Ejemplo: "ED1292 ACTIVIDAD DEPORTIVA    O2 0 64"
+     *
+     * Formato B — TIPO al final (PDF Agroindustrial y otros):
+     *   CODE  NOMBRE[con reqs]  CRED  HT  HP  TIPO
+     *   Ejemplo: "AG1234 NOMBRE DEL CURSO 3 32 32 O"
+     *   Ejemplo: "AG1234 NOMBRE MA1408 4 48 32 O"
+     *
+     * @return array|null
+     */
+    private function parsearLineaCurso(string $linea): ?array
+    {
+        // ── Formato A: TIPO antes de los números ─────────────────────────────
+        if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s{2,}([OE])(.*)$/u', $linea, $m)) {
+            $despues = $m[4];
 
             if (preg_match('/^\s*(\d+)\s+(\d+)\s+(\d+)\s*$/', $despues, $nums)) {
-                // Caso A: solo números, sin requisitos
-                $creditos   = (int) $nums[1];
-                $hteorica   = (int) $nums[2];
-                $hpractica  = (int) $nums[3];
-                $requisitos = [];
-            } elseif (preg_match('/^(.*?)\s+(\d+)\s+(\d+)\s+(\d+)\s*$/', $despues, $nums)) {
-                // Caso B: hay texto de requisitos antes de los 3 números finales
-                $creditos   = (int) $nums[2];
-                $hteorica   = (int) $nums[3];
-                $hpractica  = (int) $nums[4];
-                // Extraer sólo los códigos de curso del texto de requisitos
-                preg_match_all('/\b([A-Z]{2}\d{4})\b/', $nums[1], $reqMatches);
-                $requisitos = array_unique($reqMatches[1] ?? []);
-            } else {
-                continue; // no se pudo parsear, omitir línea
+                return [
+                    'codigo'          => $m[1],
+                    'nombre'          => trim($m[2]),
+                    'tipo'            => $m[3],
+                    'creditos'        => (int) $nums[1],
+                    'horas_teoricas'  => (int) $nums[2],
+                    'horas_practicas' => (int) $nums[3],
+                    'requisitos'      => [],
+                ];
             }
 
-            $cursos[] = [
-                'ciclo'           => $cicloActual ?: null,
-                'codigo'          => $codigo,
+            if (preg_match('/^(.*?)\s+(\d+)\s+(\d+)\s+(\d+)\s*$/', $despues, $nums)) {
+                preg_match_all('/\b([A-Z]{2}\d{4})\b/', $nums[1], $req);
+                return [
+                    'codigo'          => $m[1],
+                    'nombre'          => trim($m[2]),
+                    'tipo'            => $m[3],
+                    'creditos'        => (int) $nums[2],
+                    'horas_teoricas'  => (int) $nums[3],
+                    'horas_practicas' => (int) $nums[4],
+                    'requisitos'      => array_unique($req[1] ?? []),
+                ];
+            }
+        }
+
+        // ── Formato B: TIPO al final ──────────────────────────────────────────
+        if (preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+([OE])\s*$/u', $linea, $m)) {
+            [$nombre, $requisitos] = $this->separarNombreRequisitos($m[2]);
+            return [
+                'codigo'          => $m[1],
                 'nombre'          => $nombre,
-                'creditos'        => $creditos,
-                'horas_teoricas'  => $hteorica,
-                'horas_practicas' => $hpractica,
-                'tipo'            => $tipo,
+                'tipo'            => $m[6],
+                'creditos'        => (int) $m[3],
+                'horas_teoricas'  => (int) $m[4],
+                'horas_practicas' => (int) $m[5],
                 'requisitos'      => $requisitos,
             ];
         }
 
-        return $cursos;
+        return null;
     }
 
     // =========================================================================
