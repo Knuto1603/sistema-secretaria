@@ -118,7 +118,7 @@ class PlanEstudiosPdfImport
             . 'Cr[eé]ditos?\s+Electivos?[^\d\n\r]*[\r\n\s]+'
             . '(?:Cr[eé]ditos?\s+de\s+Pr[aá]cticas?[^\d\n\r]*[\r\n\s]+)?'
             . '(?:Otros?\s+Cr[eé]ditos?[^\d\n\r]*[\r\n\s]+)?'
-            . '(\d+)[^\d]+(\d+)/isu',
+            . '(\d+)\s+(\d+)/isu',
             $text,
             $m
         )) {
