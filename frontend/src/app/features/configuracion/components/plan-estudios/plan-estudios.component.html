@@ -214,6 +214,15 @@
               </p>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
+              <!-- Editar créditos -->
+              <button
+                (click)="abrirEditarPlan(p)"
+                title="Editar créditos requeridos"
+                class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
               @if (!p.activo) {
                 <button
                   (click)="activarPlan(p.id)"
@@ -524,6 +533,63 @@
           (click)="cerrarImportPdfResultado()"
           class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
           Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Editar plan -->
+@if (editandoPlan()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-base font-bold text-slate-800">Editar plan de estudios</h2>
+        <button (click)="cerrarEditarPlan()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Nombre del plan</label>
+          <input
+            type="text"
+            [(ngModel)]="editNombre"
+            placeholder="Ej: 2018-1"
+            class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Créditos obligatorios</label>
+            <input
+              type="number"
+              [(ngModel)]="editCredO"
+              min="0"
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Créditos electivos req.</label>
+            <input
+              type="number"
+              [(ngModel)]="editCredE"
+              min="0"
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+      <div class="px-6 pb-6 flex gap-3">
+        <button
+          (click)="cerrarEditarPlan()"
+          class="flex-1 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
+          Cancelar
+        </button>
+        <button
+          (click)="guardarPlan()"
+          [disabled]="guardandoPlan() || !editNombre.trim()"
+          class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+          {{ guardandoPlan() ? 'Guardando...' : 'Guardar cambios' }}
         </button>
       </div>
     </div>

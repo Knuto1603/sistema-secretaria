@@ -116,6 +116,12 @@ export class PlanEstudiosService {
     }).pipe(map(r => r.data));
   }
 
+  actualizarPlan(planId: string, data: { nombre?: string; total_creditos_obligatorios?: number; creditos_electivos_requeridos?: number }): Observable<PlanVersion> {
+    return this.http.patch<ApiResponse<PlanVersion>>(`${this.apiUrl}/planes/${planId}`, data).pipe(
+      map(r => r.data)
+    );
+  }
+
   activarPlan(planId: string): Observable<{ id: string; activo: boolean }> {
     return this.http.patch<ApiResponse<any>>(`${this.apiUrl}/planes/${planId}/activar`, {}).pipe(
       map(r => r.data)

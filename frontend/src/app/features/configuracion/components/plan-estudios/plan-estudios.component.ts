@@ -47,7 +47,51 @@ export class PlanEstudiosComponent implements OnInit {
   nuevoPlanCredE = 0;
   creandoPlan = signal(false);
 
-  // Equivalencias
+  // ── Edición de plan ──────────────────────────────────────────────────────
+
+  editandoPlan = signal<PlanVersion | null>(null);
+  editCredO    = 0;
+  editCredE    = 0;
+  editNombre   = '';
+  guardandoPlan = signal(false);
+
+  abrirEditarPlan(p: PlanVersion): void {
+    this.editandoPlan.set(p);
+    this.editNombre = p.nombre;
+    this.editCredO  = p.total_creditos_obligatorios ?? 0;
+    this.editCredE  = p.creditos_electivos_requeridos ?? 0;
+  }
+
+  cerrarEditarPlan(): void {
+    this.editandoPlan.set(null);
+  }
+
+  guardarPlan(): void {
+    const p = this.editandoPlan();
+    if (!p) return;
+    this.guardandoPlan.set(true);
+    this.service.actualizarPlan(p.id, {
+      nombre: this.editNombre,
+      total_creditos_obligatorios: this.editCredO,
+      creditos_electivos_requeridos: this.editCredE,
+    }).subscribe({
+      next: updated => {
+        this.planes.update(list => list.map(x => x.id === updated.id ? { ...x, ...updated } : x));
+        if (this.plan()?.plan?.id === updated.id) {
+          this.plan.update(d => d ? { ...d, plan: { ...d.plan!, ...updated } } : d);
+        }
+        this.mostrarMensaje('success', 'Plan actualizado correctamente');
+        this.guardandoPlan.set(false);
+        this.cerrarEditarPlan();
+      },
+      error: err => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al actualizar el plan');
+        this.guardandoPlan.set(false);
+      },
+    });
+  }
+
+  // ── Equivalencias ────────────────────────────────────────────────────────
   cursoEquivalencias = signal<{ curso: { id: string; codigo: string; nombre: string }; equivalencias: CursoEquivalencia[] } | null>(null);
   mostrarModalEquivalencias = signal(false);
 
