@@ -454,33 +454,25 @@ class PlanEstudiosController extends Controller
         $text     = $pdf->getText();
 
         // Ejecutar el parser y mostrar resultado
-        $parser   = new \App\Imports\PlanEstudiosPdfImport();
-        $parsed   = $parser->parse($filePath);
+        $parser  = new \App\Imports\PlanEstudiosPdfImport();
+        $parsed  = $parser->parse($filePath);
 
-        // Analizar qué líneas matchean el regex de curso
-        $lineas   = preg_split('/\r\n|\r|\n/', $text);
-        $debug    = [];
+        // Mostrar TODAS las líneas con su número, contenido y hex
+        $lineas  = preg_split('/\r\n|\r|\n/', $text);
+        $todas   = [];
         foreach ($lineas as $i => $linea) {
             $l = trim($linea);
-            if ($l === '') continue;
-            $matchCiclo  = preg_match('/^(X{0,2}(?:IX|IV|V?I{0,3}))CICLO\s*:/i', $l, $mc);
-            $matchCurso  = preg_match('/^([A-Z]{2}\d{4})\s+(.+?)\s{2,}([OE])(.*)$/u', $l, $mm);
-            if ($matchCiclo || $matchCurso) {
-                $debug[] = [
-                    'linea'       => $i + 1,
-                    'texto'       => $l,
-                    'tipo'        => $matchCiclo ? 'ciclo' : 'curso',
-                    'match_ciclo' => $matchCiclo ? $mc[0] : null,
-                    'match_curso' => $matchCurso ? $mm[0] : null,
-                ];
-            }
+            $todas[] = [
+                'n'   => $i + 1,
+                'txt' => $l,
+                'hex' => bin2hex($l),
+            ];
         }
 
         return $this->success([
-            'parsed'          => $parsed,
-            'lineas_matched'  => $debug,
-            'total_lineas'    => count($lineas),
-            'hex_muestra'     => bin2hex(substr($text, 0, 200)),
+            'parsed'       => $parsed,
+            'total_lineas' => count($lineas),
+            'lineas'       => $todas,
         ], 'Debug completo');
     }
 
