@@ -8,8 +8,6 @@ use App\Models\Inscripcion;
 use App\Models\Periodo;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
-use DOMDocument;
-use DOMXPath;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -28,6 +26,7 @@ class InscripcionesHtmlImport
     private int   $inscripcionesCreadas      = 0;
     private int   $inscripcionesActualizadas = 0;
     private int   $alumnosNuevos             = 0;
+    private int   $bloquesParseados          = 0;
     private array $noEncontrados             = [];
     private array $errores                   = [];
 
@@ -50,13 +49,7 @@ class InscripcionesHtmlImport
             $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
         }
 
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML('<?xml encoding="UTF-8">' . $content);
-        libxml_clear_errors();
-
-        $xpath  = new DOMXPath($dom);
-        $bloques = $this->parsearFilas($xpath);
+        $bloques = $this->parsearFilas($content);
 
         $this->resolverYGuardar($bloques);
     }
@@ -66,86 +59,113 @@ class InscripcionesHtmlImport
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Recorre TODAS las filas del documento en orden.
-     * Extrae CURSO + SEMESTRE de la misma fila cuando aparecen juntos.
-     * Devuelve array de bloques: cada bloque = un grupo de alumnos con su curso/sección.
+     * Extrae todos los valores FONT COLOR=000080 del HTML en orden de aparición
+     * y los analiza secuencialmente para construir bloques curso→alumnos.
+     *
+     * DOMDocument descarta ~40% del contenido en archivos SIGA multi-página
+     * debido a estructura HTML inválida. Por eso se parsea el HTML directamente
+     * con regex, evitando cualquier reestructuración del DOM.
      *
      * @return array<int, array{cursoCodigo:string|null, clave:string|null, seccion:string|null, semestre:string|null, alumnos:array}>
      */
-    private function parsearFilas(DOMXPath $xpath): array
+    private function parsearFilas(string $content): array
     {
+        // Extraer en orden todos los textos dentro de <FONT COLOR=000080>
+        // tanto los bold (<B>) como los no-bold (datos de alumnos)
+        preg_match_all(
+            '/<FONT[^>]*COLOR=000080[^>]*>(?:<B>)?(?:<DIV[^>]*>)?(.*?)(?:<\/DIV>)?(?:<\/B>)?<\/FONT>/si',
+            $content,
+            $matches
+        );
+
+        $valores = [];
+        foreach ($matches[1] as $raw) {
+            $text = html_entity_decode(strip_tags($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = trim(preg_replace('/\s+/', ' ', $text));
+            if ($text !== '') {
+                $valores[] = $text;
+            }
+        }
+
         $bloques     = [];
         $semestre    = null;
         $cursoCodigo = null;
         $clave       = null;
         $seccion     = null;
         $alumnos     = [];
+        $n           = count($valores);
 
-        foreach ($xpath->query('//tr') as $tr) {
-            $text = $this->textoFila($tr, $xpath);
-            if ($text === '') {
+        for ($i = 0; $i < $n; $i++) {
+            $v     = $valores[$i];
+            $upper = strtoupper($v);
+
+            // ── Etiqueta (termina en ':') → el siguiente valor es su dato ──
+            if (str_ends_with($v, ':')) {
+                $next = $valores[$i + 1] ?? '';
+
+                if (str_contains($upper, 'CURSO')) {
+                    // Siguiente valor: "AL4401 - NOMBRE DEL CURSO"
+                    preg_match('/^([A-Z]{2,6}\d{2,6})/i', $next, $m);
+                    $nuevoCodigo = $m ? strtoupper($m[1]) : null;
+
+                    if ($nuevoCodigo && $nuevoCodigo !== $cursoCodigo) {
+                        if (!empty($alumnos)) {
+                            $bloques[] = compact('cursoCodigo', 'clave', 'seccion', 'semestre', 'alumnos');
+                            $alumnos   = [];
+                        }
+                        $cursoCodigo = $nuevoCodigo;
+                        $clave       = null;
+                        $seccion     = null;
+                    }
+                    $i++;
+                    continue;
+                }
+
+                if (str_contains($upper, 'SEMESTRE')) {
+                    $semestre = $next;
+                    $i++;
+                    continue;
+                }
+
+                if (str_contains($upper, 'CLAVE')) {
+                    $nuevaClave = $next;
+                    // Mismo curso, nueva clave → nueva sección → cerrar bloque anterior
+                    if ($nuevaClave !== $clave && $cursoCodigo !== null && !empty($alumnos)) {
+                        $bloques[] = compact('cursoCodigo', 'clave', 'seccion', 'semestre', 'alumnos');
+                        $alumnos   = [];
+                        $seccion   = null;
+                    }
+                    $clave = $nuevaClave;
+                    $i++;
+                    continue;
+                }
+
+                if (str_contains($upper, 'SECCION')) {
+                    $seccion = $next;
+                    $i++;
+                    continue;
+                }
+
+                // Otras etiquetas (DOCENTE, GRUPO, CAPACIDAD, Nº INSCRITOS…): ignorar solo la etiqueta
                 continue;
             }
 
-            // ── Extraer simultáneamente todo lo que haya en esta fila ──
-            $hayCurso    = (bool) preg_match('/CURSO\s*:\s*([A-Z]{2,3}\d{3,5})/i', $text, $mCurso);
-            $haySemestre = (bool) preg_match('/SEMESTRE\s*:\s*(\d{4}-\d)/i',       $text, $mSem);
-            $hayClave    = (bool) preg_match('/CLAVE\s*:\s*(\d+)/i',               $text, $mClave);
-            $haySeccion  = (bool) preg_match('/SECCION\s*:\s*(\S+)/i',             $text, $mSeccion);
-            $hayAlumno   = (bool) preg_match('/^(\d{10})\s+(.+)$/',               $text, $mAlumno);
-
-            // ── Cuando aparece un nuevo CURSO, cerrar el bloque anterior ──
-            if ($hayCurso) {
-                $nuevoCodigo = strtoupper(trim($mCurso[1]));
-                if ($nuevoCodigo !== $cursoCodigo) {
-                    if (!empty($alumnos)) {
-                        $bloques[] = [
-                            'cursoCodigo' => $cursoCodigo,
-                            'clave'       => $clave,
-                            'seccion'     => $seccion,
-                            'semestre'    => $semestre,
-                            'alumnos'     => $alumnos,
-                        ];
-                        $alumnos = [];
-                    }
-                    $cursoCodigo = $nuevoCodigo;
-                    $clave       = null;
-                    $seccion     = null;
-                }
-            }
-
-            if ($haySemestre) {
-                $semestre = trim($mSem[1]);
-            }
-
-            if ($hayClave) {
-                $clave = trim($mClave[1]);
-            }
-
-            if ($haySeccion) {
-                $seccion = trim($mSeccion[1]);
-            }
-
-            if ($hayAlumno) {
-                $nombre = trim($mAlumno[2]);
-                if (!preg_match('/^(CODIGO|NOMBRE|N[°º]|DOCENTE|FACULTAD)/i', $nombre)) {
+            // ── Fila de alumno: código de 10 dígitos seguido del nombre ──
+            if (preg_match('/^\d{10}$/', $v)) {
+                $nombre = $valores[$i + 1] ?? '';
+                if ($nombre !== '' && !preg_match('/^(CODIGO|NOMBRE|N[°º]|DOCENTE|FACULTAD)/i', $nombre)) {
                     $alumnos[] = [
-                        'codigo' => $mAlumno[1],
+                        'codigo' => $v,
                         'nombre' => mb_convert_case($nombre, MB_CASE_TITLE, 'UTF-8'),
                     ];
+                    $i++; // saltar el nombre
                 }
             }
         }
 
         // Guardar el último bloque
         if (!empty($alumnos)) {
-            $bloques[] = [
-                'cursoCodigo' => $cursoCodigo,
-                'clave'       => $clave,
-                'seccion'     => $seccion,
-                'semestre'    => $semestre,
-                'alumnos'     => $alumnos,
-            ];
+            $bloques[] = compact('cursoCodigo', 'clave', 'seccion', 'semestre', 'alumnos');
         }
 
         return $bloques;
@@ -167,6 +187,8 @@ class InscripcionesHtmlImport
     {
         // Mapa programacion_id → alumnos acumulados
         $grupos = [];
+
+        $this->bloquesParseados = count($bloques);
 
         foreach ($bloques as $bloque) {
             if (empty($bloque['alumnos']) && !$bloque['semestre'] && !$bloque['cursoCodigo'] && !$bloque['clave']) {
@@ -412,33 +434,10 @@ class InscripcionesHtmlImport
         return $user;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Extrae el texto de una fila uniendo celdas individuales con espacio.
-     * DOMDocument::textContent concatena sin separador, rompiendo los regex.
-     */
-    private function textoFila(\DOMElement $tr, DOMXPath $xpath): string
-    {
-        $celdas = $xpath->query('.//td|.//th', $tr);
-        if ($celdas->length > 0) {
-            $partes = [];
-            foreach ($celdas as $td) {
-                $val = trim(preg_replace('/\s+/', ' ', $td->textContent));
-                if ($val !== '') {
-                    $partes[] = $val;
-                }
-            }
-            return implode(' ', $partes);
-        }
-        return trim(preg_replace('/\s+/', ' ', $tr->textContent));
-    }
-
     public function getResumen(): array
     {
         return [
+            'bloques_parseados'          => $this->bloquesParseados,
             'programaciones_procesadas'  => $this->programacionesProcesadas,
             'inscripciones_creadas'      => $this->inscripcionesCreadas,
             'inscripciones_actualizadas' => $this->inscripcionesActualizadas,
