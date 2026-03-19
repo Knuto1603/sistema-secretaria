@@ -8,6 +8,7 @@ use App\Transformers\DevTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class DevController extends Controller
 {
@@ -116,6 +117,23 @@ class DevController extends Controller
         $routes = $this->devService->getRoutes();
 
         return $this->success($routes, 'Rutas del sistema');
+    }
+
+    // =========================================================================
+    // POST /dev/mail/test
+    // =========================================================================
+    public function testMail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'destinatario' => ['required', 'email'],
+        ]);
+
+        try {
+            $result = $this->devService->testMail($request->input('destinatario'));
+            return $this->success($result, 'Correo de prueba enviado correctamente');
+        } catch (Throwable $e) {
+            return $this->error('Error al enviar el correo: ' . $e->getMessage(), 422);
+        }
     }
 
     // =========================================================================

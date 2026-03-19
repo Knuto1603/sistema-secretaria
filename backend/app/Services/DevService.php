@@ -10,6 +10,7 @@ use App\Transformers\DevTransformer;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 class DevService
@@ -224,5 +225,38 @@ class DevService
     {
         // El token actual es de impersonación; lo revocamos
         $developer->currentAccessToken()->delete();
+    }
+
+    // =========================================================================
+    // TEST MAIL
+    // =========================================================================
+
+    public function testMail(string $destinatario): array
+    {
+        $inicio = microtime(true);
+
+        Mail::raw(
+            "Correo de prueba del sistema Secretaría FII-UNP.\n\n" .
+            "Si recibes este mensaje, el servicio de correo está configurado correctamente.\n\n" .
+            "Fecha: " . now()->toDateTimeString() . "\n" .
+            "Mailer: " . config('mail.default') . "\n" .
+            "Host: " . config('mail.mailers.smtp.host', 'N/A') . "\n" .
+            "Puerto: " . config('mail.mailers.smtp.port', 'N/A'),
+            fn ($msg) => $msg
+                ->to($destinatario)
+                ->subject('[Secretaría FII] Prueba de correo')
+                ->from(config('mail.from.address'), config('mail.from.name'))
+        );
+
+        $ms = round((microtime(true) - $inicio) * 1000);
+
+        return [
+            'enviado_a'  => $destinatario,
+            'mailer'     => config('mail.default'),
+            'host'       => config('mail.mailers.smtp.host', 'N/A'),
+            'puerto'     => config('mail.mailers.smtp.port', 'N/A'),
+            'from'       => config('mail.from.address'),
+            'tiempo_ms'  => $ms,
+        ];
     }
 }

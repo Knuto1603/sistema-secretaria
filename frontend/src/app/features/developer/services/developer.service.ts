@@ -90,4 +90,10 @@ export class DeveloperService {
       .delete<ApiResponse<null>>(`${this.api}/impersonate`)
       .pipe(map(() => void 0));
   }
+
+  testMail(destinatario: string): Observable<{ enviado_a: string; mailer: string; host: string; puerto: string | number; from: string; tiempo_ms: number }> {
+    return this.http
+      .post<ApiResponse<any>>(`${this.api}/mail/test`, { destinatario })
+      .pipe(map(r => r.data));
+  }
 }
