@@ -120,6 +120,22 @@ class DevController extends Controller
     }
 
     // =========================================================================
+    // GET /dev/mail/config
+    // =========================================================================
+    public function mailConfig(): JsonResponse
+    {
+        return $this->success([
+            'mailer'   => config('mail.default'),
+            'host'     => config('mail.mailers.smtp.host'),
+            'port'     => config('mail.mailers.smtp.port'),
+            'username' => config('mail.mailers.smtp.username'),
+            'from'     => config('mail.from.address'),
+            'env_host' => env('MAIL_HOST'),
+            'env_port' => env('MAIL_PORT'),
+        ], 'Configuración de correo actual');
+    }
+
+    // =========================================================================
     // POST /dev/mail/test
     // =========================================================================
     public function testMail(Request $request): JsonResponse

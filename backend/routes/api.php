@@ -424,6 +424,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::patch('settings/{key}', [DevController::class, 'updateSetting']);
             Route::post('maintenance/cache-clear', [DevController::class, 'clearCache']);
             Route::post('maintenance/logs-clear', [DevController::class, 'clearLogs']);
+            Route::get('mail/config', [DevController::class, 'mailConfig']);
             Route::post('mail/test', [DevController::class, 'testMail']);
             Route::get('routes', [DevController::class, 'routes']);
             Route::post('impersonate/{userId}', [DevController::class, 'impersonate']);
