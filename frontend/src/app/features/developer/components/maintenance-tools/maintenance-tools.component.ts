@@ -18,6 +18,16 @@ interface MailResult {
   tiempo_ms: number;
 }
 
+interface MailConfig {
+  mailer: string;
+  host: string;
+  port: string | number;
+  username: string;
+  from: string;
+  env_host: string;
+  env_port: string | number;
+}
+
 @Component({
   selector: 'app-maintenance-tools',
   standalone: true,
@@ -27,12 +37,14 @@ interface MailResult {
 export class MaintenanceToolsComponent {
   private devService = inject(DeveloperService);
 
-  loadingCache = signal(false);
-  loadingLogs  = signal(false);
-  loadingMail  = signal(false);
-  mailDest     = '';
-  mailResult   = signal<MailResult | null>(null);
-  toast        = signal<Toast | null>(null);
+  loadingCache  = signal(false);
+  loadingLogs   = signal(false);
+  loadingMail   = signal(false);
+  loadingConfig = signal(false);
+  mailDest      = '';
+  mailResult    = signal<MailResult | null>(null);
+  mailConfig    = signal<MailConfig | null>(null);
+  toast         = signal<Toast | null>(null);
 
   clearCache(): void {
     if (!confirm('¿Limpiar caché, configuración y vistas cacheadas?')) return;
@@ -60,6 +72,21 @@ export class MaintenanceToolsComponent {
       error: () => {
         this.loadingLogs.set(false);
         this.showToast('error', 'Error al limpiar los logs');
+      },
+    });
+  }
+
+  checkMailConfig(): void {
+    this.loadingConfig.set(true);
+    this.mailConfig.set(null);
+    this.devService.getMailConfig().subscribe({
+      next: data => {
+        this.loadingConfig.set(false);
+        this.mailConfig.set(data);
+      },
+      error: () => {
+        this.loadingConfig.set(false);
+        this.showToast('error', 'Error al obtener la configuración de correo');
       },
     });
   }

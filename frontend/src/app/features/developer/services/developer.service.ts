@@ -96,4 +96,10 @@ export class DeveloperService {
       .post<ApiResponse<any>>(`${this.api}/mail/test`, { destinatario })
       .pipe(map(r => r.data));
   }
+
+  getMailConfig(): Observable<{ mailer: string; host: string; port: string | number; username: string; from: string; env_host: string; env_port: string | number }> {
+    return this.http
+      .get<ApiResponse<any>>(`${this.api}/mail/config`)
+      .pipe(map(r => r.data));
+  }
 }
