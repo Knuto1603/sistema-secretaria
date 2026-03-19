@@ -41,7 +41,8 @@ WORKDIR /var/www/html
 
 # --- Copiar código del backend y config de PHP ---
 COPY backend/ .
-COPY docker/backend/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/backend/php.ini  /usr/local/etc/php/conf.d/custom.ini
+COPY docker/backend/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 # --- Instalar dependencias y generar autoload en un solo paso ---
 RUN git config --global --add safe.directory /var/www/html \
