@@ -30,7 +30,7 @@ export class MaintenanceToolsComponent {
   loadingCache = signal(false);
   loadingLogs  = signal(false);
   loadingMail  = signal(false);
-  mailDest     = signal('');
+  mailDest     = '';
   mailResult   = signal<MailResult | null>(null);
   toast        = signal<Toast | null>(null);
 
@@ -65,7 +65,7 @@ export class MaintenanceToolsComponent {
   }
 
   testMail(): void {
-    const dest = this.mailDest().trim();
+    const dest = this.mailDest.trim();
     if (!dest) return;
     this.loadingMail.set(true);
     this.mailResult.set(null);

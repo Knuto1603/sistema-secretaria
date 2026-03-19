@@ -55,7 +55,7 @@
         <input [(ngModel)]="mailDest" type="email" placeholder="destinatario@ejemplo.com"
           class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
           (keydown.enter)="testMail()">
-        <button (click)="testMail()" [disabled]="loadingMail() || !mailDest().trim()"
+        <button (click)="testMail()" [disabled]="loadingMail() || !mailDest.trim()"
           class="px-5 py-2 bg-blue-500 text-white text-sm font-bold rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors flex items-center gap-2">
           @if (loadingMail()) {
             <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
