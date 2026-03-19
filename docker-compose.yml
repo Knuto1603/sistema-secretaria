@@ -74,13 +74,8 @@ services:
       SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
-      MAIL_MAILER: ${MAIL_MAILER:-log}
-      MAIL_HOST: ${MAIL_HOST:-127.0.0.1}
-      MAIL_PORT: ${MAIL_PORT:-2525}
-      MAIL_USERNAME: ${MAIL_USERNAME:-null}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-null}
-      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@unp.edu.pe}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Secretaria FII-UNP}
+      # Las variables MAIL_* las inyecta EasyPanel directamente.
+      # No declararlas aquí evita que queden fijas al valor del momento del deploy.
       LLM_PROVIDER: ${LLM_PROVIDER:-groq}
       GROQ_API_KEY: ${GROQ_API_KEY}
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
@@ -121,13 +116,8 @@ services:
       SESSION_DRIVER: ${SESSION_DRIVER:-redis}
       SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      MAIL_MAILER: ${MAIL_MAILER:-log}
-      MAIL_HOST: ${MAIL_HOST:-127.0.0.1}
-      MAIL_PORT: ${MAIL_PORT:-2525}
-      MAIL_USERNAME: ${MAIL_USERNAME:-null}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-null}
-      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@unp.edu.pe}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Secretaria FII-UNP}
+      # Las variables MAIL_* las inyecta EasyPanel directamente.
+      # No declararlas aquí evita que queden fijas al valor del momento del deploy.
       LLM_PROVIDER: ${LLM_PROVIDER:-groq}
       GROQ_API_KEY: ${GROQ_API_KEY}
       GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
