@@ -125,14 +125,29 @@ class DevController extends Controller
     public function mailConfig(): JsonResponse
     {
         return $this->success([
-            'mailer'   => config('mail.default'),
-            'host'     => config('mail.mailers.smtp.host'),
-            'port'     => config('mail.mailers.smtp.port'),
-            'username' => config('mail.mailers.smtp.username'),
-            'from'     => config('mail.from.address'),
-            'env_host' => env('MAIL_HOST'),
-            'env_port' => env('MAIL_PORT'),
-        ], 'Configuración de correo actual');
+            // Valores que usa Laravel (vía config cache o mail.php)
+            'config_mailer'   => config('mail.default'),
+            'config_host'     => config('mail.mailers.smtp.host'),
+            'config_port'     => config('mail.mailers.smtp.port'),
+            'config_username' => config('mail.mailers.smtp.username'),
+            'config_from'     => config('mail.from.address'),
+
+            // Dotenv (lee .env o variable de entorno vía repositorio Laravel)
+            'env_host'        => env('MAIL_HOST'),
+            'env_port'        => env('MAIL_PORT'),
+
+            // PHP nativo — independiente de Laravel/Dotenv
+            'getenv_host'     => getenv('MAIL_HOST'),
+            'getenv_port'     => getenv('MAIL_PORT'),
+            '_env_host'       => $_ENV['MAIL_HOST']  ?? '(no está en $_ENV)',
+            '_server_host'    => $_SERVER['MAIL_HOST'] ?? '(no está en $_SERVER)',
+
+            // ¿Existe archivo .env en disco?
+            'dotenv_file'     => file_exists(base_path('.env')) ? 'SÍ existe' : 'NO existe',
+
+            // ¿Existe config cache?
+            'config_cached'   => file_exists(base_path('bootstrap/cache/config.php')) ? 'SÍ hay cache' : 'NO hay cache',
+        ], 'Diagnóstico de configuración de correo');
     }
 
     // =========================================================================
