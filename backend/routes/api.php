@@ -274,7 +274,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
 
     // Estudiantes
     Route::prefix('usuarios/estudiantes')
-        ->middleware('role:admin|secretario academico|developer')
+        ->middleware('role:admin|secretaria|secretario academico|developer')
         ->group(function () {
             Route::get('/', [EstudianteController::class, 'index']);
             Route::post('/', [EstudianteController::class, 'store']);
@@ -332,9 +332,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
     Route::prefix('progreso')->group(function () {
         Route::get('/mi-progreso', [ProgresoController::class, 'miProgreso']);
         Route::get('/{userId}', [ProgresoController::class, 'progresoAlumno'])
-            ->middleware('role:admin|secretario academico|developer');
+            ->middleware('role:admin|secretaria|secretario academico|developer');
         Route::patch('/{userId}/egresante', [ProgresoController::class, 'toggleEgresante'])
-            ->middleware('role:admin|secretario academico|developer');
+            ->middleware('role:admin|secretaria|secretario academico|developer');
     });
 
     // Roles (solo lectura)
