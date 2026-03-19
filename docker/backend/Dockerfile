@@ -52,6 +52,12 @@ RUN git config --global --add safe.directory /var/www/html \
         --prefer-dist \
         --no-interaction
 
+# --- Eliminar caché de configuración para que cada deploy lea las env vars frescas ---
+RUN rm -f bootstrap/cache/config.php \
+         bootstrap/cache/routes.php \
+         bootstrap/cache/packages.php \
+         bootstrap/cache/services.php
+
 # --- Permisos para Laravel ---
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
