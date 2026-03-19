@@ -59,4 +59,8 @@ RUN chown -R www-data:www-data /var/www/html \
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+# --- Entrypoint: genera .env desde env-vars del contenedor y arranca php-fpm ---
+COPY docker/backend/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+CMD ["/usr/local/bin/start.sh"]
