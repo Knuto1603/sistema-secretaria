@@ -61,6 +61,10 @@ Ejemplos de clasificación:
 - "¿qué cursos me faltan para egresar?" → comparacion: true
 - "¿cuántos créditos llevo?" → historial: true
 - "¿en qué cursos estoy matriculado?" → inscripciones: true
+- "al alumno juan perez que cursos le faltan?" → alumno: true, comparacion: true
+- "qué cursos le faltan al estudiante garcia?" → alumno: true, comparacion: true
+- "tiene cursos atrasados?" → alumno: true (si hay alumno en contexto previo)
+- "dame el historial del alumno rodriguez" → alumno: true, historial: true
 PROMPT;
 
         try {

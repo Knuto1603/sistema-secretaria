@@ -419,6 +419,8 @@ class DbContextService
                 $partes    = preg_split('/\s+/', trim($nombre));
                 $userQuery = User::where('tipo_usuario', 'estudiante');
                 foreach ($partes as $parte) {
+                    // Limpiar puntuación y caracteres no alfabéticos
+                    $parte = preg_replace('/[^a-záéíóúüña-z]/ui', '', $parte);
                     if (mb_strlen($parte) >= 3) {
                         $userQuery->where('name', 'like', "%{$parte}%");
                     }
@@ -854,13 +856,16 @@ class DbContextService
 
     private function extractNombreEstudiante(string $query): ?string
     {
-        // "alumno JUAN PEREZ" o "estudiante Juan Pérez García"
+        // Acepta "alumno Juan Pérez", "alumna sergio alburqueque," (mayúsculas o minúsculas)
+        // El flag /ui hace la búsqueda case-insensitive y unicode-aware
         if (preg_match(
-            '/(?:alumno|estudiante|alumna)\s+((?:[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñA-ZÁÉÍÓÚÜÑ]*\s+){1,4}[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñA-ZÁÉÍÓÚÜÑ]*)/u',
+            '/(?:alumno|estudiante|alumna)\s+((?:[a-záéíóúüña-z][a-záéíóúüñ]*\s+){0,4}[a-záéíóúüñ][a-záéíóúüñ]*)/ui',
             $query,
             $m
         )) {
-            return trim($m[1]);
+            // Limpiar puntuación al final (comas, puntos) y normalizar con ucwords
+            $nombre = trim(preg_replace('/[,.:;!?]+$/', '', trim($m[1])));
+            return $nombre !== '' ? $nombre : null;
         }
         return null;
     }
