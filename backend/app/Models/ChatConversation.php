@@ -11,11 +11,14 @@ class ChatConversation extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['user_id', 'titulo', 'expires_at'];
+    protected $fillable = ['user_id', 'titulo', 'meta', 'expires_at'];
 
     protected function casts(): array
     {
-        return ['expires_at' => 'datetime'];
+        return [
+            'expires_at' => 'datetime',
+            'meta'       => 'array',
+        ];
     }
 
     public function user(): BelongsTo

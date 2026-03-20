@@ -40,8 +40,19 @@ class ChatbotService
         $ragBlock     = $this->rag->buildContextBlock($ragResult);
         $tuvoContexto = !empty($ragResult['articles']) || !empty($ragResult['chunks']);
 
-        // 2c. Contexto de BD vivo — solo carga los bloques que el LLM identificó como necesarios
-        $dbBlock = $this->db->buildContext($intent, $user, $pregunta);
+        // 2c. Recuperar alumno en sesión (para admins con follow-up sobre un alumno previo)
+        $alumnoIdSesion = $conversation->meta['ultimo_alumno_id'] ?? null;
+
+        // 2d. Contexto de BD vivo — usa la intención clasificada y el alumno en sesión
+        $dbBlock = $this->db->buildContext($intent, $user, $pregunta, $alumnoIdSesion);
+
+        // 2e. Persistir el alumno encontrado en la sesión de la conversación
+        $alumnoEncontrado = $this->db->getAlumnoEncontradoId();
+        if ($alumnoEncontrado && $alumnoEncontrado !== $alumnoIdSesion) {
+            $meta = $conversation->meta ?? [];
+            $meta['ultimo_alumno_id'] = $alumnoEncontrado;
+            $conversation->update(['meta' => $meta]);
+        }
 
         // Combinar ambos bloques
         $contextBlock = implode("\n\n---\n\n", array_filter([$dbBlock, $ragBlock]));
@@ -185,6 +196,8 @@ INFORMACIÓN PERSONAL DEL ESTUDIANTE:
 CONSULTAS DE ADMINISTRATIVOS SOBRE ALUMNOS:
 • Si el contexto incluye "ALUMNO CONSULTADO", significa que un administrativo está consultando la información de un alumno específico. Presenta los datos de forma clara: perfil, inscripciones actuales, progreso académico (créditos obligatorios/electivos aprobados y faltantes) y resumen del historial. Puedes buscar alumnos por código universitario (10 dígitos) o por nombre completo.
 • Si el administrativo pide un "reporte" del alumno, presenta toda la información disponible de forma estructurada y en lenguaje natural.
+• Cuando el contexto incluya "Cursos pendientes por ciclo:", úsalo para responder preguntas como "¿tiene cursos atrasados?", "¿qué cursos le faltan de ciclos anteriores?" o "¿qué le falta para egresar?". Lista los cursos pendientes agrupados por ciclo, indicando si son obligatorios o electivos. Si hay cursos pendientes de ciclos anteriores al ciclo estimado del alumno, son cursos "atrasados".
+• Si el administrativo hace preguntas de seguimiento sobre el mismo alumno (ej. "¿tiene cursos atrasados?", "¿cuántos créditos le faltan?"), el contexto ya incluirá la información de ese alumno — responde directamente sin pedir que repita el nombre.
 
 DOCENTES:
 • Si el contexto incluye "DOCENTE:", úsalo para responder preguntas sobre qué cursos imparte un profesor, sus horarios y aulas. El chatbot ahora puede dar información sobre los docentes de la FII.

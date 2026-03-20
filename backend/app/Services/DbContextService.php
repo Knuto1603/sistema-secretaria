@@ -25,15 +25,26 @@ use Illuminate\Support\Str;
  */
 class DbContextService
 {
+    /** ID del alumno encontrado en la última llamada a buildContext (para persistir en sesión) */
+    private ?string $alumnoEncontradoId = null;
+
+    public function getAlumnoEncontradoId(): ?string
+    {
+        return $this->alumnoEncontradoId;
+    }
+
     /**
      * Construye el bloque de contexto de BD usando la intención clasificada por el LLM.
      *
-     * @param  array   $intent  Resultado de LlmService::classify()
-     * @param  ?User   $user    Usuario autenticado
-     * @param  string  $query   Pregunta original (para búsquedas por keyword dentro de los bloques)
+     * @param  array   $intent          Resultado de LlmService::classify()
+     * @param  ?User   $user            Usuario autenticado
+     * @param  string  $query           Pregunta original
+     * @param  ?string $alumnoIdSesion  ID del alumno en sesión (última consulta admin)
      */
-    public function buildContext(array $intent, ?User $user = null, string $query = ''): string
+    public function buildContext(array $intent, ?User $user = null, string $query = '', ?string $alumnoIdSesion = null): string
     {
+        $this->alumnoEncontradoId = null;
+
         $blocks       = [];
         $esEstudiante = $user && $user->isEstudiante();
         $esAdmin      = $user && ($user->isAdministrativo() || $user->isDeveloper());
@@ -61,8 +72,13 @@ class DbContextService
         }
 
         // ── CONTEXTO ADMIN: CONSULTA DE ALUMNO ──────────────────────────────
-        if ($esAdmin && $intent['alumno']) {
-            if ($b = $this->buildAdminAlumnoBlock($query)) $blocks[] = $b;
+        // Se carga si: la intención indica 'alumno', O si hay un alumno en sesión y hay
+        // alguna intención relacionada con información académica (follow-up del admin).
+        $hayIntentAcademica = $intent['alumno'] || $intent['historial']
+                           || $intent['comparacion'] || $intent['inscripciones'];
+
+        if ($esAdmin && ($intent['alumno'] || ($alumnoIdSesion && $hayIntentAcademica))) {
+            if ($b = $this->buildAdminAlumnoBlock($query, $alumnoIdSesion)) $blocks[] = $b;
         }
 
         // ── DOCENTE ──────────────────────────────────────────────────────────
@@ -383,10 +399,10 @@ class DbContextService
     // BLOQUE ADMIN: CONSULTA DE ALUMNO POR CÓDIGO O NOMBRE
     // =========================================================================
 
-    private function buildAdminAlumnoBlock(string $query): string
+    private function buildAdminAlumnoBlock(string $query, ?string $alumnoIdSesion = null): string
     {
-        // Intentar extraer código universitario (10 dígitos, preferiblemente 05xxxxxxxx)
-        $user = null;
+        // 1. Intentar extraer código universitario (10 dígitos) de la query
+        $user   = null;
         $codigo = $this->extractCodigoUniversitario($query);
 
         if ($codigo) {
@@ -396,11 +412,11 @@ class DbContextService
                 ->first();
         }
 
-        // Si no encontró por código, intentar por nombre
+        // 2. Si no encontró por código, intentar por nombre en la query
         if (!$user) {
             $nombre = $this->extractNombreEstudiante($query);
             if ($nombre) {
-                $partes = preg_split('/\s+/', trim($nombre));
+                $partes    = preg_split('/\s+/', trim($nombre));
                 $userQuery = User::where('tipo_usuario', 'estudiante');
                 foreach ($partes as $parte) {
                     if (mb_strlen($parte) >= 3) {
@@ -411,7 +427,18 @@ class DbContextService
             }
         }
 
+        // 3. Fallback: usar el alumno de la sesión (follow-up del admin)
+        if (!$user && $alumnoIdSesion) {
+            $user = User::where('id', $alumnoIdSesion)
+                ->where('tipo_usuario', 'estudiante')
+                ->with('escuela')
+                ->first();
+        }
+
         if (!$user) return '';
+
+        // Guardar para que ChatbotService persista en la sesión
+        $this->alumnoEncontradoId = $user->id;
 
         $periodo = Periodo::where('activo', true)->first();
         $escuela = $user->escuela?->nombre ?? 'No asignada';
@@ -455,7 +482,7 @@ class DbContextService
             }
         }
 
-        // Progreso académico
+        // Progreso académico resumido
         if ($user->escuela_id) {
             try {
                 /** @var ProgresoAcademicoService $progresoSvc */
@@ -471,23 +498,74 @@ class DbContextService
                 $lines[] = "• Obligatorios: {$obl['hechos']} / {$obl['requeridos']} cr. ({$obl['porcentaje']}%)";
                 $lines[] = "• Electivos: {$ele['hechos']} / {$ele['requeridos']} cr. ({$ele['porcentaje']}%)";
                 $lines[] = "• Egresante (calculado): " . ($progreso['egresante_calculado'] ? 'Sí' : 'No');
-
-                if (!empty($obl['pendientes_por_ciclo'])) {
-                    $faltanCreditos = $obl['requeridos'] - $obl['hechos'];
-                    $lines[] = "• Créditos obligatorios faltantes: {$faltanCreditos} cr. en "
-                             . count($obl['pendientes_por_ciclo']) . " ciclo(s)";
-                }
             } catch (\Throwable) {
                 // No interrumpir si falla el cálculo
             }
         }
 
-        // Resumen historial
-        $aprobados = $user->cursosAprobados()->withPivot('creditos')->get();
+        // Historial + comparación con plan de estudios (cursos pendientes por ciclo)
+        $aprobados = $user->cursosAprobados()->withPivot('nota', 'semestre', 'creditos')->get();
+
         if ($aprobados->isNotEmpty()) {
             $totalCred = $aprobados->sum('pivot.creditos');
             $lines[]   = '';
-            $lines[]   = "Historial académico: {$aprobados->count()} cursos aprobados — {$totalCred} créditos acumulados.";
+            $lines[]   = "Historial: {$aprobados->count()} cursos aprobados — {$totalCred} créditos acumulados.";
+
+            // Comparación plan vs. historial
+            if ($user->escuela_id) {
+                $plan = Plan::where('escuela_id', $user->escuela_id)->where('activo', true)->first();
+
+                $planQuery = PlanEstudios::with('curso');
+                if ($plan) {
+                    $planQuery->where('plan_id', $plan->id);
+                } else {
+                    $planQuery->where('escuela_id', $user->escuela_id);
+                }
+                $planEntries = $planQuery->get();
+
+                if ($planEntries->isNotEmpty()) {
+                    // IDs aprobados + equivalencias
+                    $aprobadosIds = $aprobados->pluck('id');
+                    if ($aprobadosIds->isNotEmpty()) {
+                        $equivalenciaIds = Curso::whereIn('id', $aprobadosIds)
+                            ->with('equivalencias:id')
+                            ->get()
+                            ->flatMap(fn($c) => $c->equivalencias->pluck('id'));
+                        $aprobadosIds = $aprobadosIds->merge($equivalenciaIds)->unique();
+                    }
+
+                    $pendientesByCiclo = [];
+                    foreach ($planEntries as $pe) {
+                        if (!$aprobadosIds->contains($pe->curso_id)) {
+                            $ciclo = $pe->ciclo;
+                            if (!isset($pendientesByCiclo[$ciclo])) {
+                                $pendientesByCiclo[$ciclo] = [];
+                            }
+                            $tipo  = $pe->tipo === 'O' ? 'Oblig.' : 'Electiv.';
+                            $creds = (int) ($pe->creditos ?? $pe->curso?->creditos ?? 0);
+                            $pendientesByCiclo[$ciclo][] = sprintf("    [--] %-40s %s — %d cr.",
+                                Str::limit($pe->curso?->nombre ?? '—', 38),
+                                $tipo,
+                                $creds
+                            );
+                        }
+                    }
+
+                    if (!empty($pendientesByCiclo)) {
+                        ksort($pendientesByCiclo);
+                        $lines[] = '';
+                        $lines[] = "Cursos pendientes por ciclo:";
+                        foreach ($pendientesByCiclo as $ciclo => $cursosPend) {
+                            $lines[] = "  Ciclo {$ciclo}:";
+                            foreach ($cursosPend as $lineaCurso) {
+                                $lines[] = $lineaCurso;
+                            }
+                        }
+                    } else {
+                        $lines[] = "Todos los cursos del plan están aprobados.";
+                    }
+                }
+            }
         }
 
         return implode("\n", $lines);
