@@ -59,7 +59,7 @@ class DbContextService
                 $b = $this->buildComparacionPlanHistorialBlock($user);
                 if ($b) $blocks[] = $b;
             } elseif ($this->querySeemsAboutHistorial($query)) {
-                $b = $this->buildMiHistorialBlock($user);
+                $b = $this->buildMiHistorialBlock($user, $query);
                 if ($b) $blocks[] = $b;
             }
         }
@@ -214,7 +214,7 @@ class DbContextService
     // BLOQUE: HISTORIAL DEL ESTUDIANTE AUTENTICADO
     // =========================================================================
 
-    private function buildMiHistorialBlock(User $user): string
+    private function buildMiHistorialBlock(User $user, string $query = ''): string
     {
         if (!$user->tieneHistorial()) {
             return "TU HISTORIAL ACADÉMICO:\n"
@@ -232,31 +232,61 @@ class DbContextService
 
         $totalCreditos = $aprobados->sum('pivot.creditos');
         $totalCursos   = $aprobados->count();
-        $ultimos       = $aprobados->sortByDesc('pivot.semestre')->take(8);
 
         $lines = [
             "TU HISTORIAL ACADÉMICO:",
             "• Cursos aprobados: {$totalCursos}",
             "• Créditos aprobados: {$totalCreditos}",
-            "",
-            "Cursos aprobados más recientes:",
-            sprintf("%-42s %-8s %-8s", 'Curso', 'Nota', 'Semestre'),
-            str_repeat('-', 62),
         ];
 
-        foreach ($ultimos as $curso) {
-            $nota    = $curso->pivot->nota !== null
-                ? number_format((float) $curso->pivot->nota, 1)
-                : 'Aprob.';
-            $lines[] = sprintf("%-42s %-8s %-8s",
-                Str::limit($curso->nombre ?? '—', 40),
-                $nota,
-                $curso->pivot->semestre ?? '—'
-            );
+        // Si la query menciona un curso específico, buscarlo en todo el historial
+        $keywords = $this->extractKeywords($query);
+        $encontrados = collect();
+        if (!empty($keywords)) {
+            $encontrados = $aprobados->filter(function ($curso) use ($keywords) {
+                $nombre = strtolower($curso->nombre ?? '');
+                foreach ($keywords as $kw) {
+                    if (str_contains($nombre, $kw)) return true;
+                }
+                return false;
+            });
         }
 
-        if ($totalCursos > 8) {
-            $lines[] = '... y ' . ($totalCursos - 8) . ' cursos más.';
+        if ($encontrados->isNotEmpty()) {
+            $lines[] = "";
+            $lines[] = "Resultado de búsqueda en tu historial:";
+            $lines[] = sprintf("%-42s %-8s %-8s", 'Curso', 'Nota', 'Semestre');
+            $lines[] = str_repeat('-', 62);
+            foreach ($encontrados as $curso) {
+                $nota    = $curso->pivot->nota !== null
+                    ? number_format((float) $curso->pivot->nota, 1)
+                    : 'Aprob.';
+                $lines[] = sprintf("%-42s %-8s %-8s",
+                    Str::limit($curso->nombre ?? '—', 40),
+                    $nota,
+                    $curso->pivot->semestre ?? '—'
+                );
+            }
+        } else {
+            // Sin búsqueda específica: mostrar los 10 más recientes
+            $ultimos = $aprobados->sortByDesc('pivot.semestre')->take(10);
+            $lines[] = "";
+            $lines[] = "Cursos aprobados más recientes:";
+            $lines[] = sprintf("%-42s %-8s %-8s", 'Curso', 'Nota', 'Semestre');
+            $lines[] = str_repeat('-', 62);
+            foreach ($ultimos as $curso) {
+                $nota    = $curso->pivot->nota !== null
+                    ? number_format((float) $curso->pivot->nota, 1)
+                    : 'Aprob.';
+                $lines[] = sprintf("%-42s %-8s %-8s",
+                    Str::limit($curso->nombre ?? '—', 40),
+                    $nota,
+                    $curso->pivot->semestre ?? '—'
+                );
+            }
+            if ($totalCursos > 10) {
+                $lines[] = '... y ' . ($totalCursos - 10) . ' cursos más.';
+            }
         }
 
         return implode("\n", $lines);
@@ -889,6 +919,11 @@ class DbContextService
             'cuanto me falta', 'cursos pendientes', 'mis notas anteriores',
             'avance académico', 'avance academico', 'cuántos cursos he aprobado',
             'cuantos cursos he aprobado',
+            // Consultas de nota específica por curso
+            'cuanto tengo en', 'cuánto tengo en', 'mi nota en', 'mi nota de',
+            'qué nota', 'que nota', 'qué saqué', 'que saque', 'qué jalé', 'que jale',
+            'saqué en', 'saque en', 'calificación en', 'calificacion en',
+            'nota de', 'tengo en', 'aprobé', 'aprobe', 'jalé', 'jale',
         ];
         foreach ($triggers as $t) {
             if (str_contains($q, $t)) return true;

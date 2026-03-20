@@ -30,7 +30,7 @@ return [
     ],
 
     // Parámetros de generación
-    'max_tokens'  => (int) env('LLM_MAX_TOKENS', 450),
+    'max_tokens'  => (int) env('LLM_MAX_TOKENS', 900),
     'temperature' => (float) env('LLM_TEMPERATURE', 0.2),
 
     // RAG: cuántos fragmentos de contexto incluir en cada prompt
