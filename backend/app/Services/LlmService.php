@@ -44,14 +44,23 @@ Mensaje: "{$query}"
 
 JSON requerido (true = necesario, false = no necesario):
 {
-  "historial": bool,      // notas, cursos aprobados, créditos acumulados, historial académico
-  "inscripciones": bool,  // cursos inscritos en el periodo actual
-  "comparacion": bool,    // comparar historial con plan de estudios, qué cursos faltan para egresar
-  "docente": bool,        // información de un profesor específico
-  "cursos": bool,         // programación académica, horarios, aulas, disponibilidad de cupos
-  "plan_estudios": bool,  // malla curricular, cursos obligatorios y electivos por ciclo
+  "historial": bool,      // notas, cursos aprobados, créditos acumulados, historial académico, promedio
+  "inscripciones": bool,  // cursos en los que está matriculado/inscrito en el ciclo actual
+  "comparacion": bool,    // comparar historial con plan de estudios, qué cursos faltan para egresar, avance académico
+  "docente": bool,        // información de un profesor específico: sus cursos, horarios
+  "cursos": bool,         // programación académica, horarios, aulas, disponibilidad de cupos, cursos ofertados/aperturados en un ciclo, qué cursos se dictan, secciones disponibles
+  "plan_estudios": bool,  // malla curricular, cursos obligatorios y electivos por ciclo, plan de carrera
   "alumno": bool          // (solo admin) consultar perfil de un estudiante por nombre o código
 }
+
+Ejemplos de clasificación:
+- "¿qué cursos se aperturan en el ciclo 2026-1?" → cursos: true
+- "¿qué materias hay disponibles este semestre?" → cursos: true
+- "¿cuántos alumnos tiene cálculo I?" → cursos: true
+- "¿en qué aula es álgebra?" → cursos: true
+- "¿qué cursos me faltan para egresar?" → comparacion: true
+- "¿cuántos créditos llevo?" → historial: true
+- "¿en qué cursos estoy matriculado?" → inscripciones: true
 PROMPT;
 
         try {
