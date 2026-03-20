@@ -31,14 +31,17 @@ class ChatbotService
             'contenido'       => $pregunta,
         ]);
 
-        // 2. Buscar contexto relevante en KB
+        // 2. Clasificar intención — el LLM determina qué contextos cargar
+        $userType = $user->isEstudiante() ? 'estudiante' : 'administrativo';
+        $intent   = $this->llm->classify($pregunta, $userType);
+
+        // 2b. Buscar contexto relevante en KB (en paralelo conceptual con la clasificación)
         $ragResult    = $this->rag->search($pregunta);
         $ragBlock     = $this->rag->buildContextBlock($ragResult);
         $tuvoContexto = !empty($ragResult['articles']) || !empty($ragResult['chunks']);
 
-        // 2b. Contexto de BD vivo (periodo, programación, plan de estudios, autoridades)
-        // Se pasa el usuario para incluir su perfil personal, inscripciones e historial.
-        $dbBlock = $this->db->buildContext($pregunta, $user);
+        // 2c. Contexto de BD vivo — solo carga los bloques que el LLM identificó como necesarios
+        $dbBlock = $this->db->buildContext($intent, $user, $pregunta);
 
         // Combinar ambos bloques
         $contextBlock = implode("\n\n---\n\n", array_filter([$dbBlock, $ragBlock]));

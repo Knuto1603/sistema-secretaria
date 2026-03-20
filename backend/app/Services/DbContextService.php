@@ -25,72 +25,62 @@ use Illuminate\Support\Str;
  */
 class DbContextService
 {
-    public function buildContext(string $query, ?User $user = null): string
+    /**
+     * Construye el bloque de contexto de BD usando la intención clasificada por el LLM.
+     *
+     * @param  array   $intent  Resultado de LlmService::classify()
+     * @param  ?User   $user    Usuario autenticado
+     * @param  string  $query   Pregunta original (para búsquedas por keyword dentro de los bloques)
+     */
+    public function buildContext(array $intent, ?User $user = null, string $query = ''): string
     {
         $blocks       = [];
         $esEstudiante = $user && $user->isEstudiante();
         $esAdmin      = $user && ($user->isAdministrativo() || $user->isDeveloper());
         $escuelaId    = $esEstudiante ? $user->escuela_id : null;
 
-        // Siempre: periodo activo
-        $periodoBlock = $this->buildPeriodoBlock();
-        if ($periodoBlock) {
-            $blocks[] = $periodoBlock;
-        }
-
-        // Siempre: autoridades
-        $autoridadesBlock = $this->buildAutoridadesBlock();
-        if ($autoridadesBlock) {
-            $blocks[] = $autoridadesBlock;
-        }
+        // Siempre: periodo activo y autoridades
+        if ($b = $this->buildPeriodoBlock())     $blocks[] = $b;
+        if ($b = $this->buildAutoridadesBlock()) $blocks[] = $b;
 
         // ── CONTEXTO ESTUDIANTE ──────────────────────────────────────────────
         if ($esEstudiante) {
             $user->loadMissing('escuela');
             $blocks[] = $this->buildEstudiantePerfilBlock($user);
 
-            if ($this->querySeemsAboutMisInscripciones($query)) {
-                $b = $this->buildMisInscripcionesBlock($user);
-                if ($b) $blocks[] = $b;
+            if ($intent['inscripciones']) {
+                if ($b = $this->buildMisInscripcionesBlock($user)) $blocks[] = $b;
             }
 
-            // Comparación plan vs. historial (bloque completo, tiene precedencia)
-            if ($this->querySeemsAboutComparacion($query)) {
-                $b = $this->buildComparacionPlanHistorialBlock($user);
-                if ($b) $blocks[] = $b;
-            } elseif ($this->querySeemsAboutHistorial($query)) {
-                $b = $this->buildMiHistorialBlock($user, $query);
-                if ($b) $blocks[] = $b;
+            // comparacion tiene precedencia sobre historial
+            if ($intent['comparacion']) {
+                if ($b = $this->buildComparacionPlanHistorialBlock($user)) $blocks[] = $b;
+            } elseif ($intent['historial']) {
+                if ($b = $this->buildMiHistorialBlock($user, $query)) $blocks[] = $b;
             }
         }
 
         // ── CONTEXTO ADMIN: CONSULTA DE ALUMNO ──────────────────────────────
-        if ($esAdmin && $this->querySeemsAboutAlumno($query)) {
-            $b = $this->buildAdminAlumnoBlock($query);
-            if ($b) $blocks[] = $b;
+        if ($esAdmin && $intent['alumno']) {
+            if ($b = $this->buildAdminAlumnoBlock($query)) $blocks[] = $b;
         }
 
         // ── DOCENTE ──────────────────────────────────────────────────────────
-        if ($this->querySeemsAboutDocente($query)) {
-            $b = $this->buildDocenteBlock($query);
-            if ($b) $blocks[] = $b;
+        if ($intent['docente']) {
+            if ($b = $this->buildDocenteBlock($query)) $blocks[] = $b;
         }
 
         // ── PROGRAMACIÓN ─────────────────────────────────────────────────────
-        if ($this->querySeemsAboutCursos($query)) {
-            $b = $this->buildProgramacionBlock($query, $escuelaId);
-            if ($b) $blocks[] = $b;
+        if ($intent['cursos']) {
+            if ($b = $this->buildProgramacionBlock($query, $escuelaId)) $blocks[] = $b;
         }
 
-        // ── PLAN DE ESTUDIOS ──────────────────────────────────────────────────
-        if ($this->querySeemsAboutPlanEstudios($query)) {
-            $b = $this->buildPlanEstudiosBlock($query, $escuelaId);
-            if ($b) $blocks[] = $b;
+        // ── PLAN DE ESTUDIOS ─────────────────────────────────────────────────
+        if ($intent['plan_estudios']) {
+            if ($b = $this->buildPlanEstudiosBlock($query, $escuelaId)) $blocks[] = $b;
         }
 
-        if (empty($blocks)) {
-            return '';
-        }
+        if (empty($blocks)) return '';
 
         return "=== INFORMACIÓN ACADÉMICA ACTUAL (BASE DE DATOS) ===\n\n"
             . implode("\n\n", $blocks);
@@ -844,146 +834,6 @@ class DbContextService
     // HELPERS: DETECCIÓN DE INTENCIÓN
     // =========================================================================
 
-    private function querySeemsAboutAlumno(string $query): bool
-    {
-        // Código universitario explícito
-        if (preg_match('/\b\d{10}\b/', $query)) return true;
-
-        $q        = strtolower($query);
-        $triggers = [
-            'alumno', 'alumna', 'estudiante', 'ver perfil',
-            'progreso de', 'historial de', 'créditos de', 'creditos de',
-            'inscripciones de', 'cursos de', 'información del alumno',
-            'buscar alumno', 'consultar alumno', 'datos del alumno',
-        ];
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        return false;
-    }
-
-    private function querySeemsAboutDocente(string $query): bool
-    {
-        $q        = strtolower($query);
-        $triggers = [
-            'docente', 'profesor', 'profesora', 'maestro', 'maestra',
-            'quién enseña', 'quien enseña', 'quién dicta', 'quien dicta',
-            'quién da clases', 'quien da clases', 'quién imparte', 'quien imparte',
-            'qué docente', 'que docente', 'cuál es el profesor', 'cual es el profesor',
-        ];
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        return false;
-    }
-
-    private function querySeemsAboutCursos(string $query): bool
-    {
-        $triggers = [
-            'curso', 'materia', 'asignatura', 'clase', 'horario', 'cupo',
-            'lleno', 'disponible', 'inscribir', 'inscripción', 'inscripcion',
-            'sección', 'seccion', 'grupo', 'aula', 'laboratorio', 'clave',
-            'programación', 'programacion', 'verano', 'nivelacion', 'nivelación',
-        ];
-        $q = strtolower($query);
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        return false;
-    }
-
-    private function querySeemsAboutMisInscripciones(string $query): bool
-    {
-        $q        = strtolower($query);
-        $triggers = [
-            'mis cursos', 'mis materias', 'estoy inscrito', 'me inscrib',
-            'qué llevo', 'que llevo', 'cuáles llevo', 'cuales llevo',
-            'qué tengo', 'que tengo este', 'mis clases', 'mi matrícula',
-            'mi matricula', 'llevo este', 'llevo ahora', 'tengo este ciclo',
-            'estoy llevando', 'estoy cursando', 'estoy matriculado',
-            'cuántos cursos llevo', 'cuantos cursos llevo',
-        ];
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        return false;
-    }
-
-    private function querySeemsAboutHistorial(string $query): bool
-    {
-        $q        = strtolower($query);
-        $triggers = [
-            'historial', 'aprobados', 'créditos aprobados', 'creditos aprobados',
-            'mi progreso', 'qué aprobé', 'que aprobe', 'cuántos créditos', 'cuantos creditos',
-            'cursos me faltan', 'qué me falta', 'que me falta', 'cuánto me falta',
-            'cuanto me falta', 'cursos pendientes', 'mis notas anteriores',
-            'avance académico', 'avance academico', 'cuántos cursos he aprobado',
-            'cuantos cursos he aprobado',
-            // Consultas de nota específica por curso
-            'cuanto tengo en', 'cuánto tengo en', 'mi nota en', 'mi nota de',
-            'qué nota', 'que nota', 'qué saqué', 'que saque', 'qué jalé', 'que jale',
-            'saqué en', 'saque en', 'calificación en', 'calificacion en',
-            'nota de', 'tengo en', 'aprobé', 'aprobe', 'jalé', 'jale',
-        ];
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        return false;
-    }
-
-    private function querySeemsAboutComparacion(string $query): bool
-    {
-        $q = strtolower($query);
-
-        // Pregunta explícita de comparación historial vs. plan
-        $triggers = [
-            'comparar', 'compararlo', 'compare', 'versus', 'vs plan',
-            'qué me falta', 'que me falta', 'cuánto me falta', 'cuanto me falta',
-            'cursos me faltan', 'cursos pendientes', 'cursos que me faltan',
-            'qué cursos me faltan', 'que cursos me faltan',
-            'faltan para graduarme', 'faltan para egresar', 'faltan para terminar',
-            'cuántos créditos me faltan', 'cuantos creditos me faltan',
-            'mi avance', 'mi progreso', 'avance académico', 'avance academico',
-            'falta para terminar', 'falta para acabar la carrera',
-            'historial con mi plan', 'historial y mi plan', 'plan de estudios',
-        ];
-
-        foreach ($triggers as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-
-        // "historial" + "plan" juntos en la misma pregunta
-        if (str_contains($q, 'historial') && str_contains($q, 'plan')) return true;
-        if (str_contains($q, 'aprobados') && str_contains($q, 'plan'))  return true;
-        if (str_contains($q, 'historial') && str_contains($q, 'faltan')) return true;
-
-        return false;
-    }
-
-    private function querySeemsAboutPlanEstudios(string $query): bool
-    {
-        $q = strtolower($query);
-        $strong = [
-            'plan', 'malla', 'crédito', 'credito',
-            'obligatorio', 'electivo', 'pensum', 'prerrequisito',
-            'currícula', 'curricula', 'ingeniería industrial',
-            'ingeniería informática', 'agroindustrial', 'mecatrónica',
-        ];
-        foreach ($strong as $t) {
-            if (str_contains($q, $t)) return true;
-        }
-        if (str_contains($q, 'ciclo') || str_contains($q, 'semestre')) {
-            $curricular = ['llevar', 'ver', 'tomar', 'cursar', 'carrera', 'escuela',
-                           'requisito', 'créditos', 'creditos', 'materias'];
-            foreach ($curricular as $c) {
-                if (str_contains($q, $c)) return true;
-            }
-            if (preg_match('/\d+/', $q) || preg_match('/\b(I{1,3}|IV|V|VI{0,3}|IX|X)\b/i', $q)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     // =========================================================================
     // HELPERS: CLASIFICACIÓN Y DETECCIÓN

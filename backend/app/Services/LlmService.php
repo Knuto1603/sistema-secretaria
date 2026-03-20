@@ -26,6 +26,77 @@ class LlmService
     }
 
     /**
+     * Clasifica la intención del mensaje para determinar qué contextos cargar.
+     * Llamada rápida (~120 tokens) antes de construir el contexto completo.
+     *
+     * @return array{historial:bool, inscripciones:bool, comparacion:bool,
+     *               docente:bool, cursos:bool, plan_estudios:bool, alumno:bool}
+     */
+    public function classify(string $query, string $userType = 'estudiante'): array
+    {
+        $prompt = <<<PROMPT
+Eres un clasificador de intención para un asistente académico universitario.
+Analiza el mensaje y determina qué contextos de base de datos necesita cargar.
+Responde ÚNICAMENTE con JSON válido, sin explicaciones ni markdown.
+
+Tipo de usuario: {$userType}
+Mensaje: "{$query}"
+
+JSON requerido (true = necesario, false = no necesario):
+{
+  "historial": bool,      // notas, cursos aprobados, créditos acumulados, historial académico
+  "inscripciones": bool,  // cursos inscritos en el periodo actual
+  "comparacion": bool,    // comparar historial con plan de estudios, qué cursos faltan para egresar
+  "docente": bool,        // información de un profesor específico
+  "cursos": bool,         // programación académica, horarios, aulas, disponibilidad de cupos
+  "plan_estudios": bool,  // malla curricular, cursos obligatorios y electivos por ciclo
+  "alumno": bool          // (solo admin) consultar perfil de un estudiante por nombre o código
+}
+PROMPT;
+
+        try {
+            $response = Http::withToken($this->apiKey)
+                ->timeout(15)
+                ->post("{$this->baseUrl}/chat/completions", [
+                    'model'       => $this->model,
+                    'messages'    => [['role' => 'user', 'content' => $prompt]],
+                    'max_tokens'  => 120,
+                    'temperature' => 0.0,
+                ]);
+
+            if (!$response->successful()) {
+                return $this->defaultIntent();
+            }
+
+            $content = $response->json()['choices'][0]['message']['content'] ?? '{}';
+
+            // Extraer JSON aunque venga con texto extra
+            if (preg_match('/\{.*?\}/s', $content, $m)) {
+                $intent = json_decode($m[0], true) ?? [];
+            } else {
+                $intent = json_decode($content, true) ?? [];
+            }
+
+            return array_merge($this->defaultIntent(), array_map('boolval', $intent));
+        } catch (\Throwable) {
+            return $this->defaultIntent();
+        }
+    }
+
+    private function defaultIntent(): array
+    {
+        return [
+            'historial'     => false,
+            'inscripciones' => false,
+            'comparacion'   => false,
+            'docente'       => false,
+            'cursos'        => false,
+            'plan_estudios' => false,
+            'alumno'        => false,
+        ];
+    }
+
+    /**
      * Envía mensajes al LLM y retorna la respuesta + tokens usados.
      *
      * @param  array  $messages  [['role' => 'user|assistant|system', 'content' => '...']]
