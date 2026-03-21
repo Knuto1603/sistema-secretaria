@@ -379,17 +379,25 @@ class DbContextService
             }
         }
 
+        // Para el RESUMEN usar los créditos REQUERIDOS del plan, no la suma de todos los electivos.
+        // (El plan puede tener 50 cr. de electivos disponibles pero solo exige 15 cr. aprobados.)
+        $eleReqPlan = $plan ? (int) $plan->creditos_electivos_requeridos : $totalEleReq;
+        $eleAprFinal = min($totalEleApr, $eleReqPlan);
+
         $oblPct  = $totalOblReq > 0 ? round($totalOblApr / $totalOblReq * 100) : 0;
-        $elePct  = $totalEleReq > 0 ? round($totalEleApr / $totalEleReq * 100) : 0;
-        $totApr  = $totalOblApr + $totalEleApr;
-        $totReq  = $totalOblReq + $totalEleReq;
+        $elePct  = $eleReqPlan  > 0 ? round($eleAprFinal  / $eleReqPlan  * 100) : 0;
+        $totReq  = $totalOblReq + $eleReqPlan;
+        $totApr  = $totalOblApr + $eleAprFinal;
         $totPct  = $totReq > 0 ? round($totApr / $totReq * 100) : 0;
+
+        $puedeEgresar = $totalOblApr >= $totalOblReq && $eleAprFinal >= $eleReqPlan;
 
         $lines[] = "";
         $lines[] = "── RESUMEN ──";
         $lines[] = "• Obligatorios : {$totalOblApr}/{$totalOblReq} cr. aprobados ({$oblPct}%)";
-        $lines[] = "• Electivos    : {$totalEleApr}/{$totalEleReq} cr. aprobados ({$elePct}%)";
-        $lines[] = "• TOTAL        : {$totApr}/{$totReq} cr. aprobados ({$totPct}%)";
+        $lines[] = "• Electivos    : {$eleAprFinal}/{$eleReqPlan} cr. requeridos aprobados ({$elePct}%) [de {$totalEleApr} cr. electivos en total]";
+        $lines[] = "• TOTAL        : {$totApr}/{$totReq} cr. requeridos ({$totPct}%)";
+        $lines[] = "• ¿Puede egresar?: " . ($puedeEgresar ? "SÍ — cumple todos los requisitos del plan" : "NO — le faltan créditos");
         $lines[] = "([OK] = aprobado  [--] = pendiente)";
 
         return implode("\n", $lines);
