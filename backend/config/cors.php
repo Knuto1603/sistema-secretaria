@@ -26,6 +26,8 @@ return [
         'http://127.0.0.1:4200',
         'http://20.121.70.122',
         'http://20.121.70.122:80',
+        'http://68.211.112.144',
+        'http://68.211.112.144:80',
     ],
 
     // Patrones de orígenes (regex) - alternativa a allowed_origins
