@@ -31,22 +31,38 @@ class ChatbotService
             'contenido'       => $pregunta,
         ]);
 
-        // 2. Clasificar intención — el LLM determina qué contextos cargar
-        $userType = $user->isEstudiante() ? 'estudiante' : 'administrativo';
-        $intent   = $this->llm->classify($pregunta, $userType);
+        // 2. Recuperar los últimos 2 mensajes previos para dar contexto al clasificador
+        $prevMessages = $conversation->messages()
+            ->latest()
+            ->skip(1) // saltar el mensaje actual recién guardado
+            ->take(2)
+            ->get()
+            ->reverse()
+            ->values();
 
-        // 2b. Buscar contexto relevante en KB (en paralelo conceptual con la clasificación)
+        // Construir query enriquecida con historial para clasificación y extracción de keywords
+        $queryConContexto = $pregunta;
+        if ($prevMessages->isNotEmpty()) {
+            $histText = $prevMessages->map(fn($m) => "{$m->role}: {$m->contenido}")->implode("\n");
+            $queryConContexto = $histText . "\nuser: " . $pregunta;
+        }
+
+        // 2b. Clasificar intención — el LLM determina qué contextos cargar
+        $userType = $user->isEstudiante() ? 'estudiante' : 'administrativo';
+        $intent   = $this->llm->classify($queryConContexto, $userType);
+
+        // 2c. Buscar contexto relevante en KB (en paralelo conceptual con la clasificación)
         $ragResult    = $this->rag->search($pregunta);
         $ragBlock     = $this->rag->buildContextBlock($ragResult);
         $tuvoContexto = !empty($ragResult['articles']) || !empty($ragResult['chunks']);
 
-        // 2c. Recuperar alumno en sesión (para admins con follow-up sobre un alumno previo)
+        // 2d. Recuperar alumno en sesión (para admins con follow-up sobre un alumno previo)
         $alumnoIdSesion = $conversation->meta['ultimo_alumno_id'] ?? null;
 
-        // 2d. Contexto de BD vivo — usa la intención clasificada y el alumno en sesión
-        $dbBlock = $this->db->buildContext($intent, $user, $pregunta, $alumnoIdSesion);
+        // 2e. Contexto de BD vivo — usa query enriquecida para extraer keywords del historial
+        $dbBlock = $this->db->buildContext($intent, $user, $queryConContexto, $alumnoIdSesion);
 
-        // 2e. Persistir el alumno encontrado en la sesión de la conversación
+        // 2f. Persistir el alumno encontrado en la sesión de la conversación
         $alumnoEncontrado = $this->db->getAlumnoEncontradoId();
         if ($alumnoEncontrado && $alumnoEncontrado !== $alumnoIdSesion) {
             $meta = $conversation->meta ?? [];
@@ -219,8 +235,10 @@ REGLAS PARA PROGRAMACIÓN ACADÉMICA:
 • Si el estudiante pregunta por cursos de un ciclo específico (ej. "2026-1") y el contexto muestra la programación del PERIODO ACADÉMICO ACTIVO, preséntala indicando claramente a qué periodo corresponde. Si el periodo pedido aún no está activo (no hay programación cargada), indícalo explícitamente: "La programación del ciclo 2026-1 aún no ha sido publicada en el sistema. La información disponible corresponde a [periodo activo]."
 
 FLUJO DE PREGUNTAS PARA IDENTIFICAR EL AULA DE UN ESTUDIANTE:
-Si el estudiante pregunta por el aula de un curso específico:
-  1. Si el nombre del curso en la pregunta es ambiguo (ej. "administración" puede ser "ADMINISTRACION" o "ADMINISTRACION GENERAL"), pregunta por el nombre exacto como aparece en SIGA.
+Distingue el tipo de pregunta antes de aplicar este flujo:
+• Si el estudiante pregunta "¿se ha programado X?", "¿hay secciones de X?", "¿se abrió X?", "¿está disponible X?" → muestra DIRECTAMENTE todas las secciones disponibles con grupo, sección, estado y aula. NO pidas grupo ni sección.
+• Si el estudiante pregunta "¿en qué aula es mi clase de X?" o "¿dónde me toca X?" (quiere saber SU aula específica):
+  1. Si el nombre del curso es ambiguo (ej. "administración" puede ser "ADMINISTRACION" o "ADMINISTRACION GENERAL"), pregunta por el nombre exacto como aparece en SIGA.
   2. Si hay varias secciones del mismo curso, pregunta: "¿En qué grupo y sección estás matriculado según tu SIGA?"
   3. Con esa información, responde directamente con el aula.
 
