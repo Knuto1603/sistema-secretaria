@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 class ProgramacionTransformer
 {
-    public function toDTO(ProgramacionAcademica $model): ProgramacionResponseDTO
+    public function toDTO(ProgramacionAcademica $model, ?string $escuelaEstudianteId = null): ProgramacionResponseDTO
     {
         // Aula desde relación aulaRelacion (sin conflicto de nombre con el campo texto 'aula')
         $aulaRel  = null;
@@ -80,6 +80,12 @@ class ProgramacionTransformer
             ];
         }
 
+        // Detectar si es equivalente: tiene relación escuelas cargada y la escuela del estudiante NO está en la lista
+        $esEquivalente = false;
+        if ($escuelaEstudianteId && $model->relationLoaded('escuelas')) {
+            $esEquivalente = !$model->escuelas->contains('id', $escuelaEstudianteId);
+        }
+
         return new ProgramacionResponseDTO(
             id:               $model->id,
             curso_id:         $model->curso_id,
@@ -115,17 +121,18 @@ class ProgramacionTransformer
             grupo_horario: $grupoHorario,
             escuelas:           $escuelas,
             escuela_programada: $escuelaProgramada,
-            created_at:         $model->created_at->toISOString()
+            created_at:         $model->created_at->toISOString(),
+            es_equivalente:     $esEquivalente,
         );
     }
 
-    public function toArray(ProgramacionAcademica $model): array
+    public function toArray(ProgramacionAcademica $model, ?string $escuelaEstudianteId = null): array
     {
-        return $this->toDTO($model)->toArray();
+        return $this->toDTO($model, $escuelaEstudianteId)->toArray();
     }
 
-    public function collection(Collection $models): array
+    public function collection(Collection $models, ?string $escuelaEstudianteId = null): array
     {
-        return $models->map(fn($m) => $this->toArray($m))->toArray();
+        return $models->map(fn($m) => $this->toArray($m, $escuelaEstudianteId))->toArray();
     }
 }

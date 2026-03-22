@@ -29,7 +29,7 @@ class ProgramacionService
         protected PeriodoRepositoryInterface $periodoRepository
     ) {}
 
-    public function getPaginated(ProgramacionFilterDTO $dto, Request $request): LengthAwarePaginator
+    public function getPaginated(ProgramacionFilterDTO $dto, Request $request, ?User $user = null): LengthAwarePaginator
     {
         $periodoId = $dto->periodo_id ?? $this->periodoRepository->getActiveId();
 
@@ -37,7 +37,21 @@ class ProgramacionService
             throw new Exception('No hay un periodo académico activo.');
         }
 
-        $query = $this->programacionRepository->getBaseQuery($periodoId, $dto->escuela_id, $dto->ciclo, $dto->area_id, $dto->grupo, $dto->escuela_programada_id);
+        // Para estudiantes, incluir cursos equivalentes de otras escuelas
+        $codigosEquivalentes = [];
+        if ($user && $user->isEstudiante() && $user->escuela_id) {
+            $codigosEquivalentes = $this->getCodigosEquivalentes($periodoId, $user->escuela_id);
+        }
+
+        $query = $this->programacionRepository->getBaseQuery(
+            $periodoId,
+            $dto->escuela_id,
+            $dto->ciclo,
+            $dto->area_id,
+            $dto->grupo,
+            $dto->escuela_programada_id,
+            $codigosEquivalentes
+        );
 
         return $this->applyFiltersAndPaginate(
             $query,
@@ -49,6 +63,46 @@ class ProgramacionService
             ],
             false
         );
+    }
+
+    /**
+     * Obtiene los códigos de cursos ofertados a la escuela del estudiante
+     * que también tienen secciones en OTRAS escuelas (equivalentes).
+     */
+    private function getCodigosEquivalentes(string $periodoId, string $escuelaId): array
+    {
+        // Códigos de cursos asignados a la escuela del estudiante en este periodo
+        $codigosEscuela = ProgramacionAcademica::where('periodo_id', $periodoId)
+            ->whereExists(function ($q) use ($escuelaId) {
+                $q->from('programacion_escuelas')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+            })
+            ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
+            ->pluck('cursos.codigo')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($codigosEscuela)) {
+            return [];
+        }
+
+        // De esos mismos códigos, verificar cuáles tienen secciones en OTRA escuela
+        $codigosConOtraEscuela = ProgramacionAcademica::where('periodo_id', $periodoId)
+            ->whereNotExists(function ($q) use ($escuelaId) {
+                $q->from('programacion_escuelas')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+            })
+            ->join('cursos as c2', 'c2.id', '=', 'programacion_academica.curso_id')
+            ->whereIn('c2.codigo', $codigosEscuela)
+            ->pluck('c2.codigo')
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return $codigosConOtraEscuela;
     }
 
     public function import(ImportProgramacionDTO $dto): void

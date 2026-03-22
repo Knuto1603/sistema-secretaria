@@ -80,7 +80,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         });
     }
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null): Builder
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = []): Builder
     {
         $query = $this->model
             ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
@@ -92,10 +92,25 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             ->orderBy('cursos.nombre', 'asc');
 
         if ($escuelaId) {
-            $query->whereExists(function ($sub) use ($escuelaId) {
-                $sub->from('programacion_escuelas')
-                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
-                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+            $query->where(function ($q) use ($escuelaId, $codigosEquivalentes) {
+                // Cursos normales: asignados a la escuela del estudiante
+                $q->whereExists(function ($sub) use ($escuelaId) {
+                    $sub->from('programacion_escuelas')
+                        ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                        ->where('programacion_escuelas.escuela_id', $escuelaId);
+                });
+
+                // Cursos equivalentes: mismo código, pero de OTRA escuela
+                if (!empty($codigosEquivalentes)) {
+                    $q->orWhere(function ($eq) use ($escuelaId, $codigosEquivalentes) {
+                        $eq->whereIn('cursos.codigo', $codigosEquivalentes)
+                            ->whereNotExists(function ($ne) use ($escuelaId) {
+                                $ne->from('programacion_escuelas')
+                                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                                    ->where('programacion_escuelas.escuela_id', $escuelaId);
+                            });
+                    });
+                }
             });
         }
 

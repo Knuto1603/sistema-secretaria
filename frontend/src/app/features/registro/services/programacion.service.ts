@@ -68,6 +68,7 @@ export interface Programacion {
   escuelas?: EscuelaRef[];
   escuela_programada?: EscuelaRef | null;
   docente_id?: string | null;
+  es_equivalente?: boolean;
 }
 
 export interface PaginatedResponse<T> {

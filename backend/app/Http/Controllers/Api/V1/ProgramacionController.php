@@ -64,8 +64,11 @@ class ProgramacionController extends Controller
             }
 
             $dto    = ProgramacionFilterDTO::fromRequest($data);
-            $result = $this->service->getPaginated($dto, $request);
-            $items  = $this->transformer->collection(collect($result->items()));
+            $result = $this->service->getPaginated($dto, $request, $user);
+
+            // Marcar cursos equivalentes (de otra escuela) antes de transformar
+            $escuelaId = ($user && $user->isEstudiante()) ? $user->escuela_id : null;
+            $items = $this->transformer->collection(collect($result->items()), $escuelaId);
 
             return $this->paginated($items, $result, 'Lista de programación académica');
         } catch (Exception $e) {

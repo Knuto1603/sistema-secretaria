@@ -445,6 +445,14 @@
           <div class="flex flex-col gap-1">
             <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
             <span class="text-[10px] text-slate-400 font-bold tracking-tighter">{{ row.curso?.codigo || '-' }}</span>
+            @if (row.es_equivalente) {
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 text-violet-700 text-[9px] font-bold rounded-md border border-violet-200 leading-none w-fit">
+                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+                Otra escuela
+              </span>
+            }
             <div class="flex flex-wrap gap-1">
               @for (e of row.escuelas; track e.id) {
                 <span class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-bold rounded-md border border-indigo-100 leading-none">
