@@ -867,7 +867,7 @@ class DbContextService
         // Acepta "alumno Juan Pérez", "alumna sergio alburqueque," (mayúsculas o minúsculas)
         // El flag /ui hace la búsqueda case-insensitive y unicode-aware
         if (preg_match(
-            '/(?:alumno|estudiante|alumna)\s+((?:[a-záéíóúüña-z][a-záéíóúüñ]*\s+){0,4}[a-záéíóúüñ][a-záéíóúüñ]*)/ui',
+            '/(?:alumno|estudiante|alumna)[\s,:\-]+((?:[a-záéíóúüña-z][a-záéíóúüñ]*\s+){0,4}[a-záéíóúüñ][a-záéíóúüñ]*)/ui',
             $query,
             $m
         )) {
