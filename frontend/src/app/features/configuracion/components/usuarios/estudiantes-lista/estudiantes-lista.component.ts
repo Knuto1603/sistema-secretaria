@@ -39,6 +39,7 @@ export class EstudiantesListaComponent implements OnInit {
   loading = signal(false);
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
   reenvioEnProgreso = signal<string | null>(null);
+  resetActivacionEnProgreso = signal<string | null>(null);
   toggleEgresanteEnProgreso = signal<string | null>(null);
 
   // Modal detalle
@@ -237,6 +238,31 @@ export class EstudiantesListaComponent implements OnInit {
       },
       error: () => {
         this.mostrarMensaje('error', 'Error al cambiar el estado');
+      }
+    });
+  }
+
+  resetActivacion(estudiante: Estudiante): void {
+    if (this.resetActivacionEnProgreso()) return;
+
+    if (!confirm(`¿Resetear la activación de ${estudiante.name}? El alumno deberá solicitar un nuevo OTP y establecer su contraseña nuevamente.`)) return;
+
+    this.resetActivacionEnProgreso.set(estudiante.id);
+
+    this.usuarioService.resetActivacion(estudiante.id).subscribe({
+      next: (updated) => {
+        this.estudiantes.update(lista =>
+          lista.map(e => e.id === updated.id ? updated : e)
+        );
+        if (this.estudianteDetalle()?.id === updated.id) {
+          this.estudianteDetalle.set(updated);
+        }
+        this.mostrarMensaje('success', `Cuenta de ${updated.name} reseteada correctamente`);
+        this.resetActivacionEnProgreso.set(null);
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al resetear la activación');
+        this.resetActivacionEnProgreso.set(null);
       }
     });
   }

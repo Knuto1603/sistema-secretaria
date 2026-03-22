@@ -297,6 +297,12 @@ export class UsuarioService {
     );
   }
 
+  resetActivacion(id: string): Observable<Estudiante> {
+    return this.http.post<ApiResponse<Estudiante>>(`${this.baseUrl}/estudiantes/${id}/reset-activacion`, {}).pipe(
+      map(response => response.data)
+    );
+  }
+
   importarEstudiantes(archivo: File): Observable<{ resumen: ImportResumen; resultados: ImportFila[] }> {
     const form = new FormData();
     form.append('archivo', archivo);

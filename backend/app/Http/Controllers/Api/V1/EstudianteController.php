@@ -149,6 +149,20 @@ class EstudianteController extends Controller
     }
 
     /**
+     * Resetea la activación de la cuenta de un estudiante
+     */
+    public function resetActivacion(string $id): JsonResponse
+    {
+        $result = $this->service->resetActivacion($id);
+
+        if (!$result['success']) {
+            return $this->error($result['message'], 400);
+        }
+
+        return $this->success($result['data'] ?? null, $result['message']);
+    }
+
+    /**
      * Importa estudiantes desde un archivo Excel
      */
     public function import(Request $request): JsonResponse
