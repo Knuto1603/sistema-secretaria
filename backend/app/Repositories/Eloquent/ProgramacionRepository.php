@@ -90,7 +90,13 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
                 (SELECT pe.tipo FROM plan_estudios pe
                  INNER JOIN planes_estudios plan ON plan.id = pe.plan_id AND plan.activo = 1
                  WHERE pe.curso_id = programacion_academica.curso_id
-                   AND plan.escuela_id = programacion_academica.escuela_programada_id
+                   AND (
+                     plan.escuela_id = programacion_academica.escuela_programada_id
+                     OR (programacion_academica.escuela_programada_id IS NULL AND plan.escuela_id IN (
+                       SELECT pesc.escuela_id FROM programacion_escuelas pesc
+                       WHERE pesc.programacion_id = programacion_academica.id
+                     ))
+                   )
                  LIMIT 1) as tipo_plan')
             ->leftJoin('cursos', 'programacion_academica.curso_id', '=', 'cursos.id')
             ->orderByDesc('esta_lleno_orden')
@@ -143,8 +149,18 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
                              ->where('plan_f.activo', 1);
                     })
                     ->whereColumn('pe_f.curso_id', 'programacion_academica.curso_id')
-                    ->whereColumn('plan_f.escuela_id', 'programacion_academica.escuela_programada_id')
-                    ->where('pe_f.tipo', $tipo);
+                    ->where('pe_f.tipo', $tipo)
+                    ->where(function ($w) {
+                        $w->whereColumn('plan_f.escuela_id', 'programacion_academica.escuela_programada_id')
+                          ->orWhere(function ($fallback) {
+                              $fallback->whereNull('programacion_academica.escuela_programada_id')
+                                       ->whereExists(function ($pesc) {
+                                           $pesc->from('programacion_escuelas')
+                                                ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                                                ->whereColumn('programacion_escuelas.escuela_id', 'plan_f.escuela_id');
+                                       });
+                          });
+                    });
             });
         }
 
