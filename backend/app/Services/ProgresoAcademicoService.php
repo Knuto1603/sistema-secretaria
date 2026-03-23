@@ -36,6 +36,7 @@ class ProgresoAcademicoService
         $obligatoriosHechos     = 0;
         $electivosHechos        = 0;
         $pendientesObligatorios = [];
+        $debugAprobados         = [];
 
         foreach ($plan->cursos as $planCurso) {
             $curso    = $planCurso->curso;
@@ -46,6 +47,7 @@ class ProgresoAcademicoService
                 continue;
             }
 
+            $directamenteAprobado = in_array($curso->id, $aprobadosIds);
             // Verificar si el curso está aprobado directamente o vía equivalencia
             $aprobado = in_array($curso->id, $aprobadosConEquivalencias);
 
@@ -53,6 +55,13 @@ class ProgresoAcademicoService
                 $obligatoriosRequeridos += $creditos;
                 if ($aprobado) {
                     $obligatoriosHechos += $creditos;
+                    $debugAprobados[] = [
+                        'ciclo'    => $planCurso->ciclo,
+                        'codigo'   => $curso->codigo,
+                        'nombre'   => $curso->nombre,
+                        'creditos' => $creditos,
+                        'via'      => $directamenteAprobado ? 'directo' : 'equivalencia',
+                    ];
                 } else {
                     $pendientesObligatorios[] = [
                         'ciclo'    => $planCurso->ciclo,
@@ -111,6 +120,8 @@ class ProgresoAcademicoService
             ],
             'egresante_calculado' => $egresanteCalculado,
             'egresante_manual'    => (bool) $user->egresante,
+            // Debug temporal: cursos del plan contados como aprobados y por qué vía
+            '_debug_aprobados' => $debugAprobados,
         ];
     }
 
