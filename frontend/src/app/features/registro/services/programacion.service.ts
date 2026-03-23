@@ -69,6 +69,7 @@ export interface Programacion {
   escuela_programada?: EscuelaRef | null;
   docente_id?: string | null;
   es_equivalente?: boolean;
+  tipo_plan?: 'O' | 'E' | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -111,7 +112,8 @@ export class ProgramacionService {
     ciclo?: number,
     areaId?: string,
     grupo?: string,
-    escuelaProgramadaId?: string
+    escuelaProgramadaId?: string,
+    tipo?: string
   ): Observable<PaginatedResponse<Programacion>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -123,6 +125,7 @@ export class ProgramacionService {
     if (areaId)              params = params.set('area_id', areaId);
     if (grupo)               params = params.set('grupo', grupo);
     if (escuelaProgramadaId) params = params.set('escuela_programada_id', escuelaProgramadaId);
+    if (tipo)                params = params.set('tipo', tipo);
 
     return this.http
       .get<ApiResponse<ApiPaginatedData<Programacion>>>(this.apiUrl, { params })

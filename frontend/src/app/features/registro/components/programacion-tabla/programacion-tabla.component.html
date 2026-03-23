@@ -396,6 +396,26 @@
             </div>
           }
 
+          <!-- Tipo (Obligatorio / Electivo) -->
+          <div class="relative">
+            <select
+              [ngModel]="tipoSeleccionado()"
+              (ngModelChange)="onTipoChange($event)"
+              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px] transition-all"
+              [ngClass]="tipoSeleccionado() === 'O' ? 'border-blue-300 bg-blue-50 text-blue-700' :
+                         tipoSeleccionado() === 'E' ? 'border-amber-300 bg-amber-50 text-amber-700' :
+                         'border-slate-200'">
+              <option value="">Tipo</option>
+              <option value="O">Obligatorio</option>
+              <option value="E">Electivo</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+
           <!-- Separador visual -->
           <div class="h-6 w-px bg-slate-200"></div>
         }
@@ -445,14 +465,25 @@
           <div class="flex flex-col gap-1">
             <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
             <span class="text-[10px] text-slate-400 font-bold tracking-tighter">{{ row.curso?.codigo || '-' }}</span>
-            @if (row.es_equivalente) {
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 text-violet-700 text-[9px] font-bold rounded-md border border-violet-200 leading-none w-fit">
-                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                </svg>
-                Otra escuela
-              </span>
-            }
+            <div class="flex flex-wrap gap-1 mt-0.5">
+              @if (row.tipo_plan === 'O') {
+                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold rounded-md border border-blue-200 leading-none">
+                  Obligatorio
+                </span>
+              } @else if (row.tipo_plan === 'E') {
+                <span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-md border border-amber-200 leading-none">
+                  Electivo
+                </span>
+              }
+              @if (row.es_equivalente) {
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 text-violet-700 text-[9px] font-bold rounded-md border border-violet-200 leading-none">
+                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                  </svg>
+                  Otra escuela
+                </span>
+              }
+            </div>
             <div class="flex flex-wrap gap-1">
               @for (e of row.escuelas; track e.id) {
                 <span class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-bold rounded-md border border-indigo-100 leading-none">
