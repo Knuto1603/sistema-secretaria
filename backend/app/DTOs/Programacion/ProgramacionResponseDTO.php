@@ -30,6 +30,7 @@ readonly class ProgramacionResponseDTO
         public ?array $escuela_programada,
         public string $created_at,
         public bool $es_equivalente = false,
+        public ?string $tipo_plan = null,
     ) {}
 
     public function toArray(): array
@@ -60,6 +61,7 @@ readonly class ProgramacionResponseDTO
             'escuela_programada'  => $this->escuela_programada,
             'created_at'          => $this->created_at,
             'es_equivalente'      => $this->es_equivalente,
+            'tipo_plan'           => $this->tipo_plan,
         ];
     }
 }

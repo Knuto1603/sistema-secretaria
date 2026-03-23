@@ -80,13 +80,18 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         });
     }
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = []): Builder
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = [], ?string $tipo = null): Builder
     {
         $query = $this->model
             ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
             ->where('periodo_id', $periodoId)
             ->selectRaw('programacion_academica.*,
-                (CASE WHEN lleno_manual = 1 OR n_inscritos >= capacidad THEN 1 ELSE 0 END) as esta_lleno_orden')
+                (CASE WHEN lleno_manual = 1 OR n_inscritos >= capacidad THEN 1 ELSE 0 END) as esta_lleno_orden,
+                (SELECT pe.tipo FROM plan_estudios pe
+                 INNER JOIN planes_estudios plan ON plan.id = pe.plan_id AND plan.activo = 1
+                 WHERE pe.curso_id = programacion_academica.curso_id
+                   AND plan.escuela_id = programacion_academica.escuela_programada_id
+                 LIMIT 1) as tipo_plan')
             ->leftJoin('cursos', 'programacion_academica.curso_id', '=', 'cursos.id')
             ->orderByDesc('esta_lleno_orden')
             ->orderBy('cursos.nombre', 'asc');
@@ -128,6 +133,19 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
 
         if ($escuelaProgramadaId) {
             $query->where('programacion_academica.escuela_programada_id', $escuelaProgramadaId);
+        }
+
+        if ($tipo) {
+            $query->whereExists(function ($sub) use ($tipo) {
+                $sub->from('plan_estudios as pe_f')
+                    ->join('planes_estudios as plan_f', function ($join) {
+                        $join->on('plan_f.id', '=', 'pe_f.plan_id')
+                             ->where('plan_f.activo', 1);
+                    })
+                    ->whereColumn('pe_f.curso_id', 'programacion_academica.curso_id')
+                    ->whereColumn('plan_f.escuela_id', 'programacion_academica.escuela_programada_id')
+                    ->where('pe_f.tipo', $tipo);
+            });
         }
 
         return $query;

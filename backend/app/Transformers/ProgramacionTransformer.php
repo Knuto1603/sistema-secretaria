@@ -123,6 +123,7 @@ class ProgramacionTransformer
             escuela_programada: $escuelaProgramada,
             created_at:         $model->created_at->toISOString(),
             es_equivalente:     $esEquivalente,
+            tipo_plan:          $model->tipo_plan ?? null,
         );
     }
 

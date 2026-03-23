@@ -13,6 +13,7 @@ class ProgramacionFilterDTO
         public readonly ?string $area_id              = null,
         public readonly ?string $grupo                = null,
         public readonly ?string $escuela_programada_id = null,
+    public readonly ?string $tipo                 = null,  // O = Obligatorio, E = Electivo
     ) {}
 
     public static function fromRequest(array $data): self
@@ -26,6 +27,7 @@ class ProgramacionFilterDTO
             area_id:               $data['area_id'] ?? null,
             grupo:                 $data['grupo'] ?? null,
             escuela_programada_id: $data['escuela_programada_id'] ?? null,
+            tipo:                  isset($data['tipo']) && in_array($data['tipo'], ['O', 'E']) ? $data['tipo'] : null,
         );
     }
 }
