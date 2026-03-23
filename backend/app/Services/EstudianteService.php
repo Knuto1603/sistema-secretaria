@@ -177,12 +177,18 @@ class EstudianteService
             // Invalidar todos los OTPs existentes
             $user->otpCodes()->update(['usado' => true]);
 
-            // Quitar password y timestamp de activación
-            $user->forceFill([
-                'password'         => null,
-                'password_set_at'  => null,
-            ])->save();
+            // Quitar password y timestamp de activación usando DB directo
+            // para evitar que el cast 'hashed' intente hashear null
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'password'        => null,
+                    'password_set_at' => null,
+                ]);
         });
+
+        // Refrescar el modelo para reflejar los cambios
+        $user->refresh();
 
         $user->load('escuela');
         $ultimoOtp = $this->repository->getUltimoOtpEnviado($user->id);
