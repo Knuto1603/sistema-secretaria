@@ -98,8 +98,12 @@ class User extends Authenticatable
             ->withPivot('fuente', 'nota', 'semestre', 'tipo', 'creditos')
             ->where(function ($q) {
                 // Importados del PDF: solo aprobados (nota > 10)
-                // Autoreportados (nota null): siempre se consideran aprobados
-                $q->where('nota', '>', 10)->orWhereNull('nota');
+                $q->where('historial_academico.nota', '>', 10)
+                  // Autoreportados sin nota: siempre se consideran aprobados
+                  ->orWhere(function ($inner) {
+                      $inner->where('historial_academico.fuente', 'autoreporte')
+                            ->whereNull('historial_academico.nota');
+                  });
             })
             ->distinct()
             ->withTimestamps();

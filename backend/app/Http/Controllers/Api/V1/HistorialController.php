@@ -31,7 +31,7 @@ class HistorialController extends Controller
                 'tipo'     => $h->tipo,
                 'creditos' => $h->creditos,
                 'nota'     => $h->nota,
-                'aprobado' => $h->nota === null || $h->nota > 10,
+                'aprobado' => $h->nota > 10 || ($h->fuente === 'autoreporte' && $h->nota === null),
                 'fuente'   => $h->fuente,
             ]);
 
