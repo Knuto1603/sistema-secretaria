@@ -212,12 +212,17 @@ class ProgramacionService
 
         $cursoIdsFiltro = !empty($elegiblesIds) ? $elegiblesIds : ['__none__'];
 
+        // Códigos de los cursos elegibles (para buscar equivalentes en otras escuelas)
+        $codigosElegibles = !empty($elegiblesIds)
+            ? Curso::whereIn('id', $elegiblesIds)->pluck('codigo')->toArray()
+            : [];
+
         // Llamar sin filtro de escuela para poder hacer el OR correctamente;
         // el filtro de escuela se aplica dentro del where() para que los
         // cursos en los que el alumno YA está inscrito no sean excluidos.
         $query = $this->programacionRepository
             ->getBaseQuery($periodoId)
-            ->where(function ($q) use ($cursoIdsFiltro, $inscritosProgramacionIds, $user) {
+            ->where(function ($q) use ($cursoIdsFiltro, $codigosElegibles, $inscritosProgramacionIds, $user) {
                 // Rama 1: cursos elegibles habilitados para la escuela del alumno
                 $q->where(function ($inner) use ($cursoIdsFiltro, $user) {
                     $inner->whereIn('programacion_academica.curso_id', $cursoIdsFiltro)
@@ -227,7 +232,18 @@ class ProgramacionService
                                   ->where('programacion_escuelas.escuela_id', $user->escuela_id);
                           });
                 });
-                // Rama 2: cursos en los que ya está inscrito este periodo
+                // Rama 2: mismo código de curso programado en otra escuela
+                if (!empty($codigosElegibles)) {
+                    $q->orWhere(function ($inner) use ($codigosElegibles, $user) {
+                        $inner->whereIn('cursos.codigo', $codigosElegibles)
+                              ->whereNotExists(function ($sub) use ($user) {
+                                  $sub->from('programacion_escuelas')
+                                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                                      ->where('programacion_escuelas.escuela_id', $user->escuela_id);
+                              });
+                    });
+                }
+                // Rama 3: cursos en los que ya está inscrito este periodo
                 if (!empty($inscritosProgramacionIds)) {
                     $q->orWhereIn('programacion_academica.id', $inscritosProgramacionIds);
                 }
