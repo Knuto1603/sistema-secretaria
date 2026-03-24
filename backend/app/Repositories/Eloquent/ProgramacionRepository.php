@@ -88,9 +88,8 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             ->selectRaw('programacion_academica.*,
                 (CASE WHEN lleno_manual = 1 OR n_inscritos >= capacidad THEN 1 ELSE 0 END) as esta_lleno_orden,
                 (SELECT pe.tipo FROM plan_estudios pe
-                 INNER JOIN planes_estudios plan ON plan.id = pe.plan_id AND plan.activo = 1
                  WHERE pe.curso_id = programacion_academica.curso_id
-                   AND plan.escuela_id = COALESCE(
+                   AND pe.escuela_id = COALESCE(
                      programacion_academica.escuela_programada_id,
                      (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
                       FROM programacion_escuelas
@@ -143,10 +142,9 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         if ($tipo) {
             $query->whereRaw('EXISTS (
                 SELECT 1 FROM plan_estudios pe_f
-                INNER JOIN planes_estudios plan_f ON plan_f.id = pe_f.plan_id AND plan_f.activo = 1
                 WHERE pe_f.curso_id = programacion_academica.curso_id
                   AND pe_f.tipo = ?
-                  AND plan_f.escuela_id = COALESCE(
+                  AND pe_f.escuela_id = COALESCE(
                     programacion_academica.escuela_programada_id,
                     (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
                      FROM programacion_escuelas
