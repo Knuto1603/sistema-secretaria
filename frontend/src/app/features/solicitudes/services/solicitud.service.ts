@@ -40,6 +40,7 @@ export interface CreateSolicitudDTO {
   motivo: string;
   firma: string;
   archivo_sustento?: File;
+  fuera_de_plan?: boolean;
 }
 
 export interface UpdateEstadoDTO {
@@ -91,6 +92,10 @@ export class SolicitudService {
 
     if (data.archivo_sustento) {
       formData.append('archivo_sustento', data.archivo_sustento);
+    }
+
+    if (data.fuera_de_plan) {
+      formData.append('fuera_de_plan', '1');
     }
 
     return this.http.post<ApiResponse<Solicitud>>(this.apiUrl, formData).pipe(

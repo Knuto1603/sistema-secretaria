@@ -43,6 +43,7 @@ export class SolicitudFormComponent implements OnInit {
   successMessage = signal('');
   errorMessage = signal('');
   firmaBase64 = signal('');
+  fueraDePlan = signal(false);
 
   solicitudForm = this.fb.group({
     motivo: ['', [Validators.required, Validators.minLength(20)]],
@@ -51,6 +52,7 @@ export class SolicitudFormComponent implements OnInit {
 
 ngOnInit(): void {
   const id = this.route.snapshot.paramMap.get('id');
+  this.fueraDePlan.set(this.route.snapshot.queryParamMap.get('fuera_de_plan') === '1');
 
   if (!id) {
     this.router.navigate(['/programacion']);
@@ -101,7 +103,8 @@ ngOnInit(): void {
       programacion_id: this.programacionInfo()?.id!,
       motivo: this.solicitudForm.value.motivo!,
       firma: this.firmaBase64(),
-      archivo_sustento: this.solicitudForm.value.archivo_sustento as any | undefined
+      archivo_sustento: this.solicitudForm.value.archivo_sustento as any | undefined,
+      fuera_de_plan: this.fueraDePlan()
     };
 
     this.solicitudService.crearSolicitud(payload).subscribe({
