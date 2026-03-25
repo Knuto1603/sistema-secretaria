@@ -22,6 +22,7 @@ class SolicitudTransformer
             archivo_sustento_nombre: $model->archivo_sustento_nombre,
             asignado_a: $model->asignado_a,
             observaciones_admin: $model->observaciones_admin,
+            fuera_de_plan: (bool) $model->fuera_de_plan,
             metadatos: $model->metadatos,
             user: $model->user ? [
                 'id' => $model->user->id,

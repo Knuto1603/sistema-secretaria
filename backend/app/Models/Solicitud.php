@@ -23,11 +23,13 @@ class Solicitud extends Model
         'archivo_sustento_path',
         'archivo_sustento_nombre',
         'asignado_a',
-        'observaciones_admin'
+        'observaciones_admin',
+        'fuera_de_plan'
     ];
 
     protected $casts = [
-        'metadatos' => 'array',
+        'metadatos'    => 'array',
+        'fuera_de_plan' => 'boolean',
     ];
 
     public function user(): BelongsTo

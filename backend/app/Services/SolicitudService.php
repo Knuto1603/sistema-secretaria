@@ -48,8 +48,8 @@ class SolicitudService
                 throw new Exception('No se pueden presentar solicitudes para periodos académicos inactivos.');
             }
 
-            // Verificar que el curso pertenece al plan de estudios de la escuela del estudiante
-            if ($user->escuela_id) {
+            // Verificar plan de estudios y sección habilitada (se omite si fuera_de_plan = true)
+            if ($user->escuela_id && !$dto->fuera_de_plan) {
                 $cursoEnPlan = PlanEstudios::where('escuela_id', $user->escuela_id)
                     ->where('curso_id', $programacion->curso_id)
                     ->exists();
@@ -99,6 +99,7 @@ class SolicitudService
                 'archivo_sustento_path' => $sustentoPath,
                 'archivo_sustento_nombre' => $sustentoNombre,
                 'estado' => 'pendiente',
+                'fuera_de_plan' => $dto->fuera_de_plan,
                 'metadatos' => [
                     'user_agent' => $dto->user_agent,
                     'ip' => $dto->ip,
