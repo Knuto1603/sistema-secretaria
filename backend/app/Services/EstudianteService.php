@@ -201,6 +201,46 @@ class EstudianteService
     }
 
     /**
+     * Inhabilita la cuenta del estudiante Y resetea la activación:
+     * - activo = false (no puede iniciar sesión)
+     * - password = null, password_set_at = null
+     * - Todos los OTPs invalidados
+     * El alumno deberá ser reactivado por un admin y luego solicitar nuevo OTP.
+     */
+    public function inhabilitarYResetear(string $id): array
+    {
+        $user = $this->repository->findById($id);
+
+        if (!$user || $user->tipo_usuario !== 'estudiante') {
+            return ['success' => false, 'message' => 'Estudiante no encontrado'];
+        }
+
+        DB::transaction(function () use ($user) {
+            // Invalidar todos los OTPs existentes
+            $user->otpCodes()->update(['usado' => true]);
+
+            // Deshabilitar cuenta y borrar credenciales
+            DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'activo'          => false,
+                    'password'        => null,
+                    'password_set_at' => null,
+                ]);
+        });
+
+        $user->refresh();
+        $user->load('escuela');
+        $ultimoOtp = $this->repository->getUltimoOtpEnviado($user->id);
+
+        return [
+            'success' => true,
+            'message' => 'Cuenta inhabilitada y credenciales reseteadas. El estudiante deberá ser reactivado y solicitar un nuevo OTP.',
+            'data'    => $this->transformer->toEstudianteArray($user, $ultimoOtp),
+        ];
+    }
+
+    /**
      * Verifica si se puede enviar un nuevo OTP (máximo 3 por hora)
      */
     protected function puedeEnviarOtp(string $userId): bool

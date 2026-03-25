@@ -291,6 +291,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::patch('/{id}/toggle', [EstudianteController::class, 'toggle']);
             Route::post('/{id}/reenviar-otp', [EstudianteController::class, 'reenviarOtp']);
             Route::post('/{id}/reset-activacion', [EstudianteController::class, 'resetActivacion']);
+            Route::post('/{id}/inhabilitar-resetear', [EstudianteController::class, 'inhabilitarYResetear']);
             Route::get('/{id}/historial',     [EstudianteController::class, 'historial']);
             Route::get('/{id}/inscripciones', [EstudianteController::class, 'inscripciones']);
         });

@@ -163,6 +163,20 @@ class EstudianteController extends Controller
     }
 
     /**
+     * Inhabilita la cuenta del estudiante y resetea la activación (OTP + contraseña)
+     */
+    public function inhabilitarYResetear(string $id): JsonResponse
+    {
+        $result = $this->service->inhabilitarYResetear($id);
+
+        if (!$result['success']) {
+            return $this->error($result['message'], 400);
+        }
+
+        return $this->success($result['data'] ?? null, $result['message']);
+    }
+
+    /**
      * Importa estudiantes desde un archivo Excel
      */
     public function import(Request $request): JsonResponse
