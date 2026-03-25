@@ -7,6 +7,7 @@ use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Programacion\ImportProgramacionHtmlRequest;
 use App\Http\Requests\Programacion\ImportProgramacionRequest;
+use App\Imports\ProgramacionCampusImport;
 use App\Imports\ProgramacionHtmlImport;
 use App\Models\Curso;
 use App\Models\Escuela;
@@ -127,6 +128,80 @@ class ProgramacionController extends Controller
                     'historial_registrado' => $result['historial_registrado'],
                     'items'                => $items,
                     'pagination'           => [
+                        'current_page' => $paginated->currentPage(),
+                        'last_page'    => $paginated->lastPage(),
+                        'per_page'     => $paginated->perPage(),
+                        'total'        => $paginated->total(),
+                    ],
+                ],
+            ]);
+        } catch (Exception $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+    }
+
+    /**
+     * Importar programación desde reporte Excel del sistema Campus.
+     * El encabezado está en la fila 8 y el ciclo ya viene como entero.
+     * Marca automáticamente lleno_manual = true cuando n_inscritos >= capacidad.
+     */
+    public function importCampus(ImportProgramacionRequest $request): JsonResponse
+    {
+        try {
+            $dto = ImportProgramacionDTO::fromRequest(
+                $request->file('file'),
+                $request->periodo_id
+            );
+
+            $this->service->importCampus($dto);
+
+            return $this->success(null, 'Programación Campus importada exitosamente');
+        } catch (Exception $e) {
+            return $this->error('Error al procesar el Excel Campus: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Devuelve TODA la programación del periodo activo sin filtro de escuela/plan.
+     * Usado para el flujo "No encuentro mi curso" del estudiante.
+     */
+    public function todosParaSolicitud(Request $request): JsonResponse
+    {
+        try {
+            $periodoId = $request->get('periodo_id') ?? $this->service->getActivePeriodoId();
+
+            if (!$periodoId) {
+                return $this->error('No hay periodo activo.', 422);
+            }
+
+            $page    = (int) $request->get('page', 1);
+            $perPage = (int) $request->get('per_page', 15);
+            $search  = $request->get('search', '');
+
+            $query = \App\Models\ProgramacionAcademica::where('periodo_id', $periodoId)
+                ->with(['curso', 'docente', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas'])
+                ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
+                ->select('programacion_academica.*');
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('cursos.nombre', 'LIKE', "%{$search}%")
+                      ->orWhere('cursos.codigo', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $query->orderByRaw('cursos.nombre ASC');
+
+            $paginated = $query->paginate($perPage, ['*'], 'page', $page);
+
+            $items = $this->transformer->collection(collect($paginated->items()));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todos los cursos del periodo',
+                'data'    => [
+                    'items'      => $items,
+                    'pagination' => [
                         'current_page' => $paginated->currentPage(),
                         'last_page'    => $paginated->lastPage(),
                         'per_page'     => $paginated->perPage(),

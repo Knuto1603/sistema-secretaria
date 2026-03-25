@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
+use App\Imports\ProgramacionCampusImport;
 use App\Imports\ProgramacionImport;
 use App\Models\Curso;
 use App\Models\Inscripcion;
@@ -116,6 +117,18 @@ class ProgramacionService
 
         $this->programacionRepository->deleteByPeriodo($periodoId);
         Excel::import(new ProgramacionImport($periodoId), $dto->file);
+    }
+
+    public function importCampus(ImportProgramacionDTO $dto): void
+    {
+        $periodoId = $dto->periodo_id ?? $this->periodoRepository->getActiveId();
+
+        if (!$periodoId) {
+            throw new Exception('No se pudo determinar el periodo académico.');
+        }
+
+        $this->programacionRepository->deleteByPeriodo($periodoId);
+        Excel::import(new ProgramacionCampusImport($periodoId), $dto->file);
     }
 
     public function findById(string $id): ?ProgramacionAcademica

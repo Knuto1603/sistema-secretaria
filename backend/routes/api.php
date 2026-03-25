@@ -115,6 +115,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::get('/', [ProgramacionController::class, 'index']);
         Route::get('/grupos', [ProgramacionController::class, 'grupos']);
         Route::get('/para-mi', [ProgramacionController::class, 'paraMi']);
+        Route::get('/todos-periodo', [ProgramacionController::class, 'todosParaSolicitud']);
         Route::get('/template', [ProgramacionController::class, 'downloadTemplate']);
         Route::get('/export', [ProgramacionController::class, 'export'])
             ->middleware('role:secretaria|admin|developer');
@@ -122,6 +123,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::post('/', [ProgramacionController::class, 'store'])
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import', [ProgramacionController::class, 'import'])
+            ->middleware('role:secretaria|admin|developer');
+        Route::post('/import-campus', [ProgramacionController::class, 'importCampus'])
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
             ->middleware('role:secretaria|admin|developer');
