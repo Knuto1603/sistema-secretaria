@@ -38,9 +38,10 @@ export class EstudiantesListaComponent implements OnInit {
   estudiantes = signal<Estudiante[]>([]);
   loading = signal(false);
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
-  reenvioEnProgreso = signal<string | null>(null);
-  resetActivacionEnProgreso = signal<string | null>(null);
-  toggleEgresanteEnProgreso = signal<string | null>(null);
+  reenvioEnProgreso            = signal<string | null>(null);
+  resetActivacionEnProgreso    = signal<string | null>(null);
+  toggleEgresanteEnProgreso    = signal<string | null>(null);
+  inhabilitarResetearEnProgreso = signal<string | null>(null);
 
   // Modal detalle
   estudianteDetalle = signal<Estudiante | null>(null);
@@ -263,6 +264,35 @@ export class EstudiantesListaComponent implements OnInit {
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al resetear la activación');
         this.resetActivacionEnProgreso.set(null);
+      }
+    });
+  }
+
+  inhabilitarYResetear(estudiante: Estudiante): void {
+    if (this.inhabilitarResetearEnProgreso()) return;
+
+    if (!confirm(
+      `¿Inhabilitar la cuenta de ${estudiante.name}?\n\n` +
+      `La cuenta quedará desactivada y se borrará la contraseña. ` +
+      `El alumno deberá ser reactivado por un administrador y luego solicitar un nuevo OTP para ingresar.`
+    )) return;
+
+    this.inhabilitarResetearEnProgreso.set(estudiante.id);
+
+    this.usuarioService.inhabilitarYResetear(estudiante.id).subscribe({
+      next: (updated) => {
+        this.estudiantes.update(lista =>
+          lista.map(e => e.id === updated.id ? updated : e)
+        );
+        if (this.estudianteDetalle()?.id === updated.id) {
+          this.estudianteDetalle.set(updated);
+        }
+        this.mostrarMensaje('success', `Cuenta de ${updated.name} inhabilitada y credenciales reseteadas.`);
+        this.inhabilitarResetearEnProgreso.set(null);
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al inhabilitar la cuenta');
+        this.inhabilitarResetearEnProgreso.set(null);
       }
     });
   }

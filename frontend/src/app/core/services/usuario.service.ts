@@ -303,6 +303,12 @@ export class UsuarioService {
     );
   }
 
+  inhabilitarYResetear(id: string): Observable<Estudiante> {
+    return this.http.post<ApiResponse<Estudiante>>(`${this.baseUrl}/estudiantes/${id}/inhabilitar-resetear`, {}).pipe(
+      map(response => response.data)
+    );
+  }
+
   importarEstudiantes(archivo: File): Observable<{ resumen: ImportResumen; resultados: ImportFila[] }> {
     const form = new FormData();
     form.append('archivo', archivo);

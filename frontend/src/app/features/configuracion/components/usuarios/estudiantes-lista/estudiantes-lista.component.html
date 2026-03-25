@@ -299,6 +299,27 @@
           (clicked)="toggleActivo(row)">
           {{ row.activo ? 'Desactivar' : 'Activar' }}
         </app-btn>
+        <!-- Inhabilitar y resetear OTP (solo si está activo o tiene cuenta activada) -->
+        @if (row.activo || row.cuenta_activada) {
+          <app-btn
+            variant="danger"
+            [disabled]="inhabilitarResetearEnProgreso() === row.id"
+            title="Inhabilitar cuenta y forzar nuevo OTP"
+            (clicked)="inhabilitarYResetear(row)">
+            @if (inhabilitarResetearEnProgreso() === row.id) {
+              <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            } @else {
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+              </svg>
+              Inhabilitar
+            }
+          </app-btn>
+        }
       </div>
     </ng-template>
 
@@ -699,6 +720,21 @@
           (clicked)="toggleActivo(estudianteDetalle()!)">
           {{ estudianteDetalle()!.activo ? 'Desactivar' : 'Activar' }}
         </app-btn>
+        @if (estudianteDetalle()!.activo || estudianteDetalle()!.cuenta_activada) {
+          <app-btn
+            variant="danger"
+            [disabled]="inhabilitarResetearEnProgreso() === estudianteDetalle()!.id"
+            title="Inhabilitar cuenta y forzar nuevo OTP"
+            (clicked)="inhabilitarYResetear(estudianteDetalle()!)">
+            @if (inhabilitarResetearEnProgreso() === estudianteDetalle()!.id) {
+              <svg class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+            }
+            Inhabilitar y resetear OTP
+          </app-btn>
+        }
         <app-btn variant="ghost" (clicked)="cerrarDetalle()">Cerrar</app-btn>
       </div>
     </div>
