@@ -323,7 +323,7 @@
 
               <!-- Requisitos (columna) con tooltip en cada chip -->
               <td class="px-4 py-3 hidden xl:table-cell">
-                @if (curso.requisitos?.length) {
+                @if (curso.requisitos.length) {
                   <div class="flex flex-wrap gap-1">
                     @for (req of curso.requisitos; track req) {
                       <span

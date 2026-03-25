@@ -125,7 +125,7 @@
               type="text"
               placeholder="Buscar por nombre o código de curso..."
               [value]="todosCursosSearch()"
-              (input)="onTodosCursosSearch(($event.target as HTMLInputElement).value)"
+              (input)="onTodosCursosSearch($any($event.target).value)"
               class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
           </div>
         </div>

@@ -70,6 +70,7 @@ export interface Programacion {
   docente_id?: string | null;
   es_equivalente?: boolean;
   tipo_plan?: 'O' | 'E' | null;
+  ciclo?: number | null;
 }
 
 export interface PaginatedResponse<T> {
