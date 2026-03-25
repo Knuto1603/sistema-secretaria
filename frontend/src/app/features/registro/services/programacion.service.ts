@@ -208,6 +208,33 @@ export class ProgramacionService {
     return this.http.post(`${this.apiUrl}/import`, formData);
   }
 
+  importarExcelCampus(file: File, periodoId?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (periodoId) formData.append('periodo_id', periodoId);
+    return this.http.post(`${this.apiUrl}/import-campus`, formData);
+  }
+
+  getTodosParaSolicitud(
+    page: number = 1,
+    search: string = '',
+    perPage: number = 15,
+    periodoId?: string
+  ): Observable<{ items: Programacion[]; pagination: { current_page: number; last_page: number; per_page: number; total: number } }> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('per_page', perPage.toString());
+    if (search)    params = params.set('search', search);
+    if (periodoId) params = params.set('periodo_id', periodoId);
+
+    return this.http
+      .get<{ success: boolean; data: { items: Programacion[]; pagination: any } }>(
+        `${this.apiUrl}/todos-periodo`,
+        { params }
+      )
+      .pipe(map(r => r.data));
+  }
+
   importarHtml(
     file: File,
     periodoId?: string

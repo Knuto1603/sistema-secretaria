@@ -59,9 +59,10 @@ export class ProgramacionTablaComponent implements OnInit {
   loading           = signal(false);
   loadingPeriodos   = signal(false);
   loadingMatriz     = signal(false);
-  isUploading       = signal(false);
-  isUploadingHtml   = signal(false);
-  isExporting       = signal(false);
+  isUploading         = signal(false);
+  isUploadingHtml     = signal(false);
+  isUploadingCampus   = signal(false);
+  isExporting         = signal(false);
   searchTerm        = signal('');
   currentPage       = signal(1);
   perPage           = signal(10);
@@ -98,6 +99,14 @@ export class ProgramacionTablaComponent implements OnInit {
   programacionDetalleId = signal<string | null>(null);
   eliminando            = signal(false);
   errorEliminar         = signal<string | null>(null);
+
+  // Modal: No encuentro mi curso
+  showTodosCursos          = signal(false);
+  todosCursos              = signal<Programacion[]>([]);
+  todosCursosPagination    = signal<{ current_page: number; last_page: number; per_page: number; total: number } | null>(null);
+  todosCursosPage          = signal(1);
+  todosCursosSearch        = signal('');
+  todosCursosLoading       = signal(false);
 
   // Modal: Limpiar periodo (solo developer)
   showLimpiarPeriodo      = signal(false);
@@ -345,6 +354,66 @@ export class ProgramacionTablaComponent implements OnInit {
         error: () => this.isUploading.set(false),
       });
     }
+  }
+
+  onCampusFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.isUploadingCampus.set(true);
+      const periodoId = this.periodoSeleccionado() || undefined;
+      this.programacionService.importarExcelCampus(file, periodoId).subscribe({
+        next: () => {
+          this.isUploadingCampus.set(false);
+          (event.target as HTMLInputElement).value = '';
+          this.cargarProgramacion(1);
+          this.todosLosItems.set([]);
+        },
+        error: () => {
+          this.isUploadingCampus.set(false);
+          (event.target as HTMLInputElement).value = '';
+        },
+      });
+    }
+  }
+
+  // ─── "NO ENCUENTRO MI CURSO" ─────────────────────────────────────────────
+
+  abrirTodosCursos(): void {
+    this.showTodosCursos.set(true);
+    this.todosCursosSearch.set('');
+    this.todosCursosPage.set(1);
+    this.cargarTodosCursos();
+  }
+
+  cerrarTodosCursos(): void {
+    this.showTodosCursos.set(false);
+  }
+
+  cargarTodosCursos(page: number = this.todosCursosPage()): void {
+    this.todosCursosLoading.set(true);
+    this.todosCursosPage.set(page);
+    this.programacionService
+      .getTodosParaSolicitud(page, this.todosCursosSearch(), 15)
+      .subscribe({
+        next: res => {
+          this.todosCursos.set(res.items);
+          this.todosCursosPagination.set(res.pagination);
+          this.todosCursosLoading.set(false);
+        },
+        error: () => this.todosCursosLoading.set(false),
+      });
+  }
+
+  onTodosCursosSearch(value: string): void {
+    this.todosCursosSearch.set(value);
+    this.cargarTodosCursos(1);
+  }
+
+  solicitarFueraDePlan(item: Programacion): void {
+    this.showTodosCursos.set(false);
+    this.router.navigate(['app/solicitudes/nueva/', item.id], {
+      queryParams: { fuera_de_plan: '1' },
+    });
   }
 
   // ─── EXPORT ──────────────────────────────────────────────────────────────
