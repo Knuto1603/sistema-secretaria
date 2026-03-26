@@ -97,9 +97,10 @@
           </div>
         </div>
 
-        <!-- Fila 3: Escuelas -->
+        <!-- Fila 3: Escuelas habilitadas -->
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escuelas</label>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escuelas habilitadas</label>
+          <p class="text-[10px] text-slate-400 mb-2">Escuelas que podrán ver y solicitar este curso.</p>
           <div class="flex flex-wrap gap-2">
             @for (escuela of escuelas(); track escuela.id) {
               <button
@@ -116,6 +117,48 @@
             <p class="text-xs text-amber-500 mt-1 font-medium">Selecciona al menos una escuela</p>
           }
         </div>
+
+        <!-- Fila 4: Escuela programada -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escuela programada <span class="text-slate-300">(opcional)</span></label>
+          <p class="text-[10px] text-slate-400 mb-2">Escuela responsable de la programación de este curso.</p>
+          <select [ngModel]="escuelaProgramadaId()" (ngModelChange)="escuelaProgramadaId.set($event)"
+            class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+            <option value="">Sin escuela programada</option>
+            @for (escuela of escuelas(); track escuela.id) {
+              <option [value]="escuela.id">{{ escuela.nombre_corto || escuela.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Secciones existentes del curso -->
+        @if (cargandoSecciones()) {
+          <div class="flex items-center gap-2 text-sm text-slate-400">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Buscando secciones existentes...
+          </div>
+        }
+        @if (!cargandoSecciones() && seccionesExistentes().length > 0) {
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">
+              Secciones ya registradas para este curso ({{ seccionesExistentes().length }})
+            </p>
+            <div class="space-y-1">
+              @for (sec of seccionesExistentes(); track sec.id) {
+                <div class="flex items-center gap-3 text-xs text-slate-600">
+                  <span class="font-bold text-amber-700 w-6">S{{ sec.seccion }}</span>
+                  <span>{{ sec.docente || 'Sin docente' }}</span>
+                  @if (sec.aula) { <span class="text-slate-400">· {{ sec.aula }}</span> }
+                  <span class="text-slate-400">· {{ sec.n_inscritos }}/{{ sec.capacidad }} inscritos</span>
+                </div>
+              }
+            </div>
+            <p class="text-[10px] text-amber-500 mt-2">Las nuevas secciones se numerarán a partir de la {{ seccionesExistentes().length + 1 }}.</p>
+          </div>
+        }
 
         <!-- Secciones -->
         <div>
@@ -138,7 +181,14 @@
 
                 <!-- Cabecera sección -->
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-bold text-slate-700">Sección {{ $index + 1 }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-700">Sección</span>
+                    <input type="text"
+                      [ngModel]="seccion.seccion"
+                      (ngModelChange)="updateSeccion($index, 'seccion', $event)"
+                      placeholder="N°"
+                      class="w-14 px-2 py-1 text-sm font-bold text-center border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                  </div>
                   @if (secciones().length > 1) {
                     <button (click)="eliminarSeccion($index)"
                       class="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">

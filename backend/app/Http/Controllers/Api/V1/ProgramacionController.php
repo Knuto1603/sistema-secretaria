@@ -239,6 +239,36 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Secciones existentes de un curso en un periodo (para el formulario de creación).
+     */
+    public function seccionesDelCurso(Request $request): JsonResponse
+    {
+        $cursoId   = $request->get('curso_id');
+        $periodoId = $request->get('periodo_id') ?? $this->service->getActivePeriodoId();
+
+        if (!$cursoId || !$periodoId) {
+            return $this->success([]);
+        }
+
+        $secciones = ProgramacionAcademica::where('curso_id', $cursoId)
+            ->where('periodo_id', $periodoId)
+            ->with(['docente', 'aulaRelacion', 'grupoHorario', 'escuelaProgramada'])
+            ->orderByRaw('CAST(IFNULL(seccion, 0) AS UNSIGNED) ASC')
+            ->get()
+            ->map(fn($p) => [
+                'id'          => $p->id,
+                'seccion'     => $p->seccion,
+                'grupo'       => $p->grupo,
+                'docente'     => $p->docente?->nombre_completo,
+                'aula'        => $p->aula ?? $p->aulaRelacion?->nombre,
+                'capacidad'   => $p->capacidad,
+                'n_inscritos' => $p->n_inscritos,
+            ]);
+
+        return $this->success($secciones);
+    }
+
+    /**
      * Crear programación académica manual (curso por curso)
      */
     public function store(Request $request): JsonResponse
@@ -248,7 +278,9 @@ class ProgramacionController extends Controller
             'curso_id'                     => 'required|uuid|exists:cursos,id',
             'escuelas'                     => 'required|array|min:1',
             'escuelas.*'                   => 'uuid|exists:escuelas,id',
+            'escuela_programada_id'        => 'nullable|uuid|exists:escuelas,id',
             'secciones'                    => 'required|array|min:1',
+            'secciones.*.seccion'          => 'nullable|string|max:10',
             'secciones.*.grupo_horario_id' => 'nullable|uuid|exists:grupos_horario,id',
             'secciones.*.aula_id'          => 'nullable|uuid|exists:aulas,id',
             'secciones.*.docente_id'       => 'nullable|uuid|exists:docentes,id',
@@ -258,6 +290,14 @@ class ProgramacionController extends Controller
         try {
             $curso   = Curso::findOrFail($data['curso_id']);
             $created = [];
+
+            // Calcular el máximo número de sección existente para continuar la numeración
+            $maxSeccionExistente = ProgramacionAcademica::where('periodo_id', $data['periodo_id'])
+                ->where('curso_id', $data['curso_id'])
+                ->whereNotNull('seccion')
+                ->get()
+                ->map(fn($p) => is_numeric($p->seccion) ? (int) $p->seccion : 0)
+                ->max() ?? 0;
 
             // Verificar conflictos antes de crear
             $conflictos = [];
@@ -301,19 +341,25 @@ class ProgramacionController extends Controller
                 $id    = (string) Str::uuid();
                 $clave = 'M' . strtoupper(substr(str_replace('-', '', $id), 0, 8));
 
+                // Usar sección manual o auto-calcular a partir de las existentes
+                $seccionNum = isset($seccionData['seccion']) && $seccionData['seccion'] !== ''
+                    ? $seccionData['seccion']
+                    : (string) ($maxSeccionExistente + $index + 1);
+
                 $prog = ProgramacionAcademica::create([
-                    'id'               => $id,
-                    'curso_id'         => $data['curso_id'],
-                    'periodo_id'       => $data['periodo_id'],
-                    'docente_id'       => $seccionData['docente_id'] ?? null,
-                    'aula_id'          => $seccionData['aula_id'] ?? null,
-                    'grupo_horario_id' => $seccionData['grupo_horario_id'] ?? null,
-                    'clave'            => $clave,
-                    'grupo'            => $grupoNombre,
-                    'seccion'          => (string) ($index + 1),
-                    'capacidad'        => $seccionData['capacidad'],
-                    'n_inscritos'      => 0,
-                    'lleno_manual'     => false,
+                    'id'                   => $id,
+                    'curso_id'             => $data['curso_id'],
+                    'periodo_id'           => $data['periodo_id'],
+                    'docente_id'           => $seccionData['docente_id'] ?? null,
+                    'aula_id'              => $seccionData['aula_id'] ?? null,
+                    'grupo_horario_id'     => $seccionData['grupo_horario_id'] ?? null,
+                    'clave'                => $clave,
+                    'grupo'                => $grupoNombre,
+                    'seccion'              => $seccionNum,
+                    'capacidad'            => $seccionData['capacidad'],
+                    'n_inscritos'          => 0,
+                    'lleno_manual'         => false,
+                    'escuela_programada_id' => $data['escuela_programada_id'] ?? null,
                 ]);
 
                 $prog->escuelas()->sync($data['escuelas']);

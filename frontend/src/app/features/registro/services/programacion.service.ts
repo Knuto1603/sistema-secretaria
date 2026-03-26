@@ -3,6 +3,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '@env/environment';
 
+export interface SeccionExistente {
+  id: string;
+  seccion: string | null;
+  grupo: string | null;
+  docente: string | null;
+  aula: string | null;
+  capacidad: number;
+  n_inscritos: number;
+}
+
 export interface AulaRel {
   id: string;
   nombre: string;
@@ -168,7 +178,9 @@ export class ProgramacionService {
     periodo_id: string;
     curso_id: string;
     escuelas: string[];
+    escuela_programada_id: string | null;
     secciones: Array<{
+      seccion: string | null;
       grupo_horario_id: string | null;
       aula_id: string | null;
       docente_id: string | null;
@@ -177,6 +189,13 @@ export class ProgramacionService {
   }): Observable<{ creadas: number }> {
     return this.http
       .post<ApiResponse<{ creadas: number }>>(this.apiUrl, data)
+      .pipe(map(r => r.data));
+  }
+
+  getSeccionesDelCurso(cursoId: string, periodoId: string): Observable<SeccionExistente[]> {
+    const params = new HttpParams().set('curso_id', cursoId).set('periodo_id', periodoId);
+    return this.http
+      .get<ApiResponse<SeccionExistente[]>>(`${this.apiUrl}/secciones-del-curso`, { params })
       .pipe(map(r => r.data));
   }
 

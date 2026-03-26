@@ -119,6 +119,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::get('/template', [ProgramacionController::class, 'downloadTemplate']);
         Route::get('/export', [ProgramacionController::class, 'export'])
             ->middleware('role:secretaria|admin|developer');
+        Route::get('/secciones-del-curso', [ProgramacionController::class, 'seccionesDelCurso'])
+            ->middleware('role:secretaria|admin|developer');
         Route::get('/{id}', [ProgramacionController::class, 'show']);
         Route::post('/', [ProgramacionController::class, 'store'])
             ->middleware('role:secretaria|admin|developer');

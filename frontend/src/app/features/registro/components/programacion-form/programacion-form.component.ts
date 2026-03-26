@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '@env/environment';
-import { ProgramacionService } from '../../services/programacion.service';
+import { ProgramacionService, SeccionExistente } from '../../services/programacion.service';
 import { HorarioService, GrupoHorario } from '../../../configuracion/services/horario.service';
 import { AulaService, Pabellon } from '../../../configuracion/services/aula.service';
 import { PeriodoService, Periodo } from '@core/services/periodo.service';
@@ -26,6 +26,7 @@ interface Curso {
 }
 
 interface SeccionForm {
+  seccion: string;
   grupo_horario_id: string | null;
   aula_id: string | null;
   docente_id: string | null;
@@ -75,9 +76,14 @@ export class ProgramacionFormComponent implements OnInit {
   // Valores del formulario
   periodoId = signal<string>('');
   escuelasSeleccionadas = signal<Set<string>>(new Set());
+  escuelaProgramadaId = signal<string>('');
   secciones = signal<SeccionForm[]>([
-    { grupo_horario_id: null, aula_id: null, docente_id: null, capacidad: 30 }
+    { seccion: '1', grupo_horario_id: null, aula_id: null, docente_id: null, capacidad: 30 }
   ]);
+
+  // Secciones existentes del curso
+  seccionesExistentes = signal<SeccionExistente[]>([]);
+  cargandoSecciones = signal(false);
 
   // Búsqueda de docente por sección
   docenteBusqueda: string[] = [''];
@@ -135,12 +141,36 @@ export class ProgramacionFormComponent implements OnInit {
     this.cursoBusqueda = `${curso.codigo} - ${curso.nombre}`;
     this.mostrarResultados.set(false);
     this.cursoResultados.set([]);
+    this.cargarSeccionesExistentes(curso.id);
   }
 
   limpiarCurso(): void {
     this.cursoSeleccionado.set(null);
     this.cursoBusqueda = '';
     this.cursoResultados.set([]);
+    this.seccionesExistentes.set([]);
+    this.resetSecciones();
+  }
+
+  private cargarSeccionesExistentes(cursoId: string): void {
+    const periodoId = this.periodoId();
+    if (!periodoId) return;
+    this.cargandoSecciones.set(true);
+    this.programacionService.getSeccionesDelCurso(cursoId, periodoId).subscribe({
+      next: (existentes) => {
+        this.seccionesExistentes.set(existentes);
+        this.cargandoSecciones.set(false);
+        this.resetSecciones(existentes.length);
+      },
+      error: () => this.cargandoSecciones.set(false),
+    });
+  }
+
+  private resetSecciones(offset: number = 0): void {
+    this.secciones.set([
+      { seccion: (offset + 1).toString(), grupo_horario_id: null, aula_id: null, docente_id: null, capacidad: 30 }
+    ]);
+    this.docenteBusqueda = [''];
   }
 
   // ─── Escuelas ───────────────────────────────────────────────────────────
@@ -154,7 +184,8 @@ export class ProgramacionFormComponent implements OnInit {
   // ─── Secciones ──────────────────────────────────────────────────────────
 
   agregarSeccion(): void {
-    this.secciones.update(s => [...s, { grupo_horario_id: null, aula_id: null, docente_id: null, capacidad: 30 }]);
+    const nextNum = this.seccionesExistentes().length + this.secciones().length + 1;
+    this.secciones.update(s => [...s, { seccion: nextNum.toString(), grupo_horario_id: null, aula_id: null, docente_id: null, capacidad: 30 }]);
     this.docenteBusqueda.push('');
   }
 
@@ -243,7 +274,8 @@ export class ProgramacionFormComponent implements OnInit {
       periodo_id: this.periodoId(),
       curso_id: this.cursoSeleccionado()!.id,
       escuelas: Array.from(this.escuelasSeleccionadas()),
-      secciones: this.secciones(),
+      escuela_programada_id: this.escuelaProgramadaId() || null,
+      secciones: this.secciones().map(s => ({ ...s, seccion: s.seccion || null })),
     }).subscribe({
       next: (res) => {
         this.guardando.set(false);
