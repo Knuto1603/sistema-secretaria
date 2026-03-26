@@ -174,8 +174,8 @@ class EstudianteService
         }
 
         DB::transaction(function () use ($user) {
-            // Invalidar todos los OTPs existentes
-            $user->otpCodes()->update(['usado' => true]);
+            // Invalidar todos los OTPs existentes (el campo es verified_at, no 'usado')
+            $user->otpCodes()->whereNull('verified_at')->update(['verified_at' => now()]);
 
             // Quitar password y timestamp de activación usando DB directo
             // para evitar que el cast 'hashed' intente hashear null
@@ -189,8 +189,8 @@ class EstudianteService
 
         // Refrescar el modelo para reflejar los cambios
         $user->refresh();
-
         $user->load('escuela');
+
         $ultimoOtp = $this->repository->getUltimoOtpEnviado($user->id);
 
         return [
@@ -217,7 +217,7 @@ class EstudianteService
 
         DB::transaction(function () use ($user) {
             // Invalidar todos los OTPs existentes
-            $user->otpCodes()->update(['usado' => true]);
+            $user->otpCodes()->whereNull('verified_at')->update(['verified_at' => now()]);
 
             // Deshabilitar cuenta y borrar credenciales
             DB::table('users')
