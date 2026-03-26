@@ -185,7 +185,8 @@ class ProgramacionService
         // Usar plan activo si existe, fallback a escuela_id
         $planActivo = Plan::where('escuela_id', $user->escuela_id)->where('activo', true)->first();
 
-        $query = PlanEstudios::where('ciclo', '<=', $cicloActual);
+        // Mostrar todos los ciclos del plan (sin límite de ciclo actual)
+        $query = PlanEstudios::query();
         if ($planActivo) {
             $query->where('plan_id', $planActivo->id);
         } else {

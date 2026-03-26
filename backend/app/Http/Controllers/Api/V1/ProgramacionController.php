@@ -178,10 +178,23 @@ class ProgramacionController extends Controller
             $perPage = (int) $request->get('per_page', 15);
             $search  = $request->get('search', '');
 
+            // Obtener escuela del estudiante autenticado para excluir sus propios cursos
+            $user      = $request->user();
+            $escuelaId = $user?->escuela_id;
+
             $query = \App\Models\ProgramacionAcademica::where('periodo_id', $periodoId)
                 ->with(['curso', 'docente', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas'])
                 ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
                 ->select('programacion_academica.*');
+
+            // Solo mostrar cursos de OTRAS escuelas (no de la escuela propia del alumno)
+            if ($escuelaId) {
+                $query->whereNotExists(function ($q) use ($escuelaId) {
+                    $q->from('programacion_escuelas')
+                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                      ->where('programacion_escuelas.escuela_id', $escuelaId);
+                });
+            }
 
             if ($search) {
                 $query->where(function ($q) use ($search) {
