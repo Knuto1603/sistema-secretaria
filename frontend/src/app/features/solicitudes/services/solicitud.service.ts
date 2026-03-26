@@ -41,6 +41,7 @@ export interface CreateSolicitudDTO {
   firma: string;
   archivo_sustento?: File;
   fuera_de_plan?: boolean;
+  inscripcion_escuela?: boolean;
 }
 
 export interface UpdateEstadoDTO {
@@ -96,6 +97,10 @@ export class SolicitudService {
 
     if (data.fuera_de_plan) {
       formData.append('fuera_de_plan', '1');
+    }
+
+    if (data.inscripcion_escuela) {
+      formData.append('inscripcion_escuela', '1');
     }
 
     return this.http.post<ApiResponse<Solicitud>>(this.apiUrl, formData).pipe(

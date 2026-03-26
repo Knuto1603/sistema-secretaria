@@ -13,7 +13,8 @@ class CreateSolicitudDTO
         public readonly ?UploadedFile $archivo_sustento,
         public readonly ?string $user_agent,
         public readonly ?string $ip,
-        public readonly bool $fuera_de_plan = false
+        public readonly bool $fuera_de_plan = false,
+        public readonly bool $inscripcion_escuela = false
     ) {}
 
     public static function fromRequest(array $data, ?UploadedFile $file = null, ?string $userAgent = null, ?string $ip = null): self
@@ -25,7 +26,8 @@ class CreateSolicitudDTO
             archivo_sustento: $file,
             user_agent: $userAgent,
             ip: $ip,
-            fuera_de_plan: (bool) ($data['fuera_de_plan'] ?? false)
+            fuera_de_plan: (bool) ($data['fuera_de_plan'] ?? false),
+            inscripcion_escuela: (bool) ($data['inscripcion_escuela'] ?? false)
         );
     }
 }

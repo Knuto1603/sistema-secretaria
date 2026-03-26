@@ -754,17 +754,25 @@
 
           <!-- Acciones estudiante -->
           @if (esEstudiante()) {
-            @if (row.esta_lleno) {
-              @if (tieneSolicitudActiva(row.id)) {
-                <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
-                  Solicitado
-                </span>
-              } @else if (isPeriodoActivo()) {
-                <app-btn variant="primary" (clicked)="solicitarCupo(row)">Solicitar</app-btn>
-              } @else {
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
-              }
+            @if (tieneSolicitudActiva(row.id)) {
+              <!-- Ya tiene solicitud activa para este curso -->
+              <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
+                Solicitado
+              </span>
+            } @else if (!isPeriodoActivo()) {
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
+            } @else if (row.esta_lleno) {
+              <!-- Curso lleno → Ampliación de cupo -->
+              <app-btn variant="primary" (clicked)="solicitarCupo(row)">
+                Solicitar cupo
+              </app-btn>
+            } @else if (row.es_equivalente) {
+              <!-- Curso de otra escuela con cupos → Inscripción entre escuelas -->
+              <app-btn variant="secondary" (clicked)="solicitarInscripcionEscuela(row)">
+                Inscribir
+              </app-btn>
             } @else {
+              <!-- Curso propio con cupos → puede inscribirse normalmente -->
               <span class="text-[10px] font-semibold text-emerald-500 uppercase tracking-widest px-3">✓ Libre</span>
             }
           }

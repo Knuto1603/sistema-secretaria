@@ -48,8 +48,12 @@ class SolicitudService
                 throw new Exception('No se pueden presentar solicitudes para periodos académicos inactivos.');
             }
 
-            // Verificar plan de estudios y sección habilitada (se omite si fuera_de_plan = true)
-            if ($user->escuela_id && !$dto->fuera_de_plan) {
+            // Verificar plan de estudios y sección habilitada.
+            // Se omite si fuera_de_plan = true (curso fuera del plan) o
+            // inscripcion_escuela = true (sección de otra escuela con cupos).
+            $esExcepcion = $dto->fuera_de_plan || $dto->inscripcion_escuela;
+
+            if ($user->escuela_id && !$esExcepcion) {
                 $cursoEnPlan = PlanEstudios::where('escuela_id', $user->escuela_id)
                     ->where('curso_id', $programacion->curso_id)
                     ->exists();
@@ -74,7 +78,9 @@ class SolicitudService
                 throw new Exception('Ya tienes una solicitud activa para este curso. No puedes presentar otra hasta que sea resuelta.');
             }
 
-            $tipoSolicitud = $this->tipoSolicitudRepository->findByCode('CUPO_EXT');
+            // Elegir el tipo de solicitud según el contexto
+            $tipoCodigo = $dto->inscripcion_escuela ? 'INSC_ESCUELA' : 'CUPO_EXT';
+            $tipoSolicitud = $this->tipoSolicitudRepository->findByCode($tipoCodigo);
 
             if (!$tipoSolicitud) {
                 throw new Exception('Configuración de tipos de solicitud incompleta.');

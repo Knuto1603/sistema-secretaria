@@ -18,7 +18,8 @@ class CreateSolicitudRequest extends FormRequest
             'motivo' => ['required', 'string', 'min:20'],
             'firma' => ['required', 'string'],
             'archivo_sustento' => ['nullable', 'file', 'mimes:pdf,jpg,png', 'max:2048'],
-            'fuera_de_plan' => ['nullable', 'boolean'],
+            'fuera_de_plan'       => ['nullable', 'boolean'],
+            'inscripcion_escuela' => ['nullable', 'boolean'],
         ];
     }
 

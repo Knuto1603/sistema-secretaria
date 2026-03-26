@@ -541,6 +541,12 @@ export class ProgramacionTablaComponent implements OnInit {
     this.router.navigate(['app/solicitudes/nueva/', item.id]);
   }
 
+  solicitarInscripcionEscuela(item: Programacion): void {
+    this.router.navigate(['app/solicitudes/nueva/', item.id], {
+      queryParams: { inscripcion_escuela: '1' },
+    });
+  }
+
   verSolicitudesCurso(item: Programacion): void {
     this.router.navigate(['/app/solicitudes/list'], {
       queryParams: { programacion_id: item.id },

@@ -1,8 +1,11 @@
 <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
   
   <!-- Header del Formulario -->
-  <div class="bg-indigo-600 p-8 text-white">
-    <h2 class="text-2xl font-black tracking-tight">Solicitud de Cupo</h2>
+  <div class="p-8 text-white" [ngClass]="inscripcionEscuela() ? 'bg-violet-600' : 'bg-indigo-600'">
+    <h2 class="text-2xl font-black tracking-tight">
+      @if (inscripcionEscuela()) { Inscripción entre Escuelas }
+      @else { Solicitud de Cupo }
+    </h2>
     <div class="mt-4 flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/20">
       <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-600">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -16,7 +19,20 @@
 
   <div class="p-8 space-y-6">
     
-    @if (fueraDePlan()) {
+    @if (inscripcionEscuela()) {
+      <div class="flex items-start gap-3 p-4 bg-violet-50 border border-violet-200 rounded-2xl">
+        <svg class="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <div>
+          <p class="text-sm font-bold text-violet-800">Inscripción en sección de otra escuela</p>
+          <p class="text-xs text-violet-700 mt-0.5">
+            Esta sección pertenece a otra escuela profesional y tiene cupos disponibles. Tu solicitud será evaluada por la secretaría académica para autorizar tu inscripción.
+          </p>
+        </div>
+      </div>
+    } @else if (fueraDePlan()) {
       <div class="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
         <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

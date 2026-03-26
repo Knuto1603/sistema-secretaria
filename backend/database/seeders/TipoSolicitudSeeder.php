@@ -17,5 +17,14 @@ class TipoSolicitudSeeder extends Seeder
                 'activo' => true
             ]
         );
+
+        TipoSolicitud::updateOrCreate(
+            ['codigo' => 'INSC_ESCUELA'],
+            [
+                'nombre' => 'Inscripción entre Escuelas',
+                'descripcion' => 'Solicitud para inscribirse en una sección programada por otra escuela profesional que tiene cupos disponibles.',
+                'activo' => true
+            ]
+        );
     }
 }
