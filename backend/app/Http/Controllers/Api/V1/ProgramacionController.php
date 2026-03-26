@@ -153,9 +153,10 @@ class ProgramacionController extends Controller
                 $request->periodo_id
             );
 
-            $this->service->importCampus($dto);
+            $resumen = $this->service->importCampus($dto);
 
-            return $this->success(null, 'Programación Campus importada exitosamente');
+            $msg = "Campus importado: {$resumen['actualizados']} actualizados, {$resumen['omitidos']} omitidos.";
+            return $this->success($resumen, $msg);
         } catch (Exception $e) {
             return $this->error('Error al procesar el Excel Campus: ' . $e->getMessage(), 500);
         }

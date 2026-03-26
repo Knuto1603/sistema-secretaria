@@ -62,6 +62,7 @@ export class ProgramacionTablaComponent implements OnInit {
   isUploading         = signal(false);
   isUploadingHtml     = signal(false);
   isUploadingCampus   = signal(false);
+  campusDebugResult   = signal<{ actualizados: number; omitidos: number; detalle: { codigo: string; nombre: string; seccion: any; motivo: string }[] } | null>(null);
   isExporting         = signal(false);
   searchTerm        = signal('');
   currentPage       = signal(1);
@@ -362,11 +363,14 @@ export class ProgramacionTablaComponent implements OnInit {
       this.isUploadingCampus.set(true);
       const periodoId = this.periodoSeleccionado() || undefined;
       this.programacionService.importarExcelCampus(file, periodoId).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.isUploadingCampus.set(false);
           (event.target as HTMLInputElement).value = '';
           this.cargarProgramacion(1);
           this.todosLosItems.set([]);
+          if (res?.data) {
+            this.campusDebugResult.set(res.data);
+          }
         },
         error: () => {
           this.isUploadingCampus.set(false);

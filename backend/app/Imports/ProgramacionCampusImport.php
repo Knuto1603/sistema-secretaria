@@ -31,6 +31,19 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
     private array $aulaCache    = [];
     private array $escuelaCache = [];
 
+    /** Registros del Campus que no pudieron actualizarse */
+    private array $omitidos = [];
+    private int   $actualizados = 0;
+
+    public function getResumen(): array
+    {
+        return [
+            'actualizados' => $this->actualizados,
+            'omitidos'     => count($this->omitidos),
+            'detalle'      => $this->omitidos,
+        ];
+    }
+
     public function __construct(string $periodoId)
     {
         $this->periodoId = $periodoId;
@@ -162,8 +175,17 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             $codigoRaw = $row['codigo'] ?? null;
             if (!$codigoRaw || trim((string) $codigoRaw) === '') continue;
 
-            $curso = Curso::where('codigo', trim((string) $codigoRaw))->first();
-            if (!$curso) continue;
+            $codigoLimpio = trim((string) $codigoRaw);
+            $curso = Curso::where('codigo', $codigoLimpio)->first();
+            if (!$curso) {
+                $this->omitidos[] = [
+                    'codigo'  => $codigoLimpio,
+                    'nombre'  => trim((string) ($row['nombre'] ?? $row['asignatura'] ?? '—')),
+                    'seccion' => $row['sec'] ?? null,
+                    'motivo'  => 'Curso no existe en el sistema',
+                ];
+                continue;
+            }
 
             $grupoNombreTexto = $row['grp']      ?? null;
             $aulaNombreTexto  = $row['aula']     ?? null;
@@ -200,7 +222,15 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
                 ->where('seccion', $seccion)
                 ->first();
 
-            if (!$prog) continue;
+            if (!$prog) {
+                $this->omitidos[] = [
+                    'codigo'  => $codigoLimpio,
+                    'nombre'  => $curso->nombre,
+                    'seccion' => $seccion,
+                    'motivo'  => 'No hay programación registrada para esta sección en el periodo',
+                ];
+                continue;
+            }
 
             $prog->update([
                 'docente_id'       => $docente?->id,
@@ -217,6 +247,8 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             if ($escuelaId) {
                 $prog->escuelas()->syncWithoutDetaching([$escuelaId]);
             }
+
+            $this->actualizados++;
         }
     }
 }

@@ -119,7 +119,7 @@ class ProgramacionService
         Excel::import(new ProgramacionImport($periodoId), $dto->file);
     }
 
-    public function importCampus(ImportProgramacionDTO $dto): void
+    public function importCampus(ImportProgramacionDTO $dto): array
     {
         $periodoId = $dto->periodo_id ?? $this->periodoRepository->getActiveId();
 
@@ -128,7 +128,10 @@ class ProgramacionService
         }
 
         // No se borra la programación existente: Campus solo actualiza registros ya cargados
-        Excel::import(new ProgramacionCampusImport($periodoId), $dto->file);
+        $importer = new ProgramacionCampusImport($periodoId);
+        Excel::import($importer, $dto->file);
+
+        return $importer->getResumen();
     }
 
     public function findById(string $id): ?ProgramacionAcademica
