@@ -193,25 +193,29 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             // Marcar como lleno manual si ya está completo según Campus
             $llenoManual = $nInscritos >= $capacidad;
 
-            $prog = ProgramacionAcademica::create([
-                'curso_id'         => $curso->id,
-                'periodo_id'       => $this->periodoId,
+            // Solo actualizar registros existentes; nunca crear nuevos desde Campus
+            $seccion = $row['sec'] ?? null;
+            $prog = ProgramacionAcademica::where('periodo_id', $this->periodoId)
+                ->where('curso_id', $curso->id)
+                ->where('seccion', $seccion)
+                ->first();
+
+            if (!$prog) continue;
+
+            $prog->update([
                 'docente_id'       => $docente?->id,
                 'grupo_horario_id' => $grupoHorarioId,
                 'aula_id'          => $aulaId,
-                'clave'            => 'S/N',
-                'grupo'            => $grupoNombreNorm ?? 'A',
-                'seccion'          => $row['sec'] ?? null,
-                'ciclo'            => $cicloInt,
-                'aula'             => $aulaNombreTexto ? strtoupper(trim((string) $aulaNombreTexto)) : null,
-                'n_acta'           => null,
+                'grupo'            => $grupoNombreNorm ?? $prog->grupo,
+                'ciclo'            => $cicloInt ?? $prog->ciclo,
+                'aula'             => $aulaNombreTexto ? strtoupper(trim((string) $aulaNombreTexto)) : $prog->aula,
                 'capacidad'        => $capacidad,
                 'n_inscritos'      => $nInscritos,
                 'lleno_manual'     => $llenoManual,
             ]);
 
             if ($escuelaId) {
-                $prog->escuelas()->sync([$escuelaId]);
+                $prog->escuelas()->syncWithoutDetaching([$escuelaId]);
             }
         }
     }

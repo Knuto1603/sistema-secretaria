@@ -127,7 +127,7 @@ class ProgramacionService
             throw new Exception('No se pudo determinar el periodo académico.');
         }
 
-        $this->programacionRepository->deleteByPeriodo($periodoId);
+        // No se borra la programación existente: Campus solo actualiza registros ya cargados
         Excel::import(new ProgramacionCampusImport($periodoId), $dto->file);
     }
 
