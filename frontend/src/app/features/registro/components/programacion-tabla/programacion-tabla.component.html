@@ -163,12 +163,16 @@
                   <div class="flex items-center gap-2 flex-shrink-0">
                     @if (item.esta_lleno) {
                       <app-badge color="red">Lleno</app-badge>
+                      <app-btn variant="primary" (clicked)="solicitarFueraDePlan(item)">
+                        Solicitar cupo
+                      </app-btn>
                     } @else {
                       <span class="text-[10px] font-bold text-emerald-500 uppercase">Disponible</span>
+                      <button (click)="solicitarInscripcionEscuela(item)"
+                        class="px-3 py-1.5 text-xs font-bold text-violet-700 bg-violet-50 border border-violet-300 rounded-lg hover:bg-violet-100 transition-colors whitespace-nowrap">
+                        Inscribir aquí
+                      </button>
                     }
-                    <app-btn variant="primary" (clicked)="solicitarFueraDePlan(item)">
-                      Solicitar
-                    </app-btn>
                   </div>
                 </div>
               }
