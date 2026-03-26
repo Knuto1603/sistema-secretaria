@@ -76,11 +76,24 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
         return Str::slug($clean, '_');
     }
 
+    /**
+     * Normaliza el nombre de grupo eliminando sufijos de turno/sección.
+     * G1A → G1, G10AB → G10, G3AH → G3, G5BH → G5, G1ABH → G1
+     */
+    private function normalizarGrupo(string $nombre): string
+    {
+        $nombre = strtoupper(trim($nombre));
+        if (preg_match('/^(G\d+)[A-Z]+$/', $nombre, $m)) {
+            return $m[1];
+        }
+        return $nombre;
+    }
+
     private function resolverGrupo(?string $nombre): ?string
     {
         if (!$nombre || trim($nombre) === '') return null;
 
-        $key = strtoupper(trim($nombre));
+        $key = $this->normalizarGrupo($nombre);
 
         if (isset($this->grupoCache[$key])) {
             return $this->grupoCache[$key];
@@ -157,9 +170,10 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             $docenteNombre    = $row['docente']  ?? null;
             $escuelaNombre    = $row['escuela']  ?? null;
 
-            $grupoHorarioId = $this->resolverGrupo($grupoNombreTexto);
-            $aulaId         = $this->resolverAula($aulaNombreTexto);
-            $escuelaId      = $this->resolverEscuela($escuelaNombre);
+            $grupoHorarioId   = $this->resolverGrupo($grupoNombreTexto);
+            $grupoNombreNorm  = $grupoNombreTexto ? $this->normalizarGrupo($grupoNombreTexto) : null;
+            $aulaId           = $this->resolverAula($aulaNombreTexto);
+            $escuelaId        = $this->resolverEscuela($escuelaNombre);
 
             // Campus ya envía ciclo como entero
             $cicloRaw = $row['ciclo'] ?? null;
@@ -186,7 +200,7 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
                 'grupo_horario_id' => $grupoHorarioId,
                 'aula_id'          => $aulaId,
                 'clave'            => 'S/N',
-                'grupo'            => $grupoNombreTexto ? strtoupper(trim((string) $grupoNombreTexto)) : 'A',
+                'grupo'            => $grupoNombreNorm ?? 'A',
                 'seccion'          => $row['sec'] ?? null,
                 'ciclo'            => $cicloInt,
                 'aula'             => $aulaNombreTexto ? strtoupper(trim((string) $aulaNombreTexto)) : null,
