@@ -31,16 +31,35 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
     private array $aulaCache    = [];
     private array $escuelaCache = [];
 
-    /** Registros del Campus que no pudieron actualizarse */
+    /** Registros del Campus que no pudieron actualizarse (no existen en sistema) */
     private array $omitidos = [];
     private int   $actualizados = 0;
+    /** IDs de programaciones actualizadas exitosamente */
+    private array $actualizadosIds = [];
 
     public function getResumen(): array
     {
+        // Programaciones del periodo que Campus NO actualizó → no están en Campus
+        $noEnCampus = ProgramacionAcademica::where('periodo_id', $this->periodoId)
+            ->whereNotIn('id', $this->actualizadosIds)
+            ->with(['curso:id,codigo,nombre', 'escuelas:id,nombre,nombre_corto'])
+            ->get()
+            ->map(fn($p) => [
+                'id'      => $p->id,
+                'codigo'  => $p->curso?->codigo,
+                'nombre'  => $p->curso?->nombre,
+                'seccion' => $p->seccion,
+                'grupo'   => $p->grupo,
+                'escuela' => $p->escuelas->first()?->nombre_corto ?? $p->escuelas->first()?->nombre ?? '—',
+            ])
+            ->values()
+            ->toArray();
+
         return [
-            'actualizados' => $this->actualizados,
-            'omitidos'     => count($this->omitidos),
-            'detalle'      => $this->omitidos,
+            'actualizados'  => $this->actualizados,
+            'omitidos'      => count($this->omitidos),
+            'detalle'       => $this->omitidos,
+            'no_en_campus'  => $noEnCampus,
         ];
     }
 
@@ -248,6 +267,7 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
                 $prog->escuelas()->syncWithoutDetaching([$escuelaId]);
             }
 
+            $this->actualizadosIds[] = $prog->id;
             $this->actualizados++;
         }
     }

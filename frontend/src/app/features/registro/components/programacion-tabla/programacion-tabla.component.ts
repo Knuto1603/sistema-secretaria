@@ -62,7 +62,12 @@ export class ProgramacionTablaComponent implements OnInit {
   isUploading         = signal(false);
   isUploadingHtml     = signal(false);
   isUploadingCampus   = signal(false);
-  campusDebugResult   = signal<{ actualizados: number; omitidos: number; detalle: { codigo: string; nombre: string; seccion: any; motivo: string }[] } | null>(null);
+  campusDebugResult   = signal<{
+    actualizados: number;
+    omitidos: number;
+    detalle: { codigo: string; nombre: string; seccion: any; motivo: string }[];
+    no_en_campus: { id: string; codigo: string; nombre: string; seccion: any; grupo: string; escuela: string }[];
+  } | null>(null);
   isExporting         = signal(false);
   searchTerm        = signal('');
   currentPage       = signal(1);
@@ -558,6 +563,24 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   descargarPlantilla(): void { this.programacionService.descargarPlantilla(); }
+
+  descargarNoCampusCSV(): void {
+    const datos = this.campusDebugResult()?.no_en_campus;
+    if (!datos?.length) return;
+
+    const header = 'Código,Nombre,Sección,Grupo,Escuela';
+    const filas = datos.map(r =>
+      `"${r.codigo}","${r.nombre}","${r.seccion ?? ''}","${r.grupo}","${r.escuela}"`
+    );
+    const csv = [header, ...filas].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'no_en_campus.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   onProgramacionGuardada(): void {
     this.showFormProgramacion.set(false);
