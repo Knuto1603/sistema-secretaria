@@ -38,9 +38,15 @@ class SolicitudTransformer
                 'nombre' => $model->tipoSolicitud->nombre,
             ] : null,
             programacion: $model->programacion ? [
-                'id' => $model->programacion->id,
-                'clave' => $model->programacion->clave,
-                'grupo' => $model->programacion->grupo,
+                'id'               => $model->programacion->id,
+                'clave'            => $model->programacion->clave,
+                'grupo'            => $model->programacion->grupo,
+                'seccion'          => $model->programacion->seccion,
+                'escuela_programada' => $model->programacion->escuelaProgramada ? [
+                    'id'     => $model->programacion->escuelaProgramada->id,
+                    'nombre' => $model->programacion->escuelaProgramada->nombre,
+                    'nombre_corto' => $model->programacion->escuelaProgramada->nombre_corto,
+                ] : null,
                 'curso' => $model->programacion->curso ? [
                     'id' => $model->programacion->curso->id,
                     'nombre' => $model->programacion->curso->nombre,

@@ -40,7 +40,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function findByUserId(string $userId, int $perPage = 10): LengthAwarePaginator
     {
         return $this->model
-            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente'])
+            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.escuelaProgramada'])
             ->where('user_id', $userId)
             ->latest()
             ->paginate($perPage);
@@ -49,7 +49,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function getBaseQuery(): Builder
     {
         return $this->model
-            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente']);
+            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.escuelaProgramada']);
     }
 
     public function getPaginated(array $filters = [], int $perPage = 10): LengthAwarePaginator
@@ -81,6 +81,14 @@ class SolicitudRepository implements SolicitudRepositoryInterface
 
         if (isset($filters['programacion_id']) && $filters['programacion_id']) {
             $query->where('programacion_id', $filters['programacion_id']);
+        }
+
+        if (isset($filters['tipo']) && $filters['tipo']) {
+            $query->whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $filters['tipo']));
+        }
+
+        if (isset($filters['escuela_id']) && $filters['escuela_id']) {
+            $query->whereHas('user', fn($q) => $q->where('escuela_id', $filters['escuela_id']));
         }
 
         return $query->latest()->paginate($perPage);

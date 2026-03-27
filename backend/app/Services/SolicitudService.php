@@ -131,9 +131,11 @@ class SolicitudService
     public function getAll(Request $request): LengthAwarePaginator
     {
         $filters = [
-            'estado' => $request->get('estado'),
-            'search' => $request->get('search'),
+            'estado'          => $request->get('estado'),
+            'search'          => $request->get('search'),
             'programacion_id' => $request->get('programacion_id'),
+            'tipo'            => $request->get('tipo'),
+            'escuela_id'      => $request->get('escuela_id'),
         ];
 
         $perPage = $request->get('per_page', 10);
