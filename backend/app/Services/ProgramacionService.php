@@ -7,8 +7,6 @@ use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionCampusImport;
 use App\Imports\ProgramacionImport;
 use App\Models\Inscripcion;
-use App\Models\Plan;
-use App\Models\PlanEstudios;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
 use App\Repositories\Contracts\PeriodoRepositoryInterface;
@@ -184,33 +182,19 @@ class ProgramacionService
         $cicloActual    = $user->cicloActual();
         $tieneHistorial = $user->tieneHistorial();
 
-        // Todos los cursos del plan del alumno
-        $planActivo = Plan::where('escuela_id', $user->escuela_id)->where('activo', true)->first();
-        $planQuery  = PlanEstudios::query();
-        if ($planActivo) {
-            $planQuery->where('plan_id', $planActivo->id);
-        } else {
-            $planQuery->where('escuela_id', $user->escuela_id);
-        }
-        $cursoIdsEnPlan = $planQuery->pluck('curso_id')->toArray();
-
         // IDs de programaciones en las que el alumno ya está inscrito este periodo
         $inscritosProgramacionIds = Inscripcion::where('user_id', $user->id)
             ->where('periodo_id', $periodoId)
             ->pluck('programacion_id')
             ->toArray();
 
-        $cursoIdsFiltro = !empty($cursoIdsEnPlan) ? $cursoIdsEnPlan : ['__none__'];
-
-        // Mostrar cursos del plan del alumno cuya escuela programada coincida con la del alumno.
+        // Mostrar todos los cursos programados para la escuela del alumno (escuela_programada_id).
+        // Esto refleja exactamente lo que secretaría ve al filtrar por escuela en la programación.
         $query = $this->programacionRepository
             ->getBaseQuery($periodoId)
-            ->where(function ($q) use ($cursoIdsFiltro, $inscritosProgramacionIds, $user) {
-                // Rama 1: curso en el plan + escuela_programada = escuela del alumno
-                $q->where(function ($inner) use ($cursoIdsFiltro, $user) {
-                    $inner->whereIn('programacion_academica.curso_id', $cursoIdsFiltro)
-                          ->where('programacion_academica.escuela_programada_id', $user->escuela_id);
-                });
+            ->where(function ($q) use ($inscritosProgramacionIds, $user) {
+                // Rama 1: secciones programadas para la escuela del alumno
+                $q->where('programacion_academica.escuela_programada_id', $user->escuela_id);
                 // Rama 2: cursos en los que ya está inscrito este periodo
                 if (!empty($inscritosProgramacionIds)) {
                     $q->orWhereIn('programacion_academica.id', $inscritosProgramacionIds);
