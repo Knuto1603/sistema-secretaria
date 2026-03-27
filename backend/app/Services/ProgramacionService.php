@@ -6,7 +6,6 @@ use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionCampusImport;
 use App\Imports\ProgramacionImport;
-use App\Models\Curso;
 use App\Models\Inscripcion;
 use App\Models\Plan;
 use App\Models\PlanEstudios;
@@ -185,41 +184,15 @@ class ProgramacionService
         $cicloActual    = $user->cicloActual();
         $tieneHistorial = $user->tieneHistorial();
 
-        // Usar plan activo si existe, fallback a escuela_id
+        // Todos los cursos del plan del alumno
         $planActivo = Plan::where('escuela_id', $user->escuela_id)->where('activo', true)->first();
-
-        // Mostrar todos los ciclos del plan (sin límite de ciclo actual)
-        $query = PlanEstudios::query();
+        $planQuery  = PlanEstudios::query();
         if ($planActivo) {
-            $query->where('plan_id', $planActivo->id);
+            $planQuery->where('plan_id', $planActivo->id);
         } else {
-            $query->where('escuela_id', $user->escuela_id);
+            $planQuery->where('escuela_id', $user->escuela_id);
         }
-        $cursoIdsEnPlan = $query->pluck('curso_id')->toArray();
-
-        if ($tieneHistorial) {
-            $aprobadosIds = $user->cursosAprobados()->pluck('cursos.id')->toArray();
-
-            // Expandir aprobados con equivalencias
-            if (!empty($aprobadosIds)) {
-                $equivalenciaIds = Curso::whereIn('id', $aprobadosIds)
-                    ->with('equivalencias:id')
-                    ->get()
-                    ->flatMap(fn($c) => $c->equivalencias->pluck('id'))
-                    ->toArray();
-                $aprobadosIds = array_unique(array_merge($aprobadosIds, $equivalenciaIds));
-            }
-
-            $pendientesIds    = array_values(array_diff($cursoIdsEnPlan, $aprobadosIds));
-            $pendientesCursos = Curso::whereIn('id', $pendientesIds)->with('requisitos')->get();
-
-            $elegiblesIds = $pendientesCursos->filter(function (Curso $curso) use ($aprobadosIds) {
-                if ($curso->requisitos->isEmpty()) return true;
-                return $curso->requisitos->every(fn($req) => in_array($req->id, $aprobadosIds));
-            })->pluck('id')->toArray();
-        } else {
-            $elegiblesIds = $cursoIdsEnPlan;
-        }
+        $cursoIdsEnPlan = $planQuery->pluck('curso_id')->toArray();
 
         // IDs de programaciones en las que el alumno ya está inscrito este periodo
         $inscritosProgramacionIds = Inscripcion::where('user_id', $user->id)
@@ -227,20 +200,13 @@ class ProgramacionService
             ->pluck('programacion_id')
             ->toArray();
 
-        $cursoIdsFiltro = !empty($elegiblesIds) ? $elegiblesIds : ['__none__'];
+        $cursoIdsFiltro = !empty($cursoIdsEnPlan) ? $cursoIdsEnPlan : ['__none__'];
 
-        // Códigos de los cursos elegibles (para buscar equivalentes en otras escuelas)
-        $codigosElegibles = !empty($elegiblesIds)
-            ? Curso::whereIn('id', $elegiblesIds)->pluck('codigo')->toArray()
-            : [];
-
-        // Llamar sin filtro de escuela para poder hacer el OR correctamente;
-        // el filtro de escuela se aplica dentro del where() para que los
-        // cursos en los que el alumno YA está inscrito no sean excluidos.
+        // Mostrar todos los cursos del plan que estén programados para la escuela del alumno
         $query = $this->programacionRepository
             ->getBaseQuery($periodoId)
-            ->where(function ($q) use ($cursoIdsFiltro, $codigosElegibles, $inscritosProgramacionIds, $user) {
-                // Rama 1: cursos elegibles habilitados para la escuela del alumno
+            ->where(function ($q) use ($cursoIdsFiltro, $inscritosProgramacionIds, $user) {
+                // Rama 1: cursos del plan habilitados para la escuela del alumno
                 $q->where(function ($inner) use ($cursoIdsFiltro, $user) {
                     $inner->whereIn('programacion_academica.curso_id', $cursoIdsFiltro)
                           ->whereExists(function ($sub) use ($user) {
@@ -249,18 +215,7 @@ class ProgramacionService
                                   ->where('programacion_escuelas.escuela_id', $user->escuela_id);
                           });
                 });
-                // Rama 2: mismo código de curso programado en otra escuela
-                if (!empty($codigosElegibles)) {
-                    $q->orWhere(function ($inner) use ($codigosElegibles, $user) {
-                        $inner->whereIn('cursos.codigo', $codigosElegibles)
-                              ->whereNotExists(function ($sub) use ($user) {
-                                  $sub->from('programacion_escuelas')
-                                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
-                                      ->where('programacion_escuelas.escuela_id', $user->escuela_id);
-                              });
-                    });
-                }
-                // Rama 3: cursos en los que ya está inscrito este periodo
+                // Rama 2: cursos en los que ya está inscrito este periodo
                 if (!empty($inscritosProgramacionIds)) {
                     $q->orWhereIn('programacion_academica.id', $inscritosProgramacionIds);
                 }
