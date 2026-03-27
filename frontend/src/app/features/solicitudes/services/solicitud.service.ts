@@ -15,6 +15,7 @@ export interface Solicitud {
   archivo_sustento_nombre: string | null;
   asignado_a: string | null;
   observaciones_admin: string | null;
+  fuera_de_plan: boolean;
   metadatos: any;
   created_at: string;
   updated_at: string;
@@ -31,6 +32,8 @@ export interface Solicitud {
     id: string;
     clave: string;
     grupo: string;
+    seccion: string | null;
+    escuela_programada: { id: string; nombre: string; nombre_corto: string | null } | null;
     curso: { id: string; nombre: string; codigo: string } | null;
   } | null;
 }
@@ -137,7 +140,7 @@ export class SolicitudService {
   /**
    * Obtiene todas las solicitudes (admin/secretaria/decano)
    */
-  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string): Observable<PaginatedResponse<Solicitud>> {
+  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string, tipo?: string, escuelaId?: string): Observable<PaginatedResponse<Solicitud>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString());
@@ -152,6 +155,14 @@ export class SolicitudService {
 
     if (programacionId) {
       params = params.set('programacion_id', programacionId);
+    }
+
+    if (tipo) {
+      params = params.set('tipo', tipo);
+    }
+
+    if (escuelaId) {
+      params = params.set('escuela_id', escuelaId);
     }
 
     return this.http.get<ApiResponse<ApiPaginatedData<Solicitud>>>(this.apiUrl, { params }).pipe(
@@ -206,7 +217,9 @@ export class SolicitudService {
   getEstadisticas(): Observable<{
     por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
     total: number;
-    cursos_top: Array<{ curso: string; clave: string; total_solicitudes: number }>;
+    por_tipo: { cupo_ext: number; insc_escuela: number };
+    por_escuela: Array<{ escuela: string; total: number }>;
+    cursos_top: Array<{ curso: string; codigo: string; total_solicitudes: number; escuela_programada?: string }>;
   }> {
     return this.http.get<ApiResponse<any>>(`${this.apiUrl}/estadisticas`).pipe(
       map(response => response.data)

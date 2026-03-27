@@ -1,7 +1,10 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
+import { map } from 'rxjs';
+import { environment } from '@env/environment';
 import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService, Solicitud, PaginatedResponse } from '../../services/solicitud.service';
 import { ProgramacionService, Programacion } from '../../../registro/services/programacion.service';
@@ -10,6 +13,8 @@ import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
+
+interface Escuela { id: string; nombre: string; nombre_corto: string | null; }
 
 @Component({
   selector: 'app-solicitud-lista',
@@ -28,6 +33,7 @@ export class SolicitudListaComponent implements OnInit {
   private solicitudService = inject(SolicitudService);
   private programacionService = inject(ProgramacionService);
   private periodoService = inject(PeriodoService);
+  private http = inject(HttpClient);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   public authService = inject(AuthService);
@@ -41,15 +47,22 @@ export class SolicitudListaComponent implements OnInit {
   stats = signal<{
     por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
     total: number;
-    cursos_top: Array<{ curso: string; clave: string; total_solicitudes: number }>;
+    por_tipo: { cupo_ext: number; insc_escuela: number };
+    por_escuela: Array<{ escuela: string; total: number }>;
+    cursos_top: Array<{ curso: string; codigo: string; total_solicitudes: number; escuela_programada?: string }>;
   } | null>(null);
 
   // Filtros
   searchTerm = signal('');
   estadoFiltro = signal('');
+  tipoFiltro = signal('');
+  escuelaIdFiltro = signal('');
   programacionIdFiltro = signal<string | null>(null);
   currentPage = signal(1);
   perPage = signal(10);
+
+  // Escuelas para filtro
+  escuelas = signal<Escuela[]>([]);
 
   // Info del curso cuando se filtra por programación
   cursoFiltrado = signal<string | null>(null);
@@ -91,10 +104,11 @@ export class SolicitudListaComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Cargar programaciones y estadísticas si es admin
+    // Cargar programaciones, escuelas y estadísticas si es admin
     if (this.esAdmin()) {
       this.cargarProgramaciones();
       this.cargarEstadisticas();
+      this.cargarEscuelas();
     }
 
     // Leer query params para filtrar por programación
@@ -105,6 +119,12 @@ export class SolicitudListaComponent implements OnInit {
       }
       this.cargarDatos();
     });
+  }
+
+  cargarEscuelas(): void {
+    this.http.get<{ success: boolean; data: Escuela[] }>(`${environment.apiUrl}/escuelas`).pipe(
+      map(r => r.data)
+    ).subscribe({ next: (data) => this.escuelas.set(data), error: () => {} });
   }
 
   cargarEstadisticas(): void {
@@ -148,9 +168,11 @@ export class SolicitudListaComponent implements OnInit {
       ? this.solicitudService.getAllSolicitudes(
           page,
           size,
-          this.searchTerm(),
-          this.estadoFiltro(),
-          this.programacionIdFiltro() || undefined
+          this.searchTerm() || undefined,
+          this.estadoFiltro() || undefined,
+          this.programacionIdFiltro() || undefined,
+          this.tipoFiltro() || undefined,
+          this.escuelaIdFiltro() || undefined
         )
       : this.solicitudService.getMisSolicitudes(page, size);
 
@@ -187,6 +209,16 @@ export class SolicitudListaComponent implements OnInit {
 
   onEstadoChange(estado: string): void {
     this.estadoFiltro.set(estado);
+    this.cargarDatos(1);
+  }
+
+  onTipoChange(tipo: string): void {
+    this.tipoFiltro.set(tipo);
+    this.cargarDatos(1);
+  }
+
+  onEscuelaChange(escuelaId: string): void {
+    this.escuelaIdFiltro.set(escuelaId);
     this.cargarDatos(1);
   }
 

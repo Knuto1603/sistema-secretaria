@@ -2,7 +2,8 @@
 
   <!-- Estadísticas de demanda (solo admin/secretaria) -->
   @if (esAdmin() && stats()) {
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <!-- Fila 1: Estado + Tipo -->
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
       <!-- Pendientes -->
       <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
         <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Pendientes</p>
@@ -23,32 +24,76 @@
         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Rechazadas</p>
         <p class="text-3xl font-black text-slate-600 mt-1">{{ stats()!.por_estado.rechazada }}</p>
       </div>
+      <!-- Cupo Extra -->
+      <div class="bg-violet-50 border border-violet-200 rounded-2xl p-4">
+        <p class="text-[10px] font-bold text-violet-500 uppercase tracking-widest">Cupo Extra</p>
+        <p class="text-3xl font-black text-violet-700 mt-1">{{ stats()!.por_tipo?.cupo_ext ?? 0 }}</p>
+      </div>
+      <!-- Inscripción Escuela -->
+      <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+        <p class="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Insc. Escuela</p>
+        <p class="text-3xl font-black text-rose-700 mt-1">{{ stats()!.por_tipo?.insc_escuela ?? 0 }}</p>
+      </div>
     </div>
 
-    <!-- Cursos más solicitados -->
-    @if (stats()!.cursos_top.length > 0) {
-      <div class="bg-white border border-slate-200 rounded-2xl p-5">
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3">Cursos más solicitados</h3>
-        <div class="space-y-2">
-          @for (item of stats()!.cursos_top; track item.clave) {
-            <div class="flex items-center gap-3">
-              <span class="text-[10px] font-mono text-slate-400 w-10 text-right flex-shrink-0">{{ item.clave }}</span>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-slate-700 font-medium truncate">{{ item.curso }}</span>
-                  <span class="ml-auto text-xs font-semibold text-indigo-600 flex-shrink-0">{{ item.total_solicitudes }}</span>
-                </div>
-                <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div class="h-full bg-indigo-400 rounded-full"
-                    [style.width.%]="(item.total_solicitudes / stats()!.cursos_top[0].total_solicitudes) * 100">
+    <!-- Fila 2: Cursos más solicitados + Por escuela -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Cursos más solicitados -->
+      @if (stats()!.cursos_top.length > 0) {
+        <div class="bg-white border border-slate-200 rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3">Cursos más solicitados</h3>
+          <div class="space-y-2">
+            @for (item of stats()!.cursos_top; track item.codigo) {
+              <div class="flex items-center gap-3">
+                <span class="text-[10px] font-mono text-slate-400 w-12 text-right flex-shrink-0">{{ item.codigo }}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <div class="min-w-0">
+                      <span class="text-xs text-slate-700 font-medium truncate block">{{ item.curso }}</span>
+                      @if (item.escuela_programada) {
+                        <span class="text-[10px] text-slate-400">{{ item.escuela_programada }}</span>
+                      }
+                    </div>
+                    <span class="ml-auto text-xs font-semibold text-indigo-600 flex-shrink-0">{{ item.total_solicitudes }}</span>
+                  </div>
+                  <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-400 rounded-full"
+                      [style.width.%]="(item.total_solicitudes / stats()!.cursos_top[0].total_solicitudes) * 100">
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          }
+            }
+          </div>
         </div>
-      </div>
-    }
+      }
+
+      <!-- Cupo Extra por escuela -->
+      @if (stats()!.por_escuela && stats()!.por_escuela.length > 0) {
+        <div class="bg-white border border-slate-200 rounded-2xl p-5">
+          <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest mb-3">Cupo Extra por escuela</h3>
+          <div class="space-y-2">
+            @for (item of stats()!.por_escuela; track item.escuela) {
+              <div class="flex items-center gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-700 font-medium truncate">{{ item.escuela }}</span>
+                    <span class="ml-auto text-xs font-semibold text-violet-600 flex-shrink-0">{{ item.total }}</span>
+                  </div>
+                  <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-violet-400 rounded-full"
+                      [style.width.%]="(item.total / stats()!.por_escuela[0].total) * 100">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
   }
 
   <!-- Encabezado con filtros -->
@@ -63,16 +108,18 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-3">
-      <!-- Filtro por estado (solo admin) -->
       @if (esAdmin()) {
+        <!-- Filtro por estado -->
         <div class="relative">
           <select
             [ngModel]="estadoFiltro()"
             (ngModelChange)="onEstadoChange($event)"
-            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px] appearance-none cursor-pointer font-medium">
-            @for (estado of estados; track estado.value) {
-              <option [value]="estado.value">{{ estado.label }}</option>
-            }
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[150px] appearance-none cursor-pointer font-medium">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_revision">En Revisión</option>
+            <option value="aprobada">Aprobada</option>
+            <option value="rechazada">Rechazada</option>
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,10 +127,45 @@
             </svg>
           </div>
         </div>
-      }
 
-      <!-- Buscador (solo admin) -->
-      @if (esAdmin()) {
+        <!-- Filtro por tipo de solicitud -->
+        <div class="relative">
+          <select
+            [ngModel]="tipoFiltro()"
+            (ngModelChange)="onTipoChange($event)"
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px] appearance-none cursor-pointer font-medium">
+            <option value="">Todos los tipos</option>
+            <option value="CUPO_EXT">Cupo Extra</option>
+            <option value="INSC_ESCUELA">Inscripción Escuela</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filtro por escuela del estudiante -->
+        @if (escuelas().length > 0) {
+          <div class="relative">
+            <select
+              [ngModel]="escuelaIdFiltro()"
+              (ngModelChange)="onEscuelaChange($event)"
+              class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[160px] appearance-none cursor-pointer font-medium">
+              <option value="">Todas las escuelas</option>
+              @for (esc of escuelas(); track esc.id) {
+                <option [value]="esc.id">{{ esc.nombre_corto ?? esc.nombre }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+        }
+
+        <!-- Buscador -->
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,16 +177,16 @@
             [ngModel]="searchTerm()"
             (ngModelChange)="onSearch($event)"
             placeholder="Buscar por código, nombre o curso..."
-            class="pl-11 pr-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-72 transition-all">
+            class="pl-11 pr-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
         </div>
 
-        <!-- Filtro por curso (cursos llenos) -->
+        <!-- Filtro por curso específico -->
         <div class="relative">
           <select
             [ngModel]="programacionIdFiltro() || ''"
             (ngModelChange)="onProgramacionChange($event)"
             [disabled]="loadingProgramaciones()"
-            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[280px] appearance-none cursor-pointer font-medium">
+            class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[240px] appearance-none cursor-pointer font-medium">
             <option value="">Filtrar por curso...</option>
             @for (prog of programaciones(); track prog.id) {
               <option [value]="prog.id">{{ getProgramacionLabel(prog) }}</option>
@@ -197,17 +279,30 @@
 
       <!-- Celda de Trámite / Curso -->
       @if (column.key === 'tramite') {
-        <div class="flex flex-col">
+        <div class="flex flex-col gap-0.5">
           <span class="text-[10px] font-semibold text-indigo-600 uppercase tracking-widest">
             {{ row.tipo_solicitud?.nombre || 'Solicitud' }}
           </span>
-          <span class="text-xs font-medium text-slate-500 truncate max-w-[250px]">
-            @if (row.programacion?.curso) {
-              {{ row.programacion.curso.nombre }} (G: {{ row.programacion.grupo }})
-            } @else {
-              Sin curso asignado
-            }
-          </span>
+          @if (row.programacion?.curso) {
+            <span class="text-xs font-medium text-slate-700 truncate max-w-[280px]">
+              {{ row.programacion!.curso!.nombre }}
+            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              @if (row.programacion!.seccion) {
+                <span class="text-[10px] font-mono text-slate-400">Sec: {{ row.programacion!.seccion }}</span>
+              }
+              @if (row.programacion!.grupo) {
+                <span class="text-[10px] font-mono text-slate-400">G: {{ row.programacion!.grupo }}</span>
+              }
+              @if (row.programacion!.escuela_programada) {
+                <span class="text-[10px] font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">
+                  {{ row.programacion!.escuela_programada!.nombre_corto ?? row.programacion!.escuela_programada!.nombre }}
+                </span>
+              }
+            </div>
+          } @else {
+            <span class="text-xs text-slate-400">Sin curso asignado</span>
+          }
         </div>
       }
 
