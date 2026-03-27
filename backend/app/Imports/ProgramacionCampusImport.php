@@ -4,9 +4,7 @@ namespace App\Imports;
 
 use App\Models\Aula;
 use App\Models\Curso;
-use App\Models\Docente;
 use App\Models\Escuela;
-use App\Models\GrupoHorario;
 use App\Models\ProgramacionAcademica;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -27,7 +25,6 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
 {
     protected string $periodoId;
 
-    private array $grupoCache   = [];
     private array $aulaCache    = [];
     private array $escuelaCache = [];
 
@@ -66,10 +63,6 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
     public function __construct(string $periodoId)
     {
         $this->periodoId = $periodoId;
-
-        GrupoHorario::all(['id', 'nombre'])->each(function ($g) {
-            $this->grupoCache[strtoupper(trim($g->nombre))] = $g->id;
-        });
 
         Aula::all(['id', 'nombre'])->each(function ($a) {
             $this->aulaCache[strtoupper(trim($a->nombre))] = $a->id;
@@ -119,25 +112,6 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             return $m[1];
         }
         return $nombre;
-    }
-
-    private function resolverGrupo(?string $nombre): ?string
-    {
-        if (!$nombre || trim($nombre) === '') return null;
-
-        $key = $this->normalizarGrupo($nombre);
-
-        if (isset($this->grupoCache[$key])) {
-            return $this->grupoCache[$key];
-        }
-
-        $grupo = GrupoHorario::firstOrCreate(
-            ['nombre' => $key],
-            ['descripcion' => null, 'activo' => true]
-        );
-
-        $this->grupoCache[$key] = $grupo->id;
-        return $grupo->id;
     }
 
     private function resolverAula(?string $nombre): ?string
@@ -208,24 +182,13 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
 
             $grupoNombreTexto = $row['grp']      ?? null;
             $aulaNombreTexto  = $row['aula']     ?? null;
-            $docenteNombre    = $row['docente']  ?? null;
             $escuelaNombre    = $row['escuela']  ?? null;
 
-            $grupoHorarioId   = $this->resolverGrupo($grupoNombreTexto);
-            $grupoNombreNorm  = $grupoNombreTexto ? $this->normalizarGrupo($grupoNombreTexto) : null;
-            $aulaId           = $this->resolverAula($aulaNombreTexto);
-            $escuelaId        = $this->resolverEscuela($escuelaNombre);
+            $grupoNombreNorm = $grupoNombreTexto ? $this->normalizarGrupo($grupoNombreTexto) : null;
+            $aulaId          = $this->resolverAula($aulaNombreTexto);
+            $escuelaId       = $this->resolverEscuela($escuelaNombre);
 
-            // Campus ya envía ciclo como entero
-            $cicloRaw = $row['ciclo'] ?? null;
-            $cicloInt = ($cicloRaw !== null && $cicloRaw !== '') ? (int) $cicloRaw : null;
-
-            $docente = null;
-            if ($docenteNombre && strtoupper(trim((string) $docenteNombre)) !== 'POR ASIGNAR') {
-                $docente = Docente::firstOrCreate(['nombre_completo' => trim(strtoupper((string) $docenteNombre))]);
-            }
-
-            $capacidad   = (int) ($row['cap']    ?? 0);
+            $capacidad  = (int) ($row['cap'] ?? 0);
             if ($capacidad <= 0) $capacidad = 40;
 
             // n_inscr es la clave resultante de sanitizeKey("N. Inscr.")
@@ -234,38 +197,42 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             // Marcar como lleno manual si ya está completo según Campus
             $llenoManual = $nInscritos >= $capacidad;
 
-            // Solo actualizar registros existentes; nunca crear nuevos desde Campus
-            $seccion = $row['sec'] ?? null;
-            $prog = ProgramacionAcademica::where('periodo_id', $this->periodoId)
-                ->where('curso_id', $curso->id)
-                ->where('seccion', $seccion)
-                ->first();
+            // Buscar por curso + grupo (normalizado) + aula + escuela para evitar colisiones
+            $query = ProgramacionAcademica::where('periodo_id', $this->periodoId)
+                ->where('curso_id', $curso->id);
+
+            if ($grupoNombreNorm) {
+                $query->where('grupo', $grupoNombreNorm);
+            }
+            if ($aulaId) {
+                $query->where('aula_id', $aulaId);
+            }
+            if ($escuelaId) {
+                $query->whereExists(function ($q) use ($escuelaId) {
+                    $q->from('programacion_escuelas')
+                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                      ->where('programacion_escuelas.escuela_id', $escuelaId);
+                });
+            }
+
+            $prog = $query->first();
 
             if (!$prog) {
                 $this->omitidos[] = [
                     'codigo'  => $codigoLimpio,
                     'nombre'  => $curso->nombre,
-                    'seccion' => $seccion,
-                    'motivo'  => 'No hay programación registrada para esta sección en el periodo',
+                    'seccion' => $row['sec'] ?? null,
+                    'motivo'  => "No coincide curso+grupo({$grupoNombreNorm})+aula+escuela en el periodo",
                 ];
                 continue;
             }
 
+            // Campus solo actualiza inscritos y cupos
             $prog->update([
-                'docente_id'       => $docente?->id,
-                'grupo_horario_id' => $grupoHorarioId,
-                'aula_id'          => $aulaId,
-                'grupo'            => $grupoNombreNorm ?? $prog->grupo,
-                'ciclo'            => $cicloInt ?? $prog->ciclo,
-                'aula'             => $aulaNombreTexto ? strtoupper(trim((string) $aulaNombreTexto)) : $prog->aula,
-                'capacidad'        => $capacidad,
-                'n_inscritos'      => $nInscritos,
-                'lleno_manual'     => $llenoManual,
+                'capacidad'    => $capacidad,
+                'n_inscritos'  => $nInscritos,
+                'lleno_manual' => $llenoManual,
             ]);
-
-            if ($escuelaId) {
-                $prog->escuelas()->syncWithoutDetaching([$escuelaId]);
-            }
 
             $this->actualizadosIds[] = $prog->id;
             $this->actualizados++;

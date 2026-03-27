@@ -185,22 +185,24 @@ class ProgramacionImport implements ToCollection, WithHeadingRow
             if ($capacidad <= 0) $capacidad = 40;
 
             $prog = ProgramacionAcademica::create([
-                'curso_id'         => $curso->id,
-                'periodo_id'       => $this->periodoId,
-                'docente_id'       => $docente?->id,
-                'grupo_horario_id' => $grupoHorarioId,
-                'aula_id'          => $aulaId,
-                'clave'            => $row['clave'] ?? 'S/N',
-                'grupo'            => $grupoNombreTexto ? strtoupper(trim($grupoNombreTexto)) : 'A',
-                'seccion'          => $row['sec'] ?? null,
-                'ciclo'            => $cicloInt,
-                'aula'             => $aulaNombreTexto ? strtoupper(trim($aulaNombreTexto)) : null,
-                'n_acta'           => $row['n_acta'] ?? null,
-                'capacidad'        => $capacidad,
-                'n_inscritos'      => (int) ($row['n_inscritos'] ?? 0),
+                'curso_id'            => $curso->id,
+                'periodo_id'          => $this->periodoId,
+                'docente_id'          => $docente?->id,
+                'grupo_horario_id'    => $grupoHorarioId,
+                'aula_id'             => $aulaId,
+                'clave'               => $row['clave'] ?? 'S/N',
+                'grupo'               => $grupoNombreTexto ? strtoupper(trim($grupoNombreTexto)) : 'A',
+                'seccion'             => $row['sec'] ?? null,
+                'ciclo'               => $cicloInt,
+                'aula'                => $aulaNombreTexto ? strtoupper(trim($aulaNombreTexto)) : null,
+                'n_acta'              => $row['n_acta'] ?? null,
+                'capacidad'           => $capacidad,
+                'n_inscritos'         => (int) ($row['n_inscritos'] ?? 0),
+                // La escuela del Excel es también la responsable de programar el curso
+                'escuela_programada_id' => $escuelaId,
             ]);
 
-            // Sincronizar escuela si se encontró
+            // Sincronizar escuela habilitada
             if ($escuelaId) {
                 $prog->escuelas()->sync([$escuelaId]);
             }
