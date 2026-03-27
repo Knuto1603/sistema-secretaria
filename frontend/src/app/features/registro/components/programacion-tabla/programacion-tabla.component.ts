@@ -565,19 +565,29 @@ export class ProgramacionTablaComponent implements OnInit {
   descargarPlantilla(): void { this.programacionService.descargarPlantilla(); }
 
   descargarNoCampusCSV(): void {
-    const datos = this.campusDebugResult()?.no_en_campus;
-    if (!datos?.length) return;
+    const resultado = this.campusDebugResult();
+    if (!resultado) return;
 
-    const header = 'Código,Nombre,Sección,Grupo,Escuela';
-    const filas = datos.map(r =>
-      `"${r.codigo}","${r.nombre}","${r.seccion ?? ''}","${r.grupo}","${r.escuela}"`
-    );
-    const csv = [header, ...filas].join('\n');
+    const filas: string[] = [
+      'Caso,Código,Nombre,Sección,Grupo,Escuela,Motivo',
+    ];
+
+    for (const r of resultado.detalle) {
+      filas.push(`"En Campus / sin programación en sistema","${r.codigo}","${r.nombre}","${r.seccion ?? ''}","","","${r.motivo}"`);
+    }
+
+    for (const r of resultado.no_en_campus) {
+      filas.push(`"En sistema / no está en Campus","${r.codigo}","${r.nombre}","${r.seccion ?? ''}","${r.grupo}","${r.escuela}",""`);
+    }
+
+    if (filas.length <= 1) return;
+
+    const csv = filas.join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'no_en_campus.csv';
+    a.download = 'debug_campus.csv';
     a.click();
     URL.revokeObjectURL(url);
   }

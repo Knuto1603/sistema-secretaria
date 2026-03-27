@@ -403,10 +403,19 @@
               {{ campusDebugResult()!.omitidos }} omitidos
             </span>
           </div>
-          <button (click)="campusDebugResult.set(null)"
-            class="text-amber-400 hover:text-amber-700 transition-colors text-xs font-bold">
-            Cerrar ✕
-          </button>
+          <div class="flex items-center gap-2">
+            <button (click)="descargarNoCampusCSV()"
+              class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Descargar CSV completo
+            </button>
+            <button (click)="campusDebugResult.set(null)"
+              class="text-amber-400 hover:text-amber-700 transition-colors text-xs font-bold">
+              Cerrar ✕
+            </button>
+          </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
@@ -445,19 +454,10 @@
 
           <!-- En sistema pero NO en Campus -->
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2">
               <p class="text-[10px] font-bold text-red-600 uppercase tracking-widest">
                 En sistema pero NO en Campus ({{ campusDebugResult()!.no_en_campus.length }})
               </p>
-              @if (campusDebugResult()!.no_en_campus.length > 0) {
-                <button (click)="descargarNoCampusCSV()"
-                  class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                  </svg>
-                  Descargar CSV
-                </button>
-              }
             </div>
             @if (campusDebugResult()!.no_en_campus.length > 0) {
               <div class="overflow-auto max-h-56 rounded-xl border border-red-200 bg-white">
