@@ -202,18 +202,14 @@ class ProgramacionService
 
         $cursoIdsFiltro = !empty($cursoIdsEnPlan) ? $cursoIdsEnPlan : ['__none__'];
 
-        // Mostrar todos los cursos del plan que estén programados para la escuela del alumno
+        // Mostrar cursos del plan del alumno cuya escuela programada coincida con la del alumno.
         $query = $this->programacionRepository
             ->getBaseQuery($periodoId)
             ->where(function ($q) use ($cursoIdsFiltro, $inscritosProgramacionIds, $user) {
-                // Rama 1: cursos del plan habilitados para la escuela del alumno
+                // Rama 1: curso en el plan + escuela_programada = escuela del alumno
                 $q->where(function ($inner) use ($cursoIdsFiltro, $user) {
                     $inner->whereIn('programacion_academica.curso_id', $cursoIdsFiltro)
-                          ->whereExists(function ($sub) use ($user) {
-                              $sub->from('programacion_escuelas')
-                                  ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
-                                  ->where('programacion_escuelas.escuela_id', $user->escuela_id);
-                          });
+                          ->where('programacion_academica.escuela_programada_id', $user->escuela_id);
                 });
                 // Rama 2: cursos en los que ya está inscrito este periodo
                 if (!empty($inscritosProgramacionIds)) {
