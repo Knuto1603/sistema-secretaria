@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\DTOs\Solicitud\CreateSolicitudDTO;
+use App\Exports\SolicitudesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
 use App\Models\Solicitud;
@@ -10,6 +11,7 @@ use App\Services\SolicitudService;
 use App\Transformers\SolicitudTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
 class SolicitudController extends Controller
@@ -140,56 +142,14 @@ class SolicitudController extends Controller
     }
 
     /**
-     * Exportar solicitudes filtradas como CSV
+     * Exportar solicitudes filtradas como Excel
      */
     public function exportar(Request $request)
     {
         $solicitudes = $this->service->getAllForExport($request);
+        $filename = 'solicitudes_' . now()->format('Ymd_His') . '.xlsx';
 
-        $filename = 'solicitudes_' . now()->format('Ymd_His') . '.csv';
-
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
-        ];
-
-        $callback = function () use ($solicitudes) {
-            $file = fopen('php://output', 'w');
-            fputs($file, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
-
-            fputcsv($file, [
-                'Fecha/Hora',
-                'Cód. Universitario',
-                'Nombre Completo',
-                'Escuela Alumno',
-                'Cód. Curso',
-                'Nombre Curso',
-                'Escuela Programada',
-                'Sección',
-                'Grupo',
-                'Aula',
-            ], ';');
-
-            foreach ($solicitudes as $s) {
-                fputcsv($file, [
-                    $s->created_at->format('d/m/Y H:i'),
-                    $s->user?->codigo_universitario ?? '',
-                    $s->user?->name ?? '',
-                    $s->user?->escuela?->nombre_corto ?? $s->user?->escuela?->nombre ?? '',
-                    $s->programacion?->curso?->codigo ?? '',
-                    $s->programacion?->curso?->nombre ?? '',
-                    $s->programacion?->escuelaProgramada?->nombre_corto ?? $s->programacion?->escuelaProgramada?->nombre ?? '',
-                    $s->programacion?->seccion ?? '',
-                    $s->programacion?->grupo ?? '',
-                    $s->programacion?->aulaRelacion?->nombre ?? $s->programacion?->aula ?? '',
-                ], ';');
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new SolicitudesExport($solicitudes), $filename);
     }
 
     /**
