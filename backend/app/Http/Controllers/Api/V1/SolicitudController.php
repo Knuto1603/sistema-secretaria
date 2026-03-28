@@ -121,10 +121,10 @@ class SolicitudController extends Controller
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
-        $porTipo = Solicitud::join('tipo_solicitud', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitud.id')
-            ->selectRaw('tipo_solicitud.codigo, tipo_solicitud.nombre, count(*) as total')
-            ->groupBy('tipo_solicitud.codigo', 'tipo_solicitud.nombre')
-            ->pluck('total', 'tipo_solicitud.codigo');
+        $porTipo = Solicitud::join('tipo_solicitudes', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitudes.id')
+            ->selectRaw('tipo_solicitudes.codigo, tipo_solicitudes.nombre, count(*) as total')
+            ->groupBy('tipo_solicitudes.codigo', 'tipo_solicitudes.nombre')
+            ->pluck('total', 'tipo_solicitudes.codigo');
 
         // Cursos más solicitados agrupados por curso (no por sección)
         $cursosTop = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada', 'tipoSolicitud'])
@@ -147,8 +147,8 @@ class SolicitudController extends Controller
         // Solicitudes de cupo extra agrupadas por escuela del alumno
         $porEscuela = Solicitud::join('users', 'solicitud.user_id', '=', 'users.id')
             ->join('escuelas', 'users.escuela_id', '=', 'escuelas.id')
-            ->join('tipo_solicitud', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitud.id')
-            ->where('tipo_solicitud.codigo', 'CUPO_EXT')
+            ->join('tipo_solicitudes', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitudes.id')
+            ->where('tipo_solicitudes.codigo', 'CUPO_EXT')
             ->selectRaw('escuelas.id, escuelas.nombre_corto, escuelas.nombre, count(*) as total')
             ->groupBy('escuelas.id', 'escuelas.nombre_corto', 'escuelas.nombre')
             ->orderByDesc('total')
