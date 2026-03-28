@@ -24,7 +24,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
 
         if ($solicitud) {
             $solicitud->update($data);
-            $solicitud->load(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente']);
+            $solicitud->load(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aula', 'programacion.escuelaProgramada']);
         }
 
         return $solicitud;
@@ -33,7 +33,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function findById(string $id): ?Solicitud
     {
         return $this->model
-            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'asignado'])
+            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aula', 'programacion.escuelaProgramada', 'asignado'])
             ->find($id);
     }
 

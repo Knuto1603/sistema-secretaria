@@ -33,8 +33,12 @@ export interface Solicitud {
     clave: string;
     grupo: string;
     seccion: string | null;
+    capacidad: number | null;
+    n_inscritos: number | null;
     escuela_programada: { id: string; nombre: string; nombre_corto: string | null } | null;
     curso: { id: string; nombre: string; codigo: string } | null;
+    docente: { nombre: string } | null;
+    aula: { nombre: string } | null;
   } | null;
 }
 

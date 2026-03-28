@@ -42,15 +42,23 @@ class SolicitudTransformer
                 'clave'            => $model->programacion->clave,
                 'grupo'            => $model->programacion->grupo,
                 'seccion'          => $model->programacion->seccion,
+                'capacidad'        => $model->programacion->capacidad,
+                'n_inscritos'      => $model->programacion->n_inscritos,
                 'escuela_programada' => $model->programacion->escuelaProgramada ? [
-                    'id'     => $model->programacion->escuelaProgramada->id,
-                    'nombre' => $model->programacion->escuelaProgramada->nombre,
-                    'nombre_corto' => $model->programacion->escuelaProgramada->nombre_corto,
+                    'id'          => $model->programacion->escuelaProgramada->id,
+                    'nombre'      => $model->programacion->escuelaProgramada->nombre,
+                    'nombre_corto'=> $model->programacion->escuelaProgramada->nombre_corto,
                 ] : null,
                 'curso' => $model->programacion->curso ? [
-                    'id' => $model->programacion->curso->id,
+                    'id'     => $model->programacion->curso->id,
                     'nombre' => $model->programacion->curso->nombre,
                     'codigo' => $model->programacion->curso->codigo,
+                ] : null,
+                'docente' => $model->programacion->docente ? [
+                    'nombre' => $model->programacion->docente->nombre_completo,
+                ] : null,
+                'aula' => $model->programacion->aula ? [
+                    'nombre' => $model->programacion->aula->nombre,
                 ] : null,
             ] : null,
             created_at: $model->created_at->toISOString(),
