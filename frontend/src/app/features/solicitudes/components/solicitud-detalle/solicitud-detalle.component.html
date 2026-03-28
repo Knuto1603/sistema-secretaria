@@ -80,19 +80,68 @@
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Curso Solicitado</h3>
           @if (solicitud()!.programacion?.curso) {
-            <div class="space-y-3">
-              <p class="text-lg font-bold text-slate-800">{{ solicitud()!.programacion!.curso!.nombre }}</p>
-              <div class="flex flex-wrap gap-3">
-                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
-                  Código: {{ solicitud()!.programacion!.curso!.codigo }}
-                </span>
-                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
-                  Grupo: {{ solicitud()!.programacion!.grupo }}
-                </span>
-                <span class="px-3 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600">
-                  Clave: {{ solicitud()!.programacion!.clave }}
-                </span>
+            <div class="space-y-4">
+              <div>
+                <p class="text-lg font-bold text-slate-800">{{ solicitud()!.programacion!.curso!.nombre }}</p>
+                @if (solicitud()!.programacion!.escuela_programada) {
+                  <span class="inline-block mt-1 px-2 py-0.5 bg-violet-100 text-violet-700 rounded text-xs font-medium">
+                    {{ solicitud()!.programacion!.escuela_programada!.nombre_corto ?? solicitud()!.programacion!.escuela_programada!.nombre }}
+                  </span>
+                }
               </div>
+
+              <!-- Grid de datos del curso -->
+              <dl class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <dt class="text-[10px] font-bold text-slate-400 uppercase">Código</dt>
+                  <dd class="text-sm font-mono font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.curso!.codigo }}</dd>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <dt class="text-[10px] font-bold text-slate-400 uppercase">Clave</dt>
+                  <dd class="text-sm font-mono font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.clave }}</dd>
+                </div>
+                @if (solicitud()!.programacion!.seccion) {
+                  <div class="bg-slate-50 rounded-xl p-3">
+                    <dt class="text-[10px] font-bold text-slate-400 uppercase">Sección</dt>
+                    <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.seccion }}</dd>
+                  </div>
+                }
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <dt class="text-[10px] font-bold text-slate-400 uppercase">Grupo</dt>
+                  <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.grupo }}</dd>
+                </div>
+                @if (solicitud()!.programacion!.aula) {
+                  <div class="bg-slate-50 rounded-xl p-3">
+                    <dt class="text-[10px] font-bold text-slate-400 uppercase">Aula</dt>
+                    <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.aula!.nombre }}</dd>
+                  </div>
+                }
+                @if (solicitud()!.programacion!.docente) {
+                  <div class="bg-slate-50 rounded-xl p-3 col-span-2">
+                    <dt class="text-[10px] font-bold text-slate-400 uppercase">Docente</dt>
+                    <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.docente!.nombre }}</dd>
+                  </div>
+                }
+              </dl>
+
+              <!-- Capacidad / Inscritos -->
+              @if (solicitud()!.programacion!.capacidad !== null) {
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold text-indigo-500 uppercase">Ocupación del curso</span>
+                    <span class="text-xs font-bold text-indigo-700">
+                      {{ solicitud()!.programacion!.n_inscritos ?? 0 }} / {{ solicitud()!.programacion!.capacidad }}
+                    </span>
+                  </div>
+                  <div class="h-2 bg-indigo-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all"
+                      [class.bg-emerald-500]="(solicitud()!.programacion!.n_inscritos ?? 0) < solicitud()!.programacion!.capacidad!"
+                      [class.bg-red-500]="(solicitud()!.programacion!.n_inscritos ?? 0) >= solicitud()!.programacion!.capacidad!"
+                      [style.width.%]="((solicitud()!.programacion!.n_inscritos ?? 0) / solicitud()!.programacion!.capacidad!) * 100 | number:'1.0-0'">
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
           } @else {
             <p class="text-slate-500">Sin información de curso</p>
