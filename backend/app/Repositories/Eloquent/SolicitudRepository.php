@@ -40,7 +40,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function findByUserId(string $userId, int $perPage = 10): LengthAwarePaginator
     {
         return $this->model
-            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.escuelaProgramada'])
+            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada'])
             ->where('user_id', $userId)
             ->latest()
             ->paginate($perPage);
@@ -49,7 +49,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function getBaseQuery(): Builder
     {
         return $this->model
-            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.escuelaProgramada']);
+            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada']);
     }
 
     public function getPaginated(array $filters = [], int $perPage = 10): LengthAwarePaginator
