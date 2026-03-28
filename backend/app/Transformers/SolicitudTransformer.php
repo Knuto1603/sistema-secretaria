@@ -57,8 +57,8 @@ class SolicitudTransformer
                 'docente' => $model->programacion->docente ? [
                     'nombre' => $model->programacion->docente->nombre_completo,
                 ] : null,
-                'aula' => $model->programacion->aula ? [
-                    'nombre' => $model->programacion->aula->nombre,
+                'aula' => $model->programacion->aulaRelacion ? [
+                    'nombre' => $model->programacion->aulaRelacion->nombre,
                 ] : null,
             ] : null,
             created_at: $model->created_at->toISOString(),
