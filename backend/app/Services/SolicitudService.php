@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\DTOs\Solicitud\CreateSolicitudDTO;
-use App\Models\PlanEstudios;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
@@ -48,28 +47,13 @@ class SolicitudService
                 throw new Exception('No se pueden presentar solicitudes para periodos académicos inactivos.');
             }
 
-            // Verificar plan de estudios y sección habilitada.
-            // Se omite si fuera_de_plan = true (curso fuera del plan) o
-            // inscripcion_escuela = true (sección de otra escuela con cupos).
+            // Verificar que la sección fue programada para la escuela del estudiante.
+            // Se omite si fuera_de_plan = true o inscripcion_escuela = true.
             $esExcepcion = $dto->fuera_de_plan || $dto->inscripcion_escuela;
 
             if ($user->escuela_id && !$esExcepcion) {
-                $cursoEnPlan = PlanEstudios::where('escuela_id', $user->escuela_id)
-                    ->where('curso_id', $programacion->curso_id)
-                    ->exists();
-
-                if (!$cursoEnPlan) {
-                    throw new Exception('Este curso no pertenece al plan de estudios de tu escuela profesional.');
-                }
-
-                // Verificar que la sección está habilitada para la escuela del estudiante
-                $habilitadaParaEscuela = DB::table('programacion_escuelas')
-                    ->where('programacion_id', $programacion->id)
-                    ->where('escuela_id', $user->escuela_id)
-                    ->exists();
-
-                if (!$habilitadaParaEscuela) {
-                    throw new Exception('Esta sección no está habilitada para tu escuela profesional.');
+                if ($programacion->escuela_programada_id !== $user->escuela_id) {
+                    throw new Exception('Esta sección no fue programada para tu escuela profesional.');
                 }
             }
 
