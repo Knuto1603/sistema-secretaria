@@ -115,16 +115,31 @@ class SolicitudService
     public function getAll(Request $request): LengthAwarePaginator
     {
         $filters = [
-            'estado'          => $request->get('estado'),
-            'search'          => $request->get('search'),
-            'programacion_id' => $request->get('programacion_id'),
-            'tipo'            => $request->get('tipo'),
-            'escuela_id'      => $request->get('escuela_id'),
+            'estado'               => $request->get('estado'),
+            'search'               => $request->get('search'),
+            'programacion_id'      => $request->get('programacion_id'),
+            'tipo'                 => $request->get('tipo'),
+            'escuela_id'           => $request->get('escuela_id'),
+            'escuela_programada_id'=> $request->get('escuela_programada_id'),
         ];
 
         $perPage = $request->get('per_page', 10);
 
         return $this->repository->getPaginated($filters, $perPage);
+    }
+
+    public function getAllForExport(Request $request): \Illuminate\Database\Eloquent\Collection
+    {
+        $filters = [
+            'estado'               => $request->get('estado'),
+            'search'               => $request->get('search'),
+            'programacion_id'      => $request->get('programacion_id'),
+            'tipo'                 => $request->get('tipo'),
+            'escuela_id'           => $request->get('escuela_id'),
+            'escuela_programada_id'=> $request->get('escuela_programada_id'),
+        ];
+
+        return $this->repository->getAllForExport($filters);
     }
 
     public function findById(string $id): ?Solicitud

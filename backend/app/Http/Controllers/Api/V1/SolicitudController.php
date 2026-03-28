@@ -112,6 +112,87 @@ class SolicitudController extends Controller
     }
 
     /**
+     * Cursos distintos que tienen al menos una solicitud (para el filtro del listado admin)
+     */
+    public function cursosConSolicitud(): JsonResponse
+    {
+        $items = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada'])
+            ->whereNotNull('programacion_id')
+            ->get()
+            ->unique('programacion_id')
+            ->values()
+            ->filter(fn($s) => $s->programacion?->curso)
+            ->map(fn($s) => [
+                'id'      => $s->programacion_id,
+                'clave'   => $s->programacion->clave,
+                'grupo'   => $s->programacion->grupo,
+                'seccion' => $s->programacion->seccion,
+                'curso'   => [
+                    'nombre' => $s->programacion->curso->nombre,
+                    'codigo' => $s->programacion->curso->codigo,
+                ],
+                'escuela_programada' => $s->programacion->escuelaProgramada?->nombre_corto
+                                     ?? $s->programacion->escuelaProgramada?->nombre,
+            ])
+            ->values();
+
+        return $this->success($items);
+    }
+
+    /**
+     * Exportar solicitudes filtradas como CSV
+     */
+    public function exportar(Request $request)
+    {
+        $solicitudes = $this->service->getAllForExport($request);
+
+        $filename = 'solicitudes_' . now()->format('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control'       => 'no-cache, no-store, must-revalidate',
+        ];
+
+        $callback = function () use ($solicitudes) {
+            $file = fopen('php://output', 'w');
+            fputs($file, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+
+            fputcsv($file, [
+                'Fecha/Hora',
+                'Cód. Universitario',
+                'Nombre Completo',
+                'Escuela Alumno',
+                'Cód. Curso',
+                'Nombre Curso',
+                'Escuela Programada',
+                'Sección',
+                'Grupo',
+                'Aula',
+            ], ';');
+
+            foreach ($solicitudes as $s) {
+                fputcsv($file, [
+                    $s->created_at->format('d/m/Y H:i'),
+                    $s->user?->codigo_universitario ?? '',
+                    $s->user?->name ?? '',
+                    $s->user?->escuela?->nombre_corto ?? $s->user?->escuela?->nombre ?? '',
+                    $s->programacion?->curso?->codigo ?? '',
+                    $s->programacion?->curso?->nombre ?? '',
+                    $s->programacion?->escuelaProgramada?->nombre_corto ?? $s->programacion?->escuelaProgramada?->nombre ?? '',
+                    $s->programacion?->seccion ?? '',
+                    $s->programacion?->grupo ?? '',
+                    $s->programacion?->aulaRelacion?->nombre ?? $s->programacion?->aula ?? '',
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Estadísticas de solicitudes de cupo (para secretaría/admin).
      * Devuelve conteos por estado y los cursos más solicitados.
      */

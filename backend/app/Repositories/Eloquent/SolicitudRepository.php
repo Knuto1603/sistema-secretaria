@@ -91,7 +91,41 @@ class SolicitudRepository implements SolicitudRepositoryInterface
             $query->whereHas('user', fn($q) => $q->where('escuela_id', $filters['escuela_id']));
         }
 
+        if (isset($filters['escuela_programada_id']) && $filters['escuela_programada_id']) {
+            $query->whereHas('programacion', fn($q) => $q->where('escuela_programada_id', $filters['escuela_programada_id']));
+        }
+
         return $query->latest()->paginate($perPage);
+    }
+
+    public function getAllForExport(array $filters = []): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = $this->getBaseQuery();
+
+        if (isset($filters['estado']) && $filters['estado']) {
+            $query->where('estado', $filters['estado']);
+        }
+        if (isset($filters['search']) && $filters['search']) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', fn($uq) => $uq->where('name', 'like', "%{$search}%")->orWhere('codigo_universitario', 'like', "%{$search}%"))
+                  ->orWhereHas('programacion.curso', fn($cq) => $cq->where('nombre', 'like', "%{$search}%")->orWhere('codigo', 'like', "%{$search}%"));
+            });
+        }
+        if (isset($filters['programacion_id']) && $filters['programacion_id']) {
+            $query->where('programacion_id', $filters['programacion_id']);
+        }
+        if (isset($filters['tipo']) && $filters['tipo']) {
+            $query->whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $filters['tipo']));
+        }
+        if (isset($filters['escuela_id']) && $filters['escuela_id']) {
+            $query->whereHas('user', fn($q) => $q->where('escuela_id', $filters['escuela_id']));
+        }
+        if (isset($filters['escuela_programada_id']) && $filters['escuela_programada_id']) {
+            $query->whereHas('programacion', fn($q) => $q->where('escuela_programada_id', $filters['escuela_programada_id']));
+        }
+
+        return $query->latest()->get();
     }
 
     /**
