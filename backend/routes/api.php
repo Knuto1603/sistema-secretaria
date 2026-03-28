@@ -245,6 +245,14 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::get('/estadisticas', [SolicitudController::class, 'estadisticas'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');
 
+        // Cursos con solicitudes (para filtro admin)
+        Route::get('/cursos-solicitados', [SolicitudController::class, 'cursosConSolicitud'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
+        // Exportar CSV con filtros
+        Route::get('/exportar', [SolicitudController::class, 'exportar'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
         // Crear solicitud (estudiantes)
         Route::post('/', [SolicitudController::class, 'store']);
 

@@ -7,8 +7,6 @@ import { map } from 'rxjs';
 import { environment } from '@env/environment';
 import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService, Solicitud, PaginatedResponse } from '../../services/solicitud.service';
-import { ProgramacionService, Programacion } from '../../../registro/services/programacion.service';
-import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppButtonComponent } from '@shared/button/button.component';
@@ -31,8 +29,6 @@ interface Escuela { id: string; nombre: string; nombre_corto: string | null; }
 })
 export class SolicitudListaComponent implements OnInit {
   private solicitudService = inject(SolicitudService);
-  private programacionService = inject(ProgramacionService);
-  private periodoService = inject(PeriodoService);
   private http = inject(HttpClient);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -61,15 +57,17 @@ export class SolicitudListaComponent implements OnInit {
   currentPage = signal(1);
   perPage = signal(10);
 
-  // Escuelas para filtro
+  // Escuelas para filtros
   escuelas = signal<Escuela[]>([]);
+  escuelaProgramadaFiltro = signal('');
+  exportando = signal(false);
 
   // Info del curso cuando se filtra por programación
   cursoFiltrado = signal<string | null>(null);
 
-  // Lista de programaciones para el selector
-  programaciones = signal<Programacion[]>([]);
-  loadingProgramaciones = signal(false);
+  // Cursos que tienen solicitudes (para el selector de filtro)
+  cursosConSolicitud = signal<Array<{ id: string; clave: string; grupo: string; seccion: string | null; curso: { nombre: string; codigo: string }; escuela_programada: string | null }>>([]);
+  loadingCursos = signal(false);
 
   // Estados disponibles para filtro
   estados = [
@@ -104,9 +102,8 @@ export class SolicitudListaComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Cargar programaciones, escuelas y estadísticas si es admin
     if (this.esAdmin()) {
-      this.cargarProgramaciones();
+      this.cargarCursosConSolicitud();
       this.cargarEstadisticas();
       this.cargarEscuelas();
     }
@@ -134,28 +131,11 @@ export class SolicitudListaComponent implements OnInit {
     });
   }
 
-  cargarProgramaciones(): void {
-    this.loadingProgramaciones.set(true);
-
-    // Primero obtener el periodo activo
-    this.periodoService.getPeriodoActivo().subscribe({
-      next: (periodo: Periodo | null) => {
-        if (periodo) {
-          // Cargar programaciones del periodo activo (todas, luego filtrar las llenas)
-          this.programacionService.getProgramacion(1, '', 500, periodo.id).subscribe({
-            next: (res) => {
-              // Filtrar solo los cursos llenos
-              const llenos = res.data.filter(p => p.esta_lleno);
-              this.programaciones.set(llenos);
-              this.loadingProgramaciones.set(false);
-            },
-            error: () => this.loadingProgramaciones.set(false)
-          });
-        } else {
-          this.loadingProgramaciones.set(false);
-        }
-      },
-      error: () => this.loadingProgramaciones.set(false)
+  cargarCursosConSolicitud(): void {
+    this.loadingCursos.set(true);
+    this.solicitudService.getCursosConSolicitud().subscribe({
+      next: (data) => { this.cursosConSolicitud.set(data); this.loadingCursos.set(false); },
+      error: () => this.loadingCursos.set(false)
     });
   }
 
@@ -172,7 +152,8 @@ export class SolicitudListaComponent implements OnInit {
           this.estadoFiltro() || undefined,
           this.programacionIdFiltro() || undefined,
           this.tipoFiltro() || undefined,
-          this.escuelaIdFiltro() || undefined
+          this.escuelaIdFiltro() || undefined,
+          this.escuelaProgramadaFiltro() || undefined
         )
       : this.solicitudService.getMisSolicitudes(page, size);
 
@@ -222,6 +203,35 @@ export class SolicitudListaComponent implements OnInit {
     this.cargarDatos(1);
   }
 
+  onEscuelaProgramadaChange(escuelaId: string): void {
+    this.escuelaProgramadaFiltro.set(escuelaId);
+    this.cargarDatos(1);
+  }
+
+  exportar(): void {
+    this.exportando.set(true);
+    const params: Record<string, string> = {};
+    if (this.estadoFiltro())            params['estado'] = this.estadoFiltro();
+    if (this.tipoFiltro())              params['tipo'] = this.tipoFiltro();
+    if (this.escuelaIdFiltro())         params['escuela_id'] = this.escuelaIdFiltro();
+    if (this.escuelaProgramadaFiltro()) params['escuela_programada_id'] = this.escuelaProgramadaFiltro();
+    if (this.programacionIdFiltro())    params['programacion_id'] = this.programacionIdFiltro()!;
+    if (this.searchTerm())              params['search'] = this.searchTerm();
+
+    this.solicitudService.exportarCSV(params).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `solicitudes_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportando.set(false);
+      },
+      error: () => this.exportando.set(false)
+    });
+  }
+
   limpiarFiltroCurso(): void {
     this.programacionIdFiltro.set(null);
     this.cursoFiltrado.set(null);
@@ -238,29 +248,16 @@ export class SolicitudListaComponent implements OnInit {
       this.cursoFiltrado.set(null);
       this.programacionIdFiltro.set(programacionId);
 
-      // Obtener nombre del curso del selector
-      const prog = this.programaciones().find(p => p.id === programacionId);
-      if (prog?.curso) {
-        this.cursoFiltrado.set(`${prog.curso.codigo} - ${prog.curso.nombre} (Sec: ${prog.seccion})`);
+      const prog = this.cursosConSolicitud().find(p => p.id === programacionId);
+      if (prog) {
+        this.cursoFiltrado.set(`${prog.curso.codigo} - ${prog.curso.nombre} (Sec: ${prog.seccion ?? '-'}, G: ${prog.grupo})`);
       }
 
-      // Actualizar query params
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { programacion_id: programacionId }
-      });
+      this.router.navigate([], { relativeTo: this.route, queryParams: { programacion_id: programacionId } });
       this.cargarDatos(1);
     } else {
       this.limpiarFiltroCurso();
     }
-  }
-
-  // Helper para obtener el label del selector
-  getProgramacionLabel(prog: Programacion): string {
-    if (prog.curso) {
-      return `${prog.curso.codigo} - ${prog.curso.nombre} (Sec: ${prog.seccion}, Grp: ${prog.grupo})`;
-    }
-    return `Programación ${prog.clave}`;
   }
 
   getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' {
