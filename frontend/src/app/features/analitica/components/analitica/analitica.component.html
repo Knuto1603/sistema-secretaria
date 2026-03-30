@@ -1,1 +1,269 @@
-<p>analitica works!</p>
+<div class="space-y-6">
+
+  <!-- Encabezado -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Métricas de Solicitudes</h1>
+      <p class="text-sm text-slate-500 mt-1">Ampliación de cupo — cursos, secciones y solicitantes</p>
+    </div>
+    <button (click)="cargar()"
+      class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex items-center justify-center h-64">
+      <div class="flex flex-col items-center gap-3 text-slate-400">
+        <svg class="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        <span class="text-sm font-medium">Cargando métricas...</span>
+      </div>
+    </div>
+  }
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
+      {{ error() }}
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+
+    <!-- Tarjetas resumen -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div class="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-indigo-600">{{ resumen().totalSolicitudes }}</p>
+        <p class="text-xs text-slate-500 font-semibold uppercase mt-1">Total</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-slate-700">{{ resumen().totalCursos }}</p>
+        <p class="text-xs text-slate-500 font-semibold uppercase mt-1">Cursos</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-slate-700">{{ resumen().totalSecciones }}</p>
+        <p class="text-xs text-slate-500 font-semibold uppercase mt-1">Secciones</p>
+      </div>
+      <div class="bg-amber-50 rounded-xl border border-amber-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-amber-600">{{ resumen().pendientes }}</p>
+        <p class="text-xs text-amber-600 font-semibold uppercase mt-1">Pendientes</p>
+      </div>
+      <div class="bg-indigo-50 rounded-xl border border-indigo-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-indigo-600">{{ resumen().enRevision }}</p>
+        <p class="text-xs text-indigo-600 font-semibold uppercase mt-1">En Revisión</p>
+      </div>
+      <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-emerald-600">{{ resumen().aprobadas }}</p>
+        <p class="text-xs text-emerald-600 font-semibold uppercase mt-1">Aprobadas</p>
+      </div>
+      <div class="bg-red-50 rounded-xl border border-red-200 p-4 text-center shadow-sm">
+        <p class="text-2xl font-black text-red-600">{{ resumen().rechazadas }}</p>
+        <p class="text-xs text-red-600 font-semibold uppercase mt-1">Rechazadas</p>
+      </div>
+    </div>
+
+    <!-- Sin datos -->
+    @if (cursos().length === 0) {
+      <div class="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
+        <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="font-semibold">Sin datos disponibles</p>
+        <p class="text-sm mt-1">Aún no hay solicitudes de cupo extra registradas.</p>
+      </div>
+    }
+
+    <!-- Tarjetas por curso -->
+    @for (curso of cursos(); track curso.curso_id) {
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <!-- Cabecera del curso -->
+        <div class="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center gap-4">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ curso.codigo }}</span>
+              @if (curso.total > 0) {
+                <span class="bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {{ curso.total }} solicitud{{ curso.total !== 1 ? 'es' : '' }}
+                </span>
+              }
+            </div>
+            <h2 class="text-base font-bold text-slate-800 mt-0.5 truncate">{{ curso.nombre }}</h2>
+          </div>
+
+          <!-- Mini badges de estado -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            @if (curso.por_estado.pendiente > 0) {
+              <span class="px-2 py-1 rounded-full border font-semibold bg-amber-100 text-amber-800 border-amber-200">
+                {{ curso.por_estado.pendiente }} pend.
+              </span>
+            }
+            @if (curso.por_estado.en_revision > 0) {
+              <span class="px-2 py-1 rounded-full border font-semibold bg-indigo-100 text-indigo-800 border-indigo-200">
+                {{ curso.por_estado.en_revision }} rev.
+              </span>
+            }
+            @if (curso.por_estado.aprobada > 0) {
+              <span class="px-2 py-1 rounded-full border font-semibold bg-emerald-100 text-emerald-800 border-emerald-200">
+                {{ curso.por_estado.aprobada }} apro.
+              </span>
+            }
+            @if (curso.por_estado.rechazada > 0) {
+              <span class="px-2 py-1 rounded-full border font-semibold bg-red-100 text-red-800 border-red-200">
+                {{ curso.por_estado.rechazada }} rech.
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Secciones programadas -->
+        <div class="px-6 py-4">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+            Secciones programadas ({{ curso.secciones.length }})
+          </p>
+
+          @if (curso.secciones.length === 0) {
+            <p class="text-sm text-slate-400 italic">Sin secciones en el periodo activo.</p>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    <th class="pb-2 text-left">Grupo</th>
+                    <th class="pb-2 text-left">Sección</th>
+                    <th class="pb-2 text-left hidden sm:table-cell">Docente</th>
+                    <th class="pb-2 text-left hidden md:table-cell">Aula</th>
+                    <th class="pb-2 text-left hidden md:table-cell">Escuela</th>
+                    <th class="pb-2 text-left">Inscritos</th>
+                    <th class="pb-2 text-left">Estado</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                  @for (sec of curso.secciones; track sec.id) {
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-2.5 font-bold text-slate-700">{{ sec.grupo }}</td>
+                      <td class="py-2.5 text-slate-600">{{ sec.seccion ?? '-' }}</td>
+                      <td class="py-2.5 text-slate-600 hidden sm:table-cell max-w-[160px] truncate">{{ sec.docente ?? '-' }}</td>
+                      <td class="py-2.5 text-slate-600 hidden md:table-cell">{{ sec.aula ?? '-' }}</td>
+                      <td class="py-2.5 text-slate-500 hidden md:table-cell text-xs">{{ sec.escuela_programada ?? '-' }}</td>
+                      <td class="py-2.5">
+                        <div class="flex items-center gap-2">
+                          <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all"
+                              [class]="getColorBarra(getPct(sec))"
+                              [style.width.%]="getPct(sec)">
+                            </div>
+                          </div>
+                          <span class="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                            {{ sec.n_inscritos ?? 0 }} / {{ sec.capacidad ?? '?' }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="py-2.5">
+                        @if (sec.lleno) {
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200">
+                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Lleno
+                          </span>
+                        } @else {
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Disponible
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <!-- Toggle solicitantes -->
+        <div class="border-t border-slate-100">
+          <button (click)="toggleExpandir(curso.curso_id)"
+            class="w-full flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors text-sm font-semibold text-slate-600">
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Ver solicitantes ({{ curso.solicitantes.length }})
+            </span>
+            <svg class="w-4 h-4 transition-transform"
+              [class.rotate-180]="estaExpandido(curso.curso_id)"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          @if (estaExpandido(curso.curso_id)) {
+            <div class="px-6 pb-4">
+              @if (curso.solicitantes.length === 0) {
+                <p class="text-sm text-slate-400 italic py-2">Sin solicitantes.</p>
+              } @else {
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                        <th class="pb-2 text-left">Código</th>
+                        <th class="pb-2 text-left">Nombre</th>
+                        <th class="pb-2 text-left hidden sm:table-cell">Escuela</th>
+                        <th class="pb-2 text-left">Grupo solicitado</th>
+                        <th class="pb-2 text-left hidden sm:table-cell">Fecha</th>
+                        <th class="pb-2 text-left">Estado</th>
+                        <th class="pb-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                      @for (sol of curso.solicitantes; track sol.id) {
+                        <tr class="hover:bg-slate-50 transition-colors">
+                          <td class="py-2 font-mono text-xs text-slate-500">{{ sol.codigo ?? '-' }}</td>
+                          <td class="py-2 font-semibold text-slate-700">
+                            {{ sol.nombre ?? '-' }}
+                            @if (sol.fuera_de_plan) {
+                              <span class="ml-1 text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold">FP</span>
+                            }
+                          </td>
+                          <td class="py-2 text-slate-500 text-xs hidden sm:table-cell">{{ sol.escuela ?? '-' }}</td>
+                          <td class="py-2 text-slate-600 text-center">
+                            @if (sol.grupo_solicitado) {
+                              <span class="font-bold">{{ sol.grupo_solicitado }}</span>
+                              @if (sol.seccion_solicitada) {
+                                <span class="text-slate-400 ml-1">/ {{ sol.seccion_solicitada }}</span>
+                              }
+                            } @else { - }
+                          </td>
+                          <td class="py-2 text-slate-400 text-xs hidden sm:table-cell whitespace-nowrap">{{ sol.fecha }}</td>
+                          <td class="py-2">
+                            <span class="px-2 py-0.5 rounded-full border text-xs font-semibold"
+                              [class]="getColorEstado(sol.estado)">
+                              {{ getLabelEstado(sol.estado) }}
+                            </span>
+                          </td>
+                          <td class="py-2 text-right">
+                            <button (click)="verSolicitud(sol.id)"
+                              class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold hover:underline">
+                              Ver
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+    }
+
+  }
+</div>

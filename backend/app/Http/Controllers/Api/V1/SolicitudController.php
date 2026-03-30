@@ -6,6 +6,7 @@ use App\DTOs\Solicitud\CreateSolicitudDTO;
 use App\Exports\SolicitudesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
+use App\Models\ProgramacionAcademica;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
 use App\Transformers\SolicitudTransformer;
@@ -240,6 +241,86 @@ class SolicitudController extends Controller
             'cursos_top'  => $cursosTop,
             'por_escuela' => $porEscuela,
         ], 'Estadísticas de solicitudes');
+    }
+
+    /**
+     * Métricas de cupo extra por curso:
+     * - Secciones programadas con inscritos
+     * - Lista de solicitantes por curso
+     */
+    public function metricasCupo(): JsonResponse
+    {
+        // Todas las solicitudes CUPO_EXT con relaciones
+        $solicitudes = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', 'CUPO_EXT'))
+            ->whereNotNull('programacion_id')
+            ->with([
+                'user.escuela',
+                'programacion.curso',
+                'programacion.escuelaProgramada',
+            ])
+            ->get();
+
+        // Agrupar por curso_id
+        $porCurso = $solicitudes->groupBy(fn($s) => $s->programacion?->curso?->id);
+
+        $result = [];
+
+        foreach ($porCurso as $cursoId => $sols) {
+            if (!$cursoId) continue;
+
+            $curso = $sols->first()->programacion->curso;
+
+            // Todas las secciones programadas del curso en el periodo activo
+            $secciones = ProgramacionAcademica::where('curso_id', $cursoId)
+                ->whereHas('periodo', fn($q) => $q->where('activo', true))
+                ->with(['docente', 'aulaRelacion', 'escuelaProgramada'])
+                ->orderBy('grupo')
+                ->get()
+                ->map(fn($p) => [
+                    'id'               => $p->id,
+                    'grupo'            => $p->grupo,
+                    'seccion'          => $p->seccion,
+                    'n_inscritos'      => $p->n_inscritos,
+                    'capacidad'        => $p->capacidad,
+                    'docente'          => $p->docente?->nombre,
+                    'aula'             => $p->aulaRelacion?->nombre,
+                    'escuela_programada' => $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre,
+                    'lleno'            => $p->lleno_manual || ($p->n_inscritos !== null && $p->capacidad !== null && $p->n_inscritos >= $p->capacidad),
+                ]);
+
+            // Lista de solicitantes
+            $solicitantes = $sols->map(fn($s) => [
+                'id'              => $s->id,
+                'estado'          => $s->estado,
+                'fecha'           => $s->created_at->format('d/m/Y H:i'),
+                'fuera_de_plan'   => (bool) $s->fuera_de_plan,
+                'codigo'          => $s->user?->codigo_universitario,
+                'nombre'          => $s->user?->name,
+                'escuela'         => $s->user?->escuela?->nombre_corto ?? $s->user?->escuela?->nombre,
+                'seccion_solicitada' => $s->programacion?->seccion,
+                'grupo_solicitado'   => $s->programacion?->grupo,
+            ])->values();
+
+            $result[] = [
+                'curso_id'  => $cursoId,
+                'codigo'    => $curso->codigo,
+                'nombre'    => $curso->nombre,
+                'total'     => $sols->count(),
+                'por_estado' => [
+                    'pendiente'   => $sols->where('estado', 'pendiente')->count(),
+                    'en_revision' => $sols->where('estado', 'en_revision')->count(),
+                    'aprobada'    => $sols->where('estado', 'aprobada')->count(),
+                    'rechazada'   => $sols->where('estado', 'rechazada')->count(),
+                ],
+                'secciones'    => $secciones->values(),
+                'solicitantes' => $solicitantes,
+            ];
+        }
+
+        // Ordenar por total de solicitudes desc
+        usort($result, fn($a, $b) => $b['total'] - $a['total']);
+
+        return $this->success($result, 'Métricas de cupo extra');
     }
 
     /**

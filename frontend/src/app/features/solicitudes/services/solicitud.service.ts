@@ -43,6 +43,40 @@ export interface Solicitud {
   } | null;
 }
 
+export interface SeccionMetrica {
+  id: string;
+  grupo: string;
+  seccion: string | null;
+  n_inscritos: number | null;
+  capacidad: number | null;
+  docente: string | null;
+  aula: string | null;
+  escuela_programada: string | null;
+  lleno: boolean;
+}
+
+export interface SolicitanteMetrica {
+  id: string;
+  estado: string;
+  fecha: string;
+  fuera_de_plan: boolean;
+  codigo: string | null;
+  nombre: string | null;
+  escuela: string | null;
+  seccion_solicitada: string | null;
+  grupo_solicitado: string | null;
+}
+
+export interface MetricaCurso {
+  curso_id: string;
+  codigo: string;
+  nombre: string;
+  total: number;
+  por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
+  secciones: SeccionMetrica[];
+  solicitantes: SolicitanteMetrica[];
+}
+
 export interface CreateSolicitudDTO {
   programacion_id: string;
   motivo: string;
@@ -233,6 +267,15 @@ export class SolicitudService {
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([k, v]) => { if (v) httpParams = httpParams.set(k, v); });
     return this.http.get(`${this.apiUrl}/exportar`, { params: httpParams, responseType: 'blob' });
+  }
+
+  /**
+   * Métricas de cupo extra por curso (secciones + solicitantes)
+   */
+  getMetricasCupo(): Observable<MetricaCurso[]> {
+    return this.http.get<ApiResponse<MetricaCurso[]>>(`${this.apiUrl}/metricas-cupo`).pipe(
+      map(r => r.data)
+    );
   }
 
   /**
