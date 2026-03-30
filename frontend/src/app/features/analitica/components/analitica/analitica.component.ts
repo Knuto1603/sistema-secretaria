@@ -87,4 +87,11 @@ export class AnaliticaComponent implements OnInit {
     if (pct >= 80)  return 'bg-amber-500';
     return 'bg-emerald-500';
   }
+
+  getSolicitantesPorSeccion(curso: MetricaCurso, sec: SeccionMetrica): number {
+    return curso.solicitantes.filter(
+      s => s.grupo_solicitado === sec.grupo &&
+           (sec.seccion === null || s.seccion_solicitada === sec.seccion)
+    ).length;
+  }
 }

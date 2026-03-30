@@ -142,6 +142,7 @@
                     <th class="pb-2 text-left hidden md:table-cell">Aula</th>
                     <th class="pb-2 text-left hidden md:table-cell">Escuela</th>
                     <th class="pb-2 text-left">Inscritos</th>
+                    <th class="pb-2 text-center">Solicitantes</th>
                     <th class="pb-2 text-left">Estado</th>
                   </tr>
                 </thead>
@@ -165,6 +166,16 @@
                             {{ sec.n_inscritos ?? 0 }} / {{ sec.capacidad ?? '?' }}
                           </span>
                         </div>
+                      </td>
+                      <td class="py-2.5 text-center">
+                        @let count = getSolicitantesPorSeccion(curso, sec);
+                        @if (count > 0) {
+                          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-black border border-indigo-200">
+                            {{ count }}
+                          </span>
+                        } @else {
+                          <span class="text-slate-300 text-xs">—</span>
+                        }
                       </td>
                       <td class="py-2.5">
                         @if (sec.lleno) {
