@@ -89,9 +89,6 @@ export class AnaliticaComponent implements OnInit {
   }
 
   getSolicitantesPorSeccion(curso: MetricaCurso, sec: SeccionMetrica): number {
-    return curso.solicitantes.filter(
-      s => s.grupo_solicitado === sec.grupo &&
-           (sec.seccion === null || s.seccion_solicitada === sec.seccion)
-    ).length;
+    return curso.solicitantes.filter(s => s.programacion_id === sec.id).length;
   }
 }

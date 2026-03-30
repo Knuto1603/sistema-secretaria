@@ -57,6 +57,7 @@ export interface SeccionMetrica {
 
 export interface SolicitanteMetrica {
   id: string;
+  programacion_id: string | null;
   estado: string;
   fecha: string;
   fuera_de_plan: boolean;

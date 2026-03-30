@@ -291,6 +291,7 @@ class SolicitudController extends Controller
             // Lista de solicitantes
             $solicitantes = $sols->map(fn($s) => [
                 'id'              => $s->id,
+                'programacion_id' => $s->programacion_id,
                 'estado'          => $s->estado,
                 'fecha'           => $s->created_at->format('d/m/Y H:i'),
                 'fuera_de_plan'   => (bool) $s->fuera_de_plan,
