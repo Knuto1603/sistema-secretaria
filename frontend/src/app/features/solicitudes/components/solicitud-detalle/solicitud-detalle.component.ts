@@ -23,6 +23,8 @@ export class SolicitudDetalleComponent implements OnInit {
   solicitud = signal<Solicitud | null>(null);
   loading = signal(false);
   updating = signal(false);
+  anulando = signal(false);
+  confirmarAnular = signal(false);
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Para el formulario de actualización
@@ -34,6 +36,14 @@ export class SolicitudDetalleComponent implements OnInit {
            this.authService.hasRole('secretaria') ||
            this.authService.hasRole('decano') ||
            this.authService.hasRole('secretario academico');
+  });
+
+  puedeAnular = computed(() => {
+    const sol = this.solicitud();
+    if (!sol) return false;
+    const esEstudiante = this.authService.hasRole('estudiante');
+    const estadoAnulable = sol.estado === 'pendiente' || sol.estado === 'en_revision';
+    return esEstudiante && estadoAnulable;
   });
 
   estados = [
@@ -93,6 +103,23 @@ export class SolicitudDetalleComponent implements OnInit {
 
   volver(): void {
     this.router.navigate(['/app/solicitudes/list']);
+  }
+
+  anular(): void {
+    const sol = this.solicitud();
+    if (!sol || this.anulando()) return;
+
+    this.anulando.set(true);
+    this.solicitudService.anularSolicitud(sol.id).subscribe({
+      next: () => {
+        this.router.navigate(['/app/solicitudes/list']);
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al anular la solicitud');
+        this.anulando.set(false);
+        this.confirmarAnular.set(false);
+      }
+    });
   }
 
   getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' {

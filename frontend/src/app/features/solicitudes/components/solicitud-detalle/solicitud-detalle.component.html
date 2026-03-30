@@ -296,6 +296,39 @@
           </div>
         }
 
+        <!-- Anular solicitud (solo estudiante con solicitud pendiente/en_revision) -->
+        @if (puedeAnular()) {
+          <div class="bg-red-50 p-5 rounded-2xl border border-red-200">
+            <h3 class="text-xs font-semibold text-red-600 uppercase tracking-widest mb-2">Anular Solicitud</h3>
+            <p class="text-xs text-red-500 mb-3">
+              Al anular, la solicitud se eliminará y podrás presentar una nueva.
+            </p>
+
+            @if (!confirmarAnular()) {
+              <button
+                (click)="confirmarAnular.set(true)"
+                class="w-full px-4 py-2.5 bg-white border-2 border-red-300 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition-colors">
+                Anular esta solicitud
+              </button>
+            } @else {
+              <p class="text-xs font-bold text-red-700 mb-3">¿Estás seguro? Esta acción no se puede deshacer.</p>
+              <div class="flex gap-2">
+                <button
+                  (click)="confirmarAnular.set(false)"
+                  class="flex-1 px-3 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors">
+                  Cancelar
+                </button>
+                <button
+                  (click)="anular()"
+                  [disabled]="anulando()"
+                  class="flex-1 px-3 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
+                  {{ anulando() ? 'Anulando...' : 'Sí, anular' }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+
       </div>
     </div>
   }

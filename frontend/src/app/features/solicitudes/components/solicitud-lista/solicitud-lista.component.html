@@ -336,9 +336,18 @@
 
     <!-- Acciones -->
     <ng-template #actionsTemplate let-row>
-      <app-btn variant="ghost" (clicked)="verDetalle(row)">
-        {{ esAdmin() ? 'Revisar' : 'Ver' }}
-      </app-btn>
+      <div class="flex items-center gap-2">
+        <app-btn variant="ghost" (clicked)="verDetalle(row)">
+          {{ esAdmin() ? 'Revisar' : 'Ver' }}
+        </app-btn>
+        @if (!esAdmin() && (row.estado === 'pendiente' || row.estado === 'en_revision')) {
+          <button
+            (click)="anularSolicitud(row)"
+            class="px-3 py-1.5 text-xs font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+            Anular
+          </button>
+        }
+      </div>
     </ng-template>
 
   </app-table>

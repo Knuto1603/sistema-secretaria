@@ -272,6 +272,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::get('/', [SolicitudController::class, 'index'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');
 
+        // Anular solicitud (el propio estudiante, solo si está pendiente/en_revision)
+        Route::delete('/{id}', [SolicitudController::class, 'anular']);
+
         // Ver detalle (todos pueden, pero estudiantes solo las suyas)
         Route::get('/{id}', [SolicitudController::class, 'show']);
 

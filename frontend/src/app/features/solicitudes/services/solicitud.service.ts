@@ -194,6 +194,15 @@ export class SolicitudService {
   }
 
   /**
+   * Anular solicitud (solo el propio estudiante)
+   */
+  anularSolicitud(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<null>>(`${this.apiUrl}/${id}`).pipe(
+      map(() => undefined)
+    );
+  }
+
+  /**
    * Devuelve los programacion_ids donde el estudiante ya tiene solicitud activa.
    * Usado para mostrar badge "Solicitado" en la tabla de programación.
    */

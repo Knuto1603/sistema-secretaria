@@ -283,4 +283,12 @@ export class SolicitudListaComponent implements OnInit {
   verDetalle(solicitud: Solicitud): void {
     this.router.navigate(['/app/solicitudes/detalle', solicitud.id]);
   }
+
+  anularSolicitud(solicitud: Solicitud): void {
+    if (!confirm(`¿Anular la solicitud de "${solicitud.programacion?.curso?.nombre ?? 'este trámite'}"? No se puede deshacer.`)) return;
+    this.solicitudService.anularSolicitud(solicitud.id).subscribe({
+      next: () => this.cargarDatos(1),
+      error: (err) => alert(err.error?.message || 'Error al anular la solicitud')
+    });
+  }
 }
