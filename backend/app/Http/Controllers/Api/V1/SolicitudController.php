@@ -98,6 +98,32 @@ class SolicitudController extends Controller
     }
 
     /**
+     * Anular solicitud (solo el propio estudiante, solo si está pendiente o en_revision)
+     */
+    public function anular(string $id, Request $request): JsonResponse
+    {
+        $solicitud = $this->service->findById($id);
+
+        if (!$solicitud) {
+            return $this->notFound('Solicitud no encontrada');
+        }
+
+        $user = $request->user();
+
+        if ($solicitud->user_id !== $user->id) {
+            return $this->forbidden('No puedes anular una solicitud que no es tuya');
+        }
+
+        if (!in_array($solicitud->estado, ['pendiente', 'en_revision'])) {
+            return $this->error('Solo puedes anular solicitudes pendientes o en revisión', 422);
+        }
+
+        $solicitud->delete();
+
+        return $this->success(null, 'Solicitud anulada correctamente');
+    }
+
+    /**
      * Devuelve los programacion_ids donde el estudiante ya tiene solicitud activa
      * (pendiente, en_revision o aprobada). Usado para deshabilitar el botón "Solicitar".
      */
