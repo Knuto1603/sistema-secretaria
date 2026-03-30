@@ -34,6 +34,18 @@ Route::get('/health-check', function () {
     ]);
 });
 
+// Servir archivos de storage (evita dependencia del symlink nginx)
+Route::get('/storage/{path}', function (string $path) {
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    if (!$disk->exists($path)) {
+        abort(404);
+    }
+    return response($disk->get($path), 200, [
+        'Content-Type'  => $disk->mimeType($path),
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.+');
+
 // =============================================
 // RUTAS DE AUTENTICACIÓN (Públicas)
 // =============================================
