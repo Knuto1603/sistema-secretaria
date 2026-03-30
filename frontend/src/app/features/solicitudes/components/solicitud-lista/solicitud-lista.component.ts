@@ -109,14 +109,31 @@ export class SolicitudListaComponent implements OnInit {
       this.cargarEscuelas();
     }
 
-    // Leer query params para filtrar por programación
+    // Los query params son la fuente de verdad de todos los filtros
     this.route.queryParams.subscribe(params => {
-      const programacionId = params['programacion_id'];
-      if (programacionId) {
-        this.programacionIdFiltro.set(programacionId);
-      }
+      this.searchTerm.set(params['search'] ?? '');
+      this.estadoFiltro.set(params['estado'] ?? '');
+      this.tipoFiltro.set(params['tipo'] ?? '');
+      this.escuelaIdFiltro.set(params['escuela_id'] ?? '');
+      this.escuelaProgramadaFiltro.set(params['escuela_programada_id'] ?? '');
+      this.sortOrder.set(params['sort'] === 'asc' ? 'asc' : 'desc');
+      this.currentPage.set(Number(params['page']) || 1);
+      this.perPage.set(Number(params['per_page']) || 10);
+      this.programacionIdFiltro.set(params['programacion_id'] ?? null);
       this.cargarDatos();
     });
+  }
+
+  private pushQueryParams(changes: Record<string, string | number | null>): void {
+    const next: Record<string, string> = { ...this.route.snapshot.queryParams };
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === null || value === '' || value === undefined) {
+        delete next[key];
+      } else {
+        next[key] = String(value);
+      }
+    }
+    this.router.navigate([], { relativeTo: this.route, queryParams: next, replaceUrl: true });
   }
 
   cargarEscuelas(): void {
@@ -140,15 +157,13 @@ export class SolicitudListaComponent implements OnInit {
     });
   }
 
-  cargarDatos(page: number = this.currentPage(), size: number = this.perPage()): void {
+  cargarDatos(): void {
     this.loading.set(true);
-    this.currentPage.set(page);
-    this.perPage.set(size);
 
     const request$ = this.esAdmin()
       ? this.solicitudService.getAllSolicitudes(
-          page,
-          size,
+          this.currentPage(),
+          this.perPage(),
           this.searchTerm() || undefined,
           this.estadoFiltro() || undefined,
           this.programacionIdFiltro() || undefined,
@@ -157,7 +172,7 @@ export class SolicitudListaComponent implements OnInit {
           this.escuelaProgramadaFiltro() || undefined,
           this.sortOrder()
         )
-      : this.solicitudService.getMisSolicitudes(page, size);
+      : this.solicitudService.getMisSolicitudes(this.currentPage(), this.perPage());
 
     request$.subscribe({
       next: (res) => {
@@ -186,28 +201,31 @@ export class SolicitudListaComponent implements OnInit {
   }
 
   onSearch(value: string): void {
-    this.searchTerm.set(value);
-    this.cargarDatos(1);
+    this.pushQueryParams({ search: value || null, page: null });
   }
 
   onEstadoChange(estado: string): void {
-    this.estadoFiltro.set(estado);
-    this.cargarDatos(1);
+    this.pushQueryParams({ estado: estado || null, page: null });
   }
 
   onTipoChange(tipo: string): void {
-    this.tipoFiltro.set(tipo);
-    this.cargarDatos(1);
+    this.pushQueryParams({ tipo: tipo || null, page: null });
   }
 
   onEscuelaChange(escuelaId: string): void {
-    this.escuelaIdFiltro.set(escuelaId);
-    this.cargarDatos(1);
+    this.pushQueryParams({ escuela_id: escuelaId || null, page: null });
   }
 
   onEscuelaProgramadaChange(escuelaId: string): void {
-    this.escuelaProgramadaFiltro.set(escuelaId);
-    this.cargarDatos(1);
+    this.pushQueryParams({ escuela_programada_id: escuelaId || null, page: null });
+  }
+
+  onPageChange(page: number): void {
+    this.pushQueryParams({ page: page === 1 ? null : page });
+  }
+
+  onPerPageChange(size: number): void {
+    this.pushQueryParams({ per_page: size === 10 ? null : size, page: null });
   }
 
   exportar(): void {
@@ -235,28 +253,17 @@ export class SolicitudListaComponent implements OnInit {
   }
 
   limpiarFiltroCurso(): void {
-    this.programacionIdFiltro.set(null);
     this.cursoFiltrado.set(null);
-    // Limpiar query params
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {}
-    });
-    this.cargarDatos(1);
+    this.pushQueryParams({ programacion_id: null, page: null });
   }
 
   onProgramacionChange(programacionId: string): void {
     if (programacionId) {
-      this.cursoFiltrado.set(null);
-      this.programacionIdFiltro.set(programacionId);
-
       const prog = this.cursosConSolicitud().find(p => p.id === programacionId);
       if (prog) {
         this.cursoFiltrado.set(`${prog.curso.codigo} - ${prog.curso.nombre} (Sec: ${prog.seccion ?? '-'}, G: ${prog.grupo})`);
       }
-
-      this.router.navigate([], { relativeTo: this.route, queryParams: { programacion_id: programacionId } });
-      this.cargarDatos(1);
+      this.pushQueryParams({ programacion_id: programacionId, page: null });
     } else {
       this.limpiarFiltroCurso();
     }
@@ -283,8 +290,8 @@ export class SolicitudListaComponent implements OnInit {
   }
 
   toggleSortOrder(): void {
-    this.sortOrder.set(this.sortOrder() === 'desc' ? 'asc' : 'desc');
-    this.cargarDatos(1);
+    const next = this.sortOrder() === 'desc' ? 'asc' : 'desc';
+    this.pushQueryParams({ sort: next, page: null });
   }
 
   verDetalle(solicitud: Solicitud): void {

@@ -377,8 +377,8 @@
         [from]="paginationData()!.from"
         [to]="paginationData()!.to"
         [perPage]="perPage()"
-        (pageChange)="cargarDatos($event)"
-        (pageSizeChange)="cargarDatos(1, $event)">
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPerPageChange($event)">
       </app-shared-pagination>
     </div>
   }
