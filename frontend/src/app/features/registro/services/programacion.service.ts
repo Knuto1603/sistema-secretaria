@@ -206,6 +206,7 @@ export class ProgramacionService {
       aula_id: string | null;
       docente_id: string | null;
       capacidad: number;
+      n_inscritos?: number | null;
       seccion?: string | null;
       escuelas?: string[];
       escuela_programada_id?: string | null;

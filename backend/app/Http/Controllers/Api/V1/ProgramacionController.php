@@ -405,6 +405,7 @@ class ProgramacionController extends Controller
             'aula_id'             => 'nullable|uuid|exists:aulas,id',
             'docente_id'          => 'nullable|uuid|exists:docentes,id',
             'capacidad'           => 'required|integer|min:1|max:500',
+            'n_inscritos'         => 'nullable|integer|min:0|max:500',
             'seccion'             => 'nullable|string|max:10',
             'escuelas'            => 'nullable|array',
             'escuelas.*'          => 'uuid|exists:escuelas,id',
@@ -434,11 +435,17 @@ class ProgramacionController extends Controller
                 $grupoNombre = GrupoHorario::find($data['grupo_horario_id'])?->nombre;
             }
 
+            $nInscritos = array_key_exists('n_inscritos', $data) && $data['n_inscritos'] !== null
+                ? (int) $data['n_inscritos']
+                : $programacion->n_inscritos;
+
             $programacion->update([
                 'grupo_horario_id'    => $data['grupo_horario_id'],
                 'aula_id'             => $data['aula_id'],
                 'docente_id'          => $data['docente_id'],
                 'capacidad'           => $data['capacidad'],
+                'n_inscritos'         => $nInscritos,
+                'lleno_manual'        => $nInscritos >= (int) $data['capacidad'],
                 'grupo'               => $grupoNombre,
                 'seccion'             => array_key_exists('seccion', $data) ? $data['seccion'] : $programacion->seccion,
                 'escuela_programada_id' => $data['escuela_programada_id'] ?? $programacion->escuela_programada_id,
