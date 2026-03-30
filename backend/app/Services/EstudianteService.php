@@ -24,19 +24,33 @@ class EstudianteService
     {
         return DB::transaction(function () use ($data) {
             $codigo = $data['codigo_universitario'];
+            $email  = "{$codigo}@alumnos.unp.edu.pe";
+            $nombre = strtoupper(trim($data['name']));
 
-            $user = User::create([
-                'name'                 => strtoupper(trim($data['name'])),
-                'tipo_usuario'         => 'estudiante',
-                'codigo_universitario' => $codigo,
-                'email'                => "{$codigo}@alumnos.unp.edu.pe",
-                'activo'               => true,
-            ]);
+            // Si ya existe un usuario con ese email (importado sin código), actualizarlo
+            $user = User::where('email', $email)->first();
+
+            if ($user) {
+                $user->update([
+                    'name'                 => $nombre,
+                    'codigo_universitario' => $codigo,
+                    'tipo_usuario'         => 'estudiante',
+                    'activo'               => true,
+                ]);
+            } else {
+                $user = User::create([
+                    'name'                 => $nombre,
+                    'tipo_usuario'         => 'estudiante',
+                    'codigo_universitario' => $codigo,
+                    'email'                => $email,
+                    'activo'               => true,
+                ]);
+            }
 
             $user->asignarDatosDesdeCodigoUniversitario();
 
             $rol = Role::where('name', 'estudiante')->first();
-            if ($rol) {
+            if ($rol && !$user->hasRole('estudiante')) {
                 $user->assignRole($rol);
             }
 

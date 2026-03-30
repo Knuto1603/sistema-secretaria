@@ -91,9 +91,17 @@ class EstudianteController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $email = $request->input('codigo_universitario') . '@alumnos.unp.edu.pe';
+        $existePorEmail = \App\Models\User::where('email', $email)->exists();
+
         $data = $request->validate([
             'name'                 => ['required', 'string', 'max:255'],
-            'codigo_universitario' => ['required', 'digits:10', 'unique:users,codigo_universitario'],
+            'codigo_universitario' => [
+                'required',
+                'digits:10',
+                // Solo exigir unique por código si no existe ya por email
+                $existePorEmail ? 'sometimes' : 'unique:users,codigo_universitario',
+            ],
         ]);
 
         try {
