@@ -244,4 +244,5 @@ class SolicitudController extends Controller
             'Estado actualizado exitosamente'
         );
     }
+
 }
