@@ -17,6 +17,8 @@ export interface Solicitud {
   asignado_a: string | null;
   observaciones_admin: string | null;
   fuera_de_plan: boolean;
+  respuesta_alumno: string | null;
+  fecha_respuesta: string | null;
   metadatos: any;
   created_at: string;
   updated_at: string;
@@ -226,6 +228,15 @@ export class SolicitudService {
   updateEstado(id: string, data: UpdateEstadoDTO): Observable<Solicitud> {
     return this.http.patch<ApiResponse<Solicitud>>(`${this.apiUrl}/${id}/estado`, data).pipe(
       map(response => response.data)
+    );
+  }
+
+  /**
+   * Enviar apelación a una solicitud rechazada (propio estudiante)
+   */
+  responderSolicitud(id: string, respuesta: string): Observable<Solicitud> {
+    return this.http.post<ApiResponse<Solicitud>>(`${this.apiUrl}/${id}/respuesta`, { respuesta }).pipe(
+      map(r => r.data)
     );
   }
 

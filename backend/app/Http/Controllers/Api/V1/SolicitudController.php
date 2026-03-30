@@ -339,6 +339,42 @@ class SolicitudController extends Controller
     }
 
     /**
+     * El alumno envía una respuesta/apelación a una solicitud rechazada.
+     * El estado vuelve a "en_revision" automáticamente.
+     */
+    public function responder(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'respuesta' => 'required|string|min:10|max:2000',
+        ]);
+
+        $solicitud = $this->service->findById($id);
+
+        if (!$solicitud) {
+            return $this->notFound('Solicitud no encontrada');
+        }
+
+        if ($solicitud->user_id !== $request->user()->id) {
+            return $this->error('No tienes permiso para responder esta solicitud', 403);
+        }
+
+        if ($solicitud->estado !== 'rechazada') {
+            return $this->error('Solo puedes apelar solicitudes rechazadas', 422);
+        }
+
+        $actualizada = $this->service->updateEstado($id, 'en_revision');
+        $actualizada->update([
+            'respuesta_alumno' => $request->respuesta,
+            'fecha_respuesta'  => now(),
+        ]);
+
+        return $this->success(
+            $this->transformer->toArray($actualizada->fresh(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada'])),
+            'Apelación enviada correctamente. Tu solicitud está de nuevo en revisión.'
+        );
+    }
+
+    /**
      * Actualizar estado de una solicitud (admin/secretaria/decano)
      */
     public function updateEstado(Request $request, string $id): JsonResponse

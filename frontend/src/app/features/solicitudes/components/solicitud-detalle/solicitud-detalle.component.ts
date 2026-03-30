@@ -25,6 +25,8 @@ export class SolicitudDetalleComponent implements OnInit {
   updating = signal(false);
   anulando = signal(false);
   confirmarAnular = signal(false);
+  respondiendo = signal(false);
+  textoRespuesta = signal('');
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Para el formulario de actualización
@@ -44,6 +46,12 @@ export class SolicitudDetalleComponent implements OnInit {
     const esEstudiante = this.authService.hasRole('estudiante');
     const estadoAnulable = sol.estado === 'pendiente' || sol.estado === 'en_revision';
     return esEstudiante && estadoAnulable;
+  });
+
+  puedeApelar = computed(() => {
+    const sol = this.solicitud();
+    if (!sol) return false;
+    return this.authService.hasRole('estudiante') && sol.estado === 'rechazada';
   });
 
   estados = [
@@ -118,6 +126,29 @@ export class SolicitudDetalleComponent implements OnInit {
         this.mostrarMensaje('error', err.error?.message || 'Error al anular la solicitud');
         this.anulando.set(false);
         this.confirmarAnular.set(false);
+      }
+    });
+  }
+
+  apelar(): void {
+    const sol = this.solicitud();
+    if (!sol || this.respondiendo()) return;
+    if (this.textoRespuesta().trim().length < 10) {
+      this.mostrarMensaje('error', 'La apelación debe tener al menos 10 caracteres.');
+      return;
+    }
+
+    this.respondiendo.set(true);
+    this.solicitudService.responderSolicitud(sol.id, this.textoRespuesta()).subscribe({
+      next: (updated) => {
+        this.solicitud.set(updated);
+        this.textoRespuesta.set('');
+        this.mostrarMensaje('success', 'Apelación enviada. Tu solicitud está de nuevo en revisión.');
+        this.respondiendo.set(false);
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al enviar la apelación.');
+        this.respondiendo.set(false);
       }
     });
   }

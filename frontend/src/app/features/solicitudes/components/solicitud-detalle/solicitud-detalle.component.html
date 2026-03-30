@@ -296,6 +296,64 @@
           </div>
         }
 
+        <!-- Respuesta/apelación previa del alumno (visible para todos) -->
+        @if (solicitud()!.respuesta_alumno) {
+          <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xs font-semibold text-blue-700 uppercase tracking-widest">Apelación del Estudiante</h3>
+              @if (solicitud()!.fecha_respuesta) {
+                <span class="text-[10px] text-blue-400 font-medium">
+                  {{ formatearFecha(solicitud()!.fecha_respuesta!) }}
+                </span>
+              }
+            </div>
+            <p class="text-sm text-blue-800 whitespace-pre-wrap">{{ solicitud()!.respuesta_alumno }}</p>
+          </div>
+        }
+
+        <!-- Panel de apelación (solo estudiante cuando está rechazada) -->
+        @if (puedeApelar()) {
+          <div class="bg-orange-50 p-6 rounded-2xl border border-orange-200">
+            <h3 class="text-xs font-semibold text-orange-700 uppercase tracking-widest mb-1">Apelar Solicitud</h3>
+            <p class="text-xs text-orange-600 mb-4">
+              Tu solicitud fue rechazada. Puedes enviar una respuesta explicando tu caso.
+              Al enviar, quedará en revisión nuevamente.
+            </p>
+
+            <textarea
+              [ngModel]="textoRespuesta()"
+              (ngModelChange)="textoRespuesta.set($event)"
+              placeholder="Explica los motivos de tu apelación (mínimo 10 caracteres)..."
+              rows="4"
+              [disabled]="respondiendo()"
+              class="w-full px-4 py-3 text-sm border border-orange-200 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none resize-none disabled:opacity-50">
+            </textarea>
+
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-[10px] text-orange-400 font-medium">
+                {{ textoRespuesta().length }} / 2000 caracteres
+              </span>
+              <button
+                (click)="apelar()"
+                [disabled]="respondiendo() || textoRespuesta().trim().length < 10"
+                class="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                @if (respondiendo()) {
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Enviando...
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                  Enviar apelación
+                }
+              </button>
+            </div>
+          </div>
+        }
+
         <!-- Anular solicitud (solo estudiante con solicitud pendiente/en_revision) -->
         @if (puedeAnular()) {
           <div class="bg-red-50 p-5 rounded-2xl border border-red-200">

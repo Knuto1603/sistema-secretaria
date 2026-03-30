@@ -283,6 +283,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         // Anular solicitud (el propio estudiante, solo si está pendiente/en_revision)
         Route::delete('/{id}', [SolicitudController::class, 'anular']);
 
+        // Apelar solicitud rechazada (el propio estudiante)
+        Route::post('/{id}/respuesta', [SolicitudController::class, 'responder']);
+
         // Ver detalle (todos pueden, pero estudiantes solo las suyas)
         Route::get('/{id}', [SolicitudController::class, 'show']);
 

@@ -25,12 +25,15 @@ class Solicitud extends Model
         'archivo_sustento_nombre',
         'asignado_a',
         'observaciones_admin',
-        'fuera_de_plan'
+        'fuera_de_plan',
+        'respuesta_alumno',
+        'fecha_respuesta',
     ];
 
     protected $casts = [
-        'metadatos'    => 'array',
-        'fuera_de_plan' => 'boolean',
+        'metadatos'       => 'array',
+        'fuera_de_plan'   => 'boolean',
+        'fecha_respuesta' => 'datetime',
     ];
 
     public function user(): BelongsTo

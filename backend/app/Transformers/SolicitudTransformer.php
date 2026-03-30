@@ -27,6 +27,8 @@ class SolicitudTransformer
             asignado_a: $model->asignado_a,
             observaciones_admin: $model->observaciones_admin,
             fuera_de_plan: (bool) $model->fuera_de_plan,
+            respuesta_alumno: $model->respuesta_alumno,
+            fecha_respuesta: $model->fecha_respuesta?->toISOString(),
             metadatos: $model->metadatos,
             user: $model->user ? [
                 'id' => $model->user->id,
