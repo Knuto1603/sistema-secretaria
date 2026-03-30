@@ -96,9 +96,12 @@ class EstudianteController extends Controller
             'codigo_universitario' => ['required', 'digits:10', 'unique:users,codigo_universitario'],
         ]);
 
-        $result = $this->service->create($data);
-
-        return $this->success($result, 'Estudiante creado exitosamente', 201);
+        try {
+            $result = $this->service->create($data);
+            return $this->success($result, 'Estudiante creado exitosamente', 201);
+        } catch (\Exception $e) {
+            return $this->error('Error al crear el estudiante: ' . $e->getMessage(), 500);
+        }
     }
 
     /**
