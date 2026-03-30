@@ -1,10 +1,10 @@
 <div class="space-y-6">
 
   <!-- Encabezado -->
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between flex-wrap gap-3">
     <div>
       <h1 class="text-2xl font-bold text-slate-800">Métricas de Solicitudes</h1>
-      <p class="text-sm text-slate-500 mt-1">Ampliación de cupo — cursos, secciones y solicitantes</p>
+      <p class="text-sm text-slate-500 mt-1">Cursos, secciones y solicitantes por tipo de trámite</p>
     </div>
     <button (click)="cargar()"
       class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors">
@@ -12,6 +12,24 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
       </svg>
       Actualizar
+    </button>
+  </div>
+
+  <!-- Tabs de tipo -->
+  <div class="flex gap-1 p-1 bg-slate-100 rounded-xl w-fit">
+    <button (click)="cambiarTipo('CUPO_EXT')"
+      [class]="tipoActivo() === 'CUPO_EXT'
+        ? 'bg-white text-indigo-700 shadow-sm font-bold'
+        : 'text-slate-500 hover:text-slate-700 font-semibold'"
+      class="px-5 py-2 rounded-lg text-sm transition-all">
+      Ampliación de Cupo
+    </button>
+    <button (click)="cambiarTipo('INSC_ESCUELA')"
+      [class]="tipoActivo() === 'INSC_ESCUELA'
+        ? 'bg-white text-indigo-700 shadow-sm font-bold'
+        : 'text-slate-500 hover:text-slate-700 font-semibold'"
+      class="px-5 py-2 rounded-lg text-sm transition-all">
+      Inscripción entre Escuelas
     </button>
   </div>
 
@@ -138,9 +156,14 @@
                   <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                     <th class="pb-2 text-left">Grupo</th>
                     <th class="pb-2 text-left">Sección</th>
+                    @if (esInscEscuela()) {
+                      <th class="pb-2 text-left">Escuela programada</th>
+                    }
                     <th class="pb-2 text-left hidden sm:table-cell">Docente</th>
                     <th class="pb-2 text-left hidden md:table-cell">Aula</th>
-                    <th class="pb-2 text-left hidden md:table-cell">Escuela</th>
+                    @if (!esInscEscuela()) {
+                      <th class="pb-2 text-left hidden md:table-cell">Escuela</th>
+                    }
                     <th class="pb-2 text-left">Inscritos</th>
                     <th class="pb-2 text-center">Solicitantes</th>
                     <th class="pb-2 text-left">Estado</th>
@@ -151,9 +174,22 @@
                     <tr class="hover:bg-slate-50 transition-colors">
                       <td class="py-2.5 font-bold text-slate-700">{{ sec.grupo }}</td>
                       <td class="py-2.5 text-slate-600">{{ sec.seccion ?? '-' }}</td>
+                      @if (esInscEscuela()) {
+                        <td class="py-2.5">
+                          @if (sec.escuela_programada) {
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-violet-100 text-violet-800 text-xs font-bold border border-violet-200">
+                              {{ sec.escuela_programada }}
+                            </span>
+                          } @else {
+                            <span class="text-slate-400 text-xs">Sin escuela</span>
+                          }
+                        </td>
+                      }
                       <td class="py-2.5 text-slate-600 hidden sm:table-cell max-w-[160px] truncate">{{ sec.docente ?? '-' }}</td>
                       <td class="py-2.5 text-slate-600 hidden md:table-cell">{{ sec.aula ?? '-' }}</td>
-                      <td class="py-2.5 text-slate-500 hidden md:table-cell text-xs">{{ sec.escuela_programada ?? '-' }}</td>
+                      @if (!esInscEscuela()) {
+                        <td class="py-2.5 text-slate-500 hidden md:table-cell text-xs">{{ sec.escuela_programada ?? '-' }}</td>
+                      }
                       <td class="py-2.5">
                         <div class="flex items-center gap-2">
                           <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -224,8 +260,10 @@
                       <tr class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                         <th class="pb-2 text-left">Código</th>
                         <th class="pb-2 text-left">Nombre</th>
-                        <th class="pb-2 text-left hidden sm:table-cell">Escuela</th>
-                        <th class="pb-2 text-left">Grupo solicitado</th>
+                        <th class="pb-2 text-left" [class.font-extrabold]="esInscEscuela()" [class.text-slate-600]="esInscEscuela()">
+                          Escuela {{ esInscEscuela() ? 'de origen' : '' }}
+                        </th>
+                        <th class="pb-2 text-left">Grupo / Sección</th>
                         <th class="pb-2 text-left hidden sm:table-cell">Fecha</th>
                         <th class="pb-2 text-left">Estado</th>
                         <th class="pb-2"></th>
@@ -241,7 +279,15 @@
                               <span class="ml-1 text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold">FP</span>
                             }
                           </td>
-                          <td class="py-2 text-slate-500 text-xs hidden sm:table-cell">{{ sol.escuela ?? '-' }}</td>
+                          <td class="py-2 text-xs">
+                            @if (esInscEscuela() && sol.escuela) {
+                              <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs font-bold border border-orange-200">
+                                {{ sol.escuela }}
+                              </span>
+                            } @else {
+                              <span class="text-slate-500">{{ sol.escuela ?? '-' }}</span>
+                            }
+                          </td>
                           <td class="py-2 text-slate-600 text-center">
                             @if (sol.grupo_solicitado) {
                               <span class="font-bold">{{ sol.grupo_solicitado }}</span>

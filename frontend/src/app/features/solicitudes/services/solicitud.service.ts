@@ -273,8 +273,9 @@ export class SolicitudService {
   /**
    * Métricas de cupo extra por curso (secciones + solicitantes)
    */
-  getMetricasCupo(): Observable<MetricaCurso[]> {
-    return this.http.get<ApiResponse<MetricaCurso[]>>(`${this.apiUrl}/metricas-cupo`).pipe(
+  getMetricasCupo(tipo: 'CUPO_EXT' | 'INSC_ESCUELA' = 'CUPO_EXT'): Observable<MetricaCurso[]> {
+    const params = new HttpParams().set('tipo', tipo);
+    return this.http.get<ApiResponse<MetricaCurso[]>>(`${this.apiUrl}/metricas-cupo`, { params }).pipe(
       map(r => r.data)
     );
   }

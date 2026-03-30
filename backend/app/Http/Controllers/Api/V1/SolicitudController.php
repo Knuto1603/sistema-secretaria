@@ -248,10 +248,14 @@ class SolicitudController extends Controller
      * - Secciones programadas con inscritos
      * - Lista de solicitantes por curso
      */
-    public function metricasCupo(): JsonResponse
+    public function metricasCupo(Request $request): JsonResponse
     {
-        // Todas las solicitudes CUPO_EXT con relaciones
-        $solicitudes = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', 'CUPO_EXT'))
+        $tipo = in_array($request->get('tipo'), ['CUPO_EXT', 'INSC_ESCUELA'])
+            ? $request->get('tipo')
+            : 'CUPO_EXT';
+
+        // Todas las solicitudes del tipo indicado con relaciones
+        $solicitudes = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $tipo))
             ->whereNotNull('programacion_id')
             ->with([
                 'user.escuela',
@@ -321,7 +325,7 @@ class SolicitudController extends Controller
         // Ordenar por total de solicitudes desc
         usort($result, fn($a, $b) => $b['total'] - $a['total']);
 
-        return $this->success($result, 'Métricas de cupo extra');
+        return $this->success($result, "Métricas de {$tipo}");
     }
 
     /**

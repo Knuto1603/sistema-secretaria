@@ -13,6 +13,8 @@ export class AnaliticaComponent implements OnInit {
   private solicitudService = inject(SolicitudService);
   private router = inject(Router);
 
+  tipoActivo = signal<'CUPO_EXT' | 'INSC_ESCUELA'>('CUPO_EXT');
+
   cursos = signal<MetricaCurso[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -39,10 +41,21 @@ export class AnaliticaComponent implements OnInit {
   cargar(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.solicitudService.getMetricasCupo().subscribe({
+    this.cursosExpandidos.set(new Set());
+    this.solicitudService.getMetricasCupo(this.tipoActivo()).subscribe({
       next: (data) => { this.cursos.set(data); this.loading.set(false); },
       error: () => { this.error.set('No se pudieron cargar las métricas.'); this.loading.set(false); }
     });
+  }
+
+  cambiarTipo(tipo: 'CUPO_EXT' | 'INSC_ESCUELA'): void {
+    if (this.tipoActivo() === tipo) return;
+    this.tipoActivo.set(tipo);
+    this.cargar();
+  }
+
+  esInscEscuela(): boolean {
+    return this.tipoActivo() === 'INSC_ESCUELA';
   }
 
   toggleExpandir(cursoId: string): void {
