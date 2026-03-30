@@ -155,17 +155,70 @@
         </div>
 
         <!-- Archivos adjuntos -->
-        @if (solicitud()!.archivo_sustento_path) {
+        @if (solicitud()!.archivo_sustento_url) {
           <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Archivo Adjunto</h3>
-            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-              <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <div class="flex-grow">
-                <p class="text-sm font-medium text-slate-700">{{ solicitud()!.archivo_sustento_nombre || 'Archivo adjunto' }}</p>
-              </div>
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Archivo Adjunto</h3>
+
+            <!-- Encabezado con nombre y botón descargar -->
+            <div class="flex items-center gap-3 mb-3">
+              <!-- Icono según tipo -->
+              @if (esPDF(solicitud()!.archivo_sustento_nombre)) {
+                <svg class="w-7 h-7 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 15.5h1.75c.69 0 1.25-.56 1.25-1.25S10.94 13 10.25 13H8.5v4h.75v-1.5zm1.75-1.75c.28 0 .5.22.5.5s-.22.5-.5.5H9.25v-1h1zm3.5-.75h-1.5v4h1.5c.83 0 1.5-.67 1.5-1.5v-1c0-.83-.67-1.5-1.5-1.5zm.75 2.5c0 .41-.34.75-.75.75H13v-2.5h.5c.41 0 .75.34.75.75v1zm2.25-2.5v.75H18v.75h-1.25V17H16v-4h2.5v.75H16.75z"/>
+                </svg>
+              } @else if (esImagen(solicitud()!.archivo_sustento_nombre)) {
+                <svg class="w-7 h-7 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              } @else {
+                <svg class="w-7 h-7 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              }
+              <p class="text-sm font-medium text-slate-700 flex-1 truncate">
+                {{ solicitud()!.archivo_sustento_nombre || 'Archivo adjunto' }}
+              </p>
+              <a
+                [href]="solicitud()!.archivo_sustento_url!"
+                target="_blank"
+                download
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Descargar
+              </a>
             </div>
+
+            <!-- Visor PDF -->
+            @if (esPDF(solicitud()!.archivo_sustento_nombre)) {
+              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                <iframe
+                  [src]="solicitud()!.archivo_sustento_url! | trustUrl"
+                  class="w-full"
+                  style="height: 520px; border: none;"
+                  title="Vista previa del documento">
+                </iframe>
+              </div>
+            }
+
+            <!-- Visor imagen -->
+            @else if (esImagen(solicitud()!.archivo_sustento_nombre)) {
+              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-2">
+                <img
+                  [src]="solicitud()!.archivo_sustento_url!"
+                  [alt]="solicitud()!.archivo_sustento_nombre || 'Imagen adjunta'"
+                  class="max-w-full max-h-96 object-contain rounded-lg">
+              </div>
+            }
+
+            <!-- Formato no soportado para previsualización -->
+            @else {
+              <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                Este formato no se puede previsualizar. Usa el botón "Descargar" para abrirlo.
+              </div>
+            }
+
           </div>
         }
 

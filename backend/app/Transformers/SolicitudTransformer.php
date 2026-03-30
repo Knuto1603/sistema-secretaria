@@ -5,6 +5,7 @@ namespace App\Transformers;
 use App\DTOs\Solicitud\SolicitudResponseDTO;
 use App\Models\Solicitud;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class SolicitudTransformer
 {
@@ -19,6 +20,9 @@ class SolicitudTransformer
             estado: $model->estado,
             firma_digital_path: $model->firma_digital_path,
             archivo_sustento_path: $model->archivo_sustento_path,
+            archivo_sustento_url: $model->archivo_sustento_path
+                ? Storage::disk('public')->url($model->archivo_sustento_path)
+                : null,
             archivo_sustento_nombre: $model->archivo_sustento_nombre,
             asignado_a: $model->asignado_a,
             observaciones_admin: $model->observaciones_admin,
