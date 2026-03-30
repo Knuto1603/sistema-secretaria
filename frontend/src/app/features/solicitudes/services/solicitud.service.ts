@@ -12,6 +12,7 @@ export interface Solicitud {
   estado: string;
   firma_digital_path: string | null;
   archivo_sustento_path: string | null;
+  archivo_sustento_url: string | null;
   archivo_sustento_nombre: string | null;
   asignado_a: string | null;
   observaciones_admin: string | null;

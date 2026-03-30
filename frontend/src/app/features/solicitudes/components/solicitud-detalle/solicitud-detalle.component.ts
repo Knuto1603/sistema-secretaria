@@ -6,11 +6,12 @@ import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService, Solicitud, UpdateEstadoDTO } from '../../services/solicitud.service';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
+import { TrustUrlPipe } from '@shared/pipes/trust-url.pipe';
 
 @Component({
   selector: 'app-solicitud-detalle',
   standalone: true,
-  imports: [CommonModule, FormsModule, AppButtonComponent, AppBadgeComponent],
+  imports: [CommonModule, FormsModule, AppButtonComponent, AppBadgeComponent, TrustUrlPipe],
   templateUrl: './solicitud-detalle.component.html'
 })
 export class SolicitudDetalleComponent implements OnInit {
@@ -122,5 +123,20 @@ export class SolicitudDetalleComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  esPDF(nombre: string | null): boolean {
+    return !!nombre && nombre.toLowerCase().endsWith('.pdf');
+  }
+
+  esImagen(nombre: string | null): boolean {
+    if (!nombre) return false;
+    return /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(nombre);
+  }
+
+  getIconoArchivo(nombre: string | null): string {
+    if (this.esPDF(nombre)) return 'pdf';
+    if (this.esImagen(nombre)) return 'image';
+    return 'file';
   }
 }
