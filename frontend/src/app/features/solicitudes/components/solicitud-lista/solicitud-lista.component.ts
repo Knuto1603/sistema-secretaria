@@ -56,6 +56,7 @@ export class SolicitudListaComponent implements OnInit {
   programacionIdFiltro = signal<string | null>(null);
   currentPage = signal(1);
   perPage = signal(10);
+  sortOrder = signal<'asc' | 'desc'>('desc');
 
   // Escuelas para filtros
   escuelas = signal<Escuela[]>([]);
@@ -153,7 +154,8 @@ export class SolicitudListaComponent implements OnInit {
           this.programacionIdFiltro() || undefined,
           this.tipoFiltro() || undefined,
           this.escuelaIdFiltro() || undefined,
-          this.escuelaProgramadaFiltro() || undefined
+          this.escuelaProgramadaFiltro() || undefined,
+          this.sortOrder()
         )
       : this.solicitudService.getMisSolicitudes(page, size);
 
@@ -278,6 +280,11 @@ export class SolicitudListaComponent implements OnInit {
       'rechazada': 'Rechazada'
     };
     return labels[estado?.toLowerCase()] || estado;
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder.set(this.sortOrder() === 'desc' ? 'asc' : 'desc');
+    this.cargarDatos(1);
   }
 
   verDetalle(solicitud: Solicitud): void {

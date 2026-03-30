@@ -121,6 +121,7 @@ class SolicitudService
             'tipo'                 => $request->get('tipo'),
             'escuela_id'           => $request->get('escuela_id'),
             'escuela_programada_id'=> $request->get('escuela_programada_id'),
+            'sort_order'           => $request->get('sort_order', 'desc'),
         ];
 
         $perPage = $request->get('per_page', 10);

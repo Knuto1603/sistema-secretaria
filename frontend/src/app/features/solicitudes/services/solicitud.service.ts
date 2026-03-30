@@ -145,10 +145,11 @@ export class SolicitudService {
   /**
    * Obtiene todas las solicitudes (admin/secretaria/decano)
    */
-  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string, tipo?: string, escuelaId?: string, escuelaProgramadaId?: string): Observable<PaginatedResponse<Solicitud>> {
+  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string, tipo?: string, escuelaId?: string, escuelaProgramadaId?: string, sortOrder: 'asc' | 'desc' = 'desc'): Observable<PaginatedResponse<Solicitud>> {
     let params = new HttpParams()
       .set('page', page.toString())
-      .set('per_page', perPage.toString());
+      .set('per_page', perPage.toString())
+      .set('sort_order', sortOrder);
 
     if (search)             params = params.set('search', search);
     if (estado)             params = params.set('estado', estado);

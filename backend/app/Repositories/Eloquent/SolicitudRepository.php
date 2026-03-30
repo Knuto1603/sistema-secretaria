@@ -95,7 +95,8 @@ class SolicitudRepository implements SolicitudRepositoryInterface
             $query->whereHas('programacion', fn($q) => $q->where('escuela_programada_id', $filters['escuela_programada_id']));
         }
 
-        return $query->latest()->paginate($perPage);
+        $order = ($filters['sort_order'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+        return $query->orderBy('solicitud.created_at', $order)->paginate($perPage);
     }
 
     public function getAllForExport(array $filters = []): \Illuminate\Database\Eloquent\Collection
