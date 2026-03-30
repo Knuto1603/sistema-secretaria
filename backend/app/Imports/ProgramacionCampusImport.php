@@ -122,17 +122,21 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
 
         $key = strtoupper(trim($nombre));
 
-        if (isset($this->aulaCache[$key])) {
+        if (array_key_exists($key, $this->aulaCache)) {
             return $this->aulaCache[$key];
         }
 
-        $aula = Aula::firstOrCreate(
-            ['nombre' => $key],
-            ['pabellon_id' => null, 'capacidad' => 40, 'activo' => true]
-        );
+        $aula = Aula::whereRaw('UPPER(TRIM(nombre)) = ?', [$key])->first();
 
-        $this->aulaCache[$key] = $aula->id;
-        return $aula->id;
+        // Búsqueda parcial si no hay exacta
+        if (!$aula) {
+            $aula = Aula::all(['id', 'nombre'])
+                ->first(fn($a) => str_contains(strtoupper(trim($a->nombre)), $key)
+                               || str_contains($key, strtoupper(trim($a->nombre))));
+        }
+
+        $this->aulaCache[$key] = $aula?->id;
+        return $aula?->id;
     }
 
     private function resolverEscuela(?string $nombre): ?string
@@ -182,6 +186,59 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
         return $docente?->id;
     }
 
+    private function buscarProgramacion(
+        string $periodoId,
+        string $cursoId,
+        ?string $grupoNorm,
+        ?string $aulaId,
+        ?string $escuelaId
+    ): ?ProgramacionAcademica {
+        $base = ProgramacionAcademica::where('periodo_id', $periodoId)
+                    ->where('curso_id', $cursoId);
+
+        $conEscuela = fn($q) => $q->whereExists(function ($sub) use ($escuelaId) {
+            $sub->from('programacion_escuelas')
+                ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                ->where('programacion_escuelas.escuela_id', $escuelaId);
+        });
+
+        // Intento 1: grupo + escuela + aula
+        if ($grupoNorm && $escuelaId && $aulaId) {
+            $r = (clone $base)->where('grupo', $grupoNorm)->where('aula_id', $aulaId)->tap($conEscuela)->first();
+            if ($r) return $r;
+        }
+
+        // Intento 2: grupo + escuela
+        if ($grupoNorm && $escuelaId) {
+            $r = (clone $base)->where('grupo', $grupoNorm)->tap($conEscuela)->first();
+            if ($r) return $r;
+        }
+
+        // Intento 3: grupo + aula
+        if ($grupoNorm && $aulaId) {
+            $r = (clone $base)->where('grupo', $grupoNorm)->where('aula_id', $aulaId)->first();
+            if ($r) return $r;
+        }
+
+        // Intento 4: solo grupo
+        if ($grupoNorm) {
+            $candidates = (clone $base)->where('grupo', $grupoNorm)->get();
+            if ($candidates->count() === 1) return $candidates->first();
+            // Si hay varios con mismo grupo, preferir el que tenga escuela_programada_id = escuelaId
+            if ($escuelaId && $candidates->count() > 1) {
+                $r = $candidates->firstWhere('escuela_programada_id', $escuelaId);
+                if ($r) return $r;
+            }
+            if ($candidates->count() > 0) return $candidates->first();
+        }
+
+        // Intento 5: solo curso (único resultado)
+        $candidates = (clone $base)->get();
+        if ($candidates->count() === 1) return $candidates->first();
+
+        return null;
+    }
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $rawRow) {
@@ -226,32 +283,22 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             // Marcar como lleno manual si ya está completo según Campus
             $llenoManual = $nInscritos >= $capacidad;
 
-            // Buscar por curso + grupo (normalizado) + aula + escuela para evitar colisiones
-            $query = ProgramacionAcademica::where('periodo_id', $this->periodoId)
-                ->where('curso_id', $curso->id);
-
-            if ($grupoNombreNorm) {
-                $query->where('grupo', $grupoNombreNorm);
-            }
-            if ($aulaId) {
-                $query->where('aula_id', $aulaId);
-            }
-            if ($escuelaId) {
-                $query->whereExists(function ($q) use ($escuelaId) {
-                    $q->from('programacion_escuelas')
-                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
-                      ->where('programacion_escuelas.escuela_id', $escuelaId);
-                });
-            }
-
-            $prog = $query->first();
+            // Buscar por curso+periodo con fallback progresivo:
+            // 1) curso + grupo + escuela + aula
+            // 2) curso + grupo + escuela
+            // 3) curso + grupo
+            // 4) curso solo (solo si hay resultado único)
+            $prog = $this->buscarProgramacion(
+                $this->periodoId, $curso->id,
+                $grupoNombreNorm, $aulaId, $escuelaId
+            );
 
             if (!$prog) {
                 $this->omitidos[] = [
                     'codigo'  => $codigoLimpio,
                     'nombre'  => $curso->nombre,
                     'seccion' => $row['sec'] ?? null,
-                    'motivo'  => "No coincide curso+grupo({$grupoNombreNorm})+aula+escuela en el periodo",
+                    'motivo'  => "Sin coincidencia: grupo={$grupoNombreNorm}, escuela={$escuelaNombre}",
                 ];
                 continue;
             }
