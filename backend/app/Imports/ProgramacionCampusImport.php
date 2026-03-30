@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Aula;
 use App\Models\Curso;
+use App\Models\Docente;
 use App\Models\Escuela;
 use App\Models\ProgramacionAcademica;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -27,6 +28,7 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
 
     private array $aulaCache    = [];
     private array $escuelaCache = [];
+    private array $docenteCache = [];
 
     /** Registros del Campus que no pudieron actualizarse (no existen en sistema) */
     private array $omitidos = [];
@@ -155,6 +157,31 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
         return $encontrado;
     }
 
+    private function resolverDocente(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+
+        $key = $this->normalizar($nombre);
+
+        if (array_key_exists($key, $this->docenteCache)) {
+            return $this->docenteCache[$key];
+        }
+
+        // Búsqueda exacta normalizada
+        $docente = Docente::all(['id', 'nombre_completo'])
+            ->first(fn($d) => $this->normalizar($d->nombre_completo) === $key);
+
+        // Búsqueda parcial (contiene)
+        if (!$docente) {
+            $docente = Docente::all(['id', 'nombre_completo'])
+                ->first(fn($d) => str_contains($this->normalizar($d->nombre_completo), $key)
+                               || str_contains($key, $this->normalizar($d->nombre_completo)));
+        }
+
+        $this->docenteCache[$key] = $docente?->id;
+        return $docente?->id;
+    }
+
     public function collection(Collection $rows): void
     {
         foreach ($rows as $rawRow) {
@@ -183,10 +210,12 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
             $grupoNombreTexto = $row['grp']      ?? null;
             $aulaNombreTexto  = $row['aula']     ?? null;
             $escuelaNombre    = $row['escuela']  ?? null;
+            $docenteNombre    = $row['docente']  ?? $row['nombre_docente'] ?? null;
 
             $grupoNombreNorm = $grupoNombreTexto ? $this->normalizarGrupo($grupoNombreTexto) : null;
             $aulaId          = $this->resolverAula($aulaNombreTexto);
             $escuelaId       = $this->resolverEscuela($escuelaNombre);
+            $docenteId       = $this->resolverDocente($docenteNombre);
 
             $capacidad  = (int) ($row['cap'] ?? 0);
             if ($capacidad <= 0) $capacidad = 40;
@@ -227,12 +256,16 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            // Campus solo actualiza inscritos y cupos
-            $prog->update([
+            // Campus actualiza inscritos, cupos y docente (si se resolvió)
+            $updateData = [
                 'capacidad'    => $capacidad,
                 'n_inscritos'  => $nInscritos,
                 'lleno_manual' => $llenoManual,
-            ]);
+            ];
+            if ($docenteId) {
+                $updateData['docente_id'] = $docenteId;
+            }
+            $prog->update($updateData);
 
             $this->actualizadosIds[] = $prog->id;
             $this->actualizados++;
