@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\DTOs\Solicitud\CreateSolicitudDTO;
+use App\Exports\MetricasExport;
 use App\Exports\SolicitudesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
@@ -326,6 +327,15 @@ class SolicitudController extends Controller
         usort($result, fn($a, $b) => $b['total'] - $a['total']);
 
         return $this->success($result, "Métricas de {$tipo}");
+    }
+
+    /**
+     * Exportar métricas completas (4 hojas: resumen + detalle para cada tipo)
+     */
+    public function exportarMetricas(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $filename = 'metricas_solicitudes_' . now()->format('Y-m-d') . '.xlsx';
+        return Excel::download(new MetricasExport(), $filename);
     }
 
     /**

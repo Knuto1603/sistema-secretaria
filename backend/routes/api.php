@@ -261,6 +261,10 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::get('/metricas-cupo', [SolicitudController::class, 'metricasCupo'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');
 
+        // Exportar métricas a Excel (4 hojas)
+        Route::get('/exportar-metricas', [SolicitudController::class, 'exportarMetricas'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
         // Cursos con solicitudes (para filtro admin)
         Route::get('/cursos-solicitados', [SolicitudController::class, 'cursosConSolicitud'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');

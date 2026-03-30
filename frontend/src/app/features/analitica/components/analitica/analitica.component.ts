@@ -17,6 +17,7 @@ export class AnaliticaComponent implements OnInit {
 
   cursos = signal<MetricaCurso[]>([]);
   loading = signal(true);
+  exportando = signal(false);
   error = signal<string | null>(null);
 
   cursosExpandidos = signal<Set<string>>(new Set());
@@ -56,6 +57,22 @@ export class AnaliticaComponent implements OnInit {
 
   esInscEscuela(): boolean {
     return this.tipoActivo() === 'INSC_ESCUELA';
+  }
+
+  exportar(): void {
+    this.exportando.set(true);
+    this.solicitudService.exportarMetricas().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `metricas_solicitudes_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exportando.set(false);
+      },
+      error: () => this.exportando.set(false)
+    });
   }
 
   toggleExpandir(cursoId: string): void {

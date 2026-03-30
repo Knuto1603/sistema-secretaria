@@ -262,6 +262,13 @@ export class SolicitudService {
   }
 
   /**
+   * Exporta métricas completas a Excel (4 hojas)
+   */
+  exportarMetricas(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/exportar-metricas`, { responseType: 'blob' });
+  }
+
+  /**
    * Descarga CSV exportado con los filtros actuales
    */
   exportarCSV(params: Record<string, string>): Observable<Blob> {
