@@ -405,6 +405,7 @@ class ProgramacionController extends Controller
             'aula_id'             => 'nullable|uuid|exists:aulas,id',
             'docente_id'          => 'nullable|uuid|exists:docentes,id',
             'capacidad'           => 'required|integer|min:1|max:500',
+            'seccion'             => 'nullable|string|max:10',
             'escuelas'            => 'nullable|array',
             'escuelas.*'          => 'uuid|exists:escuelas,id',
             'escuela_programada_id' => 'nullable|uuid|exists:escuelas,id',
@@ -439,6 +440,7 @@ class ProgramacionController extends Controller
                 'docente_id'          => $data['docente_id'],
                 'capacidad'           => $data['capacidad'],
                 'grupo'               => $grupoNombre,
+                'seccion'             => array_key_exists('seccion', $data) ? $data['seccion'] : $programacion->seccion,
                 'escuela_programada_id' => $data['escuela_programada_id'] ?? $programacion->escuela_programada_id,
             ]);
 
