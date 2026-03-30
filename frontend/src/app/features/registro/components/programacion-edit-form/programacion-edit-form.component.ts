@@ -51,6 +51,7 @@ export class ProgramacionEditFormComponent implements OnInit {
   grupoHorarioId        = signal<string>('');
   aulaId                = signal<string>('');
   capacidad             = signal<number>(30);
+  nInscritos            = signal<number>(0);
   seccion               = signal<string>('');
   escuelasSeleccionadas = signal<Set<string>>(new Set());
   escuelaProgramadaId   = signal<string>('');
@@ -73,6 +74,7 @@ export class ProgramacionEditFormComponent implements OnInit {
     this.grupoHorarioId.set(prog.grupo_horario_id ?? '');
     this.aulaId.set(prog.aula_id ?? '');
     this.capacidad.set(prog.capacidad ?? 30);
+    this.nInscritos.set(prog.n_inscritos ?? 0);
     this.seccion.set(prog.seccion ?? '');
     this.docenteId.set(prog.docente_id ?? prog.docente?.id ?? null);
     this.docenteBusqueda = prog.docente?.nombre_completo ?? '';
@@ -179,6 +181,7 @@ export class ProgramacionEditFormComponent implements OnInit {
         aula_id:              this.aulaId() || null,
         docente_id:           this.docenteId(),
         capacidad:            this.capacidad(),
+        n_inscritos:          this.nInscritos(),
         seccion:              this.seccion() || null,
         escuelas:             Array.from(this.escuelasSeleccionadas()),
         escuela_programada_id: this.escuelaProgramadaId() || null,

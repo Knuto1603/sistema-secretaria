@@ -64,8 +64,8 @@
             class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
         </div>
 
-        <!-- Grupo + Aula + Capacidad -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Grupo + Aula + Capacidad + Inscritos -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
 
           <!-- Grupo -->
           <div>
@@ -115,6 +115,15 @@
             <input type="number" min="1" max="500"
               [ngModel]="capacidad()"
               (ngModelChange)="capacidad.set(+$event)"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+          </div>
+
+          <!-- Inscritos -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Inscritos</label>
+            <input type="number" min="0" max="500"
+              [ngModel]="nInscritos()"
+              (ngModelChange)="nInscritos.set(+$event)"
               class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
           </div>
         </div>
