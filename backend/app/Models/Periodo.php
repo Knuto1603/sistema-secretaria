@@ -14,13 +14,15 @@ class Periodo extends Model
         'nombre',
         'fecha_inicio',
         'fecha_fin',
-        'activo'
+        'activo',
+        'solicitudes_abiertas',
     ];
 
     protected $casts = [
-        'activo' => 'boolean',
-        'fecha_inicio' => 'date',
-        'fecha_fin' => 'date',
+        'activo'               => 'boolean',
+        'solicitudes_abiertas' => 'boolean',
+        'fecha_inicio'         => 'date',
+        'fecha_fin'            => 'date',
     ];
 
     public function programaciones(): HasMany

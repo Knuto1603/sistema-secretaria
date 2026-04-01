@@ -16,6 +16,7 @@ class PeriodoTransformer
             fecha_inicio: $model->fecha_inicio?->format('Y-m-d'),
             fecha_fin: $model->fecha_fin?->format('Y-m-d'),
             activo: (bool) $model->activo,
+            solicitudes_abiertas: (bool) $model->solicitudes_abiertas,
             created_at: $model->created_at->toISOString()
         );
     }

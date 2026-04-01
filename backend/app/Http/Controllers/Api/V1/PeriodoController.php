@@ -96,4 +96,16 @@ class PeriodoController extends Controller
 
         return $this->success($periodo, 'Periodo desactivado exitosamente');
     }
+
+    public function toggleSolicitudes(string $id): JsonResponse
+    {
+        $periodo = $this->service->toggleSolicitudes($id);
+
+        if (!$periodo) {
+            return $this->notFound('Periodo no encontrado');
+        }
+
+        $estado = $periodo['solicitudes_abiertas'] ? 'abiertas' : 'cerradas';
+        return $this->success($periodo, "Presentación de solicitudes {$estado}");
+    }
 }

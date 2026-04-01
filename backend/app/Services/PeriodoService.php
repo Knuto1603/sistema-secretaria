@@ -65,4 +65,12 @@ class PeriodoService
         $periodo = $this->repository->deactivate($id);
         return $periodo ? $this->transformer->toArray($periodo) : null;
     }
+
+    public function toggleSolicitudes(string $id): ?array
+    {
+        $periodo = $this->repository->find($id);
+        if (!$periodo) return null;
+        $periodo->update(['solicitudes_abiertas' => !$periodo->solicitudes_abiertas]);
+        return $this->transformer->toArray($periodo->fresh());
+    }
 }

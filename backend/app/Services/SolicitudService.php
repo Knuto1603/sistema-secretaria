@@ -47,6 +47,11 @@ class SolicitudService
                 throw new Exception('No se pueden presentar solicitudes para periodos académicos inactivos.');
             }
 
+            // Verificar que la presentación de solicitudes esté abierta
+            if (!$programacion->periodo->solicitudes_abiertas) {
+                throw new Exception('La presentación de solicitudes está cerrada. No se aceptan nuevas solicitudes en este momento.');
+            }
+
             // Verificar que la sección fue programada para la escuela del estudiante.
             // Se omite si fuera_de_plan = true o inscripcion_escuela = true.
             $esExcepcion = $dto->fuera_de_plan || $dto->inscripcion_escuela;
