@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/auth/services/auth.service';
+import { PeriodoService } from '@core/services/periodo.service';
 
 @Component({
   selector: 'app-home',
@@ -10,10 +11,20 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   authService = inject(AuthService);
-  user = this.authService.currentUser;
+  private periodoService = inject(PeriodoService);
 
-  // Fecha actual para el saludo
+  user = this.authService.currentUser;
   today = new Date();
+  solicitudesAbiertas = signal<boolean>(true);
+
+  ngOnInit(): void {
+    if (this.authService.isEstudiante()) {
+      this.periodoService.getPeriodoActivo().subscribe({
+        next: periodo => this.solicitudesAbiertas.set(periodo?.solicitudes_abiertas ?? true),
+        error: () => {},
+      });
+    }
+  }
 }
