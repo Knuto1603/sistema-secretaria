@@ -189,7 +189,7 @@
 
         <!-- Filtro por curso (solo cursos con solicitudes) -->
         <div class="relative">
-          <select [ngModel]="programacionIdFiltro() || ''" (ngModelChange)="onProgramacionChange($event)"
+          <select [ngModel]="programacionSelectValue()" (ngModelChange)="onProgramacionChange($event)"
             [disabled]="loadingCursos()"
             class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[220px] appearance-none cursor-pointer font-medium">
             <option value="">Filtrar por curso...</option>

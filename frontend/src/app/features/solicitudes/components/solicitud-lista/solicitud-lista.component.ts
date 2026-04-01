@@ -66,6 +66,14 @@ export class SolicitudListaComponent implements OnInit {
   // Info del curso cuando se filtra por programación
   cursoFiltrado = signal<string | null>(null);
 
+  // Valor del select de programación: solo retorna el UUID cuando la opción ya existe en la lista
+  // Esto evita que ngModel se vincule antes de que los options carguen y quede en blanco
+  programacionSelectValue = computed(() => {
+    const id = this.programacionIdFiltro();
+    if (!id) return '';
+    return this.cursosConSolicitud().some(c => c.id === id) ? id : '';
+  });
+
   // Cursos que tienen solicitudes (para el selector de filtro)
   cursosConSolicitud = signal<Array<{ id: string; clave: string; grupo: string; seccion: string | null; curso: { nombre: string; codigo: string }; escuela_programada: string | null }>>([]);
   loadingCursos = signal(false);
@@ -152,7 +160,17 @@ export class SolicitudListaComponent implements OnInit {
   cargarCursosConSolicitud(): void {
     this.loadingCursos.set(true);
     this.solicitudService.getCursosConSolicitud().subscribe({
-      next: (data) => { this.cursosConSolicitud.set(data); this.loadingCursos.set(false); },
+      next: (data) => {
+        this.cursosConSolicitud.set(data);
+        this.loadingCursos.set(false);
+        // Si hay filtro activo y el nombre aún no está establecido, tomarlo de los datos cargados
+        if (this.programacionIdFiltro() && !this.cursoFiltrado()) {
+          const prog = data.find(p => p.id === this.programacionIdFiltro());
+          if (prog) {
+            this.cursoFiltrado.set(`${prog.curso.codigo} - ${prog.curso.nombre} (Sec: ${prog.seccion ?? '-'}, G: ${prog.grupo})`);
+          }
+        }
+      },
       error: () => this.loadingCursos.set(false)
     });
   }
