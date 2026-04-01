@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SolicitudService, MetricaCurso, SeccionMetrica } from '@features/solicitudes/services/solicitud.service';
 
 @Component({
   selector: 'app-analitica',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './analitica.component.html',
 })
 export class AnaliticaComponent implements OnInit {
@@ -21,17 +22,26 @@ export class AnaliticaComponent implements OnInit {
   error = signal<string | null>(null);
 
   cursosExpandidos = signal<Set<string>>(new Set());
+  busqueda = signal('');
+
+  cursosFiltrados = computed(() => {
+    const q = this.busqueda().trim().toLowerCase();
+    if (!q) return this.cursos();
+    return this.cursos().filter(c =>
+      c.nombre.toLowerCase().includes(q) || c.codigo.toLowerCase().includes(q)
+    );
+  });
 
   resumen = computed(() => {
-    const todos = this.cursos();
+    const lista = this.cursosFiltrados();
     return {
-      totalSolicitudes: todos.reduce((s, c) => s + c.total, 0),
-      totalCursos: todos.length,
-      totalSecciones: todos.reduce((s, c) => s + c.secciones.length, 0),
-      pendientes:  todos.reduce((s, c) => s + c.por_estado.pendiente, 0),
-      enRevision:  todos.reduce((s, c) => s + c.por_estado.en_revision, 0),
-      aprobadas:   todos.reduce((s, c) => s + c.por_estado.aprobada, 0),
-      rechazadas:  todos.reduce((s, c) => s + c.por_estado.rechazada, 0),
+      totalSolicitudes: lista.reduce((s, c) => s + c.total, 0),
+      totalCursos: lista.length,
+      totalSecciones: lista.reduce((s, c) => s + c.secciones.length, 0),
+      pendientes:  lista.reduce((s, c) => s + c.por_estado.pendiente, 0),
+      enRevision:  lista.reduce((s, c) => s + c.por_estado.en_revision, 0),
+      aprobadas:   lista.reduce((s, c) => s + c.por_estado.aprobada, 0),
+      rechazadas:  lista.reduce((s, c) => s + c.por_estado.rechazada, 0),
     };
   });
 
@@ -52,6 +62,7 @@ export class AnaliticaComponent implements OnInit {
   cambiarTipo(tipo: 'CUPO_EXT' | 'INSC_ESCUELA'): void {
     if (this.tipoActivo() === tipo) return;
     this.tipoActivo.set(tipo);
+    this.busqueda.set('');
     this.cargar();
   }
 

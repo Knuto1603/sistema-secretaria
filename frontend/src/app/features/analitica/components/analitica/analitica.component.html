@@ -50,6 +50,30 @@
     </button>
   </div>
 
+  <!-- Buscador de cursos -->
+  @if (!loading() && !error() && cursos().length > 0) {
+    <div class="relative max-w-md">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        placeholder="Buscar por nombre o código de curso..."
+        class="w-full pl-11 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+      @if (busqueda()) {
+        <button (click)="busqueda.set('')"
+          class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      }
+    </div>
+  }
+
   <!-- Loading -->
   @if (loading()) {
     <div class="flex items-center justify-center h-64">
@@ -115,8 +139,19 @@
       </div>
     }
 
+    <!-- Sin resultados de búsqueda -->
+    @if (cursos().length > 0 && cursosFiltrados().length === 0) {
+      <div class="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-400">
+        <svg class="w-10 h-10 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <p class="font-semibold">Sin resultados</p>
+        <p class="text-sm mt-1">No se encontraron cursos programados que coincidan con "<span class="font-bold text-slate-600">{{ busqueda() }}</span>".</p>
+      </div>
+    }
+
     <!-- Tarjetas por curso -->
-    @for (curso of cursos(); track curso.curso_id) {
+    @for (curso of cursosFiltrados(); track curso.curso_id) {
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
         <!-- Cabecera del curso -->
