@@ -47,6 +47,7 @@ class SolicitudController extends Controller
             $businessErrors = [
                 'Ya tienes una solicitud',
                 'periodos académicos inactivos',
+                'presentación de solicitudes',
                 'no existe',
                 'no tiene un curso',
                 'no pertenece al plan de estudios',
