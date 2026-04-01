@@ -97,6 +97,7 @@ export class ProgramacionTablaComponent implements OnInit {
   historialRegistrado      = signal<boolean>(false);
   showOnboarding           = signal(false);
   programacionesConSolicitud = signal<Set<string>>(new Set());
+  solicitudesAbiertas      = signal<boolean>(true);
 
   // Modales
   showFormProgramacion  = signal(false);
@@ -270,6 +271,11 @@ export class ProgramacionTablaComponent implements OnInit {
 
     this.solicitudService.getProgramacionesConSolicitudActiva().subscribe({
       next: ids => this.programacionesConSolicitud.set(new Set(ids)),
+      error: () => {},
+    });
+
+    this.periodoService.getPeriodoActivo().subscribe({
+      next: periodo => this.solicitudesAbiertas.set(periodo?.solicitudes_abiertas ?? true),
       error: () => {},
     });
   }
