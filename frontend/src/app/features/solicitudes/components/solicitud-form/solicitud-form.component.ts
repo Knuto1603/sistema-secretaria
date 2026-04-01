@@ -38,6 +38,7 @@ export class SolicitudFormComponent implements OnInit {
   // Cambiamos 'cursoSeleccionado' de input() a un signal interno
   programacionInfo = signal<Programacion | null>(null);
   cursoInfo = signal<any | null>(null);
+  solicitudesCerradas = signal(false);
   loading = signal(false);
   isSubmitting = signal(false);
   successMessage = signal('');
@@ -64,6 +65,7 @@ ngOnInit(): void {
   this.ProgramacionService.getDetalleProgramacion(id).pipe(
     switchMap(programacion => {
       this.programacionInfo.set(programacion);
+      this.solicitudesCerradas.set(programacion.periodo?.solicitudes_abiertas === false);
       if (!programacion.curso?.id) {
         throw new Error('No se encontró información del curso');
       }

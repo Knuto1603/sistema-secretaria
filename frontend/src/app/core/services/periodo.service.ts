@@ -9,6 +9,7 @@ export interface Periodo {
   fecha_inicio: string | null;
   fecha_fin: string | null;
   activo: boolean;
+  solicitudes_abiertas: boolean;
   created_at: string;
 }
 
@@ -107,6 +108,12 @@ export class PeriodoService {
    */
   desactivarPeriodo(id: string): Observable<Periodo> {
     return this.http.patch<ApiResponse<Periodo>>(`${this.apiUrl}/${id}/deactivate`, {}).pipe(
+      map(response => response.data)
+    );
+  }
+
+  toggleSolicitudes(id: string): Observable<Periodo> {
+    return this.http.patch<ApiResponse<Periodo>>(`${this.apiUrl}/${id}/toggle-solicitudes`, {}).pipe(
       map(response => response.data)
     );
   }

@@ -103,6 +103,22 @@ export class PeriodosListaComponent implements OnInit {
     });
   }
 
+  toggleSolicitudes(periodo: Periodo): void {
+    this.actionLoading.set(periodo.id + '-sol');
+    this.periodoService.toggleSolicitudes(periodo.id).subscribe({
+      next: (p) => {
+        const estado = p.solicitudes_abiertas ? 'abierta' : 'cerrada';
+        this.mostrarMensaje('success', `Presentación de solicitudes ${estado} para "${p.nombre}"`);
+        this.cargarPeriodos();
+        this.actionLoading.set(null);
+      },
+      error: () => {
+        this.mostrarMensaje('error', 'Error al cambiar el estado de solicitudes');
+        this.actionLoading.set(null);
+      }
+    });
+  }
+
   private mostrarMensaje(tipo: 'success' | 'error', texto: string): void {
     this.mensaje.set({ tipo, texto });
     setTimeout(() => this.mensaje.set(null), 4000);

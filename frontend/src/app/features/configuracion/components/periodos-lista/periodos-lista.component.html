@@ -60,6 +60,7 @@
             <th class="px-6 py-4 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha Inicio</th>
             <th class="px-6 py-4 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Fecha Fin</th>
             <th class="px-6 py-4 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Estado</th>
+            <th class="px-6 py-4 text-center text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Solicitudes</th>
             <th class="px-6 py-4 text-right text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Acciones</th>
           </tr>
         </thead>
@@ -80,6 +81,23 @@
                   <app-badge color="emerald">Activo</app-badge>
                 } @else {
                   <app-badge color="slate">Inactivo</app-badge>
+                }
+              </td>
+              <td class="px-6 py-4 text-center">
+                @if (actionLoading() === periodo.id + '-sol') {
+                  <div class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                } @else {
+                  <button (click)="toggleSolicitudes(periodo)" [disabled]="!periodo.activo"
+                    [title]="periodo.solicitudes_abiertas ? 'Cerrar presentación' : 'Abrir presentación'"
+                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors disabled:opacity-40"
+                    [class]="periodo.solicitudes_abiertas
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'">
+                    <span class="w-2 h-2 rounded-full"
+                      [class]="periodo.solicitudes_abiertas ? 'bg-emerald-500' : 'bg-red-500'">
+                    </span>
+                    {{ periodo.solicitudes_abiertas ? 'Abiertas' : 'Cerradas' }}
+                  </button>
                 }
               </td>
               <td class="px-6 py-4">

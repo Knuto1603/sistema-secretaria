@@ -72,7 +72,7 @@ export interface Programacion {
   esta_lleno: boolean;
   curso: { id: string; nombre: string; codigo: string } | null;
   docente?: { id?: string; nombre_completo: string } | null;
-  periodo?: { id: string; nombre: string; activo: boolean } | null;
+  periodo?: { id: string; nombre: string; activo: boolean; solicitudes_abiertas: boolean } | null;
   aula_rel?: AulaRel | null;
   grupo_horario?: GrupoHorarioRef | null;
   escuelas?: EscuelaRef[];
