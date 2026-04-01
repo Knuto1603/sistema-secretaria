@@ -94,7 +94,7 @@ export class SolicitudListaComponent implements OnInit {
   });
 
   // Cursos que tienen solicitudes (para el selector de filtro)
-  cursosConSolicitud = signal<Array<{ id: string; clave: string; grupo: string; seccion: string | null; curso: { nombre: string; codigo: string }; escuela_programada: string | null }>>([]);
+  cursosConSolicitud = signal<Array<{ id: string; curso_id: string; clave: string; grupo: string; seccion: string | null; curso: { nombre: string; codigo: string }; escuela_programada: string | null }>>([]);
   loadingCursos = signal(false);
 
   // Estados disponibles para filtro
