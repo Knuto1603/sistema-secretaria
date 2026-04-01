@@ -182,17 +182,19 @@ export class SolicitudService {
   /**
    * Obtiene todas las solicitudes (admin/secretaria/decano)
    */
-  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string, tipo?: string, escuelaId?: string, escuelaProgramadaId?: string, sortOrder: 'asc' | 'desc' = 'desc'): Observable<PaginatedResponse<Solicitud>> {
+  getAllSolicitudes(page: number = 1, perPage: number = 10, search?: string, estado?: string, programacionId?: string, tipo?: string, escuelaId?: string, escuelaProgramadaId?: string, cursoId?: string, grupo?: string, sortOrder: 'asc' | 'desc' = 'desc'): Observable<PaginatedResponse<Solicitud>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('per_page', perPage.toString())
       .set('sort_order', sortOrder);
 
-    if (search)             params = params.set('search', search);
-    if (estado)             params = params.set('estado', estado);
-    if (programacionId)     params = params.set('programacion_id', programacionId);
-    if (tipo)               params = params.set('tipo', tipo);
-    if (escuelaId)          params = params.set('escuela_id', escuelaId);
+    if (search)              params = params.set('search', search);
+    if (estado)              params = params.set('estado', estado);
+    if (programacionId)      params = params.set('programacion_id', programacionId);
+    if (cursoId)             params = params.set('curso_id', cursoId);
+    if (grupo)               params = params.set('grupo', grupo);
+    if (tipo)                params = params.set('tipo', tipo);
+    if (escuelaId)           params = params.set('escuela_id', escuelaId);
     if (escuelaProgramadaId) params = params.set('escuela_programada_id', escuelaProgramadaId);
 
     return this.http.get<ApiResponse<ApiPaginatedData<Solicitud>>>(this.apiUrl, { params }).pipe(
@@ -263,8 +265,8 @@ export class SolicitudService {
    * Cursos distintos que tienen solicitudes (para filtro admin)
    */
   getCursosConSolicitud(): Observable<Array<{
-    id: string; clave: string; grupo: string; seccion: string | null;
-    curso: { nombre: string; codigo: string };
+    id: string; curso_id: string; clave: string; grupo: string; seccion: string | null;
+    curso: { id: string; nombre: string; codigo: string };
     escuela_programada: string | null;
   }>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/cursos-solicitados`).pipe(

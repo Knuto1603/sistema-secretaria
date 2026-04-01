@@ -154,11 +154,13 @@ class SolicitudController extends Controller
             ->values()
             ->filter(fn($s) => $s->programacion?->curso)
             ->map(fn($s) => [
-                'id'      => $s->programacion_id,
-                'clave'   => $s->programacion->clave,
-                'grupo'   => $s->programacion->grupo,
-                'seccion' => $s->programacion->seccion,
-                'curso'   => [
+                'id'       => $s->programacion_id,
+                'curso_id' => $s->programacion->curso->id,
+                'clave'    => $s->programacion->clave,
+                'grupo'    => $s->programacion->grupo,
+                'seccion'  => $s->programacion->seccion,
+                'curso'    => [
+                    'id'     => $s->programacion->curso->id,
                     'nombre' => $s->programacion->curso->nombre,
                     'codigo' => $s->programacion->curso->codigo,
                 ],

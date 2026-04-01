@@ -83,6 +83,14 @@ class SolicitudRepository implements SolicitudRepositoryInterface
             $query->where('programacion_id', $filters['programacion_id']);
         }
 
+        if (isset($filters['curso_id']) && $filters['curso_id']) {
+            $query->whereHas('programacion', fn($q) => $q->where('curso_id', $filters['curso_id']));
+        }
+
+        if (isset($filters['grupo']) && $filters['grupo']) {
+            $query->whereHas('programacion', fn($q) => $q->where('grupo', $filters['grupo']));
+        }
+
         if (isset($filters['tipo']) && $filters['tipo']) {
             $query->whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $filters['tipo']));
         }
@@ -115,6 +123,12 @@ class SolicitudRepository implements SolicitudRepositoryInterface
         }
         if (isset($filters['programacion_id']) && $filters['programacion_id']) {
             $query->where('programacion_id', $filters['programacion_id']);
+        }
+        if (isset($filters['curso_id']) && $filters['curso_id']) {
+            $query->whereHas('programacion', fn($q) => $q->where('curso_id', $filters['curso_id']));
+        }
+        if (isset($filters['grupo']) && $filters['grupo']) {
+            $query->whereHas('programacion', fn($q) => $q->where('grupo', $filters['grupo']));
         }
         if (isset($filters['tipo']) && $filters['tipo']) {
             $query->whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $filters['tipo']));

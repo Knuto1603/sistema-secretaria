@@ -54,6 +54,8 @@ export class SolicitudListaComponent implements OnInit {
   tipoFiltro = signal('');
   escuelaIdFiltro = signal('');
   programacionIdFiltro = signal<string | null>(null);
+  cursoIdFiltro = signal('');
+  grupoFiltro = signal('');
   currentPage = signal(1);
   perPage = signal(10);
   sortOrder = signal<'asc' | 'desc'>('desc');
@@ -63,15 +65,32 @@ export class SolicitudListaComponent implements OnInit {
   escuelaProgramadaFiltro = signal('');
   exportando = signal(false);
 
-  // Info del curso cuando se filtra por programación
+  // Info del curso cuando se filtra por programación (navegación desde programacion-tabla)
   cursoFiltrado = signal<string | null>(null);
 
-  // Valor del select de programación: solo retorna el UUID cuando la opción ya existe en la lista
-  // Esto evita que ngModel se vincule antes de que los options carguen y quede en blanco
-  programacionSelectValue = computed(() => {
-    const id = this.programacionIdFiltro();
+  // Cursos únicos (deduplicados) para el dropdown de curso
+  cursosUnicos = computed(() => {
+    const seen = new Set<string>();
+    return this.cursosConSolicitud()
+      .filter(p => { if (seen.has(p.curso_id)) return false; seen.add(p.curso_id); return true; })
+      .map(p => ({ id: p.curso_id, nombre: p.curso.nombre, codigo: p.curso.codigo }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  // Grupos únicos disponibles según el curso seleccionado
+  gruposDisponibles = computed(() => {
+    const cursoId = this.cursoIdFiltro();
+    const lista = cursoId
+      ? this.cursosConSolicitud().filter(p => p.curso_id === cursoId)
+      : this.cursosConSolicitud();
+    return [...new Set(lista.map(p => p.grupo))].sort();
+  });
+
+  // Para el select de curso: solo vincula cuando la opción ya existe (evita ngModel vacío por carga async)
+  cursoSelectValue = computed(() => {
+    const id = this.cursoIdFiltro();
     if (!id) return '';
-    return this.cursosConSolicitud().some(c => c.id === id) ? id : '';
+    return this.cursosUnicos().some(c => c.id === id) ? id : '';
   });
 
   // Cursos que tienen solicitudes (para el selector de filtro)
@@ -128,6 +147,8 @@ export class SolicitudListaComponent implements OnInit {
       this.currentPage.set(Number(params['page']) || 1);
       this.perPage.set(Number(params['per_page']) || 10);
       this.programacionIdFiltro.set(params['programacion_id'] ?? null);
+      this.cursoIdFiltro.set(params['curso_id'] ?? '');
+      this.grupoFiltro.set(params['grupo'] ?? '');
       this.cargarDatos();
     });
   }
@@ -163,7 +184,7 @@ export class SolicitudListaComponent implements OnInit {
       next: (data) => {
         this.cursosConSolicitud.set(data);
         this.loadingCursos.set(false);
-        // Si hay filtro activo y el nombre aún no está establecido, tomarlo de los datos cargados
+        // Banner para filtro por programacion_id (navegación desde programacion-tabla)
         if (this.programacionIdFiltro() && !this.cursoFiltrado()) {
           const prog = data.find(p => p.id === this.programacionIdFiltro());
           if (prog) {
@@ -173,6 +194,15 @@ export class SolicitudListaComponent implements OnInit {
       },
       error: () => this.loadingCursos.set(false)
     });
+  }
+
+  onCursoChange(cursoId: string): void {
+    // Al cambiar curso, resetear grupo para evitar combinaciones inválidas
+    this.pushQueryParams({ curso_id: cursoId || null, grupo: null, page: null });
+  }
+
+  onGrupoChange(grupo: string): void {
+    this.pushQueryParams({ grupo: grupo || null, page: null });
   }
 
   cargarDatos(): void {
@@ -188,6 +218,8 @@ export class SolicitudListaComponent implements OnInit {
           this.tipoFiltro() || undefined,
           this.escuelaIdFiltro() || undefined,
           this.escuelaProgramadaFiltro() || undefined,
+          this.cursoIdFiltro() || undefined,
+          this.grupoFiltro() || undefined,
           this.sortOrder()
         )
       : this.solicitudService.getMisSolicitudes(this.currentPage(), this.perPage());
@@ -254,6 +286,8 @@ export class SolicitudListaComponent implements OnInit {
     if (this.escuelaIdFiltro())         params['escuela_id'] = this.escuelaIdFiltro();
     if (this.escuelaProgramadaFiltro()) params['escuela_programada_id'] = this.escuelaProgramadaFiltro();
     if (this.programacionIdFiltro())    params['programacion_id'] = this.programacionIdFiltro()!;
+    if (this.cursoIdFiltro())           params['curso_id'] = this.cursoIdFiltro();
+    if (this.grupoFiltro())             params['grupo'] = this.grupoFiltro();
     if (this.searchTerm())              params['search'] = this.searchTerm();
 
     this.solicitudService.exportarCSV(params).subscribe({

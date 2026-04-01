@@ -187,14 +187,14 @@
             class="pl-11 pr-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none w-64 transition-all">
         </div>
 
-        <!-- Filtro por curso (solo cursos con solicitudes) -->
+        <!-- Filtro por curso -->
         <div class="relative">
-          <select [ngModel]="programacionSelectValue()" (ngModelChange)="onProgramacionChange($event)"
+          <select [ngModel]="cursoSelectValue()" (ngModelChange)="onCursoChange($event)"
             [disabled]="loadingCursos()"
             class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[220px] appearance-none cursor-pointer font-medium">
             <option value="">Filtrar por curso...</option>
-            @for (prog of cursosConSolicitud(); track prog.id) {
-              <option [value]="prog.id">{{ prog.curso.codigo }} - {{ prog.curso.nombre }} (G: {{ prog.grupo }})</option>
+            @for (curso of cursosUnicos(); track curso.id) {
+              <option [value]="curso.id">{{ curso.codigo }} - {{ curso.nombre }}</option>
             }
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -208,6 +208,22 @@
             }
           </div>
         </div>
+
+        <!-- Filtro por grupo -->
+        @if (gruposDisponibles().length > 0) {
+          <div class="relative">
+            <select [ngModel]="grupoFiltro()" (ngModelChange)="onGrupoChange($event)"
+              class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none min-w-[140px] appearance-none cursor-pointer font-medium">
+              <option value="">Todos los grupos</option>
+              @for (g of gruposDisponibles(); track g) {
+                <option [value]="g">Grupo {{ g }}</option>
+              }
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+        }
 
         <!-- Botón exportar -->
         <button (click)="exportar()" [disabled]="exportando()"
