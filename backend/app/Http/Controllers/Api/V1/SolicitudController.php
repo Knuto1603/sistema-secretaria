@@ -290,7 +290,7 @@ class SolicitudController extends Controller
                     'seccion'          => $p->seccion,
                     'n_inscritos'      => $p->n_inscritos,
                     'capacidad'        => $p->capacidad,
-                    'docente'          => $p->docente?->nombre,
+                    'docente'          => $p->docente?->nombre_completo,
                     'aula'             => $p->aulaRelacion?->nombre,
                     'escuela_programada' => $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre,
                     'lleno'            => $p->lleno_manual || ($p->n_inscritos !== null && $p->capacidad !== null && $p->n_inscritos >= $p->capacidad),
