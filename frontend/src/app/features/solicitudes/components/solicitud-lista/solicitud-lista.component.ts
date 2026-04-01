@@ -103,7 +103,8 @@ export class SolicitudListaComponent implements OnInit {
     { value: 'pendiente', label: 'Pendiente' },
     { value: 'en_revision', label: 'En Revisión' },
     { value: 'aprobada', label: 'Aprobada' },
-    { value: 'rechazada', label: 'Rechazada' }
+    { value: 'rechazada', label: 'Rechazada' },
+    { value: 'apelado', label: 'Apelado' }
   ];
 
   // Detectar si es admin/secretaria/decano
@@ -321,12 +322,13 @@ export class SolicitudListaComponent implements OnInit {
     }
   }
 
-  getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' {
-    const mapping: Record<string, 'amber' | 'indigo' | 'emerald' | 'red' | 'slate'> = {
+  getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' | 'violet' {
+    const mapping: Record<string, 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' | 'violet'> = {
       'pendiente': 'amber',
       'en_revision': 'indigo',
       'aprobada': 'emerald',
-      'rechazada': 'red'
+      'rechazada': 'red',
+      'apelado': 'violet'
     };
     return mapping[estado?.toLowerCase()] || 'slate';
   }
@@ -336,7 +338,8 @@ export class SolicitudListaComponent implements OnInit {
       'pendiente': 'Pendiente',
       'en_revision': 'En Revisión',
       'aprobada': 'Aprobada',
-      'rechazada': 'Rechazada'
+      'rechazada': 'Rechazada',
+      'apelado': 'Apelado'
     };
     return labels[estado?.toLowerCase()] || estado;
   }

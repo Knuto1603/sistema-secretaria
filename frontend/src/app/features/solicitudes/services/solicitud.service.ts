@@ -75,7 +75,7 @@ export interface MetricaCurso {
   codigo: string;
   nombre: string;
   total: number;
-  por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
+  por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
   secciones: SeccionMetrica[];
   solicitantes: SolicitanteMetrica[];
 }
@@ -304,7 +304,7 @@ export class SolicitudService {
    * Estadísticas de solicitudes (admin/secretaria)
    */
   getEstadisticas(): Observable<{
-    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number };
+    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
     total: number;
     por_tipo: { cupo_ext: number; insc_escuela: number };
     por_escuela: Array<{ escuela: string; total: number }>;

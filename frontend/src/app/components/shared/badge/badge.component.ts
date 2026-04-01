@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppBadgeComponent {
-  color = input<'indigo' | 'emerald' | 'amber' | 'red' | 'slate'>('slate');
+  color = input<'indigo' | 'emerald' | 'amber' | 'red' | 'slate' | 'violet'>('slate');
   size = input<'sm' | 'md' | 'lg'>('md');
 
   badgeClasses = computed(() => {
@@ -24,7 +24,8 @@ export class AppBadgeComponent {
       emerald: "bg-emerald-50 text-emerald-700",
       amber: "bg-amber-50 text-amber-700",
       red: "bg-red-50 text-red-700",
-      slate: "bg-slate-100 text-slate-600"
+      slate: "bg-slate-100 text-slate-600",
+      violet: "bg-violet-50 text-violet-700"
     };
     return base + colors[this.color()];
   });
@@ -35,7 +36,8 @@ export class AppBadgeComponent {
       emerald: "bg-emerald-500",
       amber: "bg-amber-500",
       red: "bg-red-500",
-      slate: "bg-slate-400"
+      slate: "bg-slate-400",
+      violet: "bg-violet-500"
     };
     return colors[this.color()];
   });

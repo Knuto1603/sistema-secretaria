@@ -51,14 +51,15 @@ export class SolicitudDetalleComponent implements OnInit {
   puedeApelar = computed(() => {
     const sol = this.solicitud();
     if (!sol) return false;
-    return this.authService.hasRole('estudiante') && sol.estado === 'rechazada';
+    return this.authService.hasRole('estudiante') && sol.estado === 'rechazada' && !sol.respuesta_alumno;
   });
 
   estados = [
     { value: 'pendiente', label: 'Pendiente', color: 'amber' },
     { value: 'en_revision', label: 'En Revisión', color: 'indigo' },
     { value: 'aprobada', label: 'Aprobada', color: 'emerald' },
-    { value: 'rechazada', label: 'Rechazada', color: 'red' }
+    { value: 'rechazada', label: 'Rechazada', color: 'red' },
+    { value: 'apelado', label: 'Apelado', color: 'violet' }
   ];
 
   ngOnInit(): void {
@@ -153,12 +154,13 @@ export class SolicitudDetalleComponent implements OnInit {
     });
   }
 
-  getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' {
-    const mapping: Record<string, 'amber' | 'indigo' | 'emerald' | 'red' | 'slate'> = {
+  getColorEstado(estado: string): 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' | 'violet' {
+    const mapping: Record<string, 'amber' | 'indigo' | 'emerald' | 'red' | 'slate' | 'violet'> = {
       'pendiente': 'amber',
       'en_revision': 'indigo',
       'aprobada': 'emerald',
-      'rechazada': 'red'
+      'rechazada': 'red',
+      'apelado': 'violet'
     };
     return mapping[estado?.toLowerCase()] || 'slate';
   }
