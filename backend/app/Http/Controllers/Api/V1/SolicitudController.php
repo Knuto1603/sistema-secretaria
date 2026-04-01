@@ -236,6 +236,7 @@ class SolicitudController extends Controller
                 'en_revision' => (int) ($porEstado['en_revision'] ?? 0),
                 'aprobada'    => (int) ($porEstado['aprobada']    ?? 0),
                 'rechazada'   => (int) ($porEstado['rechazada']   ?? 0),
+                'apelado'     => (int) ($porEstado['apelado']     ?? 0),
             ],
             'total'       => (int) $porEstado->sum(),
             'por_tipo'    => [
@@ -320,6 +321,7 @@ class SolicitudController extends Controller
                     'en_revision' => $sols->where('estado', 'en_revision')->count(),
                     'aprobada'    => $sols->where('estado', 'aprobada')->count(),
                     'rechazada'   => $sols->where('estado', 'rechazada')->count(),
+                    'apelado'     => $sols->where('estado', 'apelado')->count(),
                 ],
                 'secciones'    => $secciones->values(),
                 'solicitantes' => $solicitantes,
@@ -365,7 +367,11 @@ class SolicitudController extends Controller
             return $this->error('Solo puedes apelar solicitudes rechazadas', 422);
         }
 
-        $actualizada = $this->service->updateEstado($id, 'en_revision');
+        if ($solicitud->respuesta_alumno !== null) {
+            return $this->error('Ya enviaste una apelación para esta solicitud. Solo se permite una apelación por solicitud.', 422);
+        }
+
+        $actualizada = $this->service->updateEstado($id, 'apelado');
         $actualizada->update([
             'respuesta_alumno' => $request->respuesta,
             'fecha_respuesta'  => now(),
@@ -373,7 +379,7 @@ class SolicitudController extends Controller
 
         return $this->success(
             $this->transformer->toArray($actualizada->fresh(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada'])),
-            'Apelación enviada correctamente. Tu solicitud está de nuevo en revisión.'
+            'Apelación enviada correctamente. Tu solicitud está siendo revisada nuevamente.'
         );
     }
 
