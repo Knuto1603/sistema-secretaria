@@ -121,7 +121,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::patch('/{id}/activate', [PeriodoController::class, 'setActive']);
         Route::patch('/{id}/deactivate', [PeriodoController::class, 'deactivate']);
         Route::patch('/{id}/toggle-solicitudes', [PeriodoController::class, 'toggleSolicitudes'])
-            ->middleware('role:admin|secretaria|secretario academico|developer');
+            ->middleware('role:secretaria|admin|developer');
     });
 
     // Rutas de Programacion Académica
