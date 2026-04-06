@@ -18,7 +18,7 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
 
     public function collection(): Collection
     {
-        // IDs de programaciones con solicitudes del tipo indicado, con conteo
+        // IDs de programaciones con solicitudes del tipo indicado, con conteo total
         $conteos = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
             ->whereNotNull('programacion_id')
             ->selectRaw('programacion_id, count(*) as total')
@@ -28,6 +28,14 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
         if ($conteos->isEmpty()) {
             return collect();
         }
+
+        // Conteo de solicitudes pendientes por programación
+        $conteosPendientes = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
+            ->whereNotNull('programacion_id')
+            ->where('estado', 'pendiente')
+            ->selectRaw('programacion_id, count(*) as total')
+            ->groupBy('programacion_id')
+            ->pluck('total', 'programacion_id');
 
         // Cursos que tienen alguna solicitud de este tipo
         $cursoIds = ProgramacionAcademica::whereIn('id', $conteos->keys())
@@ -42,23 +50,20 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
             ->orderBy('grupo')
             ->get();
 
-        return $secciones->map(function ($p) use ($conteos) {
+        return $secciones->map(function ($p) use ($conteos, $conteosPendientes) {
             $row = [
                 $p->curso?->codigo ?? '',
                 $p->curso?->nombre ?? '',
+                $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre ?? '',
+                $p->grupo ?? '',
+                $p->seccion ?? '',
+                $p->docente?->nombre ?? '',
+                $p->aulaRelacion?->nombre ?? '',
+                $p->capacidad ?? '',
+                $p->n_inscritos ?? 0,
+                (int) ($conteos->get($p->id) ?? 0),
+                (int) ($conteosPendientes->get($p->id) ?? 0),
             ];
-
-            if ($this->tipo === 'INSC_ESCUELA') {
-                $row[] = $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre ?? '';
-            }
-
-            $row[] = $p->grupo ?? '';
-            $row[] = $p->seccion ?? '';
-            $row[] = $p->docente?->nombre ?? '';
-            $row[] = $p->aulaRelacion?->nombre ?? '';
-            $row[] = $p->capacidad ?? '';
-            $row[] = $p->n_inscritos ?? 0;
-            $row[] = (int) ($conteos->get($p->id) ?? 0);
 
             return $row;
         });
@@ -66,13 +71,10 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
 
     public function headings(): array
     {
-        $heads = ['Cód. Curso', 'Nombre del Curso'];
-
-        if ($this->tipo === 'INSC_ESCUELA') {
-            $heads[] = 'Escuela Programada';
-        }
-
-        return array_merge($heads, [
+        return [
+            'Cód. Curso',
+            'Nombre del Curso',
+            'Escuela Programada',
             'Grupo',
             'Sección',
             'Docente',
@@ -80,7 +82,8 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
             'Capacidad',
             'Inscritos',
             'Solicitantes',
-        ]);
+            'Solicitantes Pendientes',
+        ];
     }
 
     public function title(): string
@@ -93,7 +96,8 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
         return [
             'A' => 14, 'B' => 40, 'C' => 25,
             'D' => 10, 'E' => 10, 'F' => 35,
-            'G' => 18, 'H' => 12, 'I' => 12, 'J' => 14,
+            'G' => 18, 'H' => 12, 'I' => 12,
+            'J' => 14, 'K' => 22,
         ];
     }
 
