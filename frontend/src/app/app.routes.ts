@@ -55,6 +55,10 @@ export const routes: Routes = [
          loadComponent: () => import('./features/analitica/components/analitica/analitica.component').then(m => m.AnaliticaComponent)
        },
        {
+         path: 'programacion-interactiva',
+         loadChildren: () => import('./features/programacion-interactiva/programacion-interactiva.routes').then(m => m.PI_ROUTES)
+       },
+       {
          path: 'configuracion',
          loadChildren: () => import('./features/configuracion/configuracion.routes').then(m => m.routes)
        },
