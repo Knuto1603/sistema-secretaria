@@ -1,0 +1,180 @@
+<div class="space-y-6">
+
+  <!-- Encabezado -->
+  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-black text-slate-800 tracking-tight">Creación Interactiva de Programación</h2>
+      <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+        Genera y distribuye secciones académicas con drag & drop
+      </p>
+    </div>
+    @if (periodoSeleccionado()) {
+      <app-btn variant="primary" (clicked)="abrirFormNuevo()" [disabled]="mostrarFormNuevo()">
+        + Nuevo Borrador
+      </app-btn>
+    }
+  </div>
+
+  <!-- Selector de período -->
+  <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+      Período Académico
+    </label>
+    @if (loadingPeriodos()) {
+      <div class="h-10 bg-slate-100 rounded-xl animate-pulse w-64"></div>
+    } @else {
+      <div class="relative w-full max-w-xs">
+        <select
+          [ngModel]="periodoSeleccionado()"
+          (ngModelChange)="onSelectPeriodo($event)"
+          class="w-full pl-4 pr-10 py-2.5 text-sm font-medium border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
+          <option value="" disabled>Seleccionar período...</option>
+          @for (p of periodos(); track p.id) {
+            <option [value]="p.id">{{ p.nombre }}{{ p.activo ? ' (Activo)' : '' }}</option>
+          }
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Formulario nuevo borrador -->
+  @if (mostrarFormNuevo()) {
+    <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 space-y-4">
+      <h3 class="text-sm font-bold text-indigo-800">Generar nuevo borrador</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre</label>
+          <input
+            type="text"
+            [ngModel]="nuevoNombre()"
+            (ngModelChange)="nuevoNombre.set($event)"
+            placeholder="Ej: 2026-I"
+            class="w-full px-4 py-2.5 text-sm border border-indigo-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tipo de Ciclo</label>
+          <div class="relative">
+            <select
+              [ngModel]="nuevoCicloTipo()"
+              (ngModelChange)="nuevoCicloTipo.set($event)"
+              class="w-full pl-4 pr-10 py-2.5 text-sm font-medium border border-indigo-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
+              <option value="impar">Impar (ciclos 1,3,5,7,9)</option>
+              <option value="par">Par (ciclos 2,4,6,8,10)</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-end gap-2">
+          <app-btn
+            variant="primary"
+            [loading]="generando()"
+            [disabled]="!nuevoNombre().trim()"
+            (clicked)="generar()">
+            Generar
+          </app-btn>
+          <app-btn variant="ghost" (clicked)="cancelarFormNuevo()">Cancelar</app-btn>
+        </div>
+      </div>
+      <p class="text-xs text-indigo-600">
+        Se creará una sección <strong>A</strong> por cada curso obligatorio del plan activo de cada escuela,
+        para los ciclos {{ nuevoCicloTipo() === 'impar' ? 'impares (1,3,5,7,9)' : 'pares (2,4,6,8,10)' }}.
+      </p>
+    </div>
+  }
+
+  <!-- Lista de borradores -->
+  @if (loadingBorradores()) {
+    <div class="space-y-3">
+      @for (i of [1,2,3]; track i) {
+        <div class="bg-slate-100 rounded-2xl h-24 animate-pulse"></div>
+      }
+    </div>
+  } @else if (!periodoSeleccionado()) {
+    <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-indigo-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <p class="text-sm font-medium text-slate-400">Selecciona un período para ver los borradores</p>
+    </div>
+  } @else if (borradores().length === 0) {
+    <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-indigo-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg>
+      <p class="text-sm font-medium text-slate-400">No hay borradores para este período</p>
+      <p class="text-xs text-slate-400 mt-1">Haz clic en "Nuevo Borrador" para generar uno desde el plan de estudios</p>
+    </div>
+  } @else {
+    <div class="space-y-3">
+      @for (borrador of borradores(); track borrador.id) {
+        <div
+          (click)="abrirEditor(borrador.id)"
+          class="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-indigo-300 hover:shadow-md transition-all duration-200 group">
+          <div class="flex items-center gap-4 min-w-0">
+            <!-- Ícono -->
+            <div class="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+            <!-- Info -->
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-slate-800 text-sm">{{ borrador.nombre }}</span>
+                <app-badge [color]="cicloTipoBadge(borrador.ciclo_tipo)" size="sm">
+                  {{ borrador.ciclo_tipo === 'par' ? 'Par' : 'Impar' }}
+                </app-badge>
+                <app-badge [color]="estadoBadge(borrador.estado)" size="sm">
+                  {{ borrador.estado }}
+                </app-badge>
+              </div>
+              <div class="flex items-center gap-4 mt-1">
+                <span class="text-xs text-slate-400">{{ borrador.periodo.nombre }}</span>
+                <span class="text-xs text-slate-400">{{ (borrador.total_secciones ?? 0) }} secciones</span>
+                <span class="text-xs text-slate-400">{{ formatDate(borrador.created_at) }}</span>
+                <span class="text-xs text-slate-400">por {{ borrador.creado_por }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            @if (borrador.estado === 'borrador') {
+              <button
+                (click)="eliminar(borrador, $event)"
+                [disabled]="eliminando() === borrador.id"
+                class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                aria-label="Eliminar borrador">
+                @if (eliminando() === borrador.id) {
+                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                }
+              </button>
+            }
+            <svg class="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-colors transform group-hover:translate-x-1 duration-200"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>
