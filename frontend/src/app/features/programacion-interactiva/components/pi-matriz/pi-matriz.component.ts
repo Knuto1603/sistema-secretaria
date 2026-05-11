@@ -31,6 +31,7 @@ export class PiMatrizComponent {
 
   private _lastDragY  = 0;
   private _rafId: number | null = null;
+  private readonly _trackDragY = (e: DragEvent) => { this._lastDragY = e.clientY; };
 
   // Filtros del panel "Sin Asignar"
   readonly filtroEscuelaPool = signal('');
@@ -113,18 +114,20 @@ export class PiMatrizComponent {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', seccionId);
     }
+    // Listener nativo en document para capturar posición en cualquier punto de la página
+    document.addEventListener('dragover', this._trackDragY);
     this._startScrollLoop();
   }
 
   onDragEnd(): void {
     this.draggingId.set(null);
+    document.removeEventListener('dragover', this._trackDragY);
     this._stopScrollLoop();
   }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-    this._lastDragY = event.clientY;
   }
 
   private _startScrollLoop(): void {
