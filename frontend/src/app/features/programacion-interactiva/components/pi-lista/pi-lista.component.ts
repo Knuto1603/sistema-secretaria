@@ -63,6 +63,7 @@ export class PiListaComponent {
 
   readonly actualizando       = signal<string | null>(null);
   readonly eliminando         = signal<string | null>(null);
+  readonly duplicando         = signal<string | null>(null);
   readonly agregando          = signal(false);
   readonly mostrarFormAgregar = signal(false);
 
@@ -191,6 +192,21 @@ export class PiListaComponent {
     this.piService.updateSeccion(this.borrador().id, seccion.id, { grupo_horario_id: grupoId || null }).subscribe({
       next: updated => { this.seccionActualizada.emit(updated); this.actualizando.set(null); },
       error: () => this.actualizando.set(null)
+    });
+  }
+
+  duplicarSeccion(seccion: BorradorSeccion): void {
+    this.duplicando.set(seccion.id);
+    const data: AgregarSeccionDTO = {
+      curso_id:   seccion.curso.id,
+      escuela_id: seccion.escuela.id,
+      ciclo:      seccion.ciclo,
+      tipo:       seccion.tipo,
+      capacidad:  seccion.capacidad,
+    };
+    this.piService.agregarSeccion(this.borrador().id, data).subscribe({
+      next: nueva => { this.seccionAgregada.emit(nueva); this.duplicando.set(null); },
+      error: () => this.duplicando.set(null)
     });
   }
 
