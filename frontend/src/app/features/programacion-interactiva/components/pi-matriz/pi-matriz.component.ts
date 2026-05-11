@@ -1,5 +1,5 @@
 import {
-  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy, HostListener
+  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,9 @@ export class PiMatrizComponent {
   guardando     = signal(false);
   eliminando    = signal<string | null>(null);
   error         = signal<string | null>(null);
+
+  private _lastDragY  = 0;
+  private _rafId: number | null = null;
 
   // Filtros del panel "Sin Asignar"
   readonly filtroEscuelaPool = signal('');
@@ -110,26 +113,41 @@ export class PiMatrizComponent {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', seccionId);
     }
+    this._startScrollLoop();
   }
 
   onDragEnd(): void {
     this.draggingId.set(null);
+    this._stopScrollLoop();
   }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this._lastDragY = event.clientY;
   }
 
-  @HostListener('document:dragover', ['$event'])
-  onDocumentDragOver(event: DragEvent): void {
-    if (!this.draggingId()) return;
-    const threshold = 100;
-    const speed = 12;
-    const { clientY } = event;
-    const { innerHeight } = window;
-    if (clientY < threshold) window.scrollBy(0, -speed);
-    else if (clientY > innerHeight - threshold) window.scrollBy(0, speed);
+  private _startScrollLoop(): void {
+    const loop = () => {
+      if (!this.draggingId()) return;
+      const threshold = 100;
+      const y = this._lastDragY;
+      const h = window.innerHeight;
+      if (y > 0 && y < threshold) {
+        window.scrollBy(0, -Math.ceil((threshold - y) / 8));
+      } else if (y > h - threshold) {
+        window.scrollBy(0, Math.ceil((y - (h - threshold)) / 8));
+      }
+      this._rafId = requestAnimationFrame(loop);
+    };
+    this._rafId = requestAnimationFrame(loop);
+  }
+
+  private _stopScrollLoop(): void {
+    if (this._rafId !== null) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
   }
 
   onDragEnter(event: DragEvent, cellEl: HTMLElement): void {
