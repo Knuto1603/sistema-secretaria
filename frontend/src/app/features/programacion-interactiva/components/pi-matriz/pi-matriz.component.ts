@@ -1,5 +1,5 @@
 import {
-  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy
+  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy, ElementRef
 } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +16,7 @@ import { GrupoHorario } from '../../../configuracion/services/horario.service';
 })
 export class PiMatrizComponent {
   private piService = inject(ProgramacionInteractivaService);
+  private elRef    = inject(ElementRef);
 
   borrador   = input.required<BorradorProgramacion>();
   pabellones = input.required<Pabellon[]>();
@@ -29,8 +30,9 @@ export class PiMatrizComponent {
   eliminando    = signal<string | null>(null);
   error         = signal<string | null>(null);
 
-  private _lastDragY  = 0;
+  private _lastDragY      = 0;
   private _rafId: number | null = null;
+  private _scrollEl: HTMLElement | null = null;
   private readonly _trackDragY = (e: DragEvent) => {
     e.preventDefault();
     this._lastDragY = e.clientY;
@@ -111,19 +113,30 @@ export class PiMatrizComponent {
     );
   }
 
+  private _findScrollContainer(): HTMLElement {
+    let el = this.elRef.nativeElement as HTMLElement;
+    while (el && el !== document.documentElement) {
+      const ov = window.getComputedStyle(el).overflowY;
+      if ((ov === 'auto' || ov === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+      el = el.parentElement!;
+    }
+    return document.documentElement;
+  }
+
   onDragStart(event: DragEvent, seccionId: string): void {
     this.draggingId.set(seccionId);
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData('text/plain', seccionId);
     }
-    // Listener nativo en document para capturar posición en cualquier punto de la página
+    this._scrollEl = this._findScrollContainer();
     document.addEventListener('dragover', this._trackDragY);
     this._startScrollLoop();
   }
 
   onDragEnd(): void {
     this.draggingId.set(null);
+    this._scrollEl = null;
     document.removeEventListener('dragover', this._trackDragY);
     this._stopScrollLoop();
   }
@@ -136,12 +149,16 @@ export class PiMatrizComponent {
   private _startScrollLoop(): void {
     const THRESHOLD = 120;
     const loop = () => {
-      const y = this._lastDragY;
-      const h = window.innerHeight;
-      if (y > 0 && y < THRESHOLD) {
-        window.scrollBy({ top: -Math.ceil(((THRESHOLD - y) / THRESHOLD) * 20), behavior: 'instant' });
-      } else if (y > h - THRESHOLD) {
-        window.scrollBy({ top: Math.ceil(((y - (h - THRESHOLD)) / THRESHOLD) * 20), behavior: 'instant' });
+      const container = this._scrollEl;
+      if (!container) { this._rafId = requestAnimationFrame(loop); return; }
+      const rect = container.getBoundingClientRect();
+      const y    = this._lastDragY;
+      const relY = y - rect.top;
+      const h    = rect.height;
+      if (relY > 0 && relY < THRESHOLD) {
+        container.scrollBy({ top: -Math.ceil(((THRESHOLD - relY) / THRESHOLD) * 20), behavior: 'instant' });
+      } else if (relY > h - THRESHOLD) {
+        container.scrollBy({ top: Math.ceil(((relY - (h - THRESHOLD)) / THRESHOLD) * 20), behavior: 'instant' });
       }
       this._rafId = requestAnimationFrame(loop);
     };
