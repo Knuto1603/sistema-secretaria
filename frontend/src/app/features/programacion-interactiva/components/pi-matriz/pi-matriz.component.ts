@@ -1,7 +1,8 @@
 import {
-  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy
+  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy, HostListener
 } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ProgramacionInteractivaService, BorradorProgramacion, BorradorSeccion, BulkCambio } from '../../services/programacion-interactiva.service';
 import { Pabellon, Aula } from '../../../configuracion/services/aula.service';
 import { GrupoHorario } from '../../../configuracion/services/horario.service';
@@ -10,7 +11,7 @@ import { GrupoHorario } from '../../../configuracion/services/horario.service';
   selector: 'app-pi-matriz',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, NgTemplateOutlet],
+  imports: [CommonModule, NgTemplateOutlet, FormsModule],
   templateUrl: './pi-matriz.component.html'
 })
 export class PiMatrizComponent {
@@ -28,6 +29,11 @@ export class PiMatrizComponent {
   eliminando    = signal<string | null>(null);
   error         = signal<string | null>(null);
 
+  // Filtros del panel "Sin Asignar"
+  readonly filtroEscuelaPool = signal('');
+  readonly filtroCicloPool   = signal(0);
+  readonly filtroCursoPool   = signal('');
+
   private _secciones = signal<BorradorSeccion[]>([]);
   secciones = this._secciones.asReadonly();
 
@@ -38,6 +44,44 @@ export class PiMatrizComponent {
   gruposActivos = computed((): GrupoHorario[] =>
     this.grupos().filter(g => g.activo && g.detalles.length > 0)
   );
+
+  readonly escuelasPool = computed(() => {
+    const map = new Map<string, BorradorSeccion['escuela']>();
+    for (const s of this.secciones().filter(s => !s.esta_asignado)) {
+      if (!map.has(s.escuela.id)) map.set(s.escuela.id, s.escuela);
+    }
+    return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+
+  readonly ciclosPool = computed((): number[] => {
+    const set = new Set<number>();
+    for (const s of this.secciones().filter(s => !s.esta_asignado)) set.add(s.ciclo);
+    return Array.from(set).sort((a, b) => a - b);
+  });
+
+  readonly seccionesSinAsignarFiltradas = computed((): BorradorSeccion[] => {
+    let secs = this.secciones().filter(s => !s.esta_asignado);
+    const escuela = this.filtroEscuelaPool();
+    const ciclo   = this.filtroCicloPool();
+    const curso   = this.filtroCursoPool().toLowerCase().trim();
+    if (escuela) secs = secs.filter(s => s.escuela.id === escuela);
+    if (ciclo)   secs = secs.filter(s => s.ciclo === ciclo);
+    if (curso)   secs = secs.filter(s =>
+      s.curso.nombre.toLowerCase().includes(curso) ||
+      s.curso.codigo.toLowerCase().includes(curso)
+    );
+    return secs;
+  });
+
+  readonly hayFiltrosPool = computed(() =>
+    !!this.filtroEscuelaPool() || !!this.filtroCicloPool() || !!this.filtroCursoPool().trim()
+  );
+
+  limpiarFiltrosPool(): void {
+    this.filtroEscuelaPool.set('');
+    this.filtroCicloPool.set(0);
+    this.filtroCursoPool.set('');
+  }
 
   constructor() {
     // Sincroniza secciones locales cuando el padre actualiza el borrador
@@ -75,6 +119,17 @@ export class PiMatrizComponent {
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  @HostListener('document:dragover', ['$event'])
+  onDocumentDragOver(event: DragEvent): void {
+    if (!this.draggingId()) return;
+    const threshold = 100;
+    const speed = 12;
+    const { clientY } = event;
+    const { innerHeight } = window;
+    if (clientY < threshold) window.scrollBy(0, -speed);
+    else if (clientY > innerHeight - threshold) window.scrollBy(0, speed);
   }
 
   onDragEnter(event: DragEvent, cellEl: HTMLElement): void {
