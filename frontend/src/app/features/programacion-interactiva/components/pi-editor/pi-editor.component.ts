@@ -126,8 +126,11 @@ export class PiEditorComponent implements OnInit {
     });
   }
 
-  onCambioGuardado(): void {
-    this.piService.obtener(this.borradorId).subscribe(data => this.borrador.set(data));
+  onSeccionMovida(seccion: BorradorSeccion): void {
+    this.borrador.update(b => {
+      if (!b?.secciones) return b;
+      return { ...b, secciones: b.secciones.map(s => s.id === seccion.id ? seccion : s) };
+    });
   }
 
   estadoBadge(estado: 'borrador' | 'publicado'): 'amber' | 'emerald' {

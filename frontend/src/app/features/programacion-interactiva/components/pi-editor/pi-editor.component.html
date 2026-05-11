@@ -99,7 +99,8 @@
         [borrador]="borrador()!"
         [pabellones]="pabellones()"
         [grupos]="grupos()"
-        (cambioGuardado)="onCambioGuardado()">
+        (seccionMovida)="onSeccionMovida($event)"
+        (seccionEliminada)="onSeccionEliminada($event)">
       </app-pi-matriz>
     }
 

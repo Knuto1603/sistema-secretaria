@@ -1,7 +1,7 @@
 import {
-  Component, inject, input, output, signal, computed, ChangeDetectionStrategy
+  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { ProgramacionInteractivaService, BorradorProgramacion, BorradorSeccion, BulkCambio } from '../../services/programacion-interactiva.service';
 import { Pabellon, Aula } from '../../../configuracion/services/aula.service';
 import { GrupoHorario } from '../../../configuracion/services/horario.service';
@@ -10,7 +10,7 @@ import { GrupoHorario } from '../../../configuracion/services/horario.service';
   selector: 'app-pi-matriz',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, NgTemplateOutlet],
   templateUrl: './pi-matriz.component.html'
 })
 export class PiMatrizComponent {
@@ -20,14 +20,16 @@ export class PiMatrizComponent {
   pabellones = input.required<Pabellon[]>();
   grupos     = input.required<GrupoHorario[]>();
 
-  cambioGuardado = output<void>();
+  seccionMovida    = output<BorradorSeccion>();
+  seccionEliminada = output<string>();
 
   draggingId    = signal<string | null>(null);
   guardando     = signal(false);
+  eliminando    = signal<string | null>(null);
   error         = signal<string | null>(null);
 
-  // Secciones como signal local mutable para optimistic updates
-  secciones = computed(() => [...(this.borrador().secciones ?? [])]);
+  private _secciones = signal<BorradorSeccion[]>([]);
+  secciones = this._secciones.asReadonly();
 
   aulasActivas = computed((): Aula[] =>
     this.pabellones().flatMap(p => p.aulas.filter(a => a.activo))
@@ -36,6 +38,14 @@ export class PiMatrizComponent {
   gruposActivos = computed((): GrupoHorario[] =>
     this.grupos().filter(g => g.activo && g.detalles.length > 0)
   );
+
+  constructor() {
+    // Sincroniza secciones locales cuando el padre actualiza el borrador
+    // (alta/baja de secciones), sin pisar cambios de drag-and-drop en vuelo
+    effect(() => {
+      this._secciones.set([...(this.borrador().secciones ?? [])]);
+    });
+  }
 
   /**
    * Devuelve las secciones para una celda específica (aulaId x grupoId).
@@ -86,26 +96,62 @@ export class PiMatrizComponent {
     const seccionId = event.dataTransfer?.getData('text/plain') ?? this.draggingId();
     if (!seccionId) return;
 
-    const seccion = this.secciones().find(s => s.id === seccionId);
+    const seccion = this._secciones().find(s => s.id === seccionId);
     if (!seccion) return;
 
-    // No hacer nada si cae en la misma celda
-    if (seccion.aula?.id === aulaId && seccion.grupo_horario?.id === grupoId) return;
+    if (seccion.aula?.id === (aulaId ?? undefined) && seccion.grupo_horario?.id === (grupoId ?? undefined)) return;
 
-    const cambios: BulkCambio[] = [{ id: seccionId, aula_id: aulaId, grupo_horario_id: grupoId }];
+    // Snapshot para rollback si falla la petición
+    const snapshot = [...this._secciones()];
+
+    // Construir la sección actualizada con los objetos completos
+    const pabellon   = aulaId ? this.pabellones().find(p => p.aulas.some(a => a.id === aulaId)) ?? null : null;
+    const aulaObj    = aulaId ? this.aulasActivas().find(a => a.id === aulaId) : null;
+    const nuevaAula  = aulaObj
+      ? { id: aulaObj.id, nombre: aulaObj.nombre, capacidad: aulaObj.capacidad, pabellon: pabellon ? { id: pabellon.id, nombre: pabellon.nombre } : null }
+      : null;
+    const nuevoGrupo = grupoId ? (this.gruposActivos().find(g => g.id === grupoId) ?? null) : null;
+
+    this._secciones.update(secs => secs.map(s => s.id !== seccionId ? s : {
+      ...s,
+      aula: nuevaAula,
+      grupo_horario: nuevoGrupo,
+      esta_asignado: aulaId !== null && grupoId !== null
+    }));
+
+    // Propaga la sección actualizada al padre para mantener métricas correctas
+    const seccionActualizada = this._secciones().find(s => s.id === seccionId)!;
+    this.seccionMovida.emit(seccionActualizada);
 
     this.guardando.set(true);
     this.error.set(null);
 
+    const cambios: BulkCambio[] = [{ id: seccionId, aula_id: aulaId, grupo_horario_id: grupoId }];
+
     this.piService.bulkUpdate(this.borrador().id, cambios).subscribe({
       next: () => {
         this.guardando.set(false);
-        this.cambioGuardado.emit();
       },
       error: () => {
+        this._secciones.set(snapshot);
+        this.seccionMovida.emit(seccion); // revertir en el padre también
         this.guardando.set(false);
         this.error.set('Error al guardar el cambio. Intenta de nuevo.');
       }
+    });
+  }
+
+  eliminarSeccion(sec: BorradorSeccion, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!confirm(`¿Eliminar "${sec.curso.nombre}" (Sec. ${sec.seccion})?`)) return;
+    this.eliminando.set(sec.id);
+    this.piService.deleteSeccion(this.borrador().id, sec.id).subscribe({
+      next: () => {
+        this._secciones.update(secs => secs.filter(s => s.id !== sec.id));
+        this.seccionEliminada.emit(sec.id);
+        this.eliminando.set(null);
+      },
+      error: () => this.eliminando.set(null)
     });
   }
 
