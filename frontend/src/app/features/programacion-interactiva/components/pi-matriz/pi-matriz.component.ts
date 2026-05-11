@@ -31,7 +31,10 @@ export class PiMatrizComponent {
 
   private _lastDragY  = 0;
   private _rafId: number | null = null;
-  private readonly _trackDragY = (e: DragEvent) => { this._lastDragY = e.clientY; };
+  private readonly _trackDragY = (e: DragEvent) => {
+    e.preventDefault();
+    this._lastDragY = e.clientY;
+  };
 
   // Filtros del panel "Sin Asignar"
   readonly filtroEscuelaPool = signal('');
@@ -131,15 +134,14 @@ export class PiMatrizComponent {
   }
 
   private _startScrollLoop(): void {
+    const THRESHOLD = 120;
     const loop = () => {
-      if (!this.draggingId()) return;
-      const threshold = 100;
       const y = this._lastDragY;
       const h = window.innerHeight;
-      if (y > 0 && y < threshold) {
-        window.scrollBy(0, -Math.ceil((threshold - y) / 8));
-      } else if (y > h - threshold) {
-        window.scrollBy(0, Math.ceil((y - (h - threshold)) / 8));
+      if (y > 0 && y < THRESHOLD) {
+        window.scrollBy({ top: -Math.ceil(((THRESHOLD - y) / THRESHOLD) * 20), behavior: 'instant' });
+      } else if (y > h - THRESHOLD) {
+        window.scrollBy({ top: Math.ceil(((y - (h - THRESHOLD)) / THRESHOLD) * 20), behavior: 'instant' });
       }
       this._rafId = requestAnimationFrame(loop);
     };
