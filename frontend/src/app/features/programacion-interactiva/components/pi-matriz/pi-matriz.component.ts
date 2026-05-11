@@ -101,10 +101,8 @@ export class PiMatrizComponent {
 
     if (seccion.aula?.id === (aulaId ?? undefined) && seccion.grupo_horario?.id === (grupoId ?? undefined)) return;
 
-    // Snapshot para rollback si falla la petición
     const snapshot = [...this._secciones()];
 
-    // Construir la sección actualizada con los objetos completos
     const pabellon   = aulaId ? this.pabellones().find(p => p.aulas.some(a => a.id === aulaId)) ?? null : null;
     const aulaObj    = aulaId ? this.aulasActivas().find(a => a.id === aulaId) : null;
     const nuevaAula  = aulaObj
@@ -112,6 +110,57 @@ export class PiMatrizComponent {
       : null;
     const nuevoGrupo = grupoId ? (this.gruposActivos().find(g => g.id === grupoId) ?? null) : null;
 
+    // Swap: si la celda destino (aula+grupo específica) ya tiene un ocupante, intercambiar posiciones
+    if (aulaId !== null && grupoId !== null) {
+      const ocupante = this._secciones().find(s =>
+        s.id !== seccionId &&
+        s.aula?.id === aulaId &&
+        s.grupo_horario?.id === grupoId
+      );
+
+      if (ocupante) {
+        const aulaOriginalId  = seccion.aula?.id ?? null;
+        const grupoOriginalId = seccion.grupo_horario?.id ?? null;
+
+        const pabellonOrig = aulaOriginalId ? this.pabellones().find(p => p.aulas.some(a => a.id === aulaOriginalId)) ?? null : null;
+        const aulaObjOrig  = aulaOriginalId ? this.aulasActivas().find(a => a.id === aulaOriginalId) : null;
+        const aulaOrigObj  = aulaObjOrig
+          ? { id: aulaObjOrig.id, nombre: aulaObjOrig.nombre, capacidad: aulaObjOrig.capacidad, pabellon: pabellonOrig ? { id: pabellonOrig.id, nombre: pabellonOrig.nombre } : null }
+          : null;
+        const grupoOrigObj = grupoOriginalId ? (this.gruposActivos().find(g => g.id === grupoOriginalId) ?? null) : null;
+
+        this._secciones.update(secs => secs.map(s => {
+          if (s.id === seccionId) return { ...s, aula: nuevaAula, grupo_horario: nuevoGrupo, esta_asignado: true };
+          if (s.id === ocupante.id) return { ...s, aula: aulaOrigObj, grupo_horario: grupoOrigObj, esta_asignado: aulaOriginalId !== null && grupoOriginalId !== null };
+          return s;
+        }));
+
+        this.seccionMovida.emit(this._secciones().find(s => s.id === seccionId)!);
+        this.seccionMovida.emit(this._secciones().find(s => s.id === ocupante.id)!);
+
+        this.guardando.set(true);
+        this.error.set(null);
+
+        const cambios: BulkCambio[] = [
+          { id: seccionId,   aula_id: aulaId,        grupo_horario_id: grupoId },
+          { id: ocupante.id, aula_id: aulaOriginalId, grupo_horario_id: grupoOriginalId }
+        ];
+
+        this.piService.bulkUpdate(this.borrador().id, cambios).subscribe({
+          next: () => this.guardando.set(false),
+          error: () => {
+            this._secciones.set(snapshot);
+            this.seccionMovida.emit(seccion);
+            this.seccionMovida.emit(ocupante);
+            this.guardando.set(false);
+            this.error.set('Error al guardar el cambio. Intenta de nuevo.');
+          }
+        });
+        return;
+      }
+    }
+
+    // Movimiento normal a celda vacía o columna "Sin asignar"
     this._secciones.update(secs => secs.map(s => s.id !== seccionId ? s : {
       ...s,
       aula: nuevaAula,
@@ -119,9 +168,7 @@ export class PiMatrizComponent {
       esta_asignado: aulaId !== null && grupoId !== null
     }));
 
-    // Propaga la sección actualizada al padre para mantener métricas correctas
-    const seccionActualizada = this._secciones().find(s => s.id === seccionId)!;
-    this.seccionMovida.emit(seccionActualizada);
+    this.seccionMovida.emit(this._secciones().find(s => s.id === seccionId)!);
 
     this.guardando.set(true);
     this.error.set(null);
@@ -129,12 +176,10 @@ export class PiMatrizComponent {
     const cambios: BulkCambio[] = [{ id: seccionId, aula_id: aulaId, grupo_horario_id: grupoId }];
 
     this.piService.bulkUpdate(this.borrador().id, cambios).subscribe({
-      next: () => {
-        this.guardando.set(false);
-      },
+      next: () => this.guardando.set(false),
       error: () => {
         this._secciones.set(snapshot);
-        this.seccionMovida.emit(seccion); // revertir en el padre también
+        this.seccionMovida.emit(seccion);
         this.guardando.set(false);
         this.error.set('Error al guardar el cambio. Intenta de nuevo.');
       }
