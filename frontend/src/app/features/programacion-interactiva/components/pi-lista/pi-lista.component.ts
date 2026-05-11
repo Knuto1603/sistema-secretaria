@@ -100,34 +100,63 @@ export class PiListaComponent {
     });
   }
 
+  readonly filtroEscuelaId = signal('');
+  readonly filtroCurso     = signal('');
+
   readonly escuelas = computed((): EscuelaRef[] => {
     const map = new Map<string, EscuelaRef>();
     for (const s of this.borrador().secciones ?? []) {
       if (!map.has(s.escuela.id)) map.set(s.escuela.id, s.escuela);
     }
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   readonly gruposEscuela = computed((): GrupoEscuela[] => {
-    const secciones = this.borrador().secciones ?? [];
-    const escuelaMap = new Map<string, Map<number, BorradorSeccion[]>>();
+    let secciones = this.borrador().secciones ?? [];
 
+    const escuelaId = this.filtroEscuelaId();
+    if (escuelaId) secciones = secciones.filter(s => s.escuela.id === escuelaId);
+
+    const termino = this.filtroCurso().toLowerCase().trim();
+    if (termino) secciones = secciones.filter(s =>
+      s.curso.nombre.toLowerCase().includes(termino) ||
+      s.curso.codigo.toLowerCase().includes(termino)
+    );
+
+    const escuelaMap = new Map<string, Map<number, BorradorSeccion[]>>();
     for (const s of secciones) {
-      if (!escuelaMap.has(s.escuela.id)) {
-        escuelaMap.set(s.escuela.id, new Map());
-      }
+      if (!escuelaMap.has(s.escuela.id)) escuelaMap.set(s.escuela.id, new Map());
       const cicloMap = escuelaMap.get(s.escuela.id)!;
       if (!cicloMap.has(s.ciclo)) cicloMap.set(s.ciclo, []);
       cicloMap.get(s.ciclo)!.push(s);
     }
 
-    return this.escuelas().map(escuela => ({
-      escuela,
-      ciclos: Array.from(escuelaMap.get(escuela.id)?.entries() ?? [])
-        .sort(([a], [b]) => a - b)
-        .map(([ciclo, secciones]) => ({ ciclo, secciones }))
-    }));
+    return this.escuelas()
+      .filter(e => escuelaMap.has(e.id))
+      .map(escuela => ({
+        escuela,
+        ciclos: Array.from(escuelaMap.get(escuela.id)!.entries())
+          .sort(([a], [b]) => a - b)
+          .map(([ciclo, secs]) => ({
+            ciclo,
+            secciones: [...secs].sort((a, b) => {
+              const cmp = a.curso.nombre.localeCompare(b.curso.nombre);
+              return cmp !== 0 ? cmp : a.seccion.localeCompare(b.seccion);
+            })
+          }))
+      }));
   });
+
+  readonly totalFiltradas = computed(() =>
+    this.gruposEscuela().reduce((acc, g) => acc + this.totalSeccionesGrupo(g), 0)
+  );
+
+  readonly hayFiltros = computed(() => !!this.filtroEscuelaId() || !!this.filtroCurso().trim());
+
+  limpiarFiltros(): void {
+    this.filtroEscuelaId.set('');
+    this.filtroCurso.set('');
+  }
 
   onBuscarCurso(term: string): void {
     this.cursoBusqueda.set(term);
