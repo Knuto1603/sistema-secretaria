@@ -176,6 +176,20 @@ export class PlanEstudiosService {
     });
   }
 
+  // ── Curso del plan ──────────────────────────────────────────────────────
+
+  actualizarCursoPlan(id: string, data: {
+    ciclo?: number | null;
+    creditos?: number | null;
+    tipo?: 'O' | 'E';
+    horas_teoricas?: number | null;
+    horas_practicas?: number | null;
+  }): Observable<Pick<CursoPlan, 'id' | 'ciclo' | 'creditos' | 'tipo' | 'horas_teoricas' | 'horas_practicas'>> {
+    return this.http.patch<ApiResponse<any>>(`${this.apiUrl}/${id}`, data).pipe(
+      map(r => r.data)
+    );
+  }
+
   // ── Equivalencias ───────────────────────────────────────────────────────
 
   getEquivalencias(cursoId: string): Observable<{ curso: { id: string; codigo: string; nombre: string }; equivalencias: CursoEquivalencia[] }> {

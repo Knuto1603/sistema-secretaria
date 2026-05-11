@@ -237,6 +237,23 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::patch('/{id}/toggle', [PabellonController::class, 'toggleAula']);
     });
 
+    // =============================================
+    // PROGRAMACIÓN INTERACTIVA (Borradores)
+    // =============================================
+    Route::prefix('programacion-interactiva')
+        ->middleware('role:secretaria|admin|secretario academico|developer')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'index']);
+            Route::post('/generar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'generar']);
+            Route::get('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'show']);
+            Route::delete('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'destroy']);
+            Route::post('/{id}/publicar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'publicar']);
+            Route::post('/{id}/secciones', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'agregarSeccion']);
+            Route::put('/{id}/secciones/{seccionId}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'updateSeccion']);
+            Route::patch('/{id}/secciones/bulk', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'bulkUpdate']);
+            Route::delete('/{id}/secciones/{seccionId}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'deleteSeccion']);
+        });
+
     // Rutas de Tipos de Solicitud (solo admin/secretaria)
     Route::prefix('tipos-solicitud')->middleware('role:admin|secretaria|decano|secretario academico|developer')->group(function () {
         Route::get('/', [TipoSolicitudController::class, 'index']);
@@ -358,6 +375,10 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::patch('/planes/{id}', [PlanEstudiosController::class, 'actualizarPlan'])
                 ->middleware('role:admin|secretario academico|developer');
             Route::delete('/planes/{id}', [PlanEstudiosController::class, 'eliminarPlan'])
+                ->middleware('role:admin|secretario academico|developer');
+
+            // Actualizar curso del plan
+            Route::patch('/{id}', [PlanEstudiosController::class, 'actualizarCursoPlan'])
                 ->middleware('role:admin|secretario academico|developer');
 
             // Importación

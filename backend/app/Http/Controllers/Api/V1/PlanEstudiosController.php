@@ -426,6 +426,39 @@ class PlanEstudiosController extends Controller
     }
 
     /**
+     * Actualiza los datos de un curso dentro del plan
+     * PATCH /plan-estudios/{id}
+     */
+    public function actualizarCursoPlan(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'ciclo'           => ['nullable', 'integer', 'min:1', 'max:12'],
+            'creditos'        => ['nullable', 'integer', 'min:0'],
+            'tipo'            => ['nullable', 'in:O,E'],
+            'horas_teoricas'  => ['nullable', 'integer', 'min:0'],
+            'horas_practicas' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $registro = PlanEstudios::find($id);
+        if (!$registro) {
+            return $this->notFound('Registro no encontrado');
+        }
+
+        $registro->update($request->only([
+            'ciclo', 'creditos', 'tipo', 'horas_teoricas', 'horas_practicas',
+        ]));
+
+        return $this->success([
+            'id'              => $registro->id,
+            'ciclo'           => $registro->ciclo,
+            'creditos'        => $registro->creditos,
+            'tipo'            => $registro->tipo,
+            'horas_teoricas'  => $registro->horas_teoricas,
+            'horas_practicas' => $registro->horas_practicas,
+        ], 'Curso actualizado correctamente');
+    }
+
+    /**
      * Debug: devuelve el texto crudo extraído del PDF (solo developer)
      * POST /plan-estudios/debug-pdf
      */

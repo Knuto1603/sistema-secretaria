@@ -91,6 +91,55 @@ export class PlanEstudiosComponent implements OnInit {
     });
   }
 
+  // ── Edición de curso del plan ────────────────────────────────────────────
+  editandoCurso = signal<CursoPlan | null>(null);
+  editCursoCiclo: number | null = null;
+  editCursoCreditos: number | null = null;
+  editCursoTipo: 'O' | 'E' = 'O';
+  editCursoHT: number | null = null;
+  editCursoHP: number | null = null;
+  guardandoCurso = signal(false);
+
+  abrirEditarCurso(curso: CursoPlan): void {
+    this.editandoCurso.set(curso);
+    this.editCursoCiclo     = curso.ciclo;
+    this.editCursoCreditos  = curso.creditos;
+    this.editCursoTipo      = curso.tipo;
+    this.editCursoHT        = curso.horas_teoricas;
+    this.editCursoHP        = curso.horas_practicas;
+  }
+
+  cerrarEditarCurso(): void {
+    this.editandoCurso.set(null);
+  }
+
+  guardarCursoPlan(): void {
+    const curso = this.editandoCurso();
+    if (!curso) return;
+    this.guardandoCurso.set(true);
+    this.service.actualizarCursoPlan(curso.id, {
+      ciclo:           this.editCursoCiclo,
+      creditos:        this.editCursoCreditos,
+      tipo:            this.editCursoTipo,
+      horas_teoricas:  this.editCursoHT,
+      horas_practicas: this.editCursoHP,
+    }).subscribe({
+      next: updated => {
+        this.plan.update(d => d ? {
+          ...d,
+          cursos: d.cursos.map(c => c.id === curso.id ? { ...c, ...updated } : c),
+        } : d);
+        this.mostrarMensaje('success', 'Curso actualizado correctamente');
+        this.guardandoCurso.set(false);
+        this.cerrarEditarCurso();
+      },
+      error: err => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al actualizar el curso');
+        this.guardandoCurso.set(false);
+      },
+    });
+  }
+
   // ── Equivalencias ────────────────────────────────────────────────────────
   cursoEquivalencias = signal<{ curso: { id: string; codigo: string; nombre: string }; equivalencias: CursoEquivalencia[] } | null>(null);
   mostrarModalEquivalencias = signal(false);
