@@ -3,7 +3,8 @@
 # Uso: make <comando>
 # ============================================================
 
-.PHONY: up down build restart logs shell-backend shell-db migrate seed fresh
+.PHONY: up down build restart logs shell-backend shell-db migrate seed fresh \
+        local-up local-down local-db local-setup
 
 # Levantar todos los servicios
 up:
@@ -63,6 +64,42 @@ optimize:
 	docker compose exec backend php artisan config:cache
 	docker compose exec backend php artisan route:cache
 	docker compose exec backend php artisan view:cache
+
+# ── Desarrollo local (DB + Redis en Docker, servidores nativos) ──────
+
+# Levantar solo infraestructura local
+local-up:
+	docker compose -f docker-compose.local.yml up -d
+	@echo ""
+	@echo "Infraestructura lista:"
+	@echo "  MySQL → localhost:3306  (user: secretaria / pass: secret)"
+	@echo "  Redis → localhost:6379"
+	@echo ""
+	@echo "Ahora levanta los servidores:"
+	@echo "  cd backend  && php artisan serve    → http://localhost:8000"
+	@echo "  cd frontend && ng serve             → http://localhost:4200"
+
+# Apagar infraestructura local
+local-down:
+	docker compose -f docker-compose.local.yml down
+
+# Entrar a MySQL local
+local-db:
+	docker compose -f docker-compose.local.yml exec db mysql -u secretaria -psecret gestion_academica
+
+# Primera configuración del entorno local (solo la primera vez)
+local-setup: local-up
+	@echo "Esperando a que MySQL esté listo..."
+	sleep 12
+	cd backend && cp -n .env.example .env || true
+	cd backend && php artisan key:generate
+	cd backend && php artisan migrate --seed
+	@echo ""
+	@echo "Listo. Levanta los servidores con:"
+	@echo "  cd backend  && php artisan serve"
+	@echo "  cd frontend && ng serve"
+
+# ── Primer despliegue completo ────────────────────────────────────────
 
 # Primer despliegue completo
 setup: up

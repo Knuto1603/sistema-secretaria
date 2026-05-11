@@ -22,8 +22,13 @@ return [
     // En desarrollo: localhost:4200 (Angular default)
     // En producción: cambiar por el dominio real
     'allowed_origins' => [
+        'http://localhost:49930',
         'http://localhost:4200',
+        'http://localhost:4201',
+        'http://localhost:4202',
+        'http://localhost:3000',
         'http://127.0.0.1:4200',
+        'http://127.0.0.1:4201',
         'http://20.121.70.122',
         'http://20.121.70.122:80',
         'http://68.211.112.144',
