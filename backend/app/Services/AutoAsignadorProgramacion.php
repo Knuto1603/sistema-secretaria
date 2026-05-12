@@ -44,7 +44,9 @@ class AutoAsignadorProgramacion
      */
     public function distribuir(Collection $secciones): array
     {
-        $bloques = $secciones->groupBy(fn($s) => $s->escuela_id . '|' . $s->ciclo);
+        // Agrupar por (escuela, ciclo, seccion): la sección "1" va en un aula,
+        // la sección "2" en otra, pero usando los mismos grupos horarios gracias a grupoDelPar.
+        $bloques = $secciones->groupBy(fn($s) => $s->escuela_id . '|' . $s->ciclo . '|' . $s->seccion);
 
         // Informática primero → reserva aulas FII antes que las demás escuelas
         $bloquesOrdenados = $bloques->sortBy(function (Collection $secs) {
@@ -126,8 +128,7 @@ class AutoAsignadorProgramacion
 
     private function procesarBloque(string $bloqueKey, Collection $seccionesBloque): void
     {
-        [, $cicloStr] = explode('|', $bloqueKey, 2);
-        $ciclo   = (int) $cicloStr;
+        $ciclo   = (int) $seccionesBloque->first()->ciclo;
         $escuela = $seccionesBloque->first()->escuela;
 
         $aulasPermitidas = $escuela->es_informatica ? $this->aulasFII : $this->todasAulas;
@@ -145,12 +146,7 @@ class AutoAsignadorProgramacion
             return;
         }
 
-        $seccionesOrdenadas = $seccionesBloque->sort(function ($a, $b) {
-            if ($a->curso_id !== $b->curso_id) {
-                return strcmp($a->curso_id, $b->curso_id);
-            }
-            return strcmp($a->seccion, $b->seccion);
-        });
+        $seccionesOrdenadas = $seccionesBloque->sort(fn($a, $b) => strcmp($a->curso_id, $b->curso_id));
 
         foreach ($seccionesOrdenadas as $seccion) {
             $parKey = $ciclo . '|' . $seccion->curso_id . '|' . $seccion->seccion;
