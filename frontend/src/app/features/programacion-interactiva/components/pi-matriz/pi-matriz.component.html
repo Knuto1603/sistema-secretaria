@@ -238,20 +238,24 @@
             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Horario / Aula</span>
           </th>
 
-          <!-- Una columna por pabellón/aula -->
-          @for (pabellon of pabellones(); track pabellon.id) {
-            @for (aula of pabellon.aulas; track aula.id; let aulaFirst = $first) {
-              @if (aula.activo) {
-                <th class="border-r border-slate-200 last:border-r-0 px-2 py-3 w-44 min-w-[11rem]"
-                    [class.border-l-2]="aulaFirst" [class.border-l-slate-300]="aulaFirst">
-                  <div class="flex flex-col items-center gap-0.5">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ pabellon.nombre }}</span>
-                    <span class="text-sm font-black text-slate-800">{{ aula.nombre }}</span>
-                    <span class="text-xs text-slate-400">{{ aula.capacidad }} cupos</span>
-                  </div>
-                </th>
-              }
-            }
+          <!-- Una columna por aula: normales primero, laboratorios al final -->
+          @for (col of columnas(); track col.aula.id) {
+            <th class="border-r border-slate-200 last:border-r-0 px-2 py-3 w-44 min-w-[11rem]"
+                [class.border-l-2]="col.mostrarSepPabellon || col.esInicioLabs"
+                [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
+                [class.border-l-rose-400]="col.esInicioLabs">
+              <div class="flex flex-col items-center gap-0.5">
+                @if (col.esInicioLabs) {
+                  <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-0.5">Laboratorios</span>
+                }
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ col.pabellon.nombre }}</span>
+                <span class="text-sm font-black text-slate-800">{{ col.aula.nombre }}</span>
+                <span class="text-xs text-slate-400">{{ col.aula.capacidad }} cupos</span>
+                @if (col.aula.es_laboratorio) {
+                  <span class="text-[10px] font-medium text-rose-400">Laboratorio</span>
+                }
+              </div>
+            </th>
           }
         </tr>
       </thead>
@@ -267,27 +271,25 @@
               <p class="text-xs text-slate-400 mt-0.5 leading-snug">{{ formatHorario(grupo) }}</p>
             </td>
 
-            <!-- Una celda por cada aula -->
-            @for (pabellon of pabellones(); track pabellon.id) {
-              @for (aula of pabellon.aulas; track aula.id; let aulaFirst = $first) {
-                @if (aula.activo) {
-                  <td class="border-r border-slate-200 last:border-r-0 p-2 align-top"
-                      [class.border-l-2]="aulaFirst" [class.border-l-slate-300]="aulaFirst">
-                    <div
-                      class="min-h-16 max-h-64 overflow-y-auto rounded-xl border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
-                      (dragover)="onDragOver($event)"
-                      (dragenter)="onDragEnter($event, $any($event.currentTarget))"
-                      (dragleave)="onDragLeave($event, $any($event.currentTarget))"
-                      (drop)="onDrop($event, aula.id, grupo.id, $any($event.currentTarget))">
+            <!-- Una celda por cada aula (mismo orden que el thead) -->
+            @for (col of columnas(); track col.aula.id) {
+              <td class="border-r border-slate-200 last:border-r-0 p-2 align-top"
+                  [class.border-l-2]="col.mostrarSepPabellon || col.esInicioLabs"
+                  [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
+                  [class.border-l-rose-400]="col.esInicioLabs">
+                <div
+                  class="min-h-16 max-h-64 overflow-y-auto rounded-xl border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
+                  (dragover)="onDragOver($event)"
+                  (dragenter)="onDragEnter($event, $any($event.currentTarget))"
+                  (dragleave)="onDragLeave($event, $any($event.currentTarget))"
+                  (drop)="onDrop($event, col.aula.id, grupo.id, $any($event.currentTarget))">
 
-                      @for (sec of seccionesEnCelda(aula.id, grupo.id); track sec.id) {
-                        <ng-container *ngTemplateOutlet="seccionCard; context: { $implicit: sec }"></ng-container>
-                      }
+                  @for (sec of seccionesEnCelda(col.aula.id, grupo.id); track sec.id) {
+                    <ng-container *ngTemplateOutlet="seccionCard; context: { $implicit: sec }"></ng-container>
+                  }
 
-                    </div>
-                  </td>
-                }
-              }
+                </div>
+              </td>
             }
           </tr>
         }

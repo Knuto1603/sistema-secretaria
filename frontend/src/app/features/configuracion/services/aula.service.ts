@@ -9,6 +9,7 @@ export interface Aula {
   nombre: string;
   capacidad: number;
   activo: boolean;
+  es_laboratorio: boolean;
 }
 
 export interface Pabellon {

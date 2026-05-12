@@ -50,6 +50,36 @@ export class PiMatrizComponent {
     this.pabellones().flatMap(p => p.aulas.filter(a => a.activo))
   );
 
+  /** Columnas de la matriz: aulas normales primero (por pabellón), laboratorios al final. */
+  columnas = computed(() => {
+    interface Columna { aula: Aula; pabellon: Pabellon; esInicioLabs: boolean; mostrarSepPabellon: boolean; }
+    const filas: Columna[] = [];
+
+    const normales: { aula: Aula; pabellon: Pabellon }[] = [];
+    const labs:     { aula: Aula; pabellon: Pabellon }[] = [];
+
+    for (const p of this.pabellones()) {
+      for (const a of p.aulas) {
+        if (!a.activo) continue;
+        (a.es_laboratorio ? labs : normales).push({ aula: a, pabellon: p });
+      }
+    }
+
+    let lastPabId = '';
+    for (const item of normales) {
+      filas.push({ ...item, esInicioLabs: false, mostrarSepPabellon: item.pabellon.id !== lastPabId });
+      lastPabId = item.pabellon.id;
+    }
+    lastPabId = '';
+    for (let i = 0; i < labs.length; i++) {
+      const item = labs[i];
+      filas.push({ ...item, esInicioLabs: i === 0, mostrarSepPabellon: item.pabellon.id !== lastPabId });
+      lastPabId = item.pabellon.id;
+    }
+
+    return filas;
+  });
+
   gruposActivos = computed((): GrupoHorario[] =>
     this.grupos().filter(g => g.activo && g.detalles.length > 0)
   );
