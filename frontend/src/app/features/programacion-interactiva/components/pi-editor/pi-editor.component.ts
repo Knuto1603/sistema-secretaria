@@ -6,7 +6,7 @@ import { NgClass } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, switchMap, tap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProgramacionInteractivaService, BorradorProgramacion, BorradorSeccion } from '../../services/programacion-interactiva.service';
+import { ProgramacionInteractivaService, BorradorProgramacion, BorradorSeccion, AutoAsignarResult } from '../../services/programacion-interactiva.service';
 import { AulaService, Pabellon } from '../../../configuracion/services/aula.service';
 import { HorarioService, GrupoHorario } from '../../../configuracion/services/horario.service';
 import { AppButtonComponent } from '@shared/button/button.component';
@@ -47,7 +47,7 @@ export class PiEditorComponent implements OnInit {
   publicando         = signal(false);
   publicadoExito     = signal(false);
   autoAsignando      = signal(false);
-  resultadoAutoAsign = signal<{ total: number; asignadas: number; sin_asignar: number } | null>(null);
+  resultadoAutoAsign = signal<AutoAsignarResult | null>(null);
   errorAutoAsign     = signal(false);
   vistaActiva        = signal<Vista>('lista');
 

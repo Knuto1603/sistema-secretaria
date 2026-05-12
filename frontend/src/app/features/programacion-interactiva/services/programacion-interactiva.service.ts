@@ -131,9 +131,24 @@ export class ProgramacionInteractivaService {
     );
   }
 
-  autoAsignar(id: string): Observable<{ total: number; asignadas: number; sin_asignar: number }> {
-    return this.http.post<ApiResponse<{ total: number; asignadas: number; sin_asignar: number }>>(
+  autoAsignar(id: string): Observable<AutoAsignarResult> {
+    return this.http.post<ApiResponse<AutoAsignarResult>>(
       `${this.apiUrl}/${id}/auto-asignar`, {}
     ).pipe(map(r => r.data));
   }
+}
+
+export interface ResumenAula {
+  aula: string;
+  pabellon: string;
+  slots_usados: number;
+  slots_total: number;
+  razon?: string;
+}
+
+export interface AutoAsignarResult {
+  total: number;
+  asignadas: number;
+  sin_asignar: number;
+  aulas: { usadas: ResumenAula[]; vacias: ResumenAula[] };
 }
