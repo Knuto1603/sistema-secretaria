@@ -149,9 +149,9 @@ class AutoAsignadorProgramacion
         $seccionesOrdenadas = $seccionesBloque->sort(fn($a, $b) => strcmp($a->curso_id, $b->curso_id));
 
         foreach ($seccionesOrdenadas as $seccion) {
-            // Clave sin sección: mismo curso del mismo ciclo → mismo grupo siempre,
-            // independientemente de si es sección 1 o 2, y de la escuela.
-            $parKey = $ciclo . '|' . $seccion->curso_id;
+            // Coordinación intra-escuela: mismo curso+ciclo dentro de la misma escuela
+            // siempre comparte grupo, sin importar el número de sección.
+            $parKey = $seccion->escuela_id . '|' . $ciclo . '|' . $seccion->curso_id;
             $grupoPreferido = $this->grupoDelPar[$parKey] ?? null;
             $grupoId = null;
 
