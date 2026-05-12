@@ -305,23 +305,50 @@ export class PiMatrizComponent {
     return detalles;
   }
 
-  private readonly _escuelaColorMap = computed((): Map<string, string> => {
-    const colors = ['bg-indigo-100 text-indigo-700', 'bg-emerald-100 text-emerald-700',
-                    'bg-amber-100 text-amber-700', 'bg-violet-100 text-violet-700'];
-    const map = new Map<string, string>();
-    let idx = 0;
-    for (const s of this.secciones()) {
-      if (!map.has(s.escuela.id)) {
-        map.set(s.escuela.id, colors[idx % colors.length]);
-        idx++;
-      }
-    }
+  private readonly COLORES = [
+    { bg: 'bg-blue-100',    border: 'border-blue-300',    text: 'text-blue-800'    },
+    { bg: 'bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-800' },
+    { bg: 'bg-violet-100',  border: 'border-violet-300',  text: 'text-violet-800'  },
+    { bg: 'bg-amber-100',   border: 'border-amber-300',   text: 'text-amber-800'   },
+    { bg: 'bg-rose-100',    border: 'border-rose-300',    text: 'text-rose-800'    },
+    { bg: 'bg-cyan-100',    border: 'border-cyan-300',    text: 'text-cyan-800'    },
+    { bg: 'bg-orange-100',  border: 'border-orange-300',  text: 'text-orange-800'  },
+    { bg: 'bg-teal-100',    border: 'border-teal-300',    text: 'text-teal-800'    },
+    { bg: 'bg-fuchsia-100', border: 'border-fuchsia-300', text: 'text-fuchsia-800' },
+    { bg: 'bg-lime-100',    border: 'border-lime-300',    text: 'text-lime-800'    },
+    { bg: 'bg-sky-100',     border: 'border-sky-300',     text: 'text-sky-800'     },
+    { bg: 'bg-pink-100',    border: 'border-pink-300',    text: 'text-pink-800'    },
+    { bg: 'bg-indigo-100',  border: 'border-indigo-300',  text: 'text-indigo-800'  },
+    { bg: 'bg-yellow-100',  border: 'border-yellow-300',  text: 'text-yellow-800'  },
+    { bg: 'bg-red-100',     border: 'border-red-300',     text: 'text-red-800'     },
+    { bg: 'bg-green-100',   border: 'border-green-300',   text: 'text-green-800'   },
+    { bg: 'bg-purple-100',  border: 'border-purple-300',  text: 'text-purple-800'  },
+    { bg: 'bg-slate-200',   border: 'border-slate-400',   text: 'text-slate-800'   },
+    { bg: 'bg-stone-100',   border: 'border-stone-300',   text: 'text-stone-800'   },
+    { bg: 'bg-zinc-100',    border: 'border-zinc-300',    text: 'text-zinc-800'    },
+  ];
+
+  private readonly _colorMap = computed((): Map<string, typeof this.COLORES[0]> => {
+    const map = new Map<string, typeof this.COLORES[0]>();
+    // Claves ordenadas para asignación determinista independiente del orden de llegada
+    const claves = [...new Set(this.secciones().map(s => `${s.escuela.id}|${s.ciclo}`))].sort();
+    claves.forEach((clave, idx) => map.set(clave, this.COLORES[idx % this.COLORES.length]));
     return map;
   });
 
-  escuelaColor(escuela: BorradorSeccion['escuela']): string {
-    return this._escuelaColorMap().get(escuela.id) ?? 'bg-indigo-100 text-indigo-700';
+  seccionColor(sec: BorradorSeccion): typeof this.COLORES[0] {
+    return this._colorMap().get(`${sec.escuela.id}|${sec.ciclo}`) ?? this.COLORES[0];
   }
+
+  readonly leyendaColores = computed(() => {
+    const map   = this._colorMap();
+    const secs  = this.secciones();
+    return [...map.entries()].map(([clave, color]) => {
+      const [escuelaId, cicloStr] = clave.split('|');
+      const ref = secs.find(s => s.escuela.id === escuelaId && String(s.ciclo) === cicloStr);
+      return { escuela: ref?.escuela.nombre_corto ?? escuelaId, ciclo: Number(cicloStr), color };
+    }).sort((a, b) => a.escuela.localeCompare(b.escuela) || a.ciclo - b.ciclo);
+  });
 
   isDragging(id: string): boolean {
     return this.draggingId() === id;
