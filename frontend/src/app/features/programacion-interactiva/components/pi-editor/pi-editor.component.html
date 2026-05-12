@@ -31,15 +31,71 @@
           </div>
         </div>
         @if (borrador()!.estado === 'borrador') {
-          <app-btn variant="success" [loading]="publicando()" (clicked)="publicar()">
-            Publicar Programación
-          </app-btn>
+          <div class="flex items-center gap-2">
+            <app-btn
+              variant="secondary"
+              [loading]="autoAsignando()"
+              [attr.aria-busy]="autoAsignando()"
+              (clicked)="autoAsignar()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+              Auto-asignar
+            </app-btn>
+            <app-btn variant="success" [loading]="publicando()" (clicked)="publicar()">
+              Publicar Programación
+            </app-btn>
+          </div>
         }
       </div>
 
+      <!-- Toast auto-asignación: éxito total o parcial -->
+      @if (resultadoAutoAsign()) {
+        <div class="mt-3 rounded-xl px-4 py-3 flex items-center gap-2 border"
+          [ngClass]="resultadoAutoAsign()!.sin_asignar === 0
+            ? 'bg-emerald-50 border-emerald-200'
+            : 'bg-amber-50 border-amber-200'"
+          role="alert"
+          aria-live="polite">
+          @if (resultadoAutoAsign()!.sin_asignar === 0) {
+            <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <p class="text-sm font-medium text-emerald-800">
+              Auto-asignación completa: {{ resultadoAutoAsign()!.asignadas }} de {{ resultadoAutoAsign()!.total }} secciones distribuidas.
+            </p>
+          } @else {
+            <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <p class="text-sm font-medium text-amber-800">
+              {{ resultadoAutoAsign()!.asignadas }} secciones asignadas,
+              {{ resultadoAutoAsign()!.sin_asignar }} no pudieron asignarse por falta de espacio.
+            </p>
+          }
+        </div>
+      }
+
+      <!-- Toast error HTTP en auto-asignación -->
+      @if (errorAutoAsign()) {
+        <div class="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2"
+          role="alert"
+          aria-live="assertive">
+          <svg class="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          <p class="text-sm font-medium text-red-800">
+            Error al ejecutar la auto-asignación. Intenta nuevamente.
+          </p>
+        </div>
+      }
+
       <!-- Toast publicación exitosa -->
       @if (publicadoExito()) {
-        <div class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-2" role="alert">
+        <div class="mt-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-2"
+          role="alert"
+          aria-live="polite">
           <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>

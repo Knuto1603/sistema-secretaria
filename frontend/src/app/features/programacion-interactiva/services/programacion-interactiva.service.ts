@@ -130,4 +130,10 @@ export class ProgramacionInteractivaService {
       map(() => undefined)
     );
   }
+
+  autoAsignar(id: string): Observable<{ total: number; asignadas: number; sin_asignar: number }> {
+    return this.http.post<ApiResponse<{ total: number; asignadas: number; sin_asignar: number }>>(
+      `${this.apiUrl}/${id}/auto-asignar`, {}
+    ).pipe(map(r => r.data));
+  }
 }

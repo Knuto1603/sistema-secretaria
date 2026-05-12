@@ -1,8 +1,11 @@
 import {
-  Component, inject, signal, computed, OnInit, ChangeDetectionStrategy
+  Component, inject, signal, computed, OnInit,
+  ChangeDetectionStrategy, DestroyRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, switchMap, tap, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgramacionInteractivaService, BorradorProgramacion, BorradorSeccion } from '../../services/programacion-interactiva.service';
 import { AulaService, Pabellon } from '../../../configuracion/services/aula.service';
 import { HorarioService, GrupoHorario } from '../../../configuracion/services/horario.service';
@@ -18,7 +21,7 @@ type Vista = 'lista' | 'matriz';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
+    NgClass,
     AppButtonComponent,
     AppBadgeComponent,
     PiListaComponent,
@@ -27,57 +30,59 @@ type Vista = 'lista' | 'matriz';
   templateUrl: './pi-editor.component.html'
 })
 export class PiEditorComponent implements OnInit {
-  private piService     = inject(ProgramacionInteractivaService);
-  private aulaService   = inject(AulaService);
+  private piService      = inject(ProgramacionInteractivaService);
+  private aulaService    = inject(AulaService);
   private horarioService = inject(HorarioService);
-  private route         = inject(ActivatedRoute);
-  private router        = inject(Router);
+  private route          = inject(ActivatedRoute);
+  private router         = inject(Router);
+  private destroyRef     = inject(DestroyRef);
 
-  borrador    = signal<BorradorProgramacion | null>(null);
-  pabellones  = signal<Pabellon[]>([]);
-  grupos      = signal<GrupoHorario[]>([]);
+  private readonly borradorId = this.route.snapshot.paramMap.get('id');
 
-  loading          = signal(true);
-  publicando       = signal(false);
-  publicadoExito   = signal(false);
-  vistaActiva      = signal<Vista>('lista');
+  borrador   = signal<BorradorProgramacion | null>(null);
+  pabellones = signal<Pabellon[]>([]);
+  grupos     = signal<GrupoHorario[]>([]);
 
-  get borradorId(): string { return this.route.snapshot.paramMap.get('id') ?? ''; }
+  loading            = signal(true);
+  publicando         = signal(false);
+  publicadoExito     = signal(false);
+  autoAsignando      = signal(false);
+  resultadoAutoAsign = signal<{ total: number; asignadas: number; sin_asignar: number } | null>(null);
+  errorAutoAsign     = signal(false);
+  vistaActiva        = signal<Vista>('lista');
 
-  totalSecciones  = computed(() => this.borrador()?.secciones?.length ?? 0);
-  seccionesAsignadas = computed(() =>
-    this.borrador()?.secciones?.filter(s => s.esta_asignado).length ?? 0
-  );
+  totalSecciones      = computed(() => this.borrador()?.secciones?.length ?? 0);
+  seccionesAsignadas  = computed(() => this.borrador()?.secciones?.filter(s => s.esta_asignado).length ?? 0);
   seccionesSinAsignar = computed(() => this.totalSecciones() - this.seccionesAsignadas());
 
   ngOnInit(): void {
+    if (!this.borradorId) {
+      this.router.navigate(['/app/programacion-interactiva']);
+      return;
+    }
     this.cargar();
   }
 
   private cargar(): void {
     this.loading.set(true);
-    const id = this.borradorId;
 
-    Promise.all([
-      new Promise<void>((resolve) => {
-        this.piService.obtener(id).subscribe({
-          next: data => { this.borrador.set(data); resolve(); },
-          error: () => { this.router.navigate(['/app/programacion-interactiva']); resolve(); }
-        });
-      }),
-      new Promise<void>((resolve) => {
-        this.aulaService.getPabellones().subscribe({
-          next: data => { this.pabellones.set(data); resolve(); },
-          error: () => resolve()
-        });
-      }),
-      new Promise<void>((resolve) => {
-        this.horarioService.getGrupos().subscribe({
-          next: data => { this.grupos.set(data.filter(g => g.activo && g.detalles.length > 0)); resolve(); },
-          error: () => resolve()
-        });
-      })
-    ]).then(() => this.loading.set(false));
+    forkJoin({
+      borrador:   this.piService.obtener(this.borradorId!),
+      pabellones: this.aulaService.getPabellones(),
+      grupos:     this.horarioService.getGrupos(),
+    }).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ borrador, pabellones, grupos }) => {
+          this.borrador.set(borrador);
+          this.pabellones.set(pabellones);
+          this.grupos.set(grupos.filter(g => g.activo && g.detalles.length > 0));
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.router.navigate(['/app/programacion-interactiva']);
+        }
+      });
   }
 
   setVista(v: Vista): void {
@@ -87,12 +92,19 @@ export class PiEditorComponent implements OnInit {
   publicar(): void {
     if (!confirm('¿Publicar este borrador? Se crearán los registros en la Programación Académica y no podrá modificarse.')) return;
     this.publicando.set(true);
-    this.piService.publicar(this.borradorId).subscribe({
+
+    this.piService.publicar(this.borradorId!).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: result => {
-        this.borrador.update(b => b ? { ...b, estado: result.estado as 'borrador' | 'publicado', publicado_at: result.publicado_at } : b);
+        this.borrador.update(b => b
+          ? { ...b, estado: result.estado as 'borrador' | 'publicado', publicado_at: result.publicado_at }
+          : b
+        );
         this.publicando.set(false);
         this.publicadoExito.set(true);
-        setTimeout(() => this.publicadoExito.set(false), 4000);
+        timer(4000).pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => this.publicadoExito.set(false));
       },
       error: () => this.publicando.set(false)
     });
@@ -102,19 +114,45 @@ export class PiEditorComponent implements OnInit {
     this.router.navigate(['/app/programacion-interactiva']);
   }
 
+  autoAsignar(): void {
+    if (!confirm('¿Ejecutar auto-asignación? Esto distribuirá automáticamente todas las secciones sin asignar en aulas y grupos disponibles.')) return;
+    this.autoAsignando.set(true);
+    this.resultadoAutoAsign.set(null);
+    this.errorAutoAsign.set(false);
+
+    this.piService.autoAsignar(this.borradorId!).pipe(
+      tap(resultado => {
+        this.resultadoAutoAsign.set(resultado);
+        this.autoAsignando.set(false);
+      }),
+      switchMap(() => this.piService.obtener(this.borradorId!)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: data => {
+        this.borrador.set(data);
+        timer(6000).pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => this.resultadoAutoAsign.set(null));
+      },
+      error: () => {
+        this.autoAsignando.set(false);
+        this.resultadoAutoAsign.set(null);
+        this.errorAutoAsign.set(true);
+        timer(5000).pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => this.errorAutoAsign.set(false));
+      }
+    });
+  }
+
   onSeccionActualizada(seccion: BorradorSeccion): void {
     this.borrador.update(b => {
-      if (!b || !b.secciones) return b;
-      return {
-        ...b,
-        secciones: b.secciones.map(s => s.id === seccion.id ? seccion : s)
-      };
+      if (!b?.secciones) return b;
+      return { ...b, secciones: b.secciones.map(s => s.id === seccion.id ? seccion : s) };
     });
   }
 
   onSeccionEliminada(id: string): void {
     this.borrador.update(b => {
-      if (!b || !b.secciones) return b;
+      if (!b?.secciones) return b;
       return { ...b, secciones: b.secciones.filter(s => s.id !== id) };
     });
   }
