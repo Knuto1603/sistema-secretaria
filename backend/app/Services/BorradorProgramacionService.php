@@ -246,6 +246,40 @@ class BorradorProgramacionService
         $borrador->delete();
     }
 
+    /**
+     * Orquesta la distribución automática de secciones del borrador.
+     * La lógica del algoritmo vive en AutoAsignadorProgramacion.
+     */
+    public function autoAsignar(BorradorProgramacion $borrador): array
+    {
+        $this->verificarEditable($borrador);
+
+        return DB::transaction(function () use ($borrador) {
+            $secciones = BorradorSeccion::where('borrador_id', $borrador->id)
+                ->with(['escuela', 'curso'])
+                ->get();
+
+            if ($secciones->isEmpty()) {
+                return ['total' => 0, 'asignadas' => 0, 'sin_asignar' => 0];
+            }
+
+            $asignaciones = (new AutoAsignadorProgramacion())->distribuir($secciones);
+
+            if (!empty($asignaciones)) {
+                $this->persistirAsignaciones($secciones, $asignaciones);
+            }
+
+            $total    = $secciones->count();
+            $asignadas = count($asignaciones);
+
+            return [
+                'total'       => $total,
+                'asignadas'   => $asignadas,
+                'sin_asignar' => $total - $asignadas,
+            ];
+        });
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private function verificarEditable(BorradorProgramacion $borrador): void
@@ -253,6 +287,40 @@ class BorradorProgramacionService
         if (!$borrador->esBorrador()) {
             throw new Exception('Este borrador ya fue publicado y no puede modificarse.');
         }
+    }
+
+    /**
+     * Persiste las asignaciones en una sola query (upsert) en lugar de N updates.
+     */
+    private function persistirAsignaciones(Collection $secciones, array $asignaciones): void
+    {
+        $seccionesMap = $secciones->keyBy('id');
+        $now = now();
+
+        $filas = array_map(function (string $seccionId, array $datos) use ($seccionesMap, $now) {
+            $s = $seccionesMap[$seccionId];
+            return [
+                'id'               => $s->id,
+                'borrador_id'      => $s->borrador_id,
+                'curso_id'         => $s->curso_id,
+                'escuela_id'       => $s->escuela_id,
+                'ciclo'            => $s->ciclo,
+                'tipo'             => $s->tipo,
+                'seccion'          => $s->seccion,
+                'docente_id'       => $s->docente_id,
+                'capacidad'        => $s->capacidad,
+                'aula_id'          => $datos['aula_id'],
+                'grupo_horario_id' => $datos['grupo_horario_id'],
+                'created_at'       => $s->created_at,
+                'updated_at'       => $now,
+            ];
+        }, array_keys($asignaciones), array_values($asignaciones));
+
+        BorradorSeccion::upsert(
+            $filas,
+            ['id'],
+            ['aula_id', 'grupo_horario_id', 'updated_at']
+        );
     }
 
 }

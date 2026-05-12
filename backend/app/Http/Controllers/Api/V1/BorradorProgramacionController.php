@@ -163,6 +163,23 @@ class BorradorProgramacionController extends Controller
     }
 
     /**
+     * Auto-asigna aulas y grupos a todas las secciones del borrador.
+     * POST /programacion-interactiva/{id}/auto-asignar
+     */
+    public function autoAsignar(string $id): JsonResponse
+    {
+        $borrador = BorradorProgramacion::findOrFail($id);
+        $resultado = $this->service->autoAsignar($borrador);
+
+        $msg = "Auto-asignación completada: {$resultado['asignadas']} de {$resultado['total']} secciones asignadas.";
+        if ($resultado['sin_asignar'] > 0) {
+            $msg .= " {$resultado['sin_asignar']} no pudieron asignarse por falta de espacio.";
+        }
+
+        return $this->success($resultado, $msg);
+    }
+
+    /**
      * Elimina un borrador completo.
      * DELETE /programacion-interactiva/{id}
      */

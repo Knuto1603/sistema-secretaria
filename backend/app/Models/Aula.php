@@ -18,11 +18,13 @@ class Aula extends Model
         'nombre',
         'capacidad',
         'activo',
+        'es_laboratorio',
     ];
 
     protected $casts = [
-        'capacidad' => 'integer',
-        'activo' => 'boolean',
+        'capacidad'      => 'integer',
+        'activo'         => 'boolean',
+        'es_laboratorio' => 'boolean',
     ];
 
     public function pabellon(): BelongsTo

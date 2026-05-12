@@ -16,6 +16,11 @@ class Escuela extends Model
         'codigo',
         'nombre',
         'nombre_corto',
+        'es_informatica',
+    ];
+
+    protected $casts = [
+        'es_informatica' => 'boolean',
     ];
 
     /**
