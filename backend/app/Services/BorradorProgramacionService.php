@@ -263,7 +263,8 @@ class BorradorProgramacionService
                 return ['total' => 0, 'asignadas' => 0, 'sin_asignar' => 0];
             }
 
-            $asignaciones = (new AutoAsignadorProgramacion())->distribuir($secciones);
+            $asignador    = new AutoAsignadorProgramacion();
+            $asignaciones = $asignador->distribuir($secciones);
 
             if (!empty($asignaciones)) {
                 $this->persistirAsignaciones($secciones, $asignaciones);
@@ -276,6 +277,7 @@ class BorradorProgramacionService
                 'total'       => $total,
                 'asignadas'   => $asignadas,
                 'sin_asignar' => $total - $asignadas,
+                'aulas'       => $asignador->resumenAulas(),
             ];
         });
     }

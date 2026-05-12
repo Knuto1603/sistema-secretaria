@@ -17,11 +17,14 @@ use Illuminate\Support\Collection;
  *  - Mismo (ciclo, curso_id, seccion) → mismo grupo en distintas escuelas (coordinación)
  *  - Grupo preferido solo si pertenece al rango de prioridad del ciclo (mañana/tarde)
  *  - Ciclos I–V: prioridad G1–G8; Ciclos VI–X: prioridad G9+
+ *
+ * Estrategia de distribución: "least-loaded" → siempre asigna el bloque al aula
+ * con menor ocupación actual, evitando que unas pocas aulas concentren todo el uso.
  */
 class AutoAsignadorProgramacion
 {
-    private array $ocupacion   = []; // [aula_id][grupo_id] => true
-    private array $grupoDelPar = []; // [ciclo|curso_id|seccion] => grupo_id
+    private array $ocupacion    = []; // [aula_id][grupo_id] => true
+    private array $grupoDelPar  = []; // [ciclo|curso_id|seccion] => grupo_id
     private array $asignaciones = []; // [seccion_id] => [aula_id, grupo_horario_id]
 
     private Collection $todasAulas;
@@ -56,6 +59,44 @@ class AutoAsignadorProgramacion
         return $this->asignaciones;
     }
 
+    /**
+     * Resumen de uso de aulas tras ejecutar distribuir().
+     * Útil para diagnóstico: muestra cuántos slots usa cada aula y cuáles quedaron vacías.
+     */
+    public function resumenAulas(): array
+    {
+        $totalGrupos = $this->todosGrupos->count();
+
+        $usadas = [];
+        foreach ($this->ocupacion as $aulaId => $grupos) {
+            $aula = $this->todasAulas->firstWhere('id', $aulaId);
+            $usadas[] = [
+                'aula'     => $aula?->nombre ?? $aulaId,
+                'pabellon' => $aula?->pabellon?->nombre ?? '—',
+                'slots_usados' => count($grupos),
+                'slots_total'  => $totalGrupos,
+            ];
+        }
+
+        $idsUsadas = array_keys($this->ocupacion);
+        $vacias = $this->todasAulas
+            ->whereNotIn('id', $idsUsadas)
+            ->map(fn($a) => [
+                'aula'         => $a->nombre,
+                'pabellon'     => $a->pabellon?->nombre ?? '—',
+                'slots_usados' => 0,
+                'slots_total'  => $totalGrupos,
+                'razon'        => 'No fue necesaria — aulas anteriores tuvieron capacidad suficiente',
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'usadas' => $usadas,
+            'vacias' => $vacias,
+        ];
+    }
+
     // ─── Recursos ─────────────────────────────────────────────────────────────
 
     private function cargarRecursos(): void
@@ -77,7 +118,6 @@ class AutoAsignadorProgramacion
         $gruposMañana = $this->todosGrupos->filter(fn($g) => $this->extraerNumeroGrupo($g->nombre) <= 8)->values();
         $gruposTarde  = $this->todosGrupos->filter(fn($g) => $this->extraerNumeroGrupo($g->nombre) > 8)->values();
 
-        // Precalculados una vez para evitar allocations por iteración
         $this->gruposPrioridadMañana = $gruposMañana->merge($gruposTarde);
         $this->gruposPrioridadTarde  = $gruposTarde->merge($gruposMañana);
     }
@@ -92,23 +132,19 @@ class AutoAsignadorProgramacion
 
         $aulasPermitidas = $escuela->es_informatica ? $this->aulasFII : $this->todasAulas;
         $gruposPrioridad = $ciclo <= 5 ? $this->gruposPrioridadMañana : $this->gruposPrioridadTarde;
-
-        // Flip para O(1) en la comprobación de rango prioritario
         $gruposPermitidosIds = $gruposPrioridad->pluck('id')->flip()->all();
 
         $slotsNecesarios = $seccionesBloque->count();
         $aulaId = $this->buscarAula($aulasPermitidas, $gruposPrioridad, $slotsNecesarios);
 
-        // Fallback para escuelas no-Informática: cualquier aula disponible
         if (!$aulaId && !$escuela->es_informatica) {
             $aulaId = $this->buscarAula($this->todasAulas, $this->todosGrupos, $slotsNecesarios);
         }
 
         if (!$aulaId) {
-            return; // Sin espacio → secciones del bloque quedan sin asignar
+            return;
         }
 
-        // Orden determinístico: por curso_id y luego por número de sección
         $seccionesOrdenadas = $seccionesBloque->sort(function ($a, $b) {
             if ($a->curso_id !== $b->curso_id) {
                 return strcmp($a->curso_id, $b->curso_id);
@@ -121,14 +157,12 @@ class AutoAsignadorProgramacion
             $grupoPreferido = $this->grupoDelPar[$parKey] ?? null;
             $grupoId = null;
 
-            // Usar el grupo de coordinación solo si pertenece al rango del ciclo actual
             if ($grupoPreferido
                 && isset($gruposPermitidosIds[$grupoPreferido])
                 && !isset($this->ocupacion[$aulaId][$grupoPreferido])) {
                 $grupoId = $grupoPreferido;
             }
 
-            // Si no hay coordinación posible, tomar el siguiente grupo libre
             if (!$grupoId) {
                 foreach ($gruposPrioridad as $grupo) {
                     if (!isset($this->ocupacion[$aulaId][$grupo->id])) {
@@ -139,7 +173,7 @@ class AutoAsignadorProgramacion
             }
 
             if (!$grupoId) {
-                continue; // Aula llena en esta franja
+                continue;
             }
 
             $this->asignaciones[$seccion->id] = [
@@ -153,9 +187,17 @@ class AutoAsignadorProgramacion
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
+    /**
+     * Selecciona el aula con menor ocupación actual que tenga slots suficientes
+     * en el rango de grupos indicado. Estrategia "least-loaded" para distribuir
+     * la carga entre todas las aulas disponibles en lugar de saturar las primeras.
+     */
     private function buscarAula(Collection $aulas, Collection $grupos, int $slotsNecesarios): ?string
     {
-        foreach ($aulas as $aula) {
+        // Ordenar de menor a mayor ocupación para distribuir carga uniformemente
+        $aulasOrdenadas = $aulas->sortBy(fn($a) => count($this->ocupacion[$a->id] ?? []));
+
+        foreach ($aulasOrdenadas as $aula) {
             $libres = 0;
             foreach ($grupos as $grupo) {
                 if (!isset($this->ocupacion[$aula->id][$grupo->id])) {
