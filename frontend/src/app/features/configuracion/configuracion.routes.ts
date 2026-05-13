@@ -68,6 +68,18 @@ export const routes: Routes = [
         loadComponent: () => import('./components/departamentos/departamentos.component')
           .then(m => m.DepartamentosComponent)
       },
+      // Cursos por Departamento
+      {
+        path: 'cursos-departamento',
+        loadComponent: () => import('./components/cursos-departamento/cursos-departamento.component')
+          .then(m => m.CursosDepartamentoComponent)
+      },
+      // Configuración Institucional
+      {
+        path: 'institucional',
+        loadComponent: () => import('./components/configuracion-institucional/configuracion-institucional.component')
+          .then(m => m.ConfiguracionInstitucionalComponent)
+      },
       // Base de Conocimientos
       {
         path: 'knowledge-base',
