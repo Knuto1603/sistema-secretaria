@@ -13,11 +13,12 @@ use ZipArchive;
 
 class ImportHistorialesZipService
 {
-    private int   $estudiantesCreados    = 0;
+    private int   $estudiantesCreados      = 0;
     private int   $estudiantesActualizados = 0;
-    private int   $historialInsertado    = 0;
-    private int   $historialActualizado  = 0;
-    private array $errores               = [];
+    private int   $historialInsertado      = 0;
+    private int   $historialActualizado    = 0;
+    private int   $cursosNoEncontrados     = 0;
+    private array $errores                 = [];
 
     private ?Role $rolEstudiante = null;
 
@@ -166,10 +167,12 @@ class ImportHistorialesZipService
     {
         foreach ($cursos as $entry) {
             try {
-                $curso = Curso::firstOrCreate(
-                    ['codigo' => strtoupper($entry['codigo'])],
-                    ['nombre' => mb_convert_case(trim($entry['nombre']), MB_CASE_TITLE, 'UTF-8')]
-                );
+                $curso = Curso::where('codigo', strtoupper($entry['codigo']))->first();
+
+                if (!$curso) {
+                    $this->cursosNoEncontrados++;
+                    continue;
+                }
 
                 $values = [
                     'fuente'   => 'importado',
@@ -247,12 +250,13 @@ class ImportHistorialesZipService
     public function getResumen(): array
     {
         return [
-            'estudiantes_creados'      => $this->estudiantesCreados,
-            'estudiantes_actualizados' => $this->estudiantesActualizados,
-            'historial_insertado'      => $this->historialInsertado,
-            'historial_actualizado'    => $this->historialActualizado,
-            'errores'                  => count($this->errores),
-            'detalle_errores'          => $this->errores,
+            'estudiantes_creados'       => $this->estudiantesCreados,
+            'estudiantes_actualizados'  => $this->estudiantesActualizados,
+            'historial_insertado'       => $this->historialInsertado,
+            'historial_actualizado'     => $this->historialActualizado,
+            'cursos_no_encontrados'     => $this->cursosNoEncontrados,
+            'errores'                   => count($this->errores),
+            'detalle_errores'           => $this->errores,
         ];
     }
 }

@@ -9,10 +9,11 @@ use Smalot\PdfParser\Parser;
 
 class HistorialPdfImport
 {
-    private string  $codigoEncontrado = '';
-    private int     $importados       = 0;
-    private int     $omitidos         = 0; // cursos reprobados (nota <= 10)
-    private array   $errores          = [];
+    private string  $codigoEncontrado    = '';
+    private int     $importados          = 0;
+    private int     $omitidos            = 0; // cursos reprobados (nota <= 10)
+    private int     $cursosNoEncontrados = 0; // códigos no registrados en el catálogo
+    private array   $errores             = [];
 
     /**
      * @throws \Exception si el PDF no corresponde al usuario autenticado
@@ -101,11 +102,12 @@ class HistorialPdfImport
         string $semestre
     ): void {
         try {
-            // Buscar curso por código, crearlo si no existe
-            $curso = Curso::firstOrCreate(
-                ['codigo' => strtoupper($codigo)],
-                ['nombre' => mb_convert_case(trim($nombre), MB_CASE_TITLE, 'UTF-8')]
-            );
+            $curso = Curso::where('codigo', strtoupper($codigo))->first();
+
+            if (!$curso) {
+                $this->cursosNoEncontrados++;
+                return;
+            }
 
             HistorialAcademico::updateOrCreate(
                 [
@@ -130,11 +132,12 @@ class HistorialPdfImport
     public function getResumen(): array
     {
         return [
-            'codigo_alumno' => $this->codigoEncontrado,
-            'importados'    => $this->importados,
-            'omitidos'      => $this->omitidos,
-            'errores'       => count($this->errores),
-            'detalle_errores' => $this->errores,
+            'codigo_alumno'        => $this->codigoEncontrado,
+            'importados'           => $this->importados,
+            'omitidos'             => $this->omitidos,
+            'cursos_no_encontrados' => $this->cursosNoEncontrados,
+            'errores'              => count($this->errores),
+            'detalle_errores'      => $this->errores,
         ];
     }
 }
