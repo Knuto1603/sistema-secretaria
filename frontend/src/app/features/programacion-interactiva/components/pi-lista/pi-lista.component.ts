@@ -14,6 +14,11 @@ import {
   BorradorSeccion,
   AgregarSeccionDTO
 } from '../../services/programacion-interactiva.service';
+import {
+  DocumentosPiService,
+  GeneracionDocumento,
+  CursoSinArea
+} from '../../services/documentos-pi.service';
 import { Pabellon } from '../../../configuracion/services/aula.service';
 import { GrupoHorario } from '../../../configuracion/services/horario.service';
 import { AppButtonComponent } from '@shared/button/button.component';
@@ -50,6 +55,7 @@ interface GrupoCiclo {
 })
 export class PiListaComponent {
   private readonly piService   = inject(ProgramacionInteractivaService);
+  private readonly docService  = inject(DocumentosPiService);
   private readonly http        = inject(HttpClient);
   private readonly destroyRef  = inject(DestroyRef);
 
@@ -66,6 +72,16 @@ export class PiListaComponent {
   readonly duplicando         = signal<string | null>(null);
   readonly agregando          = signal(false);
   readonly mostrarFormAgregar = signal(false);
+
+  // Generación de documentos
+  readonly mostrarModalDoc     = signal(false);
+  readonly docNumeroOficio     = signal('');
+  readonly docSemestreTexto    = signal('');
+  readonly docCursosSinArea    = signal<CursoSinArea[]>([]);
+  readonly docGeneraciones     = signal<GeneracionDocumento[]>([]);
+  readonly docGenerando        = signal(false);
+  readonly docCargando         = signal(false);
+  readonly docMensaje          = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Formulario agregar
   readonly cursoBusqueda    = signal('');
@@ -89,13 +105,13 @@ export class PiListaComponent {
           return of(null);
         }
         this.cursoBuscando.set(true);
-        return this.http.get<{ success: boolean; data: CursoResultado[] }>(
+        return this.http.get<{ success: boolean; data: { items: CursoResultado[] } }>(
           `${environment.apiUrl}/cursos?search=${encodeURIComponent(term)}&per_page=10`
         );
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(resp => {
-      if (resp) this.cursoResultados.set(resp.data ?? []);
+      if (resp) this.cursoResultados.set(resp.data?.items ?? []);
       this.cursoBuscando.set(false);
     });
   }
@@ -260,5 +276,65 @@ export class PiListaComponent {
 
   grupoDisplay(seccion: BorradorSeccion): string {
     return seccion.grupo_horario?.nombre ?? '';
+  }
+
+  // --- Generación de documentos ---
+
+  abrirModalDoc(): void {
+    this.mostrarModalDoc.set(true);
+    this.docMensaje.set(null);
+    this.docGenerando.set(false);
+    this.docCargando.set(true);
+
+    const id = this.borrador().id;
+    this.docService.getCursosSinArea(id).subscribe({
+      next: lista => this.docCursosSinArea.set(lista),
+      error: () => {}
+    });
+    this.docService.getGeneraciones(id).subscribe({
+      next: gens => { this.docGeneraciones.set(gens); this.docCargando.set(false); },
+      error: () => this.docCargando.set(false)
+    });
+  }
+
+  cerrarModalDoc(): void {
+    this.mostrarModalDoc.set(false);
+  }
+
+  generarDocumentos(): void {
+    const numero  = this.docNumeroOficio().trim();
+    const semestre = this.docSemestreTexto().trim();
+    if (!numero || !semestre || this.docGenerando()) return;
+
+    this.docGenerando.set(true);
+    this.docMensaje.set(null);
+
+    this.docService.generarDocumentos(this.borrador().id, numero, semestre).subscribe({
+      next: gen => {
+        this.docGeneraciones.update(list => [gen, ...list]);
+        this.docGenerando.set(false);
+        this.docNumeroOficio.set('');
+        this.docMensaje.set({ tipo: 'success', texto: `${gen.total_documentos} documento(s) generado(s) correctamente.` });
+      },
+      error: err => {
+        this.docGenerando.set(false);
+        this.docMensaje.set({ tipo: 'error', texto: err.error?.message || 'Error al generar documentos.' });
+      }
+    });
+  }
+
+  urlDescarga(generacionId: string, areaId: string): string {
+    return this.docService.getUrlDescarga(generacionId, areaId);
+  }
+
+  urlDescargarTodos(generacionId: string): string {
+    return this.docService.getUrlDescargarTodos(generacionId);
+  }
+
+  formatFechaGen(fecha: string): string {
+    return new Date(fecha).toLocaleDateString('es-PE', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   }
 }
