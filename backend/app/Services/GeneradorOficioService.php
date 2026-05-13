@@ -16,7 +16,6 @@ use Illuminate\Support\Str;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
-use PhpOffice\PhpWord\Style\Table;
 
 class GeneradorOficioService
 {
@@ -335,7 +334,7 @@ class GeneradorOficioService
             'borderColor' => '000000',
             'cellMargin'  => 80,
             'width'       => self::PAGE_WIDTH,
-            'unit'        => Table::WIDTH_TWIP,
+            'unit'        => 'dxa',
         ];
 
         $cellHead = ['bgColor' => 'D9D9D9'];
