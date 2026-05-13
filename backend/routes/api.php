@@ -184,13 +184,23 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
     // =============================================
     Route::prefix('areas')->group(function () {
         Route::get('/', [AreaController::class, 'index']);
+        Route::get('/cursos', [AreaController::class, 'cursos']);
         Route::middleware('role:secretaria|admin|developer')->group(function () {
             Route::post('/', [AreaController::class, 'store']);
             Route::put('/{id}', [AreaController::class, 'update']);
             Route::delete('/{id}', [AreaController::class, 'destroy']);
             Route::post('/auto-asignar', [AreaController::class, 'autoAsignar']);
+            Route::patch('/cursos/{cursoId}', [AreaController::class, 'asignarArea']);
         });
     });
+
+    // Configuración institucional
+    Route::prefix('configuracion-institucional')
+        ->middleware('role:secretaria|admin|secretario academico|developer')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\V1\ConfiguracionInstitucionalController::class, 'index']);
+            Route::put('/', [\App\Http\Controllers\Api\V1\ConfiguracionInstitucionalController::class, 'update']);
+        });
 
     // Escuelas (lectura, para formularios)
     Route::get('/escuelas', function () {
@@ -253,6 +263,12 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::put('/{id}/secciones/{seccionId}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'updateSeccion']);
             Route::patch('/{id}/secciones/bulk', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'bulkUpdate']);
             Route::delete('/{id}/secciones/{seccionId}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'deleteSeccion']);
+            // Generación de documentos
+            Route::get('/{id}/cursos-sin-area', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'cursosSinArea']);
+            Route::post('/{id}/generar-documentos', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'generar']);
+            Route::get('/{id}/generaciones', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'generaciones']);
+            Route::get('/generaciones/{generacionId}/descargar/{areaId}', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'descargar']);
+            Route::get('/generaciones/{generacionId}/descargar-todos', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'descargarTodos']);
         });
 
     // Rutas de Tipos de Solicitud (solo admin/secretaria)
