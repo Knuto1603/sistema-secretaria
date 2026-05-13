@@ -10,8 +10,8 @@ use App\Services\GeneradorOficioService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
 class GeneradorDocumentosController extends Controller
@@ -87,7 +87,7 @@ class GeneradorDocumentosController extends Controller
     /**
      * Descarga un documento individual.
      */
-    public function descargar(string $generacionId, string $areaId): Response
+    public function descargar(string $generacionId, string $areaId): BinaryFileResponse
     {
         $doc = DocumentoArea::where('generacion_id', $generacionId)
             ->where('area_id', $areaId)
@@ -105,7 +105,7 @@ class GeneradorDocumentosController extends Controller
     /**
      * Descarga todos los documentos de una generación como ZIP.
      */
-    public function descargarTodos(string $generacionId): Response
+    public function descargarTodos(string $generacionId): BinaryFileResponse
     {
         $generacion = GeneracionDocumento::with('documentos')->findOrFail($generacionId);
 
