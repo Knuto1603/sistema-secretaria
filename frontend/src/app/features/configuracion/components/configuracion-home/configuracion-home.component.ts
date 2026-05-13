@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -17,7 +17,7 @@ interface ConfigCard {
   templateUrl: './configuracion-home.component.html'
 })
 export class ConfiguracionHomeComponent {
-  constructor(private router: Router) {}
+  private router = inject(Router);
 
   cards: ConfigCard[] = [
     {
