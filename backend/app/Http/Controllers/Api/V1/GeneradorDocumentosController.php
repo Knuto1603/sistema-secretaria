@@ -24,7 +24,7 @@ class GeneradorDocumentosController extends Controller
     public function cursosSinArea(string $borradorId): JsonResponse
     {
         $borrador = BorradorProgramacion::findOrFail($borradorId);
-        $sinArea  = $this->service->cursossinArea($borrador);
+        $sinArea  = $this->service->cursosSinArea($borrador);
 
         return $this->success($sinArea, 'Cursos sin área asignada');
     }
@@ -58,7 +58,13 @@ class GeneradorDocumentosController extends Controller
                 "Se generaron {$generacion->total_documentos} documento(s) correctamente."
             );
         } catch (Exception $e) {
-            return $this->error('Error al generar documentos: ' . $e->getMessage(), 500);
+            \Log::error('Error generando documentos', [
+                'borrador_id' => $borradorId,
+                'user_id'     => $request->user()?->id,
+                'exception'   => $e->getMessage(),
+                'trace'       => $e->getTraceAsString(),
+            ]);
+            return $this->error('Ocurrió un error al generar los documentos. Contacta al administrador.', 500);
         }
     }
 
