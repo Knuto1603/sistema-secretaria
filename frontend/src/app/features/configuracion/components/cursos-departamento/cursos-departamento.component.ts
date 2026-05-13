@@ -1,10 +1,11 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CursosDepartamentoService, CursoItem } from '../../services/cursos-departamento.service';
 import { DepartamentoService, Departamento } from '../../services/departamento.service';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-cursos-departamento',
@@ -13,44 +14,51 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
   templateUrl: './cursos-departamento.component.html',
 })
 export class CursosDepartamentoComponent implements OnInit {
-  private svc   = inject(CursosDepartamentoService);
-  private depSvc = inject(DepartamentoService);
+  private svc        = inject(CursosDepartamentoService);
+  private depSvc     = inject(DepartamentoService);
+  private destroyRef = inject(DestroyRef);
 
-  cursos         = signal<CursoItem[]>([]);
-  departamentos  = signal<Departamento[]>([]);
-  loading        = signal(false);
-  asignando      = signal<string | null>(null);
-  mensaje        = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
+  cursos        = signal<CursoItem[]>([]);
+  departamentos = signal<Departamento[]>([]);
+  loading       = signal(false);
+  asignando     = signal<string | null>(null);
+  mensaje       = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
-  filtroSinArea = false;
-  filtroSearch  = '';
-  filtroAreaId  = '';
+  filtroSinArea = signal(false);
+  filtroSearch  = signal('');
+  filtroAreaId  = signal('');
 
-  private search$ = new Subject<string>();
+  private reload$ = new Subject<void>();
 
   ngOnInit(): void {
     this.depSvc.getDepartamentos().subscribe(d => this.departamentos.set(d));
-    this.cargar();
 
-    this.search$.pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.cargar());
+    this.reload$.pipe(
+      debounceTime(200),
+      switchMap(() => {
+        this.loading.set(true);
+        return this.svc.getCursos({
+          sinArea: this.filtroSinArea() || undefined,
+          search:  this.filtroSearch()  || undefined,
+          areaId:  this.filtroAreaId()  || undefined,
+        });
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (c: CursoItem[]) => { this.cursos.set(c); this.loading.set(false); },
+      error: ()              => this.loading.set(false),
+    });
+
+    this.reload$.next();
   }
 
   cargar(): void {
-    this.loading.set(true);
-    this.svc.getCursos({
-      sinArea: this.filtroSinArea || undefined,
-      search:  this.filtroSearch || undefined,
-      areaId:  this.filtroAreaId || undefined,
-    }).subscribe({
-      next: c => { this.cursos.set(c); this.loading.set(false); },
-      error: () => this.loading.set(false),
-    });
+    this.reload$.next();
   }
 
   onSearchChange(val: string): void {
-    this.filtroSearch = val;
-    this.search$.next(val);
+    this.filtroSearch.set(val);
+    this.reload$.next();
   }
 
   asignar(curso: CursoItem, areaId: string): void {
