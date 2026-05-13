@@ -10,7 +10,13 @@ class Area extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['nombre'];
+    protected $fillable = [
+        'nombre',
+        'titulo_director',
+        'director_nombre',
+        'director_cargo',
+        'nombre_tabla',
+    ];
 
     public function cursos(): HasMany
     {
