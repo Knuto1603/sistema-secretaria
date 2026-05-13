@@ -41,6 +41,7 @@ class GeneradorOficioService
                 'curso.area',
                 'aulaRelacion.pabellon',
                 'escuelaProgramada',
+                'escuelas',
             ])
             ->get();
 
@@ -411,8 +412,10 @@ class GeneradorOficioService
 
     private function getAulaNombre(ProgramacionAcademica $prog): string
     {
-        if ($prog->aula) {
-            return $prog->aula;
+        // Usar getAttributes() para leer la columna texto sin activar la relación aula()
+        $aulaTexto = $prog->getAttributes()['aula'] ?? null;
+        if ($aulaTexto) {
+            return (string) $aulaTexto;
         }
 
         $aulaRel = $prog->aulaRelacion;

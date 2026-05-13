@@ -57,7 +57,7 @@ class GeneradorDocumentosController extends Controller
                 $this->formatGeneracion($generacion),
                 "Se generaron {$generacion->total_documentos} documento(s) correctamente."
             );
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Error generando documentos', [
                 'borrador_id' => $borradorId,
                 'user_id'     => $request->user()?->id,
