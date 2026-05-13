@@ -36,7 +36,6 @@ class GeneradorOficioService
     ): GeneracionDocumento {
         $config = ConfiguracionInstitucional::getAll();
 
-        // Obtener programación del período con todas las relaciones
         $programaciones = ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
             ->with([
                 'curso.area',
@@ -45,58 +44,65 @@ class GeneradorOficioService
             ])
             ->get();
 
-        // Obtener HT/HP de plan_estudios por curso
-        $htHpMap = $this->buildHtHpMap($programaciones->pluck('curso_id')->unique()->toArray());
-
-        // Agrupar por área
-        $porArea = $programaciones->groupBy(fn($p) => $p->curso?->area_id);
-
-        // Avisar cursos sin área (retornamos lista para que el controlador la maneje)
-        $sinArea = $porArea->has(null) ? $porArea->get(null) : collect();
-
+        $htHpMap        = $this->buildHtHpMap($programaciones->pluck('curso_id')->unique()->toArray());
+        $porArea        = $programaciones->groupBy(fn($p) => $p->curso?->area_id);
         $areasConCursos = $porArea->filter(fn($_, $k) => $k !== null);
 
-        return DB::transaction(function () use ($borrador, $numeroOficio, $semestreTexto, $generadoPor, $config, $areasConCursos, $htHpMap) {
-            $generacion = GeneracionDocumento::create([
-                'borrador_id'       => $borrador->id,
-                'periodo_id'        => $borrador->periodo_id,
-                'numero_oficio'     => $numeroOficio,
-                'semestre_texto'    => $semestreTexto,
-                'generado_por'      => $generadoPor->id,
-                'generado_at'       => now(),
-                'total_documentos'  => 0,
+        // Pre-cargar todas las áreas necesarias en una sola query (evita N+1)
+        $areas = Area::findMany($areasConCursos->keys())->keyBy('id');
+
+        // Crear el registro de generación primero para obtener el ID del directorio
+        $generacion = DB::transaction(function () use ($borrador, $numeroOficio, $semestreTexto, $generadoPor) {
+            return GeneracionDocumento::create([
+                'borrador_id'      => $borrador->id,
+                'periodo_id'       => $borrador->periodo_id,
+                'numero_oficio'    => $numeroOficio,
+                'semestre_texto'   => $semestreTexto,
+                'generado_por'     => $generadoPor->id,
+                'generado_at'      => now(),
+                'total_documentos' => 0,
             ]);
+        });
 
-            $carpeta = "documentos/{$borrador->id}/{$generacion->id}";
-            Storage::disk('local')->makeDirectory($carpeta);
+        $carpeta = "documentos/{$borrador->id}/{$generacion->id}";
+        Storage::disk('local')->makeDirectory($carpeta);
 
-            $total = 0;
+        try {
+            $documentosData = [];
 
             foreach ($areasConCursos as $areaId => $cursosArea) {
-                $area = Area::find($areaId);
+                $area = $areas->get($areaId);
                 if (!$area) continue;
 
-                $ruta   = $this->generarDocumento($area, $cursosArea, $htHpMap, $config, $numeroOficio, $semestreTexto, $carpeta);
-                $nombre = basename($ruta);
+                $ruta = $this->generarDocumento($area, $cursosArea, $htHpMap, $config, $numeroOficio, $semestreTexto, $carpeta);
 
-                DocumentoArea::create([
-                    'generacion_id' => $generacion->id,
-                    'area_id'       => $area->id,
-                    'nombre_archivo'=> $nombre,
-                    'ruta'          => $ruta,
-                    'cursos_count'  => $cursosArea->count(),
-                ]);
-
-                $total++;
+                $documentosData[] = [
+                    'generacion_id'  => $generacion->id,
+                    'area_id'        => $area->id,
+                    'nombre_archivo' => basename($ruta),
+                    'ruta'           => $ruta,
+                    'cursos_count'   => $cursosArea->count(),
+                ];
             }
 
-            $generacion->update(['total_documentos' => $total]);
+            DB::transaction(function () use ($generacion, $documentosData) {
+                foreach ($documentosData as $doc) {
+                    DocumentoArea::create($doc);
+                }
+                $generacion->update(['total_documentos' => count($documentosData)]);
+            });
 
-            return $generacion->load(['documentos.area', 'generadoPor', 'periodo']);
-        });
+        } catch (\Throwable $e) {
+            // Si algo falla, limpiar archivos en disco para no dejar huérfanos
+            Storage::disk('local')->deleteDirectory($carpeta);
+            $generacion->delete();
+            throw $e;
+        }
+
+        return $generacion->load(['documentos.area', 'generadoPor', 'periodo']);
     }
 
-    public function cursossinArea(BorradorProgramacion $borrador): array
+    public function cursosSinArea(BorradorProgramacion $borrador): array
     {
         $programaciones = ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
             ->with('curso.area')
