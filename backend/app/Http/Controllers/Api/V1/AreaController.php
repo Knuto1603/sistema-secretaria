@@ -90,10 +90,10 @@ class AreaController extends Controller
 
         $area->update([
             'nombre'          => $data['nombre'],
-            'titulo_director' => $data['titulo_director'] ?? $area->titulo_director,
-            'director_nombre' => $data['director_nombre'] ?? $area->director_nombre,
-            'director_cargo'  => $data['director_cargo'] ?? $area->director_cargo,
-            'nombre_tabla'    => $data['nombre_tabla'] ?? $area->nombre_tabla,
+            'titulo_director' => array_key_exists('titulo_director', $data) ? $data['titulo_director'] : $area->titulo_director,
+            'director_nombre' => array_key_exists('director_nombre', $data) ? $data['director_nombre'] : $area->director_nombre,
+            'director_cargo'  => array_key_exists('director_cargo',  $data) ? $data['director_cargo']  : $area->director_cargo,
+            'nombre_tabla'    => array_key_exists('nombre_tabla',    $data) ? $data['nombre_tabla']    : $area->nombre_tabla,
         ]);
 
         if (array_key_exists('prefijos', $data)) {
