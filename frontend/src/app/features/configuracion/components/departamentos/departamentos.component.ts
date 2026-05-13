@@ -29,8 +29,12 @@ export class DepartamentosComponent implements OnInit {
   editando       = signal<Departamento | null>(null);
 
   // Form state
-  formNombre  = '';
-  formPrefijo = '';
+  formNombre         = '';
+  formPrefijo        = '';
+  formTituloDirector = '';
+  formDirectorNombre = '';
+  formDirectorCargo  = '';
+  formNombreTabla    = '';
   guardando   = signal(false);
 
   // Confirmaciones
@@ -54,30 +58,49 @@ export class DepartamentosComponent implements OnInit {
 
   abrirCrear(): void {
     this.editando.set(null);
-    this.formNombre  = '';
-    this.formPrefijo = '';
+    this.formNombre         = '';
+    this.formPrefijo        = '';
+    this.formTituloDirector = '';
+    this.formDirectorNombre = '';
+    this.formDirectorCargo  = '';
+    this.formNombreTabla    = '';
     this.mostrarForm.set(true);
   }
 
   abrirEditar(dep: Departamento): void {
     this.editando.set(dep);
-    this.formNombre  = dep.nombre;
-    this.formPrefijo = dep.prefijos[0] ?? '';
+    this.formNombre         = dep.nombre;
+    this.formPrefijo        = dep.prefijos[0] ?? '';
+    this.formTituloDirector = dep.titulo_director ?? '';
+    this.formDirectorNombre = dep.director_nombre ?? '';
+    this.formDirectorCargo  = dep.director_cargo  ?? '';
+    this.formNombreTabla    = dep.nombre_tabla    ?? '';
     this.mostrarForm.set(true);
   }
 
   cancelarForm(): void {
     this.mostrarForm.set(false);
     this.editando.set(null);
-    this.formNombre  = '';
-    this.formPrefijo = '';
+    this.formNombre         = '';
+    this.formPrefijo        = '';
+    this.formTituloDirector = '';
+    this.formDirectorNombre = '';
+    this.formDirectorCargo  = '';
+    this.formNombreTabla    = '';
   }
 
   guardar(): void {
     if (!this.formNombre.trim() || this.guardando()) return;
 
     const prefijo  = this.formPrefijo.trim().toUpperCase();
-    const payload  = { nombre: this.formNombre.trim(), prefijos: prefijo ? [prefijo] : [] };
+    const payload  = {
+      nombre: this.formNombre.trim(),
+      prefijos: prefijo ? [prefijo] : [],
+      titulo_director: this.formTituloDirector.trim() || null,
+      director_nombre: this.formDirectorNombre.trim() || null,
+      director_cargo:  this.formDirectorCargo.trim()  || null,
+      nombre_tabla:    this.formNombreTabla.trim()    || null,
+    };
     this.guardando.set(true);
     this.limpiarMensaje();
 

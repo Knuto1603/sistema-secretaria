@@ -284,6 +284,60 @@
                             maxlength="10"
                             class="w-full px-3 py-2 text-sm font-bold text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all uppercase placeholder:font-normal placeholder:text-slate-400">
                         </div>
+
+                        <!-- Campo: Nombre en tabla (encabezado de oficio) -->
+                        <div class="bg-white px-5 py-4 md:col-span-2">
+                          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Nombre en tabla del oficio
+                          </label>
+                          <input
+                            type="text"
+                            [(ngModel)]="formNombreTabla"
+                            placeholder="Ej: INFORMÁTICA"
+                            class="w-full px-3 py-2 text-sm text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400">
+                          <p class="text-[10px] text-slate-400 mt-1">Nombre que aparece en el encabezado de la tabla del oficio.</p>
+                        </div>
+
+                        <!-- Separador: datos del director -->
+                        <div class="bg-slate-50 px-5 py-2 md:col-span-2 border-t border-slate-100">
+                          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Datos del director (para oficios)</p>
+                        </div>
+
+                        <!-- Campo: Título del director -->
+                        <div class="bg-white px-5 py-4">
+                          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Título
+                          </label>
+                          <input
+                            type="text"
+                            [(ngModel)]="formTituloDirector"
+                            placeholder="Ej: Dr. / Mg. / Ing."
+                            class="w-full px-3 py-2 text-sm text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400">
+                        </div>
+
+                        <!-- Campo: Nombre del director -->
+                        <div class="bg-white px-5 py-4">
+                          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Nombre completo
+                          </label>
+                          <input
+                            type="text"
+                            [(ngModel)]="formDirectorNombre"
+                            placeholder="Ej: JUAN PÉREZ GARCÍA"
+                            class="w-full px-3 py-2 text-sm text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400">
+                        </div>
+
+                        <!-- Campo: Cargo del director -->
+                        <div class="bg-white px-5 py-4 md:col-span-2">
+                          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Cargo
+                          </label>
+                          <input
+                            type="text"
+                            [(ngModel)]="formDirectorCargo"
+                            placeholder="Ej: Director del Departamento Académico de Informática"
+                            class="w-full px-3 py-2 text-sm text-slate-800 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400">
+                        </div>
                       </div>
 
                       <!-- Barra de acciones -->
