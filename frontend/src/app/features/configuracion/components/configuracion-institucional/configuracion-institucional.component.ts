@@ -39,6 +39,7 @@ export class ConfiguracionInstitucionalComponent implements OnInit {
     this.svc.getAll().subscribe({
       next: items => {
         this.items.set(items);
+        this.valores = {};
         items.forEach(i => (this.valores[i.clave] = i.valor ?? ''));
         this.loading.set(false);
       },
