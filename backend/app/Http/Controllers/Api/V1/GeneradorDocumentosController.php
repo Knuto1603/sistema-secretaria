@@ -64,7 +64,7 @@ class GeneradorDocumentosController extends Controller
                 'exception'   => $e->getMessage(),
                 'trace'       => $e->getTraceAsString(),
             ]);
-            return $this->error('Ocurrió un error al generar los documentos. Contacta al administrador.', 500);
+            return $this->error('Error: ' . $e->getMessage(), 500);
         }
     }
 
