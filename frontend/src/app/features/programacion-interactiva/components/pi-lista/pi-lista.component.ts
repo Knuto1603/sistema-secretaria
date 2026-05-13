@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin, Subject, switchMap, of } from 'rxjs';
 import { environment } from '@env/environment';
 import {
   ProgramacionInteractivaService,
@@ -287,13 +287,19 @@ export class PiListaComponent {
     this.docCargando.set(true);
 
     const id = this.borrador().id;
-    this.docService.getCursosSinArea(id).subscribe({
-      next: lista => this.docCursosSinArea.set(lista),
-      error: () => {}
-    });
-    this.docService.getGeneraciones(id).subscribe({
-      next: gens => { this.docGeneraciones.set(gens); this.docCargando.set(false); },
-      error: () => this.docCargando.set(false)
+    forkJoin({
+      sinArea:      this.docService.getCursosSinArea(id),
+      generaciones: this.docService.getGeneraciones(id),
+    }).subscribe({
+      next: ({ sinArea, generaciones }) => {
+        this.docCursosSinArea.set(sinArea);
+        this.docGeneraciones.set(generaciones);
+        this.docCargando.set(false);
+      },
+      error: () => {
+        this.docCargando.set(false);
+        this.docMensaje.set({ tipo: 'error', texto: 'Error al cargar los datos. Intenta cerrar y abrir el panel.' });
+      }
     });
   }
 
@@ -323,12 +329,27 @@ export class PiListaComponent {
     });
   }
 
-  urlDescarga(generacionId: string, areaId: string): string {
-    return this.docService.getUrlDescarga(generacionId, areaId);
+  descargar(generacionId: string, areaId: string, nombreArchivo: string): void {
+    const url = this.docService.getUrlDescarga(generacionId, areaId);
+    this.http.get(url, { responseType: 'blob' }).subscribe(blob => {
+      this.triggerDownload(blob, nombreArchivo);
+    });
   }
 
-  urlDescargarTodos(generacionId: string): string {
-    return this.docService.getUrlDescargarTodos(generacionId);
+  descargarTodos(generacionId: string, numeroOficio: string): void {
+    const url = this.docService.getUrlDescargarTodos(generacionId);
+    this.http.get(url, { responseType: 'blob' }).subscribe(blob => {
+      this.triggerDownload(blob, `oficios_${numeroOficio}.zip`);
+    });
+  }
+
+  private triggerDownload(blob: Blob, nombre: string): void {
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = nombre;
+    a.click();
+    URL.revokeObjectURL(objectUrl);
   }
 
   formatFechaGen(fecha: string): string {
