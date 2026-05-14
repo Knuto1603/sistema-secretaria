@@ -41,8 +41,14 @@ WORKDIR /var/www/html
 
 # --- Copiar código del backend y config de PHP ---
 COPY backend/ .
-COPY docker/backend/php.ini  /usr/local/etc/php/conf.d/custom.ini
-COPY docker/backend/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/backend/php.ini       /usr/local/etc/php/conf.d/custom.ini
+COPY docker/backend/www.conf      /usr/local/etc/php-fpm.d/www.conf
+COPY docker/backend/entrypoint.sh /entrypoint.sh
+
+# --- Guardar plantillas fuera del volumen para copiarlas en tiempo de ejecución ---
+RUN mkdir -p /var/www/html/storage-image/plantillas \
+    && cp -r storage/app/plantillas/. /var/www/html/storage-image/plantillas/ 2>/dev/null || true \
+    && chmod +x /entrypoint.sh
 
 # --- Instalar dependencias y generar autoload en un solo paso ---
 RUN git config --global --add safe.directory /var/www/html \
@@ -65,4 +71,5 @@ RUN chown -R www-data:www-data /var/www/html \
 
 EXPOSE 9000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
