@@ -104,6 +104,6 @@ export class ProgramacionDetalleComponent implements OnInit {
   }
 
   aulaNombre(d: Programacion): string {
-    return d.aula_nombre || d.aula || d.aula_rel?.nombre || 'Sin aula';
+    return d.aula_rel?.pabellon?.nombre || d.aula_nombre || d.aula || 'Sin aula';
   }
 }
