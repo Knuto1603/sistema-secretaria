@@ -126,6 +126,24 @@ class GeneradorDocumentosController extends Controller
             ->deleteFileAfterSend(true);
     }
 
+    /**
+     * Elimina una generación y sus archivos físicos.
+     */
+    public function eliminar(string $generacionId): JsonResponse
+    {
+        $generacion = GeneracionDocumento::with('documentos')->findOrFail($generacionId);
+
+        $carpeta = "documentos/{$generacion->borrador_id}/{$generacionId}";
+        if (Storage::disk('local')->exists($carpeta)) {
+            Storage::disk('local')->deleteDirectory($carpeta);
+        }
+
+        $generacion->documentos()->delete();
+        $generacion->delete();
+
+        return $this->success(null, 'Generación eliminada correctamente.');
+    }
+
     // ─── Formato de respuesta ─────────────────────────────────────────────────
 
     private function formatGeneracion(GeneracionDocumento $g): array

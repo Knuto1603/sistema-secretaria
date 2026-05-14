@@ -81,6 +81,7 @@ export class PiListaComponent {
   readonly docGeneraciones     = signal<GeneracionDocumento[]>([]);
   readonly docGenerando        = signal(false);
   readonly docCargando         = signal(false);
+  readonly docEliminando       = signal<string | null>(null);
   readonly docMensaje          = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
   // Formulario agregar
@@ -340,6 +341,22 @@ export class PiListaComponent {
     const url = this.docService.getUrlDescargarTodos(generacionId);
     this.http.get(url, { responseType: 'blob' }).subscribe(blob => {
       this.triggerDownload(blob, `oficios_${numeroOficio}.zip`);
+    });
+  }
+
+  eliminarGeneracion(gen: GeneracionDocumento): void {
+    if (!confirm(`¿Eliminar la generación "${gen.numero_oficio}"? Se borrarán los archivos Word del servidor.`)) return;
+    this.docEliminando.set(gen.id);
+    this.docService.eliminarGeneracion(gen.id).subscribe({
+      next: () => {
+        this.docGeneraciones.update(list => list.filter(g => g.id !== gen.id));
+        this.docEliminando.set(null);
+        this.docMensaje.set({ tipo: 'success', texto: 'Generación eliminada correctamente.' });
+      },
+      error: () => {
+        this.docEliminando.set(null);
+        this.docMensaje.set({ tipo: 'error', texto: 'Error al eliminar la generación.' });
+      }
     });
   }
 

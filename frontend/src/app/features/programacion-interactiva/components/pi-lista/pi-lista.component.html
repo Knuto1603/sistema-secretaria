@@ -146,15 +146,34 @@
                         <p class="text-xs text-slate-500">{{ gen.semestre_texto }}</p>
                         <p class="text-xs text-slate-400 mt-0.5">{{ formatFechaGen(gen.generado_at) }}</p>
                       </div>
-                      <button
-                        (click)="descargarTodos(gen.id, gen.numero_oficio)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        Descargar todo (.zip)
-                      </button>
+                      <div class="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          (click)="descargarTodos(gen.id, gen.numero_oficio)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-lg transition-colors">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                          </svg>
+                          Descargar todo (.zip)
+                        </button>
+                        <button
+                          (click)="eliminarGeneracion(gen)"
+                          [disabled]="docEliminando() === gen.id"
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          [attr.aria-label]="'Eliminar generación ' + gen.numero_oficio">
+                          @if (docEliminando() === gen.id) {
+                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                            </svg>
+                          } @else {
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                          }
+                        </button>
+                      </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                       @for (doc of gen.documentos; track doc.id) {

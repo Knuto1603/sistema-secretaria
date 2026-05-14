@@ -62,4 +62,10 @@ export class DocumentosPiService {
   getUrlDescargarTodos(generacionId: string): string {
     return `${environment.apiUrl}/programacion-interactiva/generaciones/${generacionId}/descargar-todos`;
   }
+
+  eliminarGeneracion(generacionId: string): Observable<void> {
+    return this.http.delete<ApiResponse<null>>(
+      `${this.apiUrl}/generaciones/${generacionId}`
+    ).pipe(map(() => void 0));
+  }
 }

@@ -278,6 +278,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::get('/{id}/generaciones', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'generaciones']);
             Route::get('/generaciones/{generacionId}/descargar/{areaId}', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'descargar']);
             Route::get('/generaciones/{generacionId}/descargar-todos', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'descargarTodos']);
+            Route::delete('/generaciones/{generacionId}', [\App\Http\Controllers\Api\V1\GeneradorDocumentosController::class, 'eliminar']);
         });
 
     // Rutas de Tipos de Solicitud (solo admin/secretaria)
