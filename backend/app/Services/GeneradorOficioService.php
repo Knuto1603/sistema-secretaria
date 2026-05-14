@@ -212,8 +212,7 @@ class GeneradorOficioService
         $aulaRel = $prog->aulaRelacion;
         if (!$aulaRel) return '';
 
-        $pabellon = $aulaRel->pabellon?->codigo ?? $aulaRel->pabellon?->nombre ?? '';
-        return $pabellon ? "{$pabellon}-{$aulaRel->nombre}" : $aulaRel->nombre;
+        return $aulaRel->nombre;
     }
 
     private function formatFecha(\DateTime|\Carbon\Carbon $fecha): string
