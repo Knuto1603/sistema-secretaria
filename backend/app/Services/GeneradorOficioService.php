@@ -132,10 +132,10 @@ class GeneradorOficioService
         $processor->setValue('CIUDAD_FECHA',   "{$ciudad}, {$this->formatFecha(now())}");
         $processor->setValue('NUMERO_OFICIO',  "OFICIO CIRC. Nº {$numeroOficio}");
         $processor->setValue('TITULO_DIRECTOR', $area->titulo_director ?? 'Doctor');
-        $processor->setValue('NOMBRE_DIRECTOR', strtoupper($area->director_nombre ?? ''));
+        $processor->setValue('NOMBRE_DIRECTOR', mb_strtoupper($area->director_nombre ?? '', 'UTF-8'));
         $processor->setValue('CARGO_DIRECTOR',  $area->director_cargo ?? 'Director del Departamento Académico');
         $processor->setValue('SEMESTRE',        $semestre);
-        $processor->setValue('AREA_NOMBRE',     strtoupper($area->nombre_tabla ?? $area->nombre ?? ''));
+        $processor->setValue('AREA_NOMBRE',     mb_strtoupper($area->nombre_tabla ?? $area->nombre ?? '', 'UTF-8'));
 
         $titulo = $config['secretario_titulo'] ?? 'Dr.';
         $nombre = $config['secretario_nombre'] ?? '';
@@ -158,13 +158,13 @@ class GeneradorOficioService
 
             $processor->setValue("ITEM#{$item}",    (string) $item);
             $processor->setValue("CODIGO#{$item}",  $prog->curso?->codigo ?? '');
-            $processor->setValue("CURSO#{$item}",   strtoupper($prog->curso?->nombre ?? ''));
+            $processor->setValue("CURSO#{$item}",   mb_strtoupper($prog->curso?->nombre ?? '', 'UTF-8'));
             $processor->setValue("HT#{$item}",      (string) ($htHp['ht'] ?? ''));
             $processor->setValue("HP#{$item}",      (string) ($htHp['hp'] ?? ''));
             $processor->setValue("GRUPO#{$item}",   (string) ($grupo));
             $processor->setValue("SECCION#{$item}", (string) ($prog->seccion ?? ''));
             $processor->setValue("AULA#{$item}",    $aula);
-            $processor->setValue("ESCUELA#{$item}", strtoupper($escuela));
+            $processor->setValue("ESCUELA#{$item}", mb_strtoupper($escuela, 'UTF-8'));
 
             $item++;
         }
