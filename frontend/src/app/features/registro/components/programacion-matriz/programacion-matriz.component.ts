@@ -55,7 +55,7 @@ export class ProgramacionMatrizComponent {
   }
 
   aulaNombre(p: Programacion): string {
-    return p.aula_rel?.pabellon?.nombre || p.aula_nombre || p.aula || '';
+    return p.aula_nombre || p.aula || p.aula_rel?.nombre || '';
   }
 
   escuelasLabel(p: Programacion): string {

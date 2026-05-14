@@ -628,7 +628,7 @@ export class ProgramacionTablaComponent implements OnInit {
   });
 
   getAulaMostrar(row: Programacion): string {
-    return row.aula_rel?.pabellon?.nombre || row.aula_nombre || row.aula || '—';
+    return row.aula_nombre || row.aula || row.aula_rel?.nombre || '—';
   }
 
   abrirLimpiarPeriodo(): void {

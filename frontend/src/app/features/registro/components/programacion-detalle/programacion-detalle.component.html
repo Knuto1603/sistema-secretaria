@@ -77,6 +77,9 @@
           <div class="px-4 py-3 bg-slate-50 rounded-xl">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Aula</p>
             <p class="text-sm font-bold text-slate-700">{{ aulaNombre(detalle()!) }}</p>
+            @if (detalle()!.aula_rel?.pabellon) {
+              <p class="text-xs text-slate-400 mt-0.5">{{ detalle()!.aula_rel!.pabellon!.nombre }}</p>
+            }
           </div>
           <div class="px-4 py-3 bg-slate-50 rounded-xl">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Docente</p>
