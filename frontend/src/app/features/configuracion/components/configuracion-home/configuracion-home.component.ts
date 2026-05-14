@@ -84,6 +84,13 @@ export class ConfiguracionHomeComponent {
       color: 'cyan'
     },
     {
+      title: 'Plantillas Word',
+      description: 'Descarga, edita en Word y sube las plantillas usadas para generar los oficios de programación académica.',
+      icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+      route: '/app/configuracion/plantillas',
+      color: 'orange'
+    },
+    {
       title: 'Base de Conocimientos',
       description: 'Gestiona los artículos, documentos y plantillas que usa el asistente virtual para responder a los estudiantes.',
       icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',

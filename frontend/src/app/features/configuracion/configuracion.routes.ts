@@ -80,6 +80,11 @@ export const routes: Routes = [
         loadComponent: () => import('./components/configuracion-institucional/configuracion-institucional.component')
           .then(m => m.ConfiguracionInstitucionalComponent)
       },
+      // Plantillas de documentos Word
+      {
+        path: 'plantillas',
+        loadComponent: () => import('./components/plantillas/plantillas.component').then(m => m.PlantillasComponent)
+      },
       // Base de Conocimientos
       {
         path: 'knowledge-base',

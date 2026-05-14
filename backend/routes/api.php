@@ -202,6 +202,15 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::put('/', [\App\Http\Controllers\Api\V1\ConfiguracionInstitucionalController::class, 'update']);
         });
 
+    // Plantillas de documentos Word
+    Route::prefix('plantillas')
+        ->middleware('role:secretaria|admin|secretario academico|developer')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\V1\PlantillaController::class, 'index']);
+            Route::get('/{clave}/descargar', [\App\Http\Controllers\Api\V1\PlantillaController::class, 'descargar']);
+            Route::post('/{clave}/subir', [\App\Http\Controllers\Api\V1\PlantillaController::class, 'subir']);
+        });
+
     // Escuelas (lectura, para formularios)
     Route::get('/escuelas', function () {
         $escuelas = \App\Models\Escuela::orderBy('nombre')->get(['id', 'codigo', 'nombre', 'nombre_corto']);

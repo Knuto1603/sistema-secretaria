@@ -114,10 +114,12 @@ class GeneradorOficioService
         string $semestre,
         string $carpeta
     ): string {
-        $plantillaPath = Storage::disk('local')->path('plantillas/plantilla-pa.docx');
+        $conAnexo      = $programaciones->count() > 5;
+        $nombrePlantilla = $conAnexo ? 'plantilla-pa-anexo.docx' : 'plantilla-pa-inline.docx';
+        $plantillaPath   = Storage::disk('local')->path("plantillas/{$nombrePlantilla}");
 
         if (!file_exists($plantillaPath)) {
-            throw new \RuntimeException("Plantilla no encontrada en: {$plantillaPath}");
+            throw new \RuntimeException("Plantilla no encontrada: {$nombrePlantilla}");
         }
 
         $processor = new TemplateProcessor($plantillaPath);

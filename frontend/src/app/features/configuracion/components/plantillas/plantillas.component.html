@@ -1,0 +1,167 @@
+<div class="min-h-screen bg-gray-50 p-6">
+
+  <!-- Cabecera -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Plantillas de Documentos Word</h1>
+    <p class="mt-1 text-sm text-gray-500">
+      Descarga una plantilla para editarla en Word y luego súbela para actualizar los oficios generados automáticamente.
+    </p>
+  </div>
+
+  <!-- Mensaje de estado -->
+  @if (mensaje()) {
+    <div
+      role="alert"
+      class="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+      [class]="mensaje()!.tipo === 'success'
+        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        : 'bg-red-50 border-red-200 text-red-800'">
+      <svg class="mt-0.5 size-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @if (mensaje()!.tipo === 'success') {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        } @else {
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        }
+      </svg>
+      <span>{{ mensaje()!.texto }}</span>
+    </div>
+  }
+
+  <!-- Cargando -->
+  @if (cargando()) {
+    <div class="flex items-center justify-center py-16 text-gray-400">
+      <svg class="size-8 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+    </div>
+  } @else {
+
+    <!-- Grid de plantillas -->
+    <div class="grid gap-6 sm:grid-cols-2">
+      @for (plantilla of plantillas(); track plantilla.clave) {
+        <div class="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+
+          <!-- Icono + nombre -->
+          <div class="mb-4 flex items-start gap-4">
+            <div class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+              <svg class="size-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h2 class="text-base font-semibold leading-snug text-gray-900">
+                {{ plantilla.nombre }}
+              </h2>
+              <p class="mt-0.5 text-xs font-mono text-gray-400">{{ plantilla.clave }}.docx</p>
+            </div>
+          </div>
+
+          <!-- Badge estado -->
+          <div class="mb-4">
+            @if (plantilla.existe) {
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                Disponible en servidor
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                <span class="size-1.5 rounded-full bg-red-500"></span>
+                No encontrada en servidor
+              </span>
+            }
+          </div>
+
+          <!-- Metadata -->
+          <div class="mb-6 space-y-1.5 text-sm text-gray-500">
+            <div class="flex items-center gap-2">
+              <svg class="size-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Última modificación: <strong class="text-gray-700">{{ formatFecha(plantilla.updated_at) }}</strong></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="size-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z"/>
+              </svg>
+              <span>Tamaño: <strong class="text-gray-700">{{ formatSize(plantilla.size) }}</strong></span>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="mt-auto flex flex-col gap-3 sm:flex-row">
+
+            <!-- Descargar -->
+            <button
+              (click)="descargar(plantilla)"
+              [disabled]="!plantilla.existe"
+              class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"
+              [attr.aria-label]="'Descargar ' + plantilla.nombre">
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              Descargar
+            </button>
+
+            <!-- Subir nueva versión -->
+            <label
+              class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+              [class.opacity-50]="subiendo() === plantilla.clave"
+              [class.cursor-not-allowed]="subiendo() === plantilla.clave"
+              [attr.aria-label]="'Subir nueva versión de ' + plantilla.nombre">
+
+              @if (subiendo() === plantilla.clave) {
+                <svg class="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Subiendo...
+              } @else {
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Subir nueva versión
+              }
+
+              <input
+                type="file"
+                accept=".docx"
+                class="sr-only"
+                [disabled]="subiendo() === plantilla.clave"
+                (change)="onArchivoSeleccionado($event, plantilla.clave)"
+                [attr.aria-label]="'Seleccionar archivo para ' + plantilla.nombre"/>
+            </label>
+
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Nota informativa -->
+    <div class="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 size-5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <p class="font-semibold">¿Cómo modificar una plantilla?</p>
+          <ol class="mt-1 list-decimal space-y-0.5 pl-4 text-amber-700">
+            <li>Descarga la plantilla haciendo clic en <strong>Descargar</strong>.</li>
+            <li>Ábrela en Microsoft Word y realiza los cambios de diseño (márgenes, logo, fuentes).</li>
+            <li>Guarda el archivo sin cambiar los marcadores <code class="rounded bg-amber-100 px-1 font-mono text-xs">&#36;{PLACEHOLDER}</code>.</li>
+            <li>Súbela de nuevo con <strong>Subir nueva versión</strong>.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  }
+</div>
