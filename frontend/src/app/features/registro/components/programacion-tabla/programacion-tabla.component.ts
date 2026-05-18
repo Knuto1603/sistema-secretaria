@@ -12,6 +12,7 @@ import { ProgramacionFormComponent } from '../programacion-form/programacion-for
 import { ProgramacionEditFormComponent } from '../programacion-edit-form/programacion-edit-form.component';
 import { ProgramacionMatrizComponent } from '../programacion-matriz/programacion-matriz.component';
 import { ProgramacionDetalleComponent } from '../programacion-detalle/programacion-detalle.component';
+import { ModificationDrawerComponent } from '../../../programacion/components/modification-drawer/modification-drawer.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -37,6 +38,7 @@ type VistaActiva = 'tabla' | 'matriz';
     ProgramacionEditFormComponent,
     ProgramacionMatrizComponent,
     ProgramacionDetalleComponent,
+    ModificationDrawerComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -114,6 +116,9 @@ export class ProgramacionTablaComponent implements OnInit {
   todosCursosPage          = signal(1);
   todosCursosSearch        = signal('');
   todosCursosLoading       = signal(false);
+
+  // Drawer de modificaciones
+  programacionModif = signal<Programacion | null>(null);
 
   // Modal: Limpiar periodo (solo developer)
   showLimpiarPeriodo      = signal(false);
@@ -285,6 +290,15 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   // ─── EDITAR / ELIMINAR ───────────────────────────────────────────────────
+
+  abrirModificacion(item: Programacion): void {
+    this.programacionModif.set(item);
+  }
+
+  onModificacionGuardada(): void {
+    this.cargarProgramacion(this.currentPage());
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+  }
 
   abrirDetalle(item: Programacion): void {
     this.programacionDetalleId.set(item.id);
