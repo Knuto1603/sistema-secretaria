@@ -18,7 +18,9 @@ use App\Http\Controllers\Api\V1\PeriodoController;
 use App\Http\Controllers\Api\V1\PlanEstudiosController;
 use App\Http\Controllers\Api\V1\ProgresoController;
 use App\Http\Controllers\Api\V1\InscripcionController;
+use App\Http\Controllers\Api\V1\GeneracionModificacionController;
 use App\Http\Controllers\Api\V1\ModificacionController;
+use App\Http\Controllers\Api\V1\PlantillaModificacionController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
 use App\Http\Controllers\Api\V1\ProgramacionModificacionController;
 use App\Http\Controllers\Api\V1\RolController;
@@ -206,12 +208,33 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         });
     });
 
-    // ── Historial de modificaciones de programación ───────────────────────
+    // ── Modificaciones de programación ───────────────────────────────────
     Route::prefix('modificaciones')
         ->middleware('role:secretaria|admin|developer')
         ->group(function () {
+            // Historial
             Route::get('/', [ModificacionController::class, 'index']);
+
+            // Generación de documentos (rutas estáticas antes del wildcard /{id})
+            Route::get('/generaciones', [GeneracionModificacionController::class, 'index']);
+            Route::post('/generar-preview', [GeneracionModificacionController::class, 'preview']);
+            Route::post('/generar', [GeneracionModificacionController::class, 'generar']);
+            Route::get('/generaciones/{id}/zip', [GeneracionModificacionController::class, 'descargarZip']);
+            Route::get('/generaciones/{generacionId}/documentos/{areaId}/descargar', [GeneracionModificacionController::class, 'descargarDocumento']);
+            Route::delete('/generaciones/{id}', [GeneracionModificacionController::class, 'eliminar']);
+
+            // Detalle de modificación (wildcard al final)
             Route::get('/{id}', [ModificacionController::class, 'show']);
+        });
+
+    // ── Plantillas de documentos de modificación ──────────────────────────
+    Route::prefix('plantillas-modificacion')
+        ->middleware('role:secretaria|admin|developer')
+        ->group(function () {
+            Route::get('/', [PlantillaModificacionController::class, 'index']);
+            Route::post('/{tipo}', [PlantillaModificacionController::class, 'subir']);
+            Route::delete('/{tipo}', [PlantillaModificacionController::class, 'eliminar']);
+            Route::get('/{tipo}/descargar', [PlantillaModificacionController::class, 'descargar']);
         });
 
     // Configuración institucional
