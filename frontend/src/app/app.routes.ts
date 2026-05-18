@@ -38,9 +38,9 @@ export const routes: Routes = [
          path: 'home', 
          loadComponent: () => import('./features/home/components/home/home.component').then(m => m.HomeComponent) 
        },
-       { 
-         path: 'programacion', 
-         loadComponent: () => import('./features/registro/components/registro/registro.component').then(m => m.RegistroComponent) 
+       {
+         path: 'programacion',
+         loadChildren: () => import('./features/programacion/programacion.routes').then(m => m.PROGRAMACION_ROUTES)
        },
        { 
           path: 'solicitudes',
@@ -54,10 +54,8 @@ export const routes: Routes = [
          path: 'analitica',
          loadComponent: () => import('./features/analitica/components/analitica/analitica.component').then(m => m.AnaliticaComponent)
        },
-       {
-         path: 'programacion-interactiva',
-         loadChildren: () => import('./features/programacion-interactiva/programacion-interactiva.routes').then(m => m.PI_ROUTES)
-       },
+       { path: 'programacion-interactiva', redirectTo: 'programacion/borradores', pathMatch: 'full' },
+       { path: 'programacion-interactiva/:id', redirectTo: 'programacion/borradores/:id', pathMatch: 'full' },
        {
          path: 'configuracion',
          loadChildren: () => import('./features/configuracion/configuracion.routes').then(m => m.routes)
