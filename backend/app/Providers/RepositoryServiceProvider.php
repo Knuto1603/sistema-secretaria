@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Repositories\Contracts\CursoRepositoryInterface;
+use App\Repositories\Contracts\ModificacionRepositoryInterface;
 use App\Repositories\Contracts\PeriodoRepositoryInterface;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
 use App\Repositories\Contracts\SolicitudRepositoryInterface;
 use App\Repositories\Contracts\TipoSolicitudRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\CursoRepository;
+use App\Repositories\Eloquent\ModificacionRepository;
 use App\Repositories\Eloquent\PeriodoRepository;
 use App\Repositories\Eloquent\ProgramacionRepository;
 use App\Repositories\Eloquent\SolicitudRepository;
@@ -26,6 +28,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(CursoRepositoryInterface::class, CursoRepository::class);
         $this->app->bind(PeriodoRepositoryInterface::class, PeriodoRepository::class);
         $this->app->bind(TipoSolicitudRepositoryInterface::class, TipoSolicitudRepository::class);
+        $this->app->bind(ModificacionRepositoryInterface::class, ModificacionRepository::class);
     }
 
     public function boot(): void

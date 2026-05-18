@@ -183,4 +183,15 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
 
         return $programacion;
     }
+
+    public function create(array $data): ProgramacionAcademica
+    {
+        return $this->model->create($data);
+    }
+
+    /** Bulk update intencional: omite observers para eficiencia en lotes grandes. */
+    public function cerrarMasivo(array $ids): int
+    {
+        return $this->model->whereIn('id', $ids)->update(['lleno_manual' => true]);
+    }
 }

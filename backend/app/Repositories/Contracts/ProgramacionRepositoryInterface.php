@@ -22,4 +22,9 @@ interface ProgramacionRepositoryInterface
     public function getAllByPeriodo(string $periodoId, ?string $search = null, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null): Collection;
 
     public function toggleLlenoManual(string $id): ?ProgramacionAcademica;
+
+    public function create(array $data): ProgramacionAcademica;
+
+    /** Marca lleno_manual=true en múltiples secciones (bulk, sin disparar observers). */
+    public function cerrarMasivo(array $ids): int;
 }
