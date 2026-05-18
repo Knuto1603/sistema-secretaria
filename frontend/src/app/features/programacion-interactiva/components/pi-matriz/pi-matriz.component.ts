@@ -1,5 +1,6 @@
 import {
-  Component, inject, input, output, signal, computed, effect, ChangeDetectionStrategy, ElementRef
+  Component, inject, input, output, signal, computed, effect,
+  ChangeDetectionStrategy, ElementRef, ViewChild, HostListener
 } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +19,8 @@ export class PiMatrizComponent {
   private piService = inject(ProgramacionInteractivaService);
   private elRef    = inject(ElementRef);
 
+  @ViewChild('scrollTable') private _scrollTableRef!: ElementRef<HTMLElement>;
+
   borrador   = input.required<BorradorProgramacion>();
   pabellones = input.required<Pabellon[]>();
   grupos     = input.required<GrupoHorario[]>();
@@ -25,10 +28,26 @@ export class PiMatrizComponent {
   seccionMovida    = output<BorradorSeccion>();
   seccionEliminada = output<string>();
 
-  draggingId    = signal<string | null>(null);
-  guardando     = signal(false);
-  eliminando    = signal<string | null>(null);
-  error         = signal<string | null>(null);
+  draggingId      = signal<string | null>(null);
+  guardando       = signal(false);
+  eliminando      = signal<string | null>(null);
+  error           = signal<string | null>(null);
+  pantallaCompleta = signal(false);
+
+  readonly tablaWrapperClases = computed(() =>
+    this.pantallaCompleta()
+      ? 'fixed inset-0 z-50 bg-white flex flex-col p-4 gap-3'
+      : 'flex flex-col gap-0 rounded-2xl border border-slate-200 shadow-sm overflow-hidden'
+  );
+
+  togglePantallaCompleta(): void {
+    this.pantallaCompleta.update(v => !v);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.pantallaCompleta()) this.pantallaCompleta.set(false);
+  }
 
   private _lastDragY      = 0;
   private _rafId: number | null = null;
@@ -144,6 +163,7 @@ export class PiMatrizComponent {
   }
 
   private _findScrollContainer(): HTMLElement {
+    if (this._scrollTableRef?.nativeElement) return this._scrollTableRef.nativeElement;
     let el = this.elRef.nativeElement as HTMLElement;
     while (el && el !== document.documentElement) {
       const ov = window.getComputedStyle(el).overflowY;

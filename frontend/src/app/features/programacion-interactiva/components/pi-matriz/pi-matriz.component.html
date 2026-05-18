@@ -228,73 +228,102 @@
     </div>
   </div>
 
-  <!-- Scroll container — solo muestra la matriz horario × aula -->
-  <div class="overflow-auto rounded-2xl border border-slate-200 shadow-sm bg-white">
-    <table class="border-collapse" style="min-width: max-content;">
-      <thead>
-        <tr class="bg-slate-50 border-b border-slate-200">
-          <!-- Header vacío (columna de grupos) -->
-          <th class="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 w-36 min-w-[9rem] px-3 py-3">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Horario / Aula</span>
-          </th>
+  <!-- Wrapper de la tabla: normal o pantalla completa -->
+  <div [ngClass]="tablaWrapperClases()">
 
-          <!-- Una columna por aula: normales primero, laboratorios al final -->
-          @for (col of columnas(); track col.aula.id) {
-            <th class="border-r border-slate-200 last:border-r-0 px-2 py-3 w-44 min-w-[11rem]"
-                [class.border-l-2]="col.mostrarSepPabellon || col.esInicioLabs"
-                [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
-                [class.border-l-rose-400]="col.esInicioLabs">
-              <div class="flex flex-col items-center gap-0.5">
-                @if (col.esInicioLabs) {
-                  <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-0.5">Laboratorios</span>
-                }
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ col.pabellon.nombre }}</span>
-                <span class="text-sm font-black text-slate-800">{{ col.aula.nombre }}</span>
-                <span class="text-xs text-slate-400">{{ col.aula.capacidad }} cupos</span>
-                @if (col.aula.es_laboratorio) {
-                  <span class="text-[10px] font-medium text-rose-400">Laboratorio</span>
-                }
-              </div>
+    <!-- Cabecera de la tabla con botón maximizar/minimizar -->
+    <div class="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-3 py-2 flex-shrink-0">
+      <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tabla Horario × Aula</span>
+      <button
+        (click)="togglePantallaCompleta()"
+        [title]="pantallaCompleta() ? 'Salir de pantalla completa (Esc)' : 'Pantalla completa'"
+        [attr.aria-pressed]="pantallaCompleta()"
+        class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-lg transition-colors bg-white">
+        @if (pantallaCompleta()) {
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+          </svg>
+          Minimizar
+        } @else {
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+          </svg>
+          Maximizar tabla
+        }
+      </button>
+    </div>
+
+    <!-- Scroll container de la tabla -->
+    <div #scrollTable class="overflow-auto bg-white"
+         [class.flex-1]="pantallaCompleta()">
+      <table class="border-collapse" style="min-width: max-content;">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <!-- Header vacío (columna de grupos) -->
+            <th class="sticky left-0 z-20 bg-slate-50 border-r border-slate-200 w-36 min-w-[9rem] px-3 py-3">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Horario / Aula</span>
             </th>
-          }
-        </tr>
-      </thead>
 
-      <tbody>
-        <!-- Una fila por cada grupo horario -->
-        @for (grupo of gruposActivos(); track grupo.id) {
-          <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
-
-            <!-- Header de fila (grupo horario) -->
-            <td class="sticky left-0 z-10 bg-white border-r border-slate-200 px-3 py-2">
-              <p class="text-xs font-black text-slate-800">{{ grupo.nombre }}</p>
-              <p class="text-xs text-slate-400 mt-0.5 leading-snug">{{ formatHorario(grupo) }}</p>
-            </td>
-
-            <!-- Una celda por cada aula (mismo orden que el thead) -->
+            <!-- Una columna por aula: normales primero, laboratorios al final -->
             @for (col of columnas(); track col.aula.id) {
-              <td class="border-r border-slate-200 last:border-r-0 p-2 align-top"
+              <th class="border-r border-slate-200 last:border-r-0 px-2 py-3 w-44 min-w-[11rem]"
                   [class.border-l-2]="col.mostrarSepPabellon || col.esInicioLabs"
                   [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
                   [class.border-l-rose-400]="col.esInicioLabs">
-                <div
-                  class="min-h-16 max-h-64 overflow-y-auto rounded-xl border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
-                  (dragover)="onDragOver($event)"
-                  (dragenter)="onDragEnter($event, $any($event.currentTarget))"
-                  (dragleave)="onDragLeave($event, $any($event.currentTarget))"
-                  (drop)="onDrop($event, col.aula.id, grupo.id, $any($event.currentTarget))">
-
-                  @for (sec of seccionesEnCelda(col.aula.id, grupo.id); track sec.id) {
-                    <ng-container *ngTemplateOutlet="seccionCard; context: { $implicit: sec }"></ng-container>
+                <div class="flex flex-col items-center gap-0.5">
+                  @if (col.esInicioLabs) {
+                    <span class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-0.5">Laboratorios</span>
                   }
-
+                  <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ col.pabellon.nombre }}</span>
+                  <span class="text-sm font-black text-slate-800">{{ col.aula.nombre }}</span>
+                  <span class="text-xs text-slate-400">{{ col.aula.capacidad }} cupos</span>
+                  @if (col.aula.es_laboratorio) {
+                    <span class="text-[10px] font-medium text-rose-400">Laboratorio</span>
+                  }
                 </div>
-              </td>
+              </th>
             }
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+
+        <tbody>
+          <!-- Una fila por cada grupo horario -->
+          @for (grupo of gruposActivos(); track grupo.id) {
+            <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+
+              <!-- Header de fila (grupo horario) -->
+              <td class="sticky left-0 z-10 bg-white border-r border-slate-200 px-3 py-2">
+                <p class="text-xs font-black text-slate-800">{{ grupo.nombre }}</p>
+                <p class="text-xs text-slate-400 mt-0.5 leading-snug">{{ formatHorario(grupo) }}</p>
+              </td>
+
+              <!-- Una celda por cada aula (mismo orden que el thead) -->
+              @for (col of columnas(); track col.aula.id) {
+                <td class="border-r border-slate-200 last:border-r-0 p-2 align-top"
+                    [class.border-l-2]="col.mostrarSepPabellon || col.esInicioLabs"
+                    [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
+                    [class.border-l-rose-400]="col.esInicioLabs">
+                  <div
+                    class="min-h-16 max-h-64 overflow-y-auto rounded-xl border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
+                    (dragover)="onDragOver($event)"
+                    (dragenter)="onDragEnter($event, $any($event.currentTarget))"
+                    (dragleave)="onDragLeave($event, $any($event.currentTarget))"
+                    (drop)="onDrop($event, col.aula.id, grupo.id, $any($event.currentTarget))">
+
+                    @for (sec of seccionesEnCelda(col.aula.id, grupo.id); track sec.id) {
+                      <ng-container *ngTemplateOutlet="seccionCard; context: { $implicit: sec }"></ng-container>
+                    }
+
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
 
   @if (aulasActivas().length === 0) {
