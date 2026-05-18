@@ -182,7 +182,7 @@ export class ModificationDrawerComponent implements OnInit {
       unificar:     () => this.modifService.unificar({
         periodo_id: this.periodoId(),
         programacion_destino_id: prog.id,
-        programacion_origen_ids: this.origenIds(),
+        secciones_origen_ids: this.origenIds(),
         motivo,
       }),
     };

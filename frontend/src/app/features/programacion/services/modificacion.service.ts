@@ -65,7 +65,7 @@ export class ModificacionService {
   unificar(data: {
     periodo_id: string;
     programacion_destino_id: string;
-    programacion_origen_ids: string[];
+    secciones_origen_ids: string[];
     motivo: string;
   }): Observable<ModificacionCreada> {
     return this.http.post<ApiResponse<ModificacionCreada>>(
