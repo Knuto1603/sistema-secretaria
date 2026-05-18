@@ -1,0 +1,172 @@
+<!-- Encabezado -->
+<div class="mb-6">
+  <h1 class="text-xl font-bold text-slate-800">Plantillas de Modificación</h1>
+  <p class="text-sm text-slate-500 mt-0.5">
+    Sube las plantillas DOCX que se usan para generar los oficios de modificación agrupados por departamento.
+  </p>
+</div>
+
+<!-- Mensajes globales -->
+@if (errorMsg()) {
+  <div class="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">
+    {{ errorMsg() }}
+  </div>
+}
+@if (successMsg()) {
+  <div class="mb-5 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-medium">
+    {{ successMsg() }}
+  </div>
+}
+
+<!-- Instrucciones generales -->
+<div class="mb-6 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-xs text-amber-800">
+  <p class="font-bold mb-1.5">¿Cómo preparar una plantilla?</p>
+  <ol class="list-decimal list-inside space-y-1 text-amber-700">
+    <li>Descarga la plantilla actual (si existe) o crea un documento Word nuevo.</li>
+    <li>Usa las variables indicadas abajo dentro del documento usando la sintaxis <code class="bg-amber-100 px-1 rounded">${"{VAR}"}</code>.</li>
+    <li>Para filas que se repiten, asegúrate de que la primera fila de la tabla contenga las variables y de que no haya más de una fila de datos (el sistema clona esa fila automáticamente).</li>
+    <li>Guarda como <strong>.docx</strong> y súbelo aquí.</li>
+  </ol>
+</div>
+
+<!-- Estado cargando -->
+@if (cargando()) {
+  <div class="flex items-center justify-center py-20">
+    <svg class="w-8 h-8 text-purple-400 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+    </svg>
+  </div>
+}
+
+<!-- Tarjetas de plantillas -->
+@if (!cargando()) {
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    @for (p of plantillas(); track p.tipo) {
+      <div class="bg-white border rounded-2xl shadow-sm overflow-hidden"
+        [class.border-emerald-200]="p.cargada"
+        [class.border-slate-200]="!p.cargada">
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 px-5 py-4"
+          [class.bg-emerald-50]="p.cargada"
+          [class.bg-slate-50]="!p.cargada">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            [class.bg-emerald-100]="p.cargada"
+            [class.bg-slate-200]="!p.cargada">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              [class.text-emerald-600]="p.cargada"
+              [class.text-slate-400]="!p.cargada">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold text-slate-800">{{ p.label }}</p>
+            <p class="text-[10px] font-mono text-slate-400 mt-0.5">{{ p.tipo }}</p>
+          </div>
+          <span class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold"
+            [class.bg-emerald-100]="p.cargada"
+            [class.text-emerald-700]="p.cargada"
+            [class.bg-slate-200]="!p.cargada"
+            [class.text-slate-500]="!p.cargada">
+            {{ p.cargada ? 'Cargada' : 'Sin plantilla' }}
+          </span>
+        </div>
+
+        <!-- Detalles -->
+        <div class="px-5 py-4 space-y-3">
+          @if (p.cargada) {
+            <div class="text-xs text-slate-600 space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 w-16 shrink-0">Archivo</span>
+                <span class="font-medium truncate" [title]="p.nombre_archivo!">{{ p.nombre_archivo }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 w-16 shrink-0">Actualizado</span>
+                <span>{{ p.actualizado_at | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Variables disponibles -->
+          @if (instrucciones[p.tipo]) {
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">Variables disponibles</p>
+              <div class="flex flex-wrap gap-1">
+                @for (v of instrucciones[p.tipo]; track v) {
+                  <code class="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded font-mono">{{ v }}</code>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Acciones -->
+          <div class="flex gap-2 pt-1">
+            <!-- Input file oculto -->
+            <input [id]="'upload-' + p.tipo" type="file" accept=".docx"
+              class="hidden"
+              (change)="onFileSelected($event, p.tipo)">
+
+            <button (click)="triggerUpload(p.tipo)"
+              [disabled]="subiendo() === p.tipo"
+              class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border"
+              [ngClass]="subiendo() === p.tipo
+                ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                : 'bg-white border-purple-200 text-purple-700 hover:bg-purple-50'">
+              @if (subiendo() === p.tipo) {
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                Subiendo...
+              } @else {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12"/>
+                </svg>
+                {{ p.cargada ? 'Reemplazar' : 'Subir plantilla' }}
+              }
+            </button>
+
+            @if (p.cargada) {
+              <button (click)="descargar(p.tipo, p.nombre_archivo!)"
+                [disabled]="descargando() === p.tipo"
+                class="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+                title="Descargar plantilla">
+                @if (descargando() === p.tipo) {
+                  <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                } @else {
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                }
+              </button>
+
+              <button (click)="eliminar(p.tipo)"
+                [disabled]="eliminando() === p.tipo"
+                class="px-3 py-2 rounded-xl text-xs font-bold border border-red-100 bg-white text-red-500 hover:bg-red-50 transition-colors"
+                title="Eliminar plantilla">
+                @if (eliminando() === p.tipo) {
+                  <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                } @else {
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
