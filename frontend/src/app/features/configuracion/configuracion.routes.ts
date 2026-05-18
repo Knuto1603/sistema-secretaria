@@ -85,6 +85,13 @@ export const routes: Routes = [
         path: 'plantillas',
         loadComponent: () => import('./components/plantillas/plantillas.component').then(m => m.PlantillasComponent)
       },
+      // Plantillas de documentos de modificación
+      {
+        path: 'plantillas-modificacion',
+        loadComponent: () =>
+          import('./components/plantillas-modificacion/plantillas-modificacion.component')
+            .then(m => m.PlantillasModificacionComponent)
+      },
       // Base de Conocimientos
       {
         path: 'knowledge-base',

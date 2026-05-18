@@ -96,6 +96,13 @@ export class ConfiguracionHomeComponent {
       icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
       route: '/app/configuracion/knowledge-base',
       color: 'indigo'
+    },
+    {
+      title: 'Plantillas de Modificación',
+      description: 'Sube y gestiona las 4 plantillas DOCX usadas para generar los oficios de modificaciones de programación.',
+      icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+      route: '/app/configuracion/plantillas-modificacion',
+      color: 'purple'
     }
   ];
 
@@ -152,6 +159,12 @@ export class ConfiguracionHomeComponent {
         border: 'border-cyan-200',
         icon: 'text-cyan-600 bg-cyan-100',
         hover: 'hover:border-cyan-400 hover:shadow-cyan-100'
+      },
+      purple: {
+        bg: 'bg-purple-50',
+        border: 'border-purple-200',
+        icon: 'text-purple-600 bg-purple-100',
+        hover: 'hover:border-purple-400 hover:shadow-purple-100'
       }
     };
     return colors[color] || colors['indigo'];

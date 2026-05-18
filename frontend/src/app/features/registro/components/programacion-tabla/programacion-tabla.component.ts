@@ -304,6 +304,14 @@ export class ProgramacionTablaComponent implements OnInit {
     this.programacionModif.set(item);
   }
 
+  irAHistorialModificaciones(): void {
+    this.router.navigate(['/app/programacion/modificaciones']);
+  }
+
+  irAGenerarDocumentos(): void {
+    this.router.navigate(['/app/programacion/generar-documentos']);
+  }
+
   onModificacionGuardada(): void {
     this.cargarProgramacion(this.currentPage());
     if (this.vistaActiva() === 'matriz') this.cargarMatriz();
