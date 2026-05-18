@@ -1,0 +1,297 @@
+<!-- Encabezado -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-slate-800">Generar Documentos de Modificación</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Genera los oficios DOCX agrupados por departamento académico.</p>
+  </div>
+  <button (click)="irAHistorial()"
+    class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+    Ver historial
+  </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Wizard (col 1-2) -->
+  <div class="lg:col-span-2">
+
+    <!-- Steps indicator -->
+    <div class="flex items-center gap-3 mb-6">
+      @for (step of [1,2,3]; track step) {
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+            [class.bg-purple-600]="paso() >= step"
+            [class.text-white]="paso() >= step"
+            [class.bg-slate-200]="paso() < step"
+            [class.text-slate-400]="paso() < step">
+            {{ step }}
+          </div>
+          <span class="text-xs font-medium hidden sm:block"
+            [class.text-purple-700]="paso() >= step"
+            [class.text-slate-400]="paso() < step">
+            @switch (step) {
+              @case (1) { Rango de fechas }
+              @case (2) { Vista previa }
+              @case (3) { Confirmar }
+            }
+          </span>
+        </div>
+        @if (step < 3) {
+          <div class="flex-1 h-px" [class.bg-purple-300]="paso() > step" [class.bg-slate-200]="paso() <= step"></div>
+        }
+      }
+    </div>
+
+    <!-- Error global -->
+    @if (errorMsg()) {
+      <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+        {{ errorMsg() }}
+      </div>
+    }
+
+    <!-- ─── PASO 1 — Rango ─────────────────────────────────────── -->
+    @if (paso() === 1) {
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <p class="text-sm font-bold text-slate-700">Selecciona el periodo y el rango de fechas de modificaciones a documentar.</p>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+            ID de Periodo <span class="text-red-400">*</span>
+          </label>
+          <input type="text" [ngModel]="periodoId()" (ngModelChange)="periodoId.set($event)"
+            placeholder="UUID del periodo académico"
+            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+          <p class="text-[10px] text-slate-400 mt-1">Puedes obtener el ID desde Configuración → Periodos Académicos.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+              Fecha desde <span class="text-red-400">*</span>
+            </label>
+            <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+              Fecha hasta <span class="text-red-400">*</span>
+            </label>
+            <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button (click)="irAPaso2()"
+            [disabled]="!paso1Valido() || cargandoPreview()"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            [ngClass]="paso1Valido() && !cargandoPreview()
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
+            @if (cargandoPreview()) {
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+              Cargando...
+            } @else {
+              Ver vista previa
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ─── PASO 2 — Vista previa ──────────────────────────────── -->
+    @if (paso() === 2) {
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="font-bold text-slate-800">Vista previa — {{ preview().length }} documento(s)</p>
+            <p class="text-xs text-slate-500">{{ totalModificaciones() }} modificación(es) a documentar</p>
+          </div>
+        </div>
+
+        @if (preview().length === 0) {
+          <div class="text-center py-10 text-slate-400 text-sm">
+            No hay modificaciones pendientes en ese rango de fechas.
+          </div>
+        } @else {
+          <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+            @for (grupo of preview(); track grupo.area_id) {
+              <div class="border border-slate-200 rounded-xl overflow-hidden">
+                <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50">
+                  <div>
+                    <p class="text-xs font-bold text-slate-800">{{ grupo.area_nombre }}</p>
+                    <p class="text-[10px] text-purple-600 font-semibold">{{ tipoDocLabel(grupo.tipo_documento) }}</p>
+                  </div>
+                  <span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-full">
+                    {{ grupo.total_modificaciones }} mod.
+                  </span>
+                </div>
+                <div class="px-4 py-2 space-y-1">
+                  @for (mod of grupo.modificaciones; track mod.id) {
+                    <div class="flex items-center gap-2 text-[10px] text-slate-600">
+                      <span class="text-slate-400">•</span>
+                      <span class="font-medium">{{ mod.programacion?.curso?.codigo ?? '—' }}</span>
+                      <span class="truncate">{{ mod.programacion?.curso?.nombre ?? '' }}</span>
+                      <span class="text-slate-400 ml-auto">Sec. {{ mod.programacion?.seccion ?? '—' }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="flex justify-between pt-4 mt-4 border-t border-slate-100">
+          <button (click)="volver()"
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+            Volver
+          </button>
+          <button (click)="irAPaso3()"
+            [disabled]="preview().length === 0"
+            class="px-5 py-2 rounded-lg text-xs font-bold transition-all"
+            [ngClass]="preview().length > 0
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
+            Continuar
+            <svg class="w-3.5 h-3.5 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ─── PASO 3 — Confirmar ─────────────────────────────────── -->
+    @if (paso() === 3) {
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <p class="text-sm font-bold text-slate-700">Confirma los datos del oficio y descarga el ZIP con todos los documentos.</p>
+
+        <div class="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
+          <div class="flex gap-2">
+            <span class="text-slate-400 w-20 shrink-0">Período</span>
+            <span class="font-semibold">{{ periodoId() }}</span>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-slate-400 w-20 shrink-0">Desde</span>
+            <span class="font-semibold">{{ fechaDesde() }}</span>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-slate-400 w-20 shrink-0">Hasta</span>
+            <span class="font-semibold">{{ fechaHasta() }}</span>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-slate-400 w-20 shrink-0">Documentos</span>
+            <span class="font-semibold text-purple-700">{{ preview().length }}</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+            Número de oficio <span class="text-red-400">*</span>
+          </label>
+          <input type="text" [ngModel]="numeroOficio()" (ngModelChange)="numeroOficio.set($event)"
+            placeholder="Ej: 2024-001"
+            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+        </div>
+
+        <div class="flex justify-between pt-2">
+          <button (click)="volver()"
+            class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+            Volver
+          </button>
+          <button (click)="confirmarGeneracion()"
+            [disabled]="!paso3Valido()"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            [ngClass]="paso3Valido()
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
+            @if (generando()) {
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+              Generando...
+            } @else {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              Generar y descargar ZIP
+            }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Historial reciente (col 3) -->
+  <div class="lg:col-span-1">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Generaciones anteriores</p>
+      </div>
+
+      @if (cargandoHist()) {
+        <div class="flex items-center justify-center py-10">
+          <svg class="w-6 h-6 text-slate-300 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+        </div>
+      }
+
+      @if (!cargandoHist() && historial().length === 0) {
+        <p class="text-xs text-slate-400 text-center py-10">Sin generaciones anteriores</p>
+      }
+
+      @if (!cargandoHist() && historial().length > 0) {
+        <div class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+          @for (gen of historial(); track gen.id) {
+            <div class="p-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs font-bold text-slate-800 truncate">{{ gen.numero_oficio }}</p>
+                  <p class="text-[10px] text-slate-500 mt-0.5">
+                    {{ gen.generado_at | date:'dd/MM/yyyy HH:mm' }}
+                  </p>
+                  <p class="text-[10px] text-slate-400 mt-0.5">
+                    {{ gen.total_documentos }} doc · por {{ gen.generado_por ?? '—' }}
+                  </p>
+                </div>
+                <div class="flex gap-1 shrink-0">
+                  <button (click)="descargarZip(gen.id, gen.numero_oficio)"
+                    class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 transition-colors"
+                    title="Descargar ZIP">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                  </button>
+                  <button (click)="eliminarGeneracion(gen.id)"
+                    [disabled]="eliminandoId() === gen.id"
+                    class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
+                    title="Eliminar">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+</div>

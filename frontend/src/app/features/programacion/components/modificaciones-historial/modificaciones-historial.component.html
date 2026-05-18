@@ -1,0 +1,167 @@
+<!-- Encabezado -->
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-slate-800">Historial de Modificaciones</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Registro de todos los cambios realizados en la programación publicada.</p>
+  </div>
+  <button (click)="irAGenerar()"
+    class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    Generar documentos
+  </button>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white border border-slate-200 rounded-2xl p-4 mb-5 shadow-sm">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Tipo</label>
+      <select [(ngModel)]="filtros.tipo"
+        class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white">
+        @for (op of tiposOpciones; track op.value) {
+          <option [value]="op.value">{{ op.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Estado</label>
+      <select [(ngModel)]="filtros.estado"
+        class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white">
+        <option value="">Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="documentado">Documentado</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Desde</label>
+      <input type="date" [(ngModel)]="filtros.fecha_desde"
+        class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300">
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Hasta</label>
+      <input type="date" [(ngModel)]="filtros.fecha_hasta"
+        class="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300">
+    </div>
+  </div>
+
+  <div class="flex gap-2 mt-3">
+    <button (click)="aplicarFiltros()"
+      class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition-colors">
+      Filtrar
+    </button>
+    <button (click)="limpiar()"
+      class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+      Limpiar
+    </button>
+    @if (meta()) {
+      <span class="ml-auto text-xs text-slate-400 self-center">
+        {{ meta()!.total }} registro(s)
+      </span>
+    }
+  </div>
+</div>
+
+<!-- Estado cargando -->
+@if (cargando()) {
+  <div class="flex items-center justify-center py-16">
+    <svg class="w-8 h-8 text-purple-400 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+    </svg>
+  </div>
+}
+
+<!-- Sin datos -->
+@if (!cargando() && items().length === 0) {
+  <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+    <svg class="w-12 h-12 mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+    <p class="text-sm font-medium">Sin modificaciones registradas</p>
+  </div>
+}
+
+<!-- Lista -->
+@if (!cargando() && items().length > 0) {
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="bg-slate-50 border-b border-slate-200">
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Tipo</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Curso</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Sección</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Motivo</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Usuario</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Estado</th>
+          <th class="px-4 py-3 text-left font-bold uppercase tracking-widest text-[10px] text-slate-500">Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ tipoInfo(item.tipo).color }}">
+                {{ tipoInfo(item.tipo).label }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              @if (item.programacion?.curso) {
+                <p class="font-bold text-slate-800 leading-tight">{{ item.programacion!.curso!.codigo }}</p>
+                <p class="text-slate-500 text-[10px] truncate max-w-[180px]" [title]="item.programacion!.curso!.nombre">
+                  {{ item.programacion!.curso!.nombre }}
+                </p>
+              } @else {
+                <span class="text-slate-300">—</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              @if (item.programacion) {
+                Sec. {{ item.programacion.seccion }}
+              } @else {
+                <span class="text-slate-300">—</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-slate-600 max-w-[200px]">
+              <p class="truncate" [title]="item.motivo">{{ item.motivo }}</p>
+            </td>
+            <td class="px-4 py-3 text-slate-500">{{ item.usuario?.nombre ?? '—' }}</td>
+            <td class="px-4 py-3">
+              @if (item.estado === 'documentado') {
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold">Documentado</span>
+              } @else {
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">Pendiente</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-slate-400 whitespace-nowrap">
+              {{ item.created_at | date:'dd/MM/yyyy HH:mm' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  @if (meta() && meta()!.last_page > 1) {
+    <div class="flex items-center justify-center gap-1 mt-4">
+      @for (p of pages(); track p) {
+        <button (click)="irAPagina(p)"
+          class="w-8 h-8 rounded-lg text-xs font-bold transition-colors"
+          [class.bg-purple-600]="p === meta()!.current_page"
+          [class.text-white]="p === meta()!.current_page"
+          [class.bg-slate-100]="p !== meta()!.current_page"
+          [class.text-slate-600]="p !== meta()!.current_page"
+          [class.hover:bg-slate-200]="p !== meta()!.current_page">
+          {{ p }}
+        </button>
+      }
+    </div>
+  }
+}
