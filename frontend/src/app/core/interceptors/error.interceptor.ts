@@ -3,10 +3,12 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { ErrorModalService } from '../services/error-modal.service';
+import { AuthService } from '../auth/services/auth.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const errorModal = inject(ErrorModalService);
   const router = inject(Router);
+  const authService = inject(AuthService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -19,8 +21,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case 401:
-          // Token inválido o expirado → redirigir al login
-          localStorage.removeItem('access_token');
+          // Token inválido o expirado → limpiar sesión y redirigir al login
+          authService.clearLocalSession();
           router.navigate(['/login']);
           break;
 

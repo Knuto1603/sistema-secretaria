@@ -218,12 +218,20 @@ export class AuthService {
   }
 
   /**
-   * Limpia la sesión de localStorage
+   * Limpia la sesión local sin llamar al servidor.
+   * Útil cuando el token ya expiró (401) y no se puede hacer logout normal.
    */
-  private clearSession(): void {
+  clearLocalSession(): void {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_data');
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
+  }
+
+  /**
+   * Limpia la sesión de localStorage
+   */
+  private clearSession(): void {
+    this.clearLocalSession();
   }
 }
