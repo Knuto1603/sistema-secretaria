@@ -170,8 +170,8 @@ class ModificacionProgramacionService
     public function unificarSecciones(string $destinoId, array $origenIds, string $userId, string $motivo): ModificacionProgramacion
     {
         return DB::transaction(function () use ($destinoId, $origenIds, $userId, $motivo) {
-            $destino  = ProgramacionAcademica::with(['aula:id,nombre', 'grupoHorario:id,nombre'])->findOrFail($destinoId);
-            $origenes = ProgramacionAcademica::with(['aula:id,nombre', 'grupoHorario:id,nombre'])
+            $destino  = ProgramacionAcademica::with(['aulaRelacion:id,nombre', 'grupoHorario:id,nombre'])->findOrFail($destinoId);
+            $origenes = ProgramacionAcademica::with(['aulaRelacion:id,nombre', 'grupoHorario:id,nombre'])
                 ->whereIn('id', $origenIds)
                 ->get();
 
@@ -211,8 +211,8 @@ class ModificacionProgramacionService
 
     private function snapshotBase(ProgramacionAcademica $prog): array
     {
-        $aulaNombre = $prog->relationLoaded('aula')
-            ? $prog->aula?->nombre
+        $aulaNombre = $prog->relationLoaded('aulaRelacion')
+            ? $prog->aulaRelacion?->nombre
             : ($prog->aula_id ? Aula::find($prog->aula_id)?->nombre : null);
 
         $grupoNombre = $prog->relationLoaded('grupoHorario')
@@ -237,8 +237,8 @@ class ModificacionProgramacionService
     {
         $nombreAula = null;
         if ($prog->aula_id) {
-            $nombreAula = $prog->relationLoaded('aula')
-                ? $prog->aula?->nombre
+            $nombreAula = $prog->relationLoaded('aulaRelacion')
+                ? $prog->aulaRelacion?->nombre
                 : Aula::find($prog->aula_id)?->nombre;
         }
 

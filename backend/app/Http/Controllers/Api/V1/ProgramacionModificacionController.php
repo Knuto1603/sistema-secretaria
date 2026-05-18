@@ -193,7 +193,7 @@ class ProgramacionModificacionController extends Controller
             return $this->error($e->getMessage());
         } catch (Exception $e) {
             report($e);
-            return $this->error('Error interno al procesar la modificación.', 500);
+            return $this->error($e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine(), 500);
         }
     }
 }
