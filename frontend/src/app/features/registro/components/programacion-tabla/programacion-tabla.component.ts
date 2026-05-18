@@ -22,6 +22,7 @@ import { HttpClient } from '@angular/common/http';
 import { map, forkJoin } from 'rxjs';
 import { environment } from '@env/environment';
 import { ModificacionService } from '../../../programacion/services/modificacion.service';
+import { ProgramacionEstadoService } from '../../../programacion/services/programacion-estado.service';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -51,6 +52,7 @@ export class ProgramacionTablaComponent implements OnInit {
   private solicitudService     = inject(SolicitudService);
   private departamentoService  = inject(DepartamentoService);
   private modificacionService  = inject(ModificacionService);
+  private estadoService        = inject(ProgramacionEstadoService);
   private http                 = inject(HttpClient);
   public  authService          = inject(AuthService);
   private router               = inject(Router);
@@ -200,9 +202,11 @@ export class ProgramacionTablaComponent implements OnInit {
         this.periodos.set(periodos);
         this.loadingPeriodos.set(false);
 
+        // Respeta el período seleccionado en el Shell; fallback al activo
+        const preseleccionado = this.estadoService.periodoId();
         const activo = periodos.find(p => p.activo);
-        if (activo)               this.periodoSeleccionado.set(activo.id);
-        else if (periodos.length) this.periodoSeleccionado.set(periodos[0].id);
+        const inicial = periodos.find(p => p.id === preseleccionado) ?? activo ?? periodos[0];
+        if (inicial) this.periodoSeleccionado.set(inicial.id);
 
         const periodoId = this.periodoSeleccionado();
         if (periodoId) this.cargarGrupos(periodoId);
