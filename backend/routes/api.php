@@ -18,7 +18,9 @@ use App\Http\Controllers\Api\V1\PeriodoController;
 use App\Http\Controllers\Api\V1\PlanEstudiosController;
 use App\Http\Controllers\Api\V1\ProgresoController;
 use App\Http\Controllers\Api\V1\InscripcionController;
+use App\Http\Controllers\Api\V1\ModificacionController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
+use App\Http\Controllers\Api\V1\ProgramacionModificacionController;
 use App\Http\Controllers\Api\V1\RolController;
 use App\Http\Controllers\Api\V1\SolicitudController;
 use App\Http\Controllers\Api\V1\TipoSolicitudController;
@@ -161,6 +163,16 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:developer');
         Route::patch('/{id}/toggle-lleno', [ProgramacionController::class, 'toggleLleno'])
             ->middleware('role:secretaria|admin|developer');
+
+        // ── Modificaciones de programación publicada ──────────────────────
+        Route::middleware('role:secretaria|admin|developer')->group(function () {
+            Route::patch('/{id}/cerrar', [ProgramacionModificacionController::class, 'cerrar']);
+            Route::patch('/{id}/aula', [ProgramacionModificacionController::class, 'cambiarAula']);
+            Route::patch('/{id}/grupo', [ProgramacionModificacionController::class, 'cambiarGrupo']);
+            Route::patch('/{id}/aula-grupo', [ProgramacionModificacionController::class, 'cambiarAulaYGrupo']);
+            Route::post('/abrir-seccion', [ProgramacionModificacionController::class, 'abrirSeccion']);
+            Route::post('/unificar', [ProgramacionModificacionController::class, 'unificar']);
+        });
     });
 
     // Rutas de cursos
@@ -193,6 +205,14 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::patch('/cursos/{cursoId}', [AreaController::class, 'asignarArea']);
         });
     });
+
+    // ── Historial de modificaciones de programación ───────────────────────
+    Route::prefix('modificaciones')
+        ->middleware('role:secretaria|admin|developer')
+        ->group(function () {
+            Route::get('/', [ModificacionController::class, 'index']);
+            Route::get('/{id}', [ModificacionController::class, 'show']);
+        });
 
     // Configuración institucional
     Route::prefix('configuracion-institucional')
