@@ -1,0 +1,254 @@
+<!-- Overlay -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" (click)="cerrarDrawer()"></div>
+
+<!-- Panel lateral -->
+<div class="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col">
+
+  <!-- Cabecera -->
+  <div class="flex items-start justify-between px-6 py-5 border-b border-slate-100 bg-slate-50 shrink-0">
+    <div class="flex-1 min-w-0">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-500 mb-0.5">Modificación de programación</p>
+      <h2 class="text-base font-bold text-slate-800 truncate">
+        {{ programacion().curso?.nombre || 'Sección' }}
+      </h2>
+      <p class="text-xs text-slate-500 mt-0.5">
+        {{ programacion().curso?.codigo }} · Grupo {{ programacion().grupo || '—' }} · Sec. {{ programacion().seccion || '—' }}
+        @if (programacion().aula_nombre) { · {{ programacion().aula_nombre }} }
+      </p>
+    </div>
+    <button (click)="cerrarDrawer()"
+      class="ml-4 p-2 rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors shrink-0">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Cuerpo scrolleable -->
+  <div class="flex-1 overflow-y-auto">
+
+    <!-- Loading datos maestros -->
+    @if (loadingDatos()) {
+      <div class="flex items-center justify-center h-40 gap-3 text-slate-400">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+        <span class="text-sm">Cargando datos...</span>
+      </div>
+    }
+
+    <!-- Éxito -->
+    @if (exito()) {
+      <div class="flex flex-col items-center justify-center h-64 gap-4 p-8 text-center">
+        <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+          <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-base font-bold text-slate-800">Modificación registrada</p>
+          <p class="text-sm text-slate-500 mt-1">El cambio quedó documentado correctamente.</p>
+        </div>
+      </div>
+    }
+
+    <!-- Paso 1: Selección de acción -->
+    @if (!loadingDatos() && !exito() && !accionSeleccionada()) {
+      <div class="p-6 space-y-3">
+        <p class="text-sm font-semibold text-slate-600 mb-4">Selecciona el tipo de modificación:</p>
+
+        @for (op of opciones; track op.id) {
+          <button (click)="seleccionarAccion(op.id)"
+            class="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all text-left group">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+              [ngClass]="{
+                'bg-red-100 text-red-600 group-hover:bg-red-200':    op.color === 'red',
+                'bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200': op.color === 'emerald',
+                'bg-blue-100 text-blue-600 group-hover:bg-blue-200':   op.color === 'blue',
+                'bg-violet-100 text-violet-600 group-hover:bg-violet-200': op.color === 'violet',
+                'bg-amber-100 text-amber-600 group-hover:bg-amber-200': op.color === 'amber'
+              }">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="op.icono"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-bold text-slate-800">{{ op.label }}</p>
+              <p class="text-xs text-slate-500 mt-0.5">{{ op.descripcion }}</p>
+            </div>
+            <svg class="w-4 h-4 text-slate-300 group-hover:text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Paso 2: Formulario de la acción seleccionada -->
+    @if (!loadingDatos() && !exito() && accionSeleccionada()) {
+      <div class="p-6 space-y-5">
+
+        <!-- Breadcrumb de retroceso -->
+        <button (click)="volver()" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Cambiar tipo de modificación
+        </button>
+
+        <!-- Título de la acción -->
+        <div class="px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <p class="text-xs font-bold uppercase tracking-widest text-indigo-500">Acción seleccionada</p>
+          <p class="text-sm font-bold text-indigo-800 mt-0.5">{{ accionLabel() }}</p>
+        </div>
+
+        <!-- ─── Cambiar aula ──────────────────────────────────────────── -->
+        @if (accionSeleccionada() === 'cambio_aula' || accionSeleccionada() === 'abrir_seccion') {
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+              {{ accionSeleccionada() === 'cambio_aula' ? 'Nueva aula' : 'Aula (opcional)' }}
+            </label>
+            <select [(ngModel)]="aulaId" [ngModelOptions]="{standalone: true}"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
+              <option value="">— Sin asignar —</option>
+              @for (pab of pabellones(); track pab.id) {
+                <optgroup [label]="pab.nombre">
+                  @for (aula of pab.aulas; track aula.id) {
+                    @if (aula.activo) {
+                      <option [value]="aula.id">{{ aula.nombre }} (cap. {{ aula.capacidad }})</option>
+                    }
+                  }
+                </optgroup>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- ─── Cambiar grupo ─────────────────────────────────────────── -->
+        @if (accionSeleccionada() === 'cambio_grupo' || accionSeleccionada() === 'abrir_seccion') {
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+              {{ accionSeleccionada() === 'cambio_grupo' ? 'Nuevo grupo horario' : 'Grupo horario (opcional)' }}
+            </label>
+            <select [(ngModel)]="grupoId" [ngModelOptions]="{standalone: true}"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
+              <option value="">— Sin asignar —</option>
+              @for (g of grupos(); track g.id) {
+                <option [value]="g.id">{{ g.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- ─── Capacidad (solo abrir sección) ───────────────────────── -->
+        @if (accionSeleccionada() === 'abrir_seccion') {
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+              Capacidad (opcional)
+            </label>
+            <input type="number" min="1" max="500"
+              [(ngModel)]="capacidad" [ngModelOptions]="{standalone: true}"
+              placeholder="{{ programacion().capacidad }}"
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"/>
+          </div>
+        }
+
+        <!-- ─── Secciones origen (solo unificar) ─────────────────────── -->
+        @if (accionSeleccionada() === 'unificar') {
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+              Secciones a absorber
+            </label>
+            <p class="text-xs text-slate-500 mb-3">
+              Los alumnos de estas secciones se moverán a la sección actual.
+              Las secciones seleccionadas serán cerradas.
+            </p>
+
+            @if (secciones().length === 0) {
+              <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-lg text-xs text-amber-700">
+                No hay otras secciones de este curso en el periodo actual.
+              </div>
+            } @else {
+              <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                @for (sec of secciones(); track sec.id) {
+                  <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer"
+                    [class.border-indigo-200]="origenIds().includes(sec.id)"
+                    [class.bg-indigo-50]="origenIds().includes(sec.id)">
+                    <input type="checkbox"
+                      [checked]="origenIds().includes(sec.id)"
+                      (change)="toggleOrigen(sec.id)"
+                      class="w-4 h-4 rounded text-indigo-600 accent-indigo-600"/>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-slate-700">
+                        Grupo {{ sec.grupo || '—' }} · Sec. {{ sec.seccion || '—' }}
+                      </p>
+                      <p class="text-xs text-slate-500">
+                        {{ sec.aula_nombre || 'Sin aula' }} · {{ sec.n_inscritos }}/{{ sec.capacidad }} inscritos
+                      </p>
+                    </div>
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ─── Motivo (todas las acciones) ──────────────────────────── -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+            Motivo <span class="text-red-400">*</span>
+          </label>
+          <textarea
+            [(ngModel)]="motivo" [ngModelOptions]="{standalone: true}"
+            rows="3"
+            placeholder="Describe brevemente el motivo de esta modificación..."
+            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none">
+          </textarea>
+          <p class="text-[10px] text-slate-400 mt-1">Mínimo 5 caracteres. Este texto quedará en el registro de auditoría.</p>
+        </div>
+
+        <!-- Error -->
+        @if (error()) {
+          <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex gap-2 items-start">
+            <svg class="w-4 h-4 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            {{ error() }}
+          </div>
+        }
+
+      </div>
+    }
+  </div>
+
+  <!-- Pie: botón de confirmación -->
+  @if (!loadingDatos() && !exito() && accionSeleccionada()) {
+    <div class="px-6 py-4 border-t border-slate-100 bg-white shrink-0">
+      <button (click)="confirmar()"
+        [disabled]="!submitValido() || loading()"
+        class="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all"
+        [ngClass]="submitValido() && !loading()
+          ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+          : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
+        @if (loading()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          Procesando...
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Confirmar modificación
+        }
+      </button>
+      <p class="text-[10px] text-slate-400 text-center mt-2">
+        Esta acción quedará registrada en el historial de modificaciones.
+      </p>
+    </div>
+  }
+
+</div>
