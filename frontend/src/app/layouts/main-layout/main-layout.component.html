@@ -42,6 +42,7 @@
         <a [routerLink]="item.route"
            (click)="handleNavClick()"
            routerLinkActive="bg-indigo-500/20 text-white border-l-4 border-indigo-400 shadow-inner"
+           [routerLinkActiveOptions]="{ exact: item.exactMatch ?? false }"
            class="flex items-center gap-4 p-3.5 rounded-lg hover:bg-white/5 transition-all group text-indigo-100/60 hover:text-white"
            [title]="item.title">
           <svg class="w-6 h-6 shrink-0 transition-transform group-hover:scale-110"
