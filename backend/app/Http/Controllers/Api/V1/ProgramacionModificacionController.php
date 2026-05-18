@@ -43,7 +43,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->success(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Curso cerrado y modificación registrada.'
             );
         } catch (ModificacionException $e) {
@@ -66,7 +66,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->created(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Sección abierta y modificación registrada.'
             );
         } catch (ModificacionException $e) {
@@ -97,7 +97,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->success(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Aula actualizada y modificación registrada.'
             );
         } catch (ModificacionException $e) {
@@ -128,7 +128,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->success(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Grupo horario actualizado y modificación registrada.'
             );
         } catch (ModificacionException $e) {
@@ -161,7 +161,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->success(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Aula y grupo actualizados y modificación registrada.'
             );
         } catch (ModificacionException $e) {
@@ -186,7 +186,7 @@ class ProgramacionModificacionController extends Controller
             );
 
             return $this->created(
-                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aula', 'programacion.grupoHorario'])),
+                $this->transformer->toArray($modificacion->load(['periodo', 'user', 'programacion.curso.area', 'programacion.aulaRelacion', 'programacion.grupoHorario'])),
                 'Secciones unificadas y modificación registrada.'
             );
         } catch (ModificacionException $e) {

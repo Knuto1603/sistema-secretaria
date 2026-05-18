@@ -26,9 +26,9 @@ class ModificacionTransformer
                         'nombre_tabla'=> $prog->curso->area->nombre_tabla,
                     ] : null,
                 ] : null,
-                'aula' => $prog->relationLoaded('aula') && $prog->aula ? [
-                    'id'    => $prog->aula->id,
-                    'nombre'=> $prog->aula->nombre,
+                'aula' => $prog->relationLoaded('aulaRelacion') && $prog->aulaRelacion ? [
+                    'id'    => $prog->aulaRelacion->id,
+                    'nombre'=> $prog->aulaRelacion->nombre,
                 ] : null,
                 'grupo_horario' => $prog->relationLoaded('grupoHorario') && $prog->grupoHorario ? [
                     'id'    => $prog->grupoHorario->id,

@@ -21,7 +21,7 @@ class ModificacionRepository implements ModificacionRepositoryInterface
                 'periodo:id,nombre',
                 'user:id,name',
                 'programacion.curso.area:id,nombre,nombre_tabla',
-                'programacion.aula:id,nombre',
+                'programacion.aulaRelacion:id,nombre',
                 'programacion.grupoHorario:id,nombre',
             ]);
 
@@ -65,7 +65,7 @@ class ModificacionRepository implements ModificacionRepositoryInterface
             'periodo:id,nombre',
             'user:id,name',
             'programacion.curso.area',
-            'programacion.aula',
+            'programacion.aulaRelacion',
             'programacion.grupoHorario',
         ])->find($id);
     }
@@ -80,7 +80,7 @@ class ModificacionRepository implements ModificacionRepositoryInterface
         return $this->model->newQuery()
             ->with([
                 'programacion.curso.area:id,nombre,nombre_tabla,director_nombre,director_cargo,titulo_director',
-                'programacion.aula:id,nombre',
+                'programacion.aulaRelacion:id,nombre',
                 'programacion.grupoHorario:id,nombre',
                 'user:id,name',
             ])
