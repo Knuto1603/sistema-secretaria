@@ -77,6 +77,10 @@ export class ProgramacionMatrizComponent {
     return this.matriz().get(grupo)?.get(aula) ?? [];
   }
 
+  hasCambioPendiente(progId: string): boolean {
+    return this.cambiosPendientes().some(c => c.programacionId === progId);
+  }
+
   // ─── MODO MODIFICAR: computed ID-based ──────────────────────────────────────
 
   aulaColumnasMod = computed((): AulaColumna[] => {

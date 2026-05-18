@@ -190,7 +190,7 @@
                     [class.ring-purple-400]="isDragging(prog.id)"
                     [ngClass]="getCeldaColor(prog)">
                     <!-- Indicador de cambio pendiente -->
-                    @if (cambiosPendientes().some(c => c.programacionId === prog.id)) {
+                    @if (hasCambioPendiente(prog.id)) {
                       <span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1 mb-1 align-middle" title="Cambio pendiente"></span>
                     }
                     <p class="font-bold text-slate-800 leading-tight text-[11px] uppercase tracking-tight">
