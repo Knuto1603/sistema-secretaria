@@ -1,0 +1,181 @@
+<div class="min-h-screen bg-slate-50">
+
+  <!-- ── Cabecera del módulo ─────────────────────────────────── -->
+  <div class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-screen-2xl mx-auto px-6">
+
+      <!-- Título + selector de período -->
+      <div class="flex flex-wrap items-center justify-between gap-4 pt-5 pb-4">
+        <div>
+          <h1 class="text-2xl font-black text-slate-800 tracking-tight leading-tight">
+            Programación Académica
+          </h1>
+          <p class="text-xs text-slate-400 font-medium mt-0.5">
+            Ciclo completo: borrador → publicación → gestión de cambios
+          </p>
+        </div>
+
+        <!-- Selector de período -->
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+            Período
+          </span>
+          @if (loading()) {
+            <div class="h-10 w-52 bg-slate-100 rounded-xl animate-pulse"></div>
+          } @else {
+            <div class="relative">
+              <select
+                [ngModel]="estado.periodoId()"
+                (ngModelChange)="onChangePeriodo($event)"
+                class="pl-4 pr-10 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl bg-white
+                       focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer
+                       shadow-sm hover:border-indigo-300 transition-colors">
+                <option value="" disabled>Seleccionar período…</option>
+                @for (p of estado.periodos(); track p.id) {
+                  <option [value]="p.id">
+                    {{ p.nombre }}{{ p.activo ? ' (Activo)' : '' }}
+                  </option>
+                }
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ── Indicador de ciclo de vida ─────────────────────── -->
+      <div class="flex items-center gap-0 pb-4 overflow-x-auto">
+
+        <!-- Paso 1: Borrador -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 flex-shrink-0">
+          <span class="w-5 h-5 rounded-full bg-violet-500 text-white text-[10px] font-black
+                       flex items-center justify-center flex-shrink-0">1</span>
+          <svg class="w-3.5 h-3.5 text-violet-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          <span class="text-[11px] font-bold text-violet-700 whitespace-nowrap">Crear borrador</span>
+        </div>
+
+        <!-- Flecha -->
+        <div class="flex items-center flex-shrink-0 px-1">
+          <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+
+        <!-- Paso 2: Publicar -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 flex-shrink-0">
+          <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-black
+                       flex items-center justify-center flex-shrink-0">2</span>
+          <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-[11px] font-bold text-emerald-700 whitespace-nowrap">Publicar</span>
+        </div>
+
+        <!-- Flecha -->
+        <div class="flex items-center flex-shrink-0 px-1">
+          <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+
+        <!-- Paso 3: Activa -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 flex-shrink-0">
+          <span class="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-black
+                       flex items-center justify-center flex-shrink-0">3</span>
+          <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M3 6h18M3 14h6M3 18h6"/>
+          </svg>
+          <span class="text-[11px] font-bold text-indigo-700 whitespace-nowrap">Programación activa</span>
+        </div>
+
+        <!-- Flecha -->
+        <div class="flex items-center flex-shrink-0 px-1">
+          <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+
+        <!-- Paso 4: Modificar -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 flex-shrink-0">
+          <span class="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-black
+                       flex items-center justify-center flex-shrink-0">4</span>
+          <svg class="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-[11px] font-bold text-orange-700 whitespace-nowrap">Modificar &amp; documentar</span>
+        </div>
+
+      </div>
+
+      <!-- ── Tabs de navegación ──────────────────────────────── -->
+      <nav class="flex gap-1 -mb-px" role="navigation" aria-label="Secciones de programación">
+
+        <a routerLink="./"
+           [routerLinkActiveOptions]="{ exact: true }"
+           routerLinkActive="border-indigo-600 text-indigo-700 bg-indigo-50/60"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-xl border-b-2
+                  border-transparent text-slate-500 hover:text-indigo-600 hover:border-indigo-300
+                  transition-all duration-150 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M3 6h18M3 14h6M3 18h6"/>
+          </svg>
+          Programación
+        </a>
+
+        <a routerLink="borradores"
+           routerLinkActive="border-violet-600 text-violet-700 bg-violet-50/60"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-xl border-b-2
+                  border-transparent text-slate-500 hover:text-violet-600 hover:border-violet-300
+                  transition-all duration-150 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Borradores
+        </a>
+
+        <a routerLink="modificaciones"
+           routerLinkActive="border-orange-500 text-orange-700 bg-orange-50/60"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-xl border-b-2
+                  border-transparent text-slate-500 hover:text-orange-600 hover:border-orange-300
+                  transition-all duration-150 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Modificaciones
+        </a>
+
+        <a routerLink="generar-documentos"
+           routerLinkActive="border-teal-600 text-teal-700 bg-teal-50/60"
+           class="flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-xl border-b-2
+                  border-transparent text-slate-500 hover:text-teal-600 hover:border-teal-300
+                  transition-all duration-150 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Generar Oficios
+        </a>
+
+      </nav>
+    </div>
+  </div>
+
+  <!-- ── Contenido de la ruta activa ─────────────────────────── -->
+  <div class="max-w-screen-2xl mx-auto px-6 py-6">
+    <router-outlet />
+  </div>
+
+</div>
