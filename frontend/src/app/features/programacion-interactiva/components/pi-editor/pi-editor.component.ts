@@ -57,7 +57,7 @@ export class PiEditorComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.borradorId) {
-      this.router.navigate(['/app/programacion-interactiva']);
+      this.router.navigate(['/app/programacion/borradores']);
       return;
     }
     this.cargar();
@@ -80,7 +80,7 @@ export class PiEditorComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
-          this.router.navigate(['/app/programacion-interactiva']);
+          this.router.navigate(['/app/programacion/borradores']);
         }
       });
   }
@@ -111,7 +111,7 @@ export class PiEditorComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/app/programacion-interactiva']);
+    this.router.navigate(['/app/programacion/borradores']);
   }
 
   autoAsignar(): void {

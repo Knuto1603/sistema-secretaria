@@ -99,14 +99,14 @@ export class PiShellComponent implements OnInit {
     }).subscribe({
       next: borrador => {
         this.generando.set(false);
-        this.router.navigate(['/app/programacion-interactiva', borrador.id]);
+        this.router.navigate(['/app/programacion/borradores', borrador.id]);
       },
       error: () => this.generando.set(false)
     });
   }
 
   abrirEditor(id: string): void {
-    this.router.navigate(['/app/programacion-interactiva', id]);
+    this.router.navigate(['/app/programacion/borradores', id]);
   }
 
   eliminar(borrador: BorradorProgramacion, event: MouseEvent): void {
