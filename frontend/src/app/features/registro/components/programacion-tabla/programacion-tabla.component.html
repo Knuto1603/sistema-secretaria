@@ -960,13 +960,50 @@
 
   <!-- ─── VISTA MATRIZ ─────────────────────────────────────────────────── -->
   @if (vistaActiva() === 'matriz' && !esEstudiante()) {
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
+      [class.pr-[340px]]="modoMatriz() === 'modificar' && cambiosPendientesMatriz().length > 0">
+
+      <!-- Toggle Consultar / Modificar (solo admin) -->
+      @if (esAdmin()) {
+        <div class="flex items-center justify-between mb-5">
+          <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Modo de visualización</span>
+          <div class="flex items-center bg-slate-100 rounded-lg p-0.5 gap-0.5">
+            <button (click)="modoMatriz.set('consultar'); cambiosPendientesMatriz.set([])"
+              class="px-3.5 py-1.5 text-xs font-bold rounded-md transition-all"
+              [ngClass]="modoMatriz() === 'consultar'
+                ? 'bg-white text-slate-800 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'">
+              Consultar
+            </button>
+            <button (click)="modoMatriz.set('modificar')"
+              class="px-3.5 py-1.5 text-xs font-bold rounded-md transition-all"
+              [ngClass]="modoMatriz() === 'modificar'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'">
+              Modificar
+            </button>
+          </div>
+        </div>
+      }
+
       <app-programacion-matriz
         [items]="todosLosItems()"
         [loading]="loadingMatriz()"
-        (verDetalle)="programacionDetalleId.set($event)">
+        [modo]="modoMatriz()"
+        (verDetalle)="programacionDetalleId.set($event)"
+        (cambiosPendientesOut)="onCambiosPendientesMatriz($event)">
       </app-programacion-matriz>
     </div>
+
+    <!-- Panel de cambios pendientes -->
+    @if (modoMatriz() === 'modificar' && cambiosPendientesMatriz().length > 0) {
+      <app-cambios-pendientes-panel
+        [cambios]="cambiosPendientesMatriz()"
+        [guardando]="guardandoCambiosMatriz()"
+        (confirmar)="confirmarCambiosMatriz($event)"
+        (descartar)="descartarCambiosMatriz()">
+      </app-cambios-pendientes-panel>
+    }
   }
 
 </div>

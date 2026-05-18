@@ -10,16 +10,18 @@ import { DepartamentoService, Departamento } from '../../../configuracion/servic
 import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
 import { ProgramacionEditFormComponent } from '../programacion-edit-form/programacion-edit-form.component';
-import { ProgramacionMatrizComponent } from '../programacion-matriz/programacion-matriz.component';
+import { ProgramacionMatrizComponent, CambioPendiente } from '../programacion-matriz/programacion-matriz.component';
 import { ProgramacionDetalleComponent } from '../programacion-detalle/programacion-detalle.component';
 import { ModificationDrawerComponent } from '../../../programacion/components/modification-drawer/modification-drawer.component';
+import { CambiosPendientesPanelComponent } from '../../../programacion/components/cambios-pendientes-panel/cambios-pendientes-panel.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
 import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import { map, forkJoin } from 'rxjs';
 import { environment } from '@env/environment';
+import { ModificacionService } from '../../../programacion/services/modificacion.service';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -39,6 +41,7 @@ type VistaActiva = 'tabla' | 'matriz';
     ProgramacionMatrizComponent,
     ProgramacionDetalleComponent,
     ModificationDrawerComponent,
+    CambiosPendientesPanelComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -47,6 +50,7 @@ export class ProgramacionTablaComponent implements OnInit {
   private periodoService       = inject(PeriodoService);
   private solicitudService     = inject(SolicitudService);
   private departamentoService  = inject(DepartamentoService);
+  private modificacionService  = inject(ModificacionService);
   private http                 = inject(HttpClient);
   public  authService          = inject(AuthService);
   private router               = inject(Router);
@@ -76,7 +80,12 @@ export class ProgramacionTablaComponent implements OnInit {
   perPage           = signal(10);
 
   // Vista
-  vistaActiva = signal<VistaActiva>('tabla');
+  vistaActiva  = signal<VistaActiva>('tabla');
+  modoMatriz   = signal<'consultar' | 'modificar'>('consultar');
+
+  // Cambios pendientes de la matriz en modo modificar
+  cambiosPendientesMatriz  = signal<CambioPendiente[]>([]);
+  guardandoCambiosMatriz   = signal(false);
 
   // Filtros adicionales (admin)
   escuelas           = signal<Array<{ id: string; nombre: string; nombre_corto: string | null }>>([]);
@@ -298,6 +307,50 @@ export class ProgramacionTablaComponent implements OnInit {
   onModificacionGuardada(): void {
     this.cargarProgramacion(this.currentPage());
     if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+  }
+
+  toggleModoMatriz(): void {
+    if (this.modoMatriz() === 'consultar') {
+      this.modoMatriz.set('modificar');
+    } else {
+      this.modoMatriz.set('consultar');
+      this.cambiosPendientesMatriz.set([]);
+    }
+  }
+
+  onCambiosPendientesMatriz(cambios: CambioPendiente[]): void {
+    this.cambiosPendientesMatriz.set(cambios);
+  }
+
+  confirmarCambiosMatriz(motivo: string): void {
+    const cambios = this.cambiosPendientesMatriz();
+    if (!cambios.length) return;
+
+    this.guardandoCambiosMatriz.set(true);
+
+    const llamadas = cambios.map(c =>
+      this.modificacionService.cambiarAulaYGrupo(c.programacionId, {
+        aula_id: c.nuevaAulaId ?? '',
+        grupo_horario_id: c.nuevoGrupoId ?? '',
+        motivo,
+      })
+    );
+
+    forkJoin(llamadas).subscribe({
+      next: () => {
+        this.guardandoCambiosMatriz.set(false);
+        this.cambiosPendientesMatriz.set([]);
+        this.modoMatriz.set('consultar');
+        this.cargarMatriz();
+      },
+      error: () => {
+        this.guardandoCambiosMatriz.set(false);
+      },
+    });
+  }
+
+  descartarCambiosMatriz(): void {
+    this.cambiosPendientesMatriz.set([]);
   }
 
   abrirDetalle(item: Programacion): void {
