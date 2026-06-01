@@ -1,4 +1,5 @@
 import { Component, input, output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Periodo } from '@core/services/periodo.service';
 import { Departamento } from '../../../configuracion/services/departamento.service';
@@ -6,7 +7,7 @@ import { Departamento } from '../../../configuracion/services/departamento.servi
 @Component({
   selector: 'app-programacion-filtros',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './programacion-filtros.component.html'
 })
 export class ProgramacionFiltrosComponent {
