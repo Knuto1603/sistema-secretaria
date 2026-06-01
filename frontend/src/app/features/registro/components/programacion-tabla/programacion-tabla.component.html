@@ -42,73 +42,24 @@
 
   <!-- Modal: Limpiar Periodo (solo developer) -->
   @if (showLimpiarPeriodo()) {
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-7">
-        <div class="flex items-center gap-4 mb-5">
-          <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-800">Limpiar programación del periodo</h3>
-            <p class="text-sm text-slate-500 mt-0.5">Esta acción eliminará <strong>todos</strong> los cursos del periodo seleccionado.</p>
-          </div>
-        </div>
-        <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl mb-5">
-          <p class="text-xs font-bold text-red-600 uppercase tracking-widest">Periodo a limpiar</p>
-          <p class="text-sm font-bold text-slate-800 mt-1">{{ getPeriodoNombre() }}</p>
-          <p class="text-xs text-red-500 mt-1">Se eliminarán todas las secciones programadas. Esta acción no se puede deshacer.</p>
-        </div>
-        @if (limpiarPeriodoError()) {
-          <p class="text-sm text-red-600 font-medium mb-4">{{ limpiarPeriodoError() }}</p>
-        }
-        <div class="flex gap-3 justify-end">
-          <app-btn variant="ghost" (clicked)="showLimpiarPeriodo.set(false)">Cancelar</app-btn>
-          <app-btn variant="danger" [loading]="limpiarPeriodoLoading()" (clicked)="confirmarLimpiarPeriodo()">
-            Sí, limpiar todo
-          </app-btn>
-        </div>
-      </div>
-    </div>
+    <app-limpiar-periodo-modal
+      [periodoNombre]="getPeriodoNombre()"
+      [loading]="limpiarPeriodoLoading()"
+      [errorMsg]="limpiarPeriodoError()"
+      (cancelar)="showLimpiarPeriodo.set(false)"
+      (confirmar)="confirmarLimpiarPeriodo()">
+    </app-limpiar-periodo-modal>
   }
 
   <!-- Modal: Confirmar Eliminación -->
   @if (programacionAEliminar()) {
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-7">
-        <div class="flex items-center gap-4 mb-5">
-          <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-800">Eliminar sección</h3>
-            <p class="text-sm text-slate-500 mt-0.5">Esta acción no se puede deshacer.</p>
-          </div>
-        </div>
-        <div class="px-4 py-3 bg-slate-50 rounded-2xl mb-5">
-          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Curso a eliminar</p>
-          <p class="text-sm font-bold text-slate-800 mt-1">{{ programacionAEliminar()?.curso?.nombre }}</p>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Sec {{ programacionAEliminar()?.seccion }} · Grupo {{ programacionAEliminar()?.grupo }} ·
-            {{ getAulaMostrar(programacionAEliminar()!) }}
-          </p>
-        </div>
-        @if (errorEliminar()) {
-          <p class="text-sm text-red-600 font-medium mb-4">{{ errorEliminar() }}</p>
-        }
-        <div class="flex gap-3 justify-end">
-          <app-btn variant="ghost" (clicked)="programacionAEliminar.set(null)">Cancelar</app-btn>
-          <app-btn variant="danger" [loading]="eliminando()" (clicked)="confirmarEliminar()">
-            Eliminar
-          </app-btn>
-        </div>
-      </div>
-    </div>
+    <app-confirm-eliminar-modal
+      [programacion]="programacionAEliminar()!"
+      [eliminando]="eliminando()"
+      [errorMsg]="errorEliminar()"
+      (cancelar)="programacionAEliminar.set(null)"
+      (confirmar)="confirmarEliminar()">
+    </app-confirm-eliminar-modal>
   }
 
   <!-- Encabezado -->
@@ -268,105 +219,10 @@
 
     <!-- Panel debug Campus (solo developer) -->
     @if (esDeveloper() && campusDebugResult()) {
-      <div class="border-t border-amber-200 bg-amber-50 px-6 py-4">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Debug · Resultado importación Campus</span>
-            <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">
-              {{ campusDebugResult()!.actualizados }} actualizados
-            </span>
-            <span class="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">
-              {{ campusDebugResult()!.omitidos }} omitidos
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button (click)="descargarNoCampusCSV()"
-              class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-              </svg>
-              Descargar CSV completo
-            </button>
-            <button (click)="campusDebugResult.set(null)"
-              class="text-amber-400 hover:text-amber-700 transition-colors text-xs font-bold">
-              Cerrar ✕
-            </button>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          <!-- En Campus pero sin programación en sistema -->
-          <div>
-            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">
-              En Campus pero sin programación en sistema ({{ campusDebugResult()!.omitidos }})
-            </p>
-            @if (campusDebugResult()!.detalle.length > 0) {
-              <div class="overflow-auto max-h-56 rounded-xl border border-amber-200 bg-white">
-                <table class="w-full text-xs">
-                  <thead class="bg-amber-50 sticky top-0">
-                    <tr>
-                      <th class="text-left px-3 py-2 font-bold text-amber-700">Código</th>
-                      <th class="text-left px-3 py-2 font-bold text-amber-700">Nombre</th>
-                      <th class="text-left px-3 py-2 font-bold text-amber-700">Sec.</th>
-                      <th class="text-left px-3 py-2 font-bold text-amber-700">Motivo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of campusDebugResult()!.detalle; track $index) {
-                      <tr class="border-t border-amber-100 hover:bg-amber-50">
-                        <td class="px-3 py-2 font-mono font-bold text-slate-700">{{ item.codigo }}</td>
-                        <td class="px-3 py-2 text-slate-600">{{ item.nombre }}</td>
-                        <td class="px-3 py-2 text-slate-500">{{ item.seccion ?? '—' }}</td>
-                        <td class="px-3 py-2 text-red-600 font-medium">{{ item.motivo }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            } @else {
-              <p class="text-xs text-emerald-600 font-medium">Ninguno.</p>
-            }
-          </div>
-
-          <!-- En sistema pero NO en Campus -->
-          <div>
-            <div class="mb-2">
-              <p class="text-[10px] font-bold text-red-600 uppercase tracking-widest">
-                En sistema pero NO en Campus ({{ campusDebugResult()!.no_en_campus.length }})
-              </p>
-            </div>
-            @if (campusDebugResult()!.no_en_campus.length > 0) {
-              <div class="overflow-auto max-h-56 rounded-xl border border-red-200 bg-white">
-                <table class="w-full text-xs">
-                  <thead class="bg-red-50 sticky top-0">
-                    <tr>
-                      <th class="text-left px-3 py-2 font-bold text-red-700">Código</th>
-                      <th class="text-left px-3 py-2 font-bold text-red-700">Nombre</th>
-                      <th class="text-left px-3 py-2 font-bold text-red-700">Sec.</th>
-                      <th class="text-left px-3 py-2 font-bold text-red-700">Grupo</th>
-                      <th class="text-left px-3 py-2 font-bold text-red-700">Escuela</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of campusDebugResult()!.no_en_campus; track item.id) {
-                      <tr class="border-t border-red-100 hover:bg-red-50">
-                        <td class="px-3 py-2 font-mono font-bold text-slate-700">{{ item.codigo }}</td>
-                        <td class="px-3 py-2 text-slate-600">{{ item.nombre }}</td>
-                        <td class="px-3 py-2 text-slate-500">{{ item.seccion ?? '—' }}</td>
-                        <td class="px-3 py-2 text-slate-500">{{ item.grupo }}</td>
-                        <td class="px-3 py-2 text-slate-500">{{ item.escuela }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            } @else {
-              <p class="text-xs text-emerald-600 font-medium">Todos los cursos del sistema están en Campus.</p>
-            }
-          </div>
-
-        </div>
-      </div>
+      <app-campus-debug-panel
+        [resultado]="campusDebugResult()!"
+        (cerrar)="campusDebugResult.set(null)">
+      </app-campus-debug-panel>
     }
 
     <!-- Fila 2: Filtros -->

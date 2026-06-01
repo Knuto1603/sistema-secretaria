@@ -1,0 +1,30 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-7">
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800">Limpiar programación del periodo</h3>
+        <p class="text-sm text-slate-500 mt-0.5">Esta acción eliminará <strong>todos</strong> los cursos del periodo seleccionado.</p>
+      </div>
+    </div>
+    <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl mb-5">
+      <p class="text-xs font-bold text-red-600 uppercase tracking-widest">Periodo a limpiar</p>
+      <p class="text-sm font-bold text-slate-800 mt-1">{{ periodoNombre() }}</p>
+      <p class="text-xs text-red-500 mt-1">Se eliminarán todas las secciones programadas. Esta acción no se puede deshacer.</p>
+    </div>
+    @if (errorMsg()) {
+      <p class="text-sm text-red-600 font-medium mb-4">{{ errorMsg() }}</p>
+    }
+    <div class="flex gap-3 justify-end">
+      <app-btn variant="ghost" (clicked)="cancelar.emit()">Cancelar</app-btn>
+      <app-btn variant="danger" [loading]="loading()" (clicked)="confirmar.emit()">
+        Sí, limpiar todo
+      </app-btn>
+    </div>
+  </div>
+</div>

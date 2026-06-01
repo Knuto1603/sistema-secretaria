@@ -23,6 +23,9 @@ import { ModificacionService } from '../../../programacion/services/modificacion
 import { ProgramacionEstadoService } from '../../../programacion/services/programacion-estado.service';
 import { ProgramacionFiltrosComponent } from '../programacion-filtros/programacion-filtros.component';
 import { ProgramacionEstudianteComponent } from '../programacion-estudiante/programacion-estudiante.component';
+import { ConfirmEliminarModalComponent } from '../confirm-eliminar-modal/confirm-eliminar-modal.component';
+import { LimpiarPeriodoModalComponent } from '../limpiar-periodo-modal/limpiar-periodo-modal.component';
+import { CampusDebugPanelComponent } from '../campus-debug-panel/campus-debug-panel.component';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -44,6 +47,9 @@ type VistaActiva = 'tabla' | 'matriz';
     CambiosPendientesPanelComponent,
     ProgramacionFiltrosComponent,
     ProgramacionEstudianteComponent,
+    ConfirmEliminarModalComponent,
+    LimpiarPeriodoModalComponent,
+    CampusDebugPanelComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -531,33 +537,6 @@ export class ProgramacionTablaComponent implements OnInit {
 
   descargarPlantilla(): void { this.programacionService.descargarPlantilla(); }
 
-  descargarNoCampusCSV(): void {
-    const resultado = this.campusDebugResult();
-    if (!resultado) return;
-
-    const filas: string[] = [
-      'Caso,Código,Nombre,Sección,Grupo,Escuela,Motivo',
-    ];
-
-    for (const r of resultado.detalle) {
-      filas.push(`"En Campus / sin programación en sistema","${r.codigo}","${r.nombre}","${r.seccion ?? ''}","","","${r.motivo}"`);
-    }
-
-    for (const r of resultado.no_en_campus) {
-      filas.push(`"En sistema / no está en Campus","${r.codigo}","${r.nombre}","${r.seccion ?? ''}","${r.grupo}","${r.escuela}",""`);
-    }
-
-    if (filas.length <= 1) return;
-
-    const csv = filas.join('\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'debug_campus.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   onProgramacionGuardada(): void {
     this.showFormProgramacion.set(false);

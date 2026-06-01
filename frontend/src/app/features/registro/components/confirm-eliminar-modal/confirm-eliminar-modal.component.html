@@ -1,0 +1,33 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-7">
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-12 h-12 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800">Eliminar sección</h3>
+        <p class="text-sm text-slate-500 mt-0.5">Esta acción no se puede deshacer.</p>
+      </div>
+    </div>
+    <div class="px-4 py-3 bg-slate-50 rounded-2xl mb-5">
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Curso a eliminar</p>
+      <p class="text-sm font-bold text-slate-800 mt-1">{{ programacion().curso?.nombre }}</p>
+      <p class="text-xs text-slate-400 mt-0.5">
+        Sec {{ programacion().seccion }} · Grupo {{ programacion().grupo }} ·
+        {{ programacion().aula_nombre || programacion().aula || programacion().aula_rel?.nombre || '—' }}
+      </p>
+    </div>
+    @if (errorMsg()) {
+      <p class="text-sm text-red-600 font-medium mb-4">{{ errorMsg() }}</p>
+    }
+    <div class="flex gap-3 justify-end">
+      <app-btn variant="ghost" (clicked)="cancelar.emit()">Cancelar</app-btn>
+      <app-btn variant="danger" [loading]="eliminando()" (clicked)="confirmar.emit()">
+        Eliminar
+      </app-btn>
+    </div>
+  </div>
+</div>
