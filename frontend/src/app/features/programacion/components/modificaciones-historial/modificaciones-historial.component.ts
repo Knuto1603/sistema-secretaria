@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { GeneracionModificacionService, ModificacionItem, PaginacionMeta } from '../../services/generacion-modificacion.service';
 
-type TipoFiltro = '' | 'cerrar_curso' | 'abrir_seccion' | 'cambio_aula' | 'cambio_grupo' | 'unificar';
+type TipoFiltro = '' | 'cerrar_curso' | 'abrir_seccion' | 'cambio_aula' | 'cambio_grupo' | 'cambio_aula_y_grupo' | 'unificacion_secciones';
 
 interface Filtros {
   tipo: TipoFiltro;
@@ -15,11 +15,12 @@ interface Filtros {
 }
 
 const TIPO_LABELS: Record<string, { label: string; color: string }> = {
-  cerrar_curso:  { label: 'Cierre',         color: 'bg-red-100 text-red-700' },
-  abrir_seccion: { label: 'Apertura',       color: 'bg-emerald-100 text-emerald-700' },
-  cambio_aula:   { label: 'Cambio Aula',    color: 'bg-blue-100 text-blue-700' },
-  cambio_grupo:  { label: 'Cambio Grupo',   color: 'bg-violet-100 text-violet-700' },
-  unificar:      { label: 'Unificación',    color: 'bg-amber-100 text-amber-700' },
+  cerrar_curso:         { label: 'Cierre',            color: 'bg-red-100 text-red-700' },
+  abrir_seccion:        { label: 'Apertura',          color: 'bg-emerald-100 text-emerald-700' },
+  cambio_aula:          { label: 'Cambio Aula',       color: 'bg-blue-100 text-blue-700' },
+  cambio_grupo:         { label: 'Cambio Grupo',      color: 'bg-violet-100 text-violet-700' },
+  cambio_aula_y_grupo:  { label: 'Cambio Aula+Grupo', color: 'bg-sky-100 text-sky-700' },
+  unificacion_secciones:{ label: 'Unificación',       color: 'bg-amber-100 text-amber-700' },
 };
 
 @Component({
@@ -45,12 +46,13 @@ export class ModificacionesHistorialComponent implements OnInit {
   };
 
   readonly tiposOpciones: { value: TipoFiltro; label: string }[] = [
-    { value: '', label: 'Todos los tipos' },
-    { value: 'cerrar_curso',  label: 'Cierre de curso' },
-    { value: 'abrir_seccion', label: 'Apertura de sección' },
-    { value: 'cambio_aula',   label: 'Cambio de aula' },
-    { value: 'cambio_grupo',  label: 'Cambio de grupo' },
-    { value: 'unificar',      label: 'Unificación' },
+    { value: '',                    label: 'Todos los tipos' },
+    { value: 'cerrar_curso',        label: 'Cierre de curso' },
+    { value: 'abrir_seccion',       label: 'Apertura de sección' },
+    { value: 'cambio_aula',         label: 'Cambio de aula' },
+    { value: 'cambio_grupo',        label: 'Cambio de grupo' },
+    { value: 'cambio_aula_y_grupo', label: 'Cambio de aula y grupo' },
+    { value: 'unificacion_secciones', label: 'Unificación de secciones' },
   ];
 
   pages = computed(() => {
