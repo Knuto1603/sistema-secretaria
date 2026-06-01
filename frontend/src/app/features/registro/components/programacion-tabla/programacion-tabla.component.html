@@ -1,3 +1,7 @@
+@if (esEstudiante()) {
+  <app-programacion-estudiante />
+} @else {
+
 <div class="space-y-6">
 
   <!-- Drawer: Modificaciones de programación -->
@@ -107,167 +111,6 @@
     </div>
   }
 
-  <!-- Modal: Todos los cursos ("No encuentro mi curso") -->
-  @if (showTodosCursos()) {
-    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-
-        <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
-          <div>
-            <h3 class="text-base font-black text-slate-800">Cursos en otras escuelas</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Busca cursos programados en otras escuelas y solicita llevarlo ahí.</p>
-          </div>
-          <button (click)="cerrarTodosCursos()" class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Buscador -->
-        <div class="px-6 py-3 border-b border-slate-100 flex-shrink-0">
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar por nombre o código de curso..."
-              [value]="todosCursosSearch()"
-              (input)="onTodosCursosSearch($any($event.target).value)"
-              class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-          </div>
-        </div>
-
-        <!-- Lista de cursos -->
-        <div class="overflow-y-auto flex-1 px-4 py-3">
-          @if (todosCursosLoading()) {
-            <div class="flex justify-center py-8">
-              <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          } @else if (todosCursos().length === 0) {
-            <p class="text-center text-sm text-slate-400 py-8">No se encontraron cursos.</p>
-          } @else {
-            <div class="space-y-2">
-              @for (item of todosCursos(); track item.id) {
-                <div class="flex items-center justify-between gap-4 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors">
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-800 truncate">{{ item.curso?.nombre || '—' }}</p>
-                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
-                      <span class="text-[10px] font-bold text-slate-400">{{ item.curso?.codigo }}</span>
-                      @if (item.ciclo) {
-                        <span class="text-[10px] font-bold text-slate-400">· Ciclo {{ item.ciclo }}</span>
-                      }
-                      @if (item.escuelas && item.escuelas.length > 0) {
-                        <span class="text-[10px] text-indigo-500 font-bold">
-                          {{ item.escuelas[0].nombre_corto || item.escuelas[0].nombre }}
-                        </span>
-                      }
-                      <span class="text-[10px] text-slate-400">Sec {{ item.seccion }} · Grp {{ item.grupo }}</span>
-                      @if (item.docente?.nombre_completo) {
-                        <span class="text-[10px] text-slate-400">· {{ item.docente!.nombre_completo }}</span>
-                      }
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2 flex-shrink-0">
-                    @if (item.esta_lleno) {
-                      <app-badge color="red">Lleno</app-badge>
-                      <app-btn variant="primary" (clicked)="solicitarFueraDePlan(item)">
-                        Solicitar cupo
-                      </app-btn>
-                    } @else {
-                      <span class="text-[10px] font-bold text-emerald-500 uppercase">Disponible</span>
-                      <button (click)="solicitarInscripcionEscuela(item)"
-                        class="px-3 py-1.5 text-xs font-bold text-violet-700 bg-violet-50 border border-violet-300 rounded-lg hover:bg-violet-100 transition-colors whitespace-nowrap">
-                        Solicitar curso en otra escuela
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Paginación del modal -->
-        @if (todosCursosPagination() && todosCursosPagination()!.last_page > 1) {
-          <div class="px-6 py-3 border-t border-slate-100 flex-shrink-0 flex items-center justify-between">
-            <span class="text-xs text-slate-400">
-              Página {{ todosCursosPagination()!.current_page }} de {{ todosCursosPagination()!.last_page }}
-              · {{ todosCursosPagination()!.total }} cursos
-            </span>
-            <div class="flex gap-1">
-              <button
-                [disabled]="todosCursosPage() <= 1"
-                (click)="cargarTodosCursos(todosCursosPage() - 1)"
-                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors">
-                Anterior
-              </button>
-              <button
-                [disabled]="todosCursosPage() >= todosCursosPagination()!.last_page"
-                (click)="cargarTodosCursos(todosCursosPage() + 1)"
-                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors">
-                Siguiente
-              </button>
-            </div>
-          </div>
-        }
-
-      </div>
-    </div>
-  }
-
-  <!-- Modal de onboarding de historial académico -->
-  @if (showOnboarding()) {
-    <app-historial-onboarding
-      (guardado)="onHistorialGuardado()"
-      (cerrado)="onOnboardingCerrado()">
-    </app-historial-onboarding>
-  }
-
-  <!-- Banner: historial no registrado (solo estudiantes) -->
-  @if (esEstudiante() && !historialRegistrado() && !loading()) {
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
-          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm font-bold text-indigo-800">Registra tu historial académico</p>
-          <p class="text-xs text-indigo-600 mt-0.5">
-            Indica qué cursos ya aprobaste para ver solo los que te corresponden según tu ciclo.
-          </p>
-        </div>
-      </div>
-      <button (click)="abrirOnboarding()"
-        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
-        Registrar historial
-      </button>
-    </div>
-  }
-
-  <!-- Banner: presentación de solicitudes cerrada (solo estudiantes) -->
-  @if (esEstudiante() && !solicitudesAbiertas() && !loading()) {
-    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-2xl p-5">
-      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
-        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
-        </svg>
-      </div>
-      <div>
-        <p class="text-sm font-bold text-red-800">Presentación de solicitudes cerrada — Ciclo 2026-I</p>
-        <p class="text-xs text-red-600 mt-0.5">
-          Ya no se aceptarán más solicitudes para ampliar cupo o inscripciones entre escuelas para el ciclo 2026-I.
-        </p>
-      </div>
-    </div>
-  }
-
   <!-- Encabezado -->
   <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
@@ -278,62 +121,44 @@
       <div>
         <div class="flex items-center gap-3 flex-wrap">
           <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
-            @if (esEstudiante()) { Cursos disponibles } @else { Programación Académica }
+            Programación Académica
           </h2>
-          @if (!isPeriodoActivo() && periodoSeleccionado() && !esEstudiante()) {
+          @if (!isPeriodoActivo() && periodoSeleccionado()) {
             <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
               Periodo Inactivo
             </span>
           }
-          @if (esEstudiante() && cicloActual()) {
-            <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-lg">
-              Ciclo {{ cicloActual() }}
-            </span>
-          }
         </div>
         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">
-          @if (esEstudiante()) {
-            @if (historialRegistrado()) {
-              Cursos pendientes con requisitos cumplidos ·
-              <button (click)="abrirOnboarding()" class="text-indigo-500 hover:text-indigo-700 transition-colors">
-                Actualizar historial
-              </button>
-            } @else {
-              Todos los cursos de tu escuela hasta tu ciclo actual
-            }
-          } @else {
-            Gestión de cupos y secciones
-          }
+          Gestión de cupos y secciones
         </p>
       </div>
 
       <!-- Acciones (derecha) -->
       <div class="flex items-center gap-2 flex-wrap">
 
-        <!-- Toggle vista tabla/matriz (solo admin) -->
-        @if (!esEstudiante()) {
-          <div class="flex bg-slate-100 rounded-xl p-1 gap-0.5">
-            <button
-              (click)="cambiarVista('tabla')"
-              class="px-3 py-1.5 rounded-lg transition-all"
-              [title]="'Vista tabla'"
-              [ngClass]="vistaActiva() === 'tabla' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18"></path>
-              </svg>
-            </button>
-            <button
-              (click)="cambiarVista('matriz')"
-              class="px-3 py-1.5 rounded-lg transition-all"
-              [title]="'Vista matriz'"
-              [ngClass]="vistaActiva() === 'matriz' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
-              </svg>
-            </button>
-          </div>
-        }
+        <!-- Toggle vista tabla/matriz -->
+        <div class="flex bg-slate-100 rounded-xl p-1 gap-0.5">
+          <button
+            (click)="cambiarVista('tabla')"
+            class="px-3 py-1.5 rounded-lg transition-all"
+            [title]="'Vista tabla'"
+            [ngClass]="vistaActiva() === 'tabla' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 6h18M3 14h18M3 18h18"></path>
+            </svg>
+          </button>
+          <button
+            (click)="cambiarVista('matriz')"
+            class="px-3 py-1.5 rounded-lg transition-all"
+            [title]="'Vista matriz'"
+            [ngClass]="vistaActiva() === 'matriz' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path>
+            </svg>
+          </button>
+        </div>
 
         <!-- Acciones admin -->
         @if (esAdmin()) {
@@ -545,185 +370,36 @@
     }
 
     <!-- Fila 2: Filtros -->
-    <div class="border-t border-slate-100 px-6 py-3 bg-slate-50/50">
-      <div class="flex flex-wrap items-center gap-2">
-
-        <!-- Selector de Periodo (solo admin) -->
-        @if (!esEstudiante()) {
-          <div class="relative">
-            <select
-              [ngModel]="periodoSeleccionado()"
-              (ngModelChange)="onPeriodoChange($event)"
-              [disabled]="loadingPeriodos()"
-              class="pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[155px] transition-all">
-              @for (periodo of periodos(); track periodo.id) {
-                <option [value]="periodo.id">{{ periodo.nombre }} {{ periodo.activo ? '(Activo)' : '' }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Separador visual -->
-          <div class="h-6 w-px bg-slate-200"></div>
-
-          <!-- Escuela -->
-          <div class="relative">
-            <select
-              [ngModel]="escuelaSeleccionada()"
-              (ngModelChange)="onEscuelaChange($event)"
-              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px] transition-all"
-              [ngClass]="escuelaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-              <option value="">Escuela</option>
-              @for (e of escuelas(); track e.id) {
-                <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Escuela programada -->
-          <div class="relative">
-            <select
-              [ngModel]="escuelaProgramadaSeleccionada()"
-              (ngModelChange)="onEscuelaProgramadaChange($event)"
-              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[145px] transition-all"
-              [ngClass]="escuelaProgramadaSeleccionada() ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-slate-200'">
-              <option value="">Prog. para...</option>
-              @for (e of escuelas(); track e.id) {
-                <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Ciclo -->
-          <div class="relative">
-            <select
-              [ngModel]="cicloSeleccionado()"
-              (ngModelChange)="onCicloChange($event)"
-              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px] transition-all"
-              [ngClass]="cicloSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-              <option [value]="null">Ciclo</option>
-              @for (c of ciclos; track c) {
-                <option [value]="c">Ciclo {{ c }}</option>
-              }
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Departamento -->
-          @if (departamentos().length > 0) {
-            <div class="relative">
-              <select
-                [ngModel]="areaSeleccionada()"
-                (ngModelChange)="onAreaChange($event)"
-                class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
-                [ngClass]="areaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-                <option value="">Departamento</option>
-                @for (dep of departamentos(); track dep.id) {
-                  <option [value]="dep.id">{{ dep.nombre }}</option>
-                }
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-            </div>
-          }
-
-          <!-- Grupo -->
-          @if (grupos().length > 0) {
-            <div class="relative">
-              <select
-                [ngModel]="grupoSeleccionado()"
-                (ngModelChange)="onGrupoChange($event)"
-                class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[95px] transition-all"
-                [ngClass]="grupoSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
-                <option value="">Grupo</option>
-                @for (g of grupos(); track g) {
-                  <option [value]="g">{{ g }}</option>
-                }
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-            </div>
-          }
-
-          <!-- Tipo (Obligatorio / Electivo) -->
-          <div class="relative">
-            <select
-              [ngModel]="tipoSeleccionado()"
-              (ngModelChange)="onTipoChange($event)"
-              class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px] transition-all"
-              [ngClass]="tipoSeleccionado() === 'O' ? 'border-blue-300 bg-blue-50 text-blue-700' :
-                         tipoSeleccionado() === 'E' ? 'border-amber-300 bg-amber-50 text-amber-700' :
-                         'border-slate-200'">
-              <option value="">Tipo</option>
-              <option value="O">Obligatorio</option>
-              <option value="E">Electivo</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
-              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Separador visual -->
-          <div class="h-6 w-px bg-slate-200"></div>
-        }
-
-        <!-- Buscador -->
-        <div class="relative flex-1 min-w-[160px]">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path>
-          </svg>
-          <input
-            type="text"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="onSearchChange($event)"
-            placeholder="Buscar curso o docente..."
-            class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
-        </div>
-
-        <!-- Botón limpiar filtros -->
-        @if (hayFiltrosActivos()) {
-          <button (click)="limpiarFiltros()"
-            class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap bg-white">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Limpiar
-          </button>
-        }
-
-      </div>
-    </div>
+    <app-programacion-filtros
+      [periodos]="periodos()"
+      [escuelas]="escuelas()"
+      [departamentos]="departamentos()"
+      [grupos]="grupos()"
+      [loadingPeriodos]="loadingPeriodos()"
+      [periodoSeleccionado]="periodoSeleccionado()"
+      [escuelaSeleccionada]="escuelaSeleccionada()"
+      [escuelaProgramadaSeleccionada]="escuelaProgramadaSeleccionada()"
+      [cicloSeleccionado]="cicloSeleccionado()"
+      [areaSeleccionada]="areaSeleccionada()"
+      [grupoSeleccionado]="grupoSeleccionado()"
+      [tipoSeleccionado]="tipoSeleccionado()"
+      [searchTerm]="searchTerm()"
+      [hayFiltrosActivos]="hayFiltrosActivos()"
+      (periodoChange)="onPeriodoChange($event)"
+      (escuelaChange)="onEscuelaChange($event)"
+      (escuelaProgramadaChange)="onEscuelaProgramadaChange($event)"
+      (cicloChange)="onCicloChange($event)"
+      (areaChange)="onAreaChange($event)"
+      (grupoChange)="onGrupoChange($event)"
+      (tipoChange)="onTipoChange($event)"
+      (searchChange)="onSearchChange($event)"
+      (limpiar)="limpiarFiltros()">
+    </app-programacion-filtros>
 
   </div>
 
   <!-- ─── VISTA TABLA ─────────────────────────────────────────────────── -->
-  @if (vistaActiva() === 'tabla' || esEstudiante()) {
+  @if (vistaActiva() === 'tabla') {
     <div class="space-y-4">
     <app-table
       [columns]="columnas"
@@ -921,30 +597,6 @@
             </button>
           }
 
-          <!-- Acciones estudiante -->
-          @if (esEstudiante()) {
-            @if (tieneSolicitudActiva(row.id)) {
-              <!-- Ya tiene solicitud activa para este curso -->
-              <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
-                Solicitado
-              </span>
-            } @else if (!isPeriodoActivo()) {
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
-            } @else if (row.esta_lleno) {
-              <!-- Curso lleno → Ampliación de cupo -->
-              <app-btn variant="primary" (clicked)="solicitarCupo(row)">
-                Solicitar cupo
-              </app-btn>
-            } @else if (row.es_equivalente) {
-              <!-- Curso de otra escuela con cupos → Inscripción entre escuelas -->
-              <app-btn variant="secondary" (clicked)="solicitarInscripcionEscuela(row)">
-                Inscribir
-              </app-btn>
-            } @else {
-              <!-- Curso propio con cupos → puede inscribirse normalmente -->
-              <span class="text-[10px] font-semibold text-emerald-500 uppercase tracking-widest px-3">✓ Libre</span>
-            }
-          }
         </div>
       </ng-template>
     </app-table>
@@ -965,24 +617,11 @@
       </div>
     }
 
-    <!-- Enlace "¿Quieres llevar un curso en otra escuela?" (solo estudiantes) -->
-    @if (esEstudiante() && !loading() && isPeriodoActivo()) {
-      <div class="flex justify-center pt-2">
-        <button (click)="abrirTodosCursos()"
-          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-2xl border border-dashed border-violet-200 hover:border-violet-400 transition-all">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-          </svg>
-          ¿Quieres llevar tu curso en otra escuela? Da click aquí
-        </button>
-      </div>
-    }
     </div>
   }
 
   <!-- ─── VISTA MATRIZ ─────────────────────────────────────────────────── -->
-  @if (vistaActiva() === 'matriz' && !esEstudiante()) {
+  @if (vistaActiva() === 'matriz') {
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
       [class.pr-[340px]]="modoMatriz() === 'modificar' && cambiosPendientesMatriz().length > 0">
 
@@ -1030,3 +669,5 @@
   }
 
 </div>
+
+} <!-- @else (no esEstudiante) -->

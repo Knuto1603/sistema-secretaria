@@ -10,7 +10,8 @@ export const PROGRAMACION_ROUTES: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () =>
-          import('../registro/components/registro/registro.component').then(m => m.RegistroComponent)
+          import('../registro/components/programacion-tabla/programacion-tabla.component')
+            .then(m => m.ProgramacionTablaComponent)
       },
       {
         path: 'borradores',

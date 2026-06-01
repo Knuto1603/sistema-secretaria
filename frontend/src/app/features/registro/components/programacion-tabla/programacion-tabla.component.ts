@@ -5,9 +5,7 @@ import { Router } from '@angular/router';
 import { ProgramacionService, Programacion, PaginatedResponse } from '../../services/programacion.service';
 import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
-import { SolicitudService } from '../../../solicitudes/services/solicitud.service';
 import { DepartamentoService, Departamento } from '../../../configuracion/services/departamento.service';
-import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
 import { ProgramacionEditFormComponent } from '../programacion-edit-form/programacion-edit-form.component';
 import { ProgramacionMatrizComponent, CambioPendiente } from '../programacion-matriz/programacion-matriz.component';
@@ -23,6 +21,8 @@ import { map, forkJoin } from 'rxjs';
 import { environment } from '@env/environment';
 import { ModificacionService } from '../../../programacion/services/modificacion.service';
 import { ProgramacionEstadoService } from '../../../programacion/services/programacion-estado.service';
+import { ProgramacionFiltrosComponent } from '../programacion-filtros/programacion-filtros.component';
+import { ProgramacionEstudianteComponent } from '../programacion-estudiante/programacion-estudiante.component';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -36,20 +36,20 @@ type VistaActiva = 'tabla' | 'matriz';
     AppBadgeComponent,
     AppTableComponent,
     PaginationComponent,
-    HistorialOnboardingComponent,
     ProgramacionFormComponent,
     ProgramacionEditFormComponent,
     ProgramacionMatrizComponent,
     ProgramacionDetalleComponent,
     ModificationDrawerComponent,
     CambiosPendientesPanelComponent,
+    ProgramacionFiltrosComponent,
+    ProgramacionEstudianteComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
 export class ProgramacionTablaComponent implements OnInit {
   private programacionService  = inject(ProgramacionService);
   private periodoService       = inject(PeriodoService);
-  private solicitudService     = inject(SolicitudService);
   private departamentoService  = inject(DepartamentoService);
   private modificacionService  = inject(ModificacionService);
   private estadoService        = inject(ProgramacionEstadoService);
@@ -105,13 +105,6 @@ export class ProgramacionTablaComponent implements OnInit {
   // Grupos únicos del periodo actual (cargados desde el backend)
   grupos = signal<string[]>([]);
 
-  // Estado modo estudiante
-  cicloActual              = signal<number | null>(null);
-  historialRegistrado      = signal<boolean>(false);
-  showOnboarding           = signal(false);
-  programacionesConSolicitud = signal<Set<string>>(new Set());
-  solicitudesAbiertas      = signal<boolean>(true);
-
   // Modales
   showFormProgramacion  = signal(false);
   programacionAEditar   = signal<Programacion | null>(null);
@@ -119,14 +112,6 @@ export class ProgramacionTablaComponent implements OnInit {
   programacionDetalleId = signal<string | null>(null);
   eliminando            = signal(false);
   errorEliminar         = signal<string | null>(null);
-
-  // Modal: No encuentro mi curso
-  showTodosCursos          = signal(false);
-  todosCursos              = signal<Programacion[]>([]);
-  todosCursosPagination    = signal<{ current_page: number; last_page: number; per_page: number; total: number } | null>(null);
-  todosCursosPage          = signal(1);
-  todosCursosSearch        = signal('');
-  todosCursosLoading       = signal(false);
 
   // Drawer de modificaciones
   programacionModif = signal<Programacion | null>(null);
@@ -156,9 +141,7 @@ export class ProgramacionTablaComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    if (this.esEstudiante()) {
-      this.cargarParaMi();
-    } else {
+    if (!this.esEstudiante()) {
       this.cargarPeriodosYProgramacion();
       this.cargarEscuelas();
       this.cargarDepartamentos();
@@ -267,39 +250,6 @@ export class ProgramacionTablaComponent implements OnInit {
     if (vista === 'matriz' && this.todosLosItems().length === 0) {
       this.cargarMatriz();
     }
-  }
-
-  // ─── MODO ESTUDIANTE ─────────────────────────────────────────────────────
-
-  cargarParaMi(page: number = this.currentPage(), size: number = this.perPage()): void {
-    this.loading.set(true);
-    this.currentPage.set(page);
-    this.perPage.set(size);
-
-    this.programacionService.getParaMi(page, this.searchTerm(), size).subscribe({
-      next: res => {
-        this.cicloActual.set(res.cicloActual);
-        this.historialRegistrado.set(res.historialRegistrado);
-        this.programacion.set(res.paginatedData.data);
-        this.paginationData.set(res.paginatedData);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-
-    this.solicitudService.getProgramacionesConSolicitudActiva().subscribe({
-      next: ids => this.programacionesConSolicitud.set(new Set(ids)),
-      error: () => {},
-    });
-
-    this.periodoService.getPeriodoActivo().subscribe({
-      next: periodo => this.solicitudesAbiertas.set(periodo?.solicitudes_abiertas ?? true),
-      error: () => {},
-    });
-  }
-
-  tieneSolicitudActiva(programacionId: string): boolean {
-    return this.programacionesConSolicitud().has(programacionId);
   }
 
   // ─── EDITAR / ELIMINAR ───────────────────────────────────────────────────
@@ -470,46 +420,6 @@ export class ProgramacionTablaComponent implements OnInit {
     }
   }
 
-  // ─── "NO ENCUENTRO MI CURSO" ─────────────────────────────────────────────
-
-  abrirTodosCursos(): void {
-    this.showTodosCursos.set(true);
-    this.todosCursosSearch.set('');
-    this.todosCursosPage.set(1);
-    this.cargarTodosCursos();
-  }
-
-  cerrarTodosCursos(): void {
-    this.showTodosCursos.set(false);
-  }
-
-  cargarTodosCursos(page: number = this.todosCursosPage()): void {
-    this.todosCursosLoading.set(true);
-    this.todosCursosPage.set(page);
-    this.programacionService
-      .getTodosParaSolicitud(page, this.todosCursosSearch(), 15)
-      .subscribe({
-        next: res => {
-          this.todosCursos.set(res.items);
-          this.todosCursosPagination.set(res.pagination);
-          this.todosCursosLoading.set(false);
-        },
-        error: () => this.todosCursosLoading.set(false),
-      });
-  }
-
-  onTodosCursosSearch(value: string): void {
-    this.todosCursosSearch.set(value);
-    this.cargarTodosCursos(1);
-  }
-
-  solicitarFueraDePlan(item: Programacion): void {
-    this.showTodosCursos.set(false);
-    this.router.navigate(['app/solicitudes/nueva/', item.id], {
-      queryParams: { fuera_de_plan: '1' },
-    });
-  }
-
   // ─── EXPORT ──────────────────────────────────────────────────────────────
 
   exportarConHorario = signal(false);
@@ -528,18 +438,6 @@ export class ProgramacionTablaComponent implements OnInit {
   hayFiltrosActivos = computed(() =>
     !!(this.searchTerm() || this.escuelaSeleccionada() || this.cicloSeleccionado() || this.areaSeleccionada() || this.grupoSeleccionado() || this.escuelaProgramadaSeleccionada() || this.tipoSeleccionado())
   );
-
-  // ─── ONBOARDING ──────────────────────────────────────────────────────────
-
-  abrirOnboarding(): void   { this.showOnboarding.set(true); }
-
-  onHistorialGuardado(): void {
-    this.showOnboarding.set(false);
-    this.authService.patchCurrentUser({ ultima_actualizacion_historial: new Date().toISOString() });
-    this.cargarParaMi(1);
-  }
-
-  onOnboardingCerrado(): void { this.showOnboarding.set(false); }
 
   // ─── EVENTOS COMUNES ─────────────────────────────────────────────────────
 
@@ -611,35 +509,19 @@ export class ProgramacionTablaComponent implements OnInit {
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
     this.todosLosItems.set([]);
-    if (this.esEstudiante()) {
-      this.cargarParaMi(1);
-    } else {
-      this.cargarProgramacion(1);
-      if (this.vistaActiva() === 'matriz') this.cargarMatriz();
-    }
+    this.cargarProgramacion(1);
+    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
   }
 
   handlePageChange(page: number): void {
-    if (this.esEstudiante()) this.cargarParaMi(page);
-    else                     this.cargarProgramacion(page);
+    this.cargarProgramacion(page);
   }
 
   handleSizeChange(size: number): void {
-    if (this.esEstudiante()) this.cargarParaMi(1, size);
-    else                     this.cargarProgramacion(1, size);
+    this.cargarProgramacion(1, size);
   }
 
   triggerImport(fileInput: HTMLInputElement): void { fileInput.click(); }
-
-  solicitarCupo(item: Programacion): void {
-    this.router.navigate(['app/solicitudes/nueva/', item.id]);
-  }
-
-  solicitarInscripcionEscuela(item: Programacion): void {
-    this.router.navigate(['app/solicitudes/nueva/', item.id], {
-      queryParams: { inscripcion_escuela: '1' },
-    });
-  }
 
   verSolicitudesCurso(item: Programacion): void {
     this.router.navigate(['/app/solicitudes/list'], {
@@ -701,7 +583,6 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   isPeriodoActivo = computed(() => {
-    if (this.esEstudiante()) return true;
     const periodo = this.periodos().find(p => p.id === this.periodoSeleccionado());
     return periodo?.activo ?? false;
   });

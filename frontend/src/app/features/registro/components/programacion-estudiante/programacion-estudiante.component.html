@@ -1,0 +1,264 @@
+<div class="space-y-6">
+
+  <!-- Modal de onboarding de historial académico -->
+  @if (showOnboarding()) {
+    <app-historial-onboarding
+      (guardado)="onHistorialGuardado()"
+      (cerrado)="showOnboarding.set(false)">
+    </app-historial-onboarding>
+  }
+
+  <!-- Modal: Todos los cursos ("No encuentro mi curso") -->
+  @if (showTodosCursos()) {
+    <app-todos-cursos-modal
+      (cerrado)="showTodosCursos.set(false)">
+    </app-todos-cursos-modal>
+  }
+
+  <!-- Modal: Detalle Programación -->
+  @if (programacionDetalleId()) {
+    <app-programacion-detalle
+      [id]="programacionDetalleId()!"
+      (cerrado)="programacionDetalleId.set(null)">
+    </app-programacion-detalle>
+  }
+
+  <!-- Banner: historial no registrado -->
+  @if (!historialRegistrado() && !loading()) {
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-indigo-800">Registra tu historial académico</p>
+          <p class="text-xs text-indigo-600 mt-0.5">
+            Indica qué cursos ya aprobaste para ver solo los que te corresponden según tu ciclo.
+          </p>
+        </div>
+      </div>
+      <button (click)="abrirOnboarding()"
+        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
+        Registrar historial
+      </button>
+    </div>
+  }
+
+  <!-- Banner: presentación de solicitudes cerrada -->
+  @if (!solicitudesAbiertas() && !loading()) {
+    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-2xl p-5">
+      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-bold text-red-800">Presentación de solicitudes cerrada — Ciclo 2026-I</p>
+        <p class="text-xs text-red-600 mt-0.5">
+          Ya no se aceptarán más solicitudes para ampliar cupo o inscripciones entre escuelas para el ciclo 2026-I.
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Encabezado -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- Título + Buscador -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4">
+
+      <!-- Título -->
+      <div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
+            Cursos disponibles
+          </h2>
+          @if (cicloActual()) {
+            <span class="px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase rounded-lg">
+              Ciclo {{ cicloActual() }}
+            </span>
+          }
+        </div>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">
+          @if (historialRegistrado()) {
+            Cursos pendientes con requisitos cumplidos ·
+            <button (click)="abrirOnboarding()" class="text-indigo-500 hover:text-indigo-700 transition-colors">
+              Actualizar historial
+            </button>
+          } @else {
+            Todos los cursos de tu escuela hasta tu ciclo actual
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="border-t border-slate-100 px-6 py-3 bg-slate-50/50">
+      <div class="relative flex-1 min-w-[160px]">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"></path>
+        </svg>
+        <input
+          type="text"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Buscar curso o docente..."
+          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabla -->
+  <div class="space-y-4">
+    <app-table
+      [columns]="columnas"
+      [data]="programacion()"
+      [loading]="loading()">
+
+      <!-- Celdas -->
+      <ng-template #cellTemplate let-row let-column="column">
+
+        <!-- Curso -->
+        @if (column.key === 'curso') {
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-bold text-slate-800">{{ row.curso?.nombre || 'Sin curso' }}</span>
+            <span class="text-[10px] text-slate-400 font-bold tracking-tighter">{{ row.curso?.codigo || '-' }}</span>
+            <div class="flex flex-wrap gap-1 mt-0.5">
+              @if (row.tipo_plan === 'O') {
+                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold rounded-md border border-blue-200 leading-none">
+                  Obligatorio
+                </span>
+              } @else if (row.tipo_plan === 'E') {
+                <span class="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-md border border-amber-200 leading-none">
+                  Electivo
+                </span>
+              }
+              @if (row.es_equivalente) {
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 text-violet-700 text-[9px] font-bold rounded-md border border-violet-200 leading-none">
+                  <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                  </svg>
+                  Otra escuela
+                </span>
+              }
+            </div>
+            <div class="flex flex-wrap gap-1">
+              @for (e of row.escuelas; track e.id) {
+                <span class="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-bold rounded-md border border-indigo-100 leading-none">
+                  {{ e.nombre_corto || e.nombre }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Grupo -->
+        @if (column.key === 'grupo') {
+          <div class="flex justify-center">
+            <span class="w-9 h-9 flex items-center justify-center bg-indigo-50 border border-indigo-100 rounded-lg text-xs font-semibold text-indigo-700">
+              {{ row.grupo || '—' }}
+            </span>
+          </div>
+        }
+
+        <!-- Sección -->
+        @if (column.key === 'seccion') {
+          <div class="flex justify-center">
+            <span class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-lg text-xs font-semibold text-slate-600">
+              {{ row.seccion || '—' }}
+            </span>
+          </div>
+        }
+
+        <!-- Aula -->
+        @if (column.key === 'aula') {
+          <span class="text-xs font-semibold text-slate-600 bg-slate-50 px-2 py-1 rounded-lg">
+            {{ getAulaMostrar(row) }}
+          </span>
+        }
+
+        <!-- Docente -->
+        @if (column.key === 'docente') {
+          <span class="text-xs font-medium text-slate-500" [ngClass]="{'italic text-slate-300': !row.docente?.nombre_completo}">
+            {{ row.docente?.nombre_completo || 'POR ASIGNAR' }}
+          </span>
+        }
+
+        <!-- Estado / Cupos -->
+        @if (column.key === 'estado') {
+          <div class="flex flex-col items-center gap-1">
+            @if (row.esta_lleno) {
+              <app-badge color="red">Lleno</app-badge>
+            } @else {
+              <app-badge color="emerald">Disponible</app-badge>
+            }
+            <span class="text-[10px] font-bold text-slate-400">{{ row.n_inscritos }} / {{ row.capacidad }}</span>
+          </div>
+        }
+      </ng-template>
+
+      <!-- Acciones de fila -->
+      <ng-template #actionsTemplate let-row>
+        <div class="flex items-center gap-1.5">
+          @if (tieneSolicitudActiva(row.id)) {
+            <!-- Ya tiene solicitud activa para este curso -->
+            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
+              Solicitado
+            </span>
+          } @else if (!isPeriodoActivo()) {
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
+          } @else if (row.esta_lleno) {
+            <!-- Curso lleno → Ampliación de cupo -->
+            <app-btn variant="primary" (clicked)="solicitarCupo(row)">
+              Solicitar cupo
+            </app-btn>
+          } @else if (row.es_equivalente) {
+            <!-- Curso de otra escuela con cupos → Inscripción entre escuelas -->
+            <app-btn variant="secondary" (clicked)="solicitarInscripcionEscuela(row)">
+              Inscribir
+            </app-btn>
+          } @else {
+            <!-- Curso propio con cupos → puede inscribirse normalmente -->
+            <span class="text-[10px] font-semibold text-emerald-500 uppercase tracking-widest px-3">✓ Libre</span>
+          }
+        </div>
+      </ng-template>
+    </app-table>
+
+    <!-- Paginación -->
+    @if (paginationData() && !loading()) {
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <app-shared-pagination
+          [currentPage]="currentPage()"
+          [lastPage]="paginationData()!.last_page"
+          [total]="paginationData()!.total"
+          [from]="paginationData()!.from"
+          [to]="paginationData()!.to"
+          [perPage]="perPage()"
+          (pageChange)="handlePageChange($event)"
+          (pageSizeChange)="handleSizeChange($event)">
+        </app-shared-pagination>
+      </div>
+    }
+
+    <!-- Enlace "¿Quieres llevar un curso en otra escuela?" -->
+    @if (!loading() && isPeriodoActivo()) {
+      <div class="flex justify-center pt-2">
+        <button (click)="showTodosCursos.set(true)"
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-2xl border border-dashed border-violet-200 hover:border-violet-400 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          ¿Quieres llevar tu curso en otra escuela? Da click aquí
+        </button>
+      </div>
+    }
+  </div>
+
+</div>
