@@ -7,6 +7,7 @@ import {
   GeneracionItem,
   PreviewGrupo
 } from '../../services/generacion-modificacion.service';
+import { ProgramacionEstadoService } from '../../services/programacion-estado.service';
 
 const TIPO_DOC_LABELS: Record<string, string> = {
   cierre:          'Cierre de cursos',
@@ -24,17 +25,17 @@ const TIPO_DOC_LABELS: Record<string, string> = {
 export class GenerarDocumentosWizardComponent implements OnInit {
   private svc    = inject(GeneracionModificacionService);
   private router = inject(Router);
+  readonly estado = inject(ProgramacionEstadoService);
 
   // ── Wizard state ──────────────────────────────────────────────────────────
   paso = signal<1 | 2 | 3>(1);
 
-  // Paso 1
-  periodoId   = signal('');
+  // Paso 1 — el período viene del shell via ProgramacionEstadoService
   fechaDesde  = signal('');
   fechaHasta  = signal('');
 
   paso1Valido = computed(() =>
-    this.periodoId().trim().length > 0 &&
+    this.estado.periodoId().trim().length > 0 &&
     this.fechaDesde().trim().length > 0 &&
     this.fechaHasta().trim().length > 0 &&
     this.fechaHasta() >= this.fechaDesde()
@@ -76,7 +77,7 @@ export class GenerarDocumentosWizardComponent implements OnInit {
     this.preview.set([]);
     this.errorMsg.set('');
 
-    this.svc.preview(this.periodoId(), this.fechaDesde(), this.fechaHasta()).subscribe({
+    this.svc.preview(this.estado.periodoId(), this.fechaDesde(), this.fechaHasta()).subscribe({
       next: data => {
         this.preview.set(data);
         this.paso.set(2);
@@ -103,7 +104,7 @@ export class GenerarDocumentosWizardComponent implements OnInit {
     this.generando.set(true);
     this.errorMsg.set('');
 
-    this.svc.generar(this.periodoId(), this.fechaDesde(), this.fechaHasta(), this.numeroOficio()).subscribe({
+    this.svc.generar(this.estado.periodoId(), this.fechaDesde(), this.fechaHasta(), this.numeroOficio()).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -114,7 +115,6 @@ export class GenerarDocumentosWizardComponent implements OnInit {
         this.generando.set(false);
         this.paso.set(1);
         this.numeroOficio.set('');
-        this.periodoId.set('');
         this.fechaDesde.set('');
         this.fechaHasta.set('');
         this.preview.set([]);

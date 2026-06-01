@@ -55,16 +55,22 @@
     <!-- ─── PASO 1 — Rango ─────────────────────────────────────── -->
     @if (paso() === 1) {
       <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-        <p class="text-sm font-bold text-slate-700">Selecciona el periodo y el rango de fechas de modificaciones a documentar.</p>
+        <p class="text-sm font-bold text-slate-700">Selecciona el rango de fechas de modificaciones a documentar.</p>
 
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
-            ID de Periodo <span class="text-red-400">*</span>
-          </label>
-          <input type="text" [ngModel]="periodoId()" (ngModelChange)="periodoId.set($event)"
-            placeholder="UUID del periodo académico"
-            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
-          <p class="text-[10px] text-slate-400 mt-1">Puedes obtener el ID desde Configuración → Periodos Académicos.</p>
+        <!-- Período activo — viene del selector del encabezado -->
+        <div class="flex items-center gap-2 px-3 py-2.5 bg-purple-50 border border-purple-200 rounded-xl">
+          <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          @if (estado.periodo()) {
+            <span class="text-sm font-semibold text-purple-800">{{ estado.periodo()!.nombre }}</span>
+            @if (estado.periodo()!.activo) {
+              <span class="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Activo</span>
+            }
+          } @else {
+            <span class="text-sm text-slate-400 italic">Sin período seleccionado — usa el selector del encabezado</span>
+          }
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -178,7 +184,7 @@
         <div class="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
           <div class="flex gap-2">
             <span class="text-slate-400 w-20 shrink-0">Período</span>
-            <span class="font-semibold">{{ periodoId() }}</span>
+            <span class="font-semibold">{{ estado.periodo()?.nombre ?? estado.periodoId() }}</span>
           </div>
           <div class="flex gap-2">
             <span class="text-slate-400 w-20 shrink-0">Desde</span>
