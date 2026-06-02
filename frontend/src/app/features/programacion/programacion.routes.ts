@@ -9,9 +9,7 @@ export const PROGRAMACION_ROUTES: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        loadComponent: () =>
-          import('../registro/components/programacion-tabla/programacion-tabla.component')
-            .then(m => m.ProgramacionTablaComponent)
+        redirectTo: 'borradores'
       },
       {
         path: 'borradores',

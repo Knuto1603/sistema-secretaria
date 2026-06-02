@@ -141,6 +141,7 @@ export class ProgramacionTablaComponent implements OnInit {
   );
 
   constructor() {
+    // Recarga completa al cambiar de período
     effect(() => {
       const periodoId = this.estadoService.periodoId();
       if (periodoId && !this.esEstudiante()) {
@@ -149,6 +150,15 @@ export class ProgramacionTablaComponent implements OnInit {
         this.todosLosItems.set([]);
         this.cargarGrupos(periodoId);
         this.cargarProgramacion(1);
+      }
+    });
+
+    // Refresco silencioso al guardar una modificación desde otro módulo
+    effect(() => {
+      const refresh = this.estadoService.ultimaModificacion();
+      if (refresh > 0 && !this.esEstudiante()) {
+        this.todosLosItems.set([]);
+        this.cargarProgramacion(this.currentPage());
       }
     });
   }
