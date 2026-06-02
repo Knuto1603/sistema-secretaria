@@ -5,10 +5,10 @@
 <div class="space-y-6">
 
   <!-- Drawer: Modificaciones de programación -->
-  @if (programacionModif() && periodoSeleccionado()) {
+  @if (programacionModif() && estadoService.periodoId()) {
     <app-modification-drawer
       [programacion]="programacionModif()!"
-      [periodoId]="periodoSeleccionado()!"
+      [periodoId]="estadoService.periodoId()!"
       (cerrado)="programacionModif.set(null)"
       (modificado)="onModificacionGuardada()">
     </app-modification-drawer>
@@ -43,7 +43,7 @@
   <!-- Modal: Limpiar Periodo (solo developer) -->
   @if (showLimpiarPeriodo()) {
     <app-limpiar-periodo-modal
-      [periodoNombre]="getPeriodoNombre()"
+      [periodoNombre]="estadoService.periodo()?.nombre ?? 'Seleccionar periodo'"
       [loading]="limpiarPeriodoLoading()"
       [errorMsg]="limpiarPeriodoError()"
       (cancelar)="showLimpiarPeriodo.set(false)"
@@ -74,7 +74,7 @@
           <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">
             Programación Académica
           </h2>
-          @if (!isPeriodoActivo() && periodoSeleccionado()) {
+          @if (!isPeriodoActivo() && estadoService.periodoId()) {
             <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
               Periodo Inactivo
             </span>
@@ -227,12 +227,9 @@
 
     <!-- Fila 2: Filtros -->
     <app-programacion-filtros
-      [periodos]="periodos()"
       [escuelas]="escuelas()"
       [departamentos]="departamentos()"
       [grupos]="grupos()"
-      [loadingPeriodos]="loadingPeriodos()"
-      [periodoSeleccionado]="periodoSeleccionado()"
       [escuelaSeleccionada]="escuelaSeleccionada()"
       [escuelaProgramadaSeleccionada]="escuelaProgramadaSeleccionada()"
       [cicloSeleccionado]="cicloSeleccionado()"
@@ -241,7 +238,6 @@
       [tipoSeleccionado]="tipoSeleccionado()"
       [searchTerm]="searchTerm()"
       [hayFiltrosActivos]="hayFiltrosActivos()"
-      (periodoChange)="onPeriodoChange($event)"
       (escuelaChange)="onEscuelaChange($event)"
       (escuelaProgramadaChange)="onEscuelaProgramadaChange($event)"
       (cicloChange)="onCicloChange($event)"

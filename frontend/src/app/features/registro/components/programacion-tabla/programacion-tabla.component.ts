@@ -1,9 +1,8 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProgramacionService, Programacion, PaginatedResponse } from '../../services/programacion.service';
-import { PeriodoService, Periodo } from '@core/services/periodo.service';
 import { AuthService } from '@core/auth/services/auth.service';
 import { DepartamentoService, Departamento } from '../../../configuracion/services/departamento.service';
 import { ProgramacionFormComponent } from '../programacion-form/programacion-form.component';
@@ -55,10 +54,9 @@ type VistaActiva = 'tabla' | 'matriz';
 })
 export class ProgramacionTablaComponent implements OnInit {
   private programacionService  = inject(ProgramacionService);
-  private periodoService       = inject(PeriodoService);
   private departamentoService  = inject(DepartamentoService);
   private modificacionService  = inject(ModificacionService);
-  private estadoService        = inject(ProgramacionEstadoService);
+  readonly estadoService       = inject(ProgramacionEstadoService);
   private http                 = inject(HttpClient);
   public  authService          = inject(AuthService);
   private router               = inject(Router);
@@ -67,11 +65,7 @@ export class ProgramacionTablaComponent implements OnInit {
   paginationData   = signal<PaginatedResponse<Programacion> | null>(null);
   todosLosItems    = signal<Programacion[]>([]); // para la matriz
 
-  periodos             = signal<Periodo[]>([]);
-  periodoSeleccionado  = signal<string | null>(null);
-
   loading           = signal(false);
-  loadingPeriodos   = signal(false);
   loadingMatriz     = signal(false);
   isUploading         = signal(false);
   isUploadingHtml     = signal(false);
@@ -146,9 +140,21 @@ export class ProgramacionTablaComponent implements OnInit {
     this.authService.hasRole('developer')
   );
 
+  constructor() {
+    effect(() => {
+      const periodoId = this.estadoService.periodoId();
+      if (periodoId && !this.esEstudiante()) {
+        this.searchTerm.set('');
+        this.grupoSeleccionado.set('');
+        this.todosLosItems.set([]);
+        this.cargarGrupos(periodoId);
+        this.cargarProgramacion(1);
+      }
+    });
+  }
+
   ngOnInit(): void {
     if (!this.esEstudiante()) {
-      this.cargarPeriodosYProgramacion();
       this.cargarEscuelas();
       this.cargarDepartamentos();
     }
@@ -180,40 +186,12 @@ export class ProgramacionTablaComponent implements OnInit {
     });
   }
 
-  // ─── MODO ADMINISTRADOR ──────────────────────────────────────────────────
-
-  cargarPeriodosYProgramacion(): void {
-    this.loadingPeriodos.set(true);
-    this.loading.set(true);
-
-    this.periodoService.getPeriodos().subscribe({
-      next: periodos => {
-        this.periodos.set(periodos);
-        this.loadingPeriodos.set(false);
-
-        // Respeta el período seleccionado en el Shell; fallback al activo
-        const preseleccionado = this.estadoService.periodoId();
-        const activo = periodos.find(p => p.activo);
-        const inicial = periodos.find(p => p.id === preseleccionado) ?? activo ?? periodos[0];
-        if (inicial) this.periodoSeleccionado.set(inicial.id);
-
-        const periodoId = this.periodoSeleccionado();
-        if (periodoId) this.cargarGrupos(periodoId);
-        this.cargarProgramacion();
-      },
-      error: () => {
-        this.loadingPeriodos.set(false);
-        this.loading.set(false);
-      },
-    });
-  }
-
   cargarProgramacion(page: number = this.currentPage(), size: number = this.perPage()): void {
     this.loading.set(true);
     this.currentPage.set(page);
     this.perPage.set(size);
 
-    const periodoId            = this.periodoSeleccionado() || undefined;
+    const periodoId            = this.estadoService.periodoId() || undefined;
     const escuelaId            = this.escuelaSeleccionada() || undefined;
     const ciclo                = this.cicloSeleccionado() || undefined;
     const areaId               = this.areaSeleccionada() || undefined;
@@ -232,7 +210,7 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   cargarMatriz(): void {
-    const periodoId = this.periodoSeleccionado() || undefined;
+    const periodoId = this.estadoService.periodoId() || undefined;
     if (!periodoId) return;
 
     this.loadingMatriz.set(true);
@@ -372,7 +350,7 @@ export class ProgramacionTablaComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     this.isUploadingHtml.set(true);
-    const periodoId = this.periodoSeleccionado() || undefined;
+    const periodoId = this.estadoService.periodoId() || undefined;
     this.programacionService.importarHtml(file, periodoId).subscribe({
       next: () => {
         this.isUploadingHtml.set(false);
@@ -391,7 +369,7 @@ export class ProgramacionTablaComponent implements OnInit {
     const file: File = event.target.files[0];
     if (file) {
       this.isUploading.set(true);
-      const periodoId = this.periodoSeleccionado() || undefined;
+      const periodoId = this.estadoService.periodoId() || undefined;
       this.programacionService.importarExcel(file, periodoId).subscribe({
         next: () => {
           this.isUploading.set(false);
@@ -407,7 +385,7 @@ export class ProgramacionTablaComponent implements OnInit {
     const file: File = event.target.files[0];
     if (file) {
       this.isUploadingCampus.set(true);
-      const periodoId = this.periodoSeleccionado() || undefined;
+      const periodoId = this.estadoService.periodoId() || undefined;
       this.programacionService.importarExcelCampus(file, periodoId).subscribe({
         next: (res: any) => {
           this.isUploadingCampus.set(false);
@@ -432,7 +410,7 @@ export class ProgramacionTablaComponent implements OnInit {
 
   exportarExcel(): void {
     this.programacionService.exportarExcel(
-      this.periodoSeleccionado() || undefined,
+      this.estadoService.periodoId() || undefined,
       this.searchTerm() || undefined,
       this.escuelaSeleccionada() || undefined,
       this.cicloSeleccionado() || undefined,
@@ -446,16 +424,6 @@ export class ProgramacionTablaComponent implements OnInit {
   );
 
   // ─── EVENTOS COMUNES ─────────────────────────────────────────────────────
-
-  onPeriodoChange(periodoId: string): void {
-    this.periodoSeleccionado.set(periodoId);
-    this.searchTerm.set('');
-    this.grupoSeleccionado.set('');
-    this.todosLosItems.set([]);
-    this.cargarGrupos(periodoId);
-    this.cargarProgramacion(1);
-    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
-  }
 
   onEscuelaChange(escuelaId: string): void {
     this.escuelaSeleccionada.set(escuelaId);
@@ -556,15 +524,7 @@ export class ProgramacionTablaComponent implements OnInit {
     });
   }
 
-  getPeriodoNombre(): string {
-    const periodo = this.periodos().find(p => p.id === this.periodoSeleccionado());
-    return periodo?.nombre || 'Seleccionar periodo';
-  }
-
-  isPeriodoActivo = computed(() => {
-    const periodo = this.periodos().find(p => p.id === this.periodoSeleccionado());
-    return periodo?.activo ?? false;
-  });
+  isPeriodoActivo = computed(() => this.estadoService.periodo()?.activo ?? false);
 
   getAulaMostrar(row: Programacion): string {
     return row.aula_nombre || row.aula || row.aula_rel?.nombre || '—';
@@ -577,7 +537,7 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   confirmarLimpiarPeriodo(): void {
-    const periodoId = this.periodoSeleccionado();
+    const periodoId = this.estadoService.periodoId();
     if (!periodoId || this.limpiarPeriodoLoading()) return;
 
     this.limpiarPeriodoLoading.set(true);
