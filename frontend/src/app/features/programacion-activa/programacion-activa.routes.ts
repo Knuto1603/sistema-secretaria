@@ -9,6 +9,7 @@ export const PROGRAMACION_ACTIVA_ROUTES: Routes = [
       {
         path: '',
         pathMatch: 'full',
+        data: { soloLectura: true },
         loadComponent: () =>
           import('../registro/components/programacion-tabla/programacion-tabla.component')
             .then(m => m.ProgramacionTablaComponent)

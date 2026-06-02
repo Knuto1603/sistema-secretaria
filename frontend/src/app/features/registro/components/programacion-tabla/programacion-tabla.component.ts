@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ProgramacionService, Programacion, PaginatedResponse } from '../../services/programacion.service';
 import { AuthService } from '@core/auth/services/auth.service';
 import { DepartamentoService, Departamento } from '../../../configuracion/services/departamento.service';
@@ -60,6 +60,9 @@ export class ProgramacionTablaComponent implements OnInit {
   private http                 = inject(HttpClient);
   public  authService          = inject(AuthService);
   private router               = inject(Router);
+  private route                = inject(ActivatedRoute);
+
+  readonly soloLectura = computed(() => !!this.route.snapshot.data['soloLectura']);
 
   programacion     = signal<Programacion[]>([]);
   paginationData   = signal<PaginatedResponse<Programacion> | null>(null);
