@@ -1,5 +1,5 @@
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-3xl flex flex-col max-h-[90vh]">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
@@ -25,7 +25,7 @@
           placeholder="Buscar por nombre o código de curso..."
           [value]="todosCursosSearch()"
           (input)="onSearch($any($event.target).value)"
-          class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+          class="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
     </div>
 
@@ -40,7 +40,7 @@
       } @else {
         <div class="space-y-2">
           @for (item of todosCursos(); track item.id) {
-            <div class="flex items-center justify-between gap-4 p-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors">
+            <div class="flex items-center justify-between gap-4 p-3 rounded-md border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors">
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-bold text-slate-800 truncate">{{ item.curso?.nombre || '—' }}</p>
                 <div class="flex flex-wrap items-center gap-2 mt-0.5">

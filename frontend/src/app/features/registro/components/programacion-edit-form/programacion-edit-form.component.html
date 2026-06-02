@@ -1,6 +1,6 @@
 <!-- Overlay -->
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
@@ -33,13 +33,13 @@
 
         <!-- Error -->
         @if (error()) {
-          <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 font-medium">
+          <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 font-medium">
             {{ error() }}
           </div>
         }
 
         <!-- Info del curso -->
-        <div class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl">
+        <div class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-md">
           <div class="flex items-center gap-4 flex-wrap">
             <div>
               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clave</p>
@@ -61,7 +61,7 @@
             placeholder="Ej: A, B, 1, 2..."
             [ngModel]="seccion()"
             (ngModelChange)="seccion.set($event)"
-            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
         </div>
 
         <!-- Grupo + Aula + Capacidad + Inscritos -->
@@ -76,7 +76,7 @@
               </p>
             }
             <select [ngModel]="grupoHorarioId()" (ngModelChange)="grupoHorarioId.set($event)"
-              class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+              class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
               <option value="">Sin grupo</option>
               @for (g of grupos(); track g.id) {
                 <option [value]="g.id">{{ getGrupoLabel(g.id) }}</option>
@@ -93,7 +93,7 @@
               </p>
             }
             <select [ngModel]="aulaId()" (ngModelChange)="onAulaChange($event)"
-              class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+              class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
               <option value="">Sin aula</option>
               @for (pabellon of pabellones(); track pabellon.id) {
                 @if (pabellon.aulas.length > 0) {
@@ -115,7 +115,7 @@
             <input type="number" min="1" max="500"
               [ngModel]="capacidad()"
               (ngModelChange)="capacidad.set(+$event)"
-              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
           </div>
 
           <!-- Inscritos -->
@@ -124,7 +124,7 @@
             <input type="number" min="0" max="500"
               [ngModel]="nInscritos()"
               (ngModelChange)="nInscritos.set(+$event)"
-              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
           </div>
         </div>
 
@@ -132,7 +132,7 @@
         <div class="relative">
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Docente</label>
           @if (docenteId()) {
-            <div class="flex items-center gap-3 px-4 py-2.5 bg-indigo-50 border border-indigo-200 rounded-2xl">
+            <div class="flex items-center gap-3 px-4 py-2.5 bg-indigo-50 border border-indigo-200 rounded-md">
               <span class="flex-1 text-sm font-medium text-slate-700">{{ docenteNombre() }}</span>
               <button (click)="limpiarDocente()" class="text-indigo-400 hover:text-indigo-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,9 +145,9 @@
               [(ngModel)]="docenteBusqueda"
               (ngModelChange)="onDocenteBusqueda()"
               placeholder="Buscar docente por nombre..."
-              class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+              class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
             @if (showDocenteDropdown() && docenteResultados().length > 0) {
-              <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-2xl shadow-lg mt-1 overflow-hidden max-h-40 overflow-y-auto">
+              <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-md shadow-lg mt-1 overflow-hidden max-h-40 overflow-y-auto">
                 @for (doc of docenteResultados(); track doc.id) {
                   <button (click)="seleccionarDocente(doc)"
                     class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 text-sm font-medium text-slate-700 transition-colors border-b border-slate-50 last:border-0">
@@ -164,7 +164,7 @@
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Escuela Programada</label>
           <p class="text-[10px] text-slate-400 font-medium mb-2">A qué escuela pertenece esta sección (se usa para emparejar alumnos al importar)</p>
           <select [ngModel]="escuelaProgramadaId()" (ngModelChange)="escuelaProgramadaId.set($event)"
-            class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+            class="w-full pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
             <option value="">Sin asignar</option>
             @for (e of escuelas(); track e.id) {
               <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>

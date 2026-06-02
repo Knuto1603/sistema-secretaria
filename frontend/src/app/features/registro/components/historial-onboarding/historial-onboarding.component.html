@@ -1,6 +1,6 @@
 <!-- Overlay del modal -->
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-start justify-between p-6 border-b border-slate-100">
@@ -33,7 +33,7 @@
 
       <!-- Error -->
       @if (error()) {
-        <div class="bg-red-50 text-red-700 rounded-2xl p-4 text-sm font-medium">
+        <div class="bg-red-50 text-red-700 rounded-md p-4 text-sm font-medium">
           {{ error() }}
         </div>
       }
@@ -41,7 +41,7 @@
       <!-- Plan de estudios por ciclo -->
       @if (!loading() && !error()) {
         @for (ciclo of ciclos(); track ciclo.ciclo) {
-          <div class="border border-slate-200 rounded-2xl overflow-hidden">
+          <div class="border border-slate-200 rounded-md overflow-hidden">
             <!-- Cabecera del ciclo (click para marcar/desmarcar todos) -->
             <button
               type="button"
@@ -104,14 +104,14 @@
         <button
           type="button"
           (click)="cerrado.emit()"
-          class="px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+          class="px-4 py-2.5 rounded-md text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">
           Cancelar
         </button>
         <button
           type="button"
           (click)="guardar()"
           [disabled]="saving() || loading()"
-          class="px-6 py-2.5 rounded-2xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+          class="px-6 py-2.5 rounded-md text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
           @if (saving()) {
             <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             Guardando...

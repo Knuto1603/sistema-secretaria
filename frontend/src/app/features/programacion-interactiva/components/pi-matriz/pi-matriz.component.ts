@@ -37,7 +37,7 @@ export class PiMatrizComponent {
   readonly tablaWrapperClases = computed(() =>
     this.pantallaCompleta()
       ? 'fixed inset-0 z-50 bg-white flex flex-col p-4 gap-3'
-      : 'flex flex-col gap-0 rounded-2xl border border-slate-200 shadow-sm overflow-hidden'
+      : 'flex flex-col gap-0 rounded-md border border-slate-200 shadow-sm overflow-hidden'
   );
 
   togglePantallaCompleta(): void {

@@ -3,7 +3,7 @@
   <!-- Mensaje -->
   @if (mensaje()) {
     <div
-      class="p-4 rounded-2xl text-sm font-medium"
+      class="p-4 rounded-md text-sm font-medium"
       [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
       [class.text-emerald-700]="mensaje()?.tipo === 'success'"
       [class.bg-red-50]="mensaje()?.tipo === 'error'"
@@ -13,7 +13,7 @@
   }
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+  <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
     <div class="flex items-center gap-4">
       <button
         (click)="volver()"
@@ -37,7 +37,7 @@
   </div>
 
   @if (loading()) {
-    <div class="bg-white rounded-2xl border border-slate-200 p-12 flex items-center justify-center">
+    <div class="bg-white rounded-md border border-slate-200 p-12 flex items-center justify-center">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
     </div>
   } @else if (solicitud()) {
@@ -47,10 +47,10 @@
       <div class="lg:col-span-2 space-y-6">
 
         <!-- Información del estudiante -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Estudiante</h3>
           <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center text-xl font-black text-indigo-700">
+            <div class="w-14 h-14 rounded-md bg-indigo-100 flex items-center justify-center text-xl font-black text-indigo-700">
               {{ solicitud()!.user?.name?.charAt(0) || '?' }}
             </div>
             <div class="flex-1">
@@ -77,7 +77,7 @@
         </div>
 
         <!-- Información del curso -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Curso Solicitado</h3>
           @if (solicitud()!.programacion?.curso) {
             <div class="space-y-4">
@@ -92,32 +92,32 @@
 
               <!-- Grid de datos del curso -->
               <dl class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-50 rounded-xl p-3">
+                <div class="bg-slate-50 rounded-md p-3">
                   <dt class="text-[10px] font-bold text-slate-400 uppercase">Código</dt>
                   <dd class="text-sm font-mono font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.curso!.codigo }}</dd>
                 </div>
-                <div class="bg-slate-50 rounded-xl p-3">
+                <div class="bg-slate-50 rounded-md p-3">
                   <dt class="text-[10px] font-bold text-slate-400 uppercase">Clave</dt>
                   <dd class="text-sm font-mono font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.clave }}</dd>
                 </div>
                 @if (solicitud()!.programacion!.seccion) {
-                  <div class="bg-slate-50 rounded-xl p-3">
+                  <div class="bg-slate-50 rounded-md p-3">
                     <dt class="text-[10px] font-bold text-slate-400 uppercase">Sección</dt>
                     <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.seccion }}</dd>
                   </div>
                 }
-                <div class="bg-slate-50 rounded-xl p-3">
+                <div class="bg-slate-50 rounded-md p-3">
                   <dt class="text-[10px] font-bold text-slate-400 uppercase">Grupo</dt>
                   <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.grupo }}</dd>
                 </div>
                 @if (solicitud()!.programacion!.aula) {
-                  <div class="bg-slate-50 rounded-xl p-3">
+                  <div class="bg-slate-50 rounded-md p-3">
                     <dt class="text-[10px] font-bold text-slate-400 uppercase">Aula</dt>
                     <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.aula!.nombre }}</dd>
                   </div>
                 }
                 @if (solicitud()!.programacion!.docente) {
-                  <div class="bg-slate-50 rounded-xl p-3 col-span-2">
+                  <div class="bg-slate-50 rounded-md p-3 col-span-2">
                     <dt class="text-[10px] font-bold text-slate-400 uppercase">Docente</dt>
                     <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.docente!.nombre }}</dd>
                   </div>
@@ -126,7 +126,7 @@
 
               <!-- Capacidad / Inscritos -->
               @if (solicitud()!.programacion!.capacidad !== null) {
-                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-md p-3">
                   <div class="flex items-center justify-between mb-1">
                     <span class="text-[10px] font-bold text-indigo-500 uppercase">Ocupación del curso</span>
                     <span class="text-xs font-bold text-indigo-700">
@@ -149,14 +149,14 @@
         </div>
 
         <!-- Motivo de la solicitud -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Motivo de la Solicitud</h3>
           <p class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{{ solicitud()!.motivo }}</p>
         </div>
 
         <!-- Archivos adjuntos -->
         @if (solicitud()!.archivo_sustento_url) {
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Archivo Adjunto</h3>
 
             <!-- Encabezado con nombre y botón descargar -->
@@ -192,7 +192,7 @@
 
             <!-- Visor PDF -->
             @if (esPDF(solicitud()!.archivo_sustento_nombre)) {
-              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+              <div class="rounded-md overflow-hidden border border-slate-200 bg-slate-50">
                 <iframe
                   [src]="solicitud()!.archivo_sustento_url! | trustUrl"
                   class="w-full"
@@ -204,7 +204,7 @@
 
             <!-- Visor imagen -->
             @else if (esImagen(solicitud()!.archivo_sustento_nombre)) {
-              <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-2">
+              <div class="rounded-md overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center p-2">
                 <img
                   [src]="solicitud()!.archivo_sustento_url!"
                   [alt]="solicitud()!.archivo_sustento_nombre || 'Imagen adjunta'"
@@ -214,7 +214,7 @@
 
             <!-- Formato no soportado para previsualización -->
             @else {
-              <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                 Este formato no se puede previsualizar. Usa el botón "Descargar" para abrirlo.
               </div>
             }
@@ -228,7 +228,7 @@
       <div class="space-y-6">
 
         <!-- Información de la solicitud -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
           <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Información</h3>
           <dl class="space-y-4">
             <div>
@@ -248,7 +248,7 @@
 
         <!-- Panel de acciones (solo admin) -->
         @if (esAdmin()) {
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
             <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">Gestionar Solicitud</h3>
 
             <div class="space-y-4">
@@ -258,7 +258,7 @@
                 <select
                   [ngModel]="nuevoEstado()"
                   (ngModelChange)="nuevoEstado.set($event)"
-                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
                   @for (estado of estados; track estado.value) {
                     <option [value]="estado.value">{{ estado.label }}</option>
                   }
@@ -273,7 +273,7 @@
                   (ngModelChange)="observaciones.set($event)"
                   rows="4"
                   placeholder="Agregar comentarios sobre la decisión..."
-                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                  class="w-full px-4 py-3 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
               </div>
 
               <!-- Botón guardar -->
@@ -290,7 +290,7 @@
 
         <!-- Observaciones existentes -->
         @if (solicitud()!.observaciones_admin) {
-          <div class="bg-amber-50 p-6 rounded-2xl border border-amber-200">
+          <div class="bg-amber-50 p-6 rounded-md border border-amber-200">
             <h3 class="text-xs font-semibold text-amber-700 uppercase tracking-widest mb-2">Observaciones del Revisor</h3>
             <p class="text-sm text-amber-800">{{ solicitud()!.observaciones_admin }}</p>
           </div>
@@ -298,7 +298,7 @@
 
         <!-- Respuesta/apelación previa del alumno (visible para todos) -->
         @if (solicitud()!.respuesta_alumno) {
-          <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+          <div class="bg-blue-50 p-6 rounded-md border border-blue-200">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-xs font-semibold text-blue-700 uppercase tracking-widest">Apelación del Estudiante</h3>
               @if (solicitud()!.fecha_respuesta) {
@@ -313,7 +313,7 @@
 
         <!-- Panel de apelación (solo estudiante cuando está rechazada) -->
         @if (puedeApelar()) {
-          <div class="bg-orange-50 p-6 rounded-2xl border border-orange-200">
+          <div class="bg-orange-50 p-6 rounded-md border border-orange-200">
             <h3 class="text-xs font-semibold text-orange-700 uppercase tracking-widest mb-1">Apelar Solicitud</h3>
             <p class="text-xs text-orange-600 mb-4">
               Tu solicitud fue rechazada. Puedes enviar una respuesta explicando tu caso.
@@ -326,7 +326,7 @@
               placeholder="Explica los motivos de tu apelación (mínimo 10 caracteres)..."
               rows="4"
               [disabled]="respondiendo()"
-              class="w-full px-4 py-3 text-sm border border-orange-200 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none resize-none disabled:opacity-50">
+              class="w-full px-4 py-3 text-sm border border-orange-200 rounded-md bg-white focus:ring-2 focus:ring-orange-400 outline-none resize-none disabled:opacity-50">
             </textarea>
 
             <div class="flex items-center justify-between mt-3">
@@ -336,7 +336,7 @@
               <button
                 (click)="apelar()"
                 [disabled]="respondiendo() || textoRespuesta().trim().length < 10"
-                class="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                class="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold rounded-md transition-colors disabled:opacity-50">
                 @if (respondiendo()) {
                   <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -356,7 +356,7 @@
 
         <!-- Anular solicitud (solo estudiante con solicitud pendiente/en_revision) -->
         @if (puedeAnular()) {
-          <div class="bg-red-50 p-5 rounded-2xl border border-red-200">
+          <div class="bg-red-50 p-5 rounded-md border border-red-200">
             <h3 class="text-xs font-semibold text-red-600 uppercase tracking-widest mb-2">Anular Solicitud</h3>
             <p class="text-xs text-red-500 mb-3">
               Al anular, la solicitud se eliminará y podrás presentar una nueva.
@@ -365,7 +365,7 @@
             @if (!confirmarAnular()) {
               <button
                 (click)="confirmarAnular.set(true)"
-                class="w-full px-4 py-2.5 bg-white border-2 border-red-300 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition-colors">
+                class="w-full px-4 py-2.5 bg-white border-2 border-red-300 text-red-600 text-sm font-bold rounded-md hover:bg-red-50 transition-colors">
                 Anular esta solicitud
               </button>
             } @else {
@@ -373,13 +373,13 @@
               <div class="flex gap-2">
                 <button
                   (click)="confirmarAnular.set(false)"
-                  class="flex-1 px-3 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors">
+                  class="flex-1 px-3 py-2 bg-white border border-slate-200 text-slate-600 text-sm font-medium rounded-md hover:bg-slate-50 transition-colors">
                   Cancelar
                 </button>
                 <button
                   (click)="anular()"
                   [disabled]="anulando()"
-                  class="flex-1 px-3 py-2 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50">
+                  class="flex-1 px-3 py-2 bg-red-600 text-white text-sm font-bold rounded-md hover:bg-red-700 transition-colors disabled:opacity-50">
                   {{ anulando() ? 'Anulando...' : 'Sí, anular' }}
                 </button>
               </div>

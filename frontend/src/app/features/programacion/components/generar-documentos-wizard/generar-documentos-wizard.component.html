@@ -5,7 +5,7 @@
     <p class="text-sm text-slate-500 mt-0.5">Genera los oficios DOCX agrupados por departamento académico.</p>
   </div>
   <button (click)="irAHistorial()"
-    class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition-colors">
+    class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-md transition-colors">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
     </svg>
@@ -47,18 +47,18 @@
 
     <!-- Error global -->
     @if (errorMsg()) {
-      <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+      <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-md text-xs text-red-700 font-medium">
         {{ errorMsg() }}
       </div>
     }
 
     <!-- ─── PASO 1 — Rango ─────────────────────────────────────── -->
     @if (paso() === 1) {
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-4">
         <p class="text-sm font-bold text-slate-700">Selecciona el rango de fechas de modificaciones a documentar.</p>
 
         <!-- Período activo — viene del selector del encabezado -->
-        <div class="flex items-center gap-2 px-3 py-2.5 bg-purple-50 border border-purple-200 rounded-xl">
+        <div class="flex items-center gap-2 px-3 py-2.5 bg-purple-50 border border-purple-200 rounded-md">
           <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -79,21 +79,21 @@
               Fecha desde <span class="text-red-400">*</span>
             </label>
             <input type="date" [ngModel]="fechaDesde()" (ngModelChange)="fechaDesde.set($event)"
-              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300">
           </div>
           <div>
             <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
               Fecha hasta <span class="text-red-400">*</span>
             </label>
             <input type="date" [ngModel]="fechaHasta()" (ngModelChange)="fechaHasta.set($event)"
-              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+              class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300">
           </div>
         </div>
 
         <div class="flex justify-end pt-2">
           <button (click)="irAPaso2()"
             [disabled]="!paso1Valido() || cargandoPreview()"
-            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-bold transition-all"
             [ngClass]="paso1Valido() && !cargandoPreview()
               ? 'bg-purple-600 hover:bg-purple-700 text-white'
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
@@ -116,7 +116,7 @@
 
     <!-- ─── PASO 2 — Vista previa ──────────────────────────────── -->
     @if (paso() === 2) {
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
         <div class="flex items-center justify-between mb-4">
           <div>
             <p class="font-bold text-slate-800">Vista previa — {{ preview().length }} documento(s)</p>
@@ -131,7 +131,7 @@
         } @else {
           <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
             @for (grupo of preview(); track grupo.area_id) {
-              <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <div class="border border-slate-200 rounded-md overflow-hidden">
                 <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50">
                   <div>
                     <p class="text-xs font-bold text-slate-800">{{ grupo.area_nombre }}</p>
@@ -178,10 +178,10 @@
 
     <!-- ─── PASO 3 — Confirmar ─────────────────────────────────── -->
     @if (paso() === 3) {
-      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-4">
         <p class="text-sm font-bold text-slate-700">Confirma los datos del oficio y descarga el ZIP con todos los documentos.</p>
 
-        <div class="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-xs text-slate-600 space-y-1">
+        <div class="bg-purple-50 border border-purple-100 rounded-md px-4 py-3 text-xs text-slate-600 space-y-1">
           <div class="flex gap-2">
             <span class="text-slate-400 w-20 shrink-0">Período</span>
             <span class="font-semibold">{{ estado.periodo()?.nombre ?? estado.periodoId() }}</span>
@@ -206,7 +206,7 @@
           </label>
           <input type="text" [ngModel]="numeroOficio()" (ngModelChange)="numeroOficio.set($event)"
             placeholder="Ej: 2024-001"
-            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300">
+            class="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300">
         </div>
 
         <div class="flex justify-between pt-2">
@@ -216,7 +216,7 @@
           </button>
           <button (click)="confirmarGeneracion()"
             [disabled]="!paso3Valido()"
-            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-bold transition-all"
             [ngClass]="paso3Valido()
               ? 'bg-purple-600 hover:bg-purple-700 text-white'
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'">
@@ -241,7 +241,7 @@
 
   <!-- Historial reciente (col 3) -->
   <div class="lg:col-span-1">
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
       <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
         <p class="text-xs font-bold uppercase tracking-widest text-slate-500">Generaciones anteriores</p>
       </div>

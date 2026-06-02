@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+  <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
     <h2 class="text-xl font-black text-slate-800 tracking-tight">Grupos Horario</h2>
     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
       Configura los horarios de cada grupo (G1 – G14)
@@ -10,7 +10,7 @@
 
   <!-- Mensaje feedback -->
   @if (mensaje()) {
-    <div class="px-4 py-3 rounded-2xl text-sm font-medium"
+    <div class="px-4 py-3 rounded-md text-sm font-medium"
       [ngClass]="mensaje()!.tipo === 'success'
         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
         : 'bg-red-50 text-red-700 border border-red-200'">
@@ -22,7 +22,7 @@
   @if (loading()) {
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
       @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14]; track i) {
-        <div class="bg-slate-100 rounded-2xl h-20 animate-pulse"></div>
+        <div class="bg-slate-100 rounded-md h-20 animate-pulse"></div>
       }
     </div>
   }
@@ -33,7 +33,7 @@
       @for (grupo of grupos(); track grupo.id) {
         <div
           (click)="toggleGrupo(grupo.id)"
-          class="border rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:shadow-md select-none"
+          class="border rounded-md p-4 cursor-pointer transition-all duration-200 hover:shadow-md select-none"
           [ngClass]="{
             'border-indigo-400 shadow-indigo-100 shadow-md bg-indigo-50': grupoActivo() === grupo.id,
             'bg-white border-slate-200': grupoActivo() !== grupo.id,
@@ -55,7 +55,7 @@
 
     <!-- Panel del grupo activo -->
     @if (grupoActivo() && getGrupoActivo()) {
-      <div class="bg-white border border-indigo-200 rounded-2xl p-6 space-y-5">
+      <div class="bg-white border border-indigo-200 rounded-md p-6 space-y-5">
 
         <div class="flex items-center justify-between">
           <div>
@@ -76,7 +76,7 @@
         @if (getGrupoActivo()!.detalles.length > 0) {
           <div>
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Horarios configurados</p>
-            <div class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+            <div class="divide-y divide-slate-100 border border-slate-100 rounded-md overflow-hidden">
               @for (detalle of getGrupoActivo()!.detalles; track detalle.id) {
                 <!-- Modo vista -->
                 @if (detalleEditando() !== detalle.id) {
@@ -149,7 +149,7 @@
         }
 
         <!-- Formulario agregar slot -->
-        <div class="bg-slate-50 rounded-2xl p-4 space-y-3">
+        <div class="bg-slate-50 rounded-md p-4 space-y-3">
           <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Agregar horario</p>
           <div class="flex flex-wrap items-end gap-3">
             <div>

@@ -9,7 +9,7 @@
 <div class="space-y-4">
 
   <!-- Recuadro 1: Filtros -->
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+  <div class="bg-white rounded-md border border-slate-200 shadow-sm px-6 py-4">
     <div class="flex flex-wrap items-center gap-2">
 
       <!-- Búsqueda -->
@@ -23,7 +23,7 @@
           [ngModel]="search()"
           (ngModelChange)="search.set($event); cargar(1)"
           placeholder="Buscar por nombre, código o email..."
-          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full">
+          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full">
       </div>
 
       <!-- Escuela -->
@@ -31,7 +31,7 @@
         <select
           [ngModel]="escuelaSeleccionada()"
           (ngModelChange)="escuelaSeleccionada.set($event); cargar(1)"
-          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px]"
+          class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px]"
           [ngClass]="escuelaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
           <option value="">Escuela</option>
           @for (e of escuelas(); track e.id) {
@@ -50,7 +50,7 @@
         <select
           [ngModel]="cuentaActivada()"
           (ngModelChange)="cuentaActivada.set($event); cargar(1)"
-          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px]"
+          class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px]"
           [ngClass]="cuentaActivada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
           <option value="">Cuenta</option>
           <option value="true">Activada</option>
@@ -68,7 +68,7 @@
         <select
           [ngModel]="activoFiltro()"
           (ngModelChange)="activoFiltro.set($event); cargar(1)"
-          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px]"
+          class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px]"
           [ngClass]="activoFiltro() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
           <option value="">Estado</option>
           <option value="true">Activo</option>
@@ -83,7 +83,7 @@
 
       @if (hayFiltros()) {
         <button (click)="limpiarFiltros()"
-          class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-slate-200 flex items-center gap-1.5 bg-white">
+          class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors border border-slate-200 flex items-center gap-1.5 bg-white">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -192,7 +192,7 @@
 
   <!-- Recuadro 3: Paginación -->
   @if (pagination() && !loading()) {
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
       <app-shared-pagination
         [currentPage]="currentPage()"
         [lastPage]="pagination()!.last_page"

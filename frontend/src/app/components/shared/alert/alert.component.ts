@@ -13,7 +13,7 @@ export class AppAlertComponent {
   message = input.required<string>();
 
   alertClasses = computed(() => {
-    const base = "p-4 rounded-2xl mb-4 border transition-all animate-in fade-in slide-in-from-top-4 ";
+    const base = "p-4 rounded-md mb-4 border transition-all animate-in fade-in slide-in-from-top-4 ";
     const types = {
       success: "bg-emerald-50 border-emerald-100 text-emerald-800",
       error: "bg-red-50 border-red-100 text-red-800",

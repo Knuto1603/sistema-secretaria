@@ -1,6 +1,6 @@
 <!-- Overlay -->
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
@@ -35,7 +35,7 @@
 
         <!-- Error global -->
         @if (error()) {
-          <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 font-medium">
+          <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 font-medium">
             {{ error() }}
           </div>
         }
@@ -44,7 +44,7 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Periodo Académico</label>
           <select [ngModel]="periodoId()" (ngModelChange)="periodoId.set($event)"
-            class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+            class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
             @for (p of periodos(); track p.id) {
               <option [value]="p.id">{{ p.nombre }} {{ p.activo ? '(Activo)' : '' }}</option>
             }
@@ -56,7 +56,7 @@
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Curso</label>
           <div class="relative">
             @if (cursoSeleccionado()) {
-              <div class="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-300 rounded-2xl">
+              <div class="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-300 rounded-md">
                 <div class="flex-1">
                   <span class="text-xs font-semibold text-indigo-700 uppercase tracking-wide">{{ cursoSeleccionado()!.codigo }}</span>
                   <span class="text-sm font-medium text-slate-700 ml-2">{{ cursoSeleccionado()!.nombre }}</span>
@@ -72,7 +72,7 @@
                 <input type="text" [(ngModel)]="cursoBusqueda"
                   (ngModelChange)="onCursoBusqueda()"
                   placeholder="Buscar por código o nombre..."
-                  class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+                  class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
                 @if (buscandoCurso()) {
                   <div class="absolute inset-y-0 right-3 flex items-center">
                     <svg class="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
                 }
               </div>
               @if (mostrarResultados() && cursoResultados().length > 0) {
-                <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-2xl shadow-lg mt-1 overflow-hidden max-h-48 overflow-y-auto">
+                <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-md shadow-lg mt-1 overflow-hidden max-h-48 overflow-y-auto">
                   @for (curso of cursoResultados(); track curso.id) {
                     <button (click)="seleccionarCurso(curso)"
                       class="w-full text-left px-4 py-3 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0">
@@ -123,7 +123,7 @@
           <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escuela programada <span class="text-slate-300">(opcional)</span></label>
           <p class="text-[10px] text-slate-400 mb-2">Escuela responsable de la programación de este curso.</p>
           <select [ngModel]="escuelaProgramadaId()" (ngModelChange)="escuelaProgramadaId.set($event)"
-            class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
+            class="w-full pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none font-medium">
             <option value="">Sin escuela programada</option>
             @for (escuela of escuelas(); track escuela.id) {
               <option [value]="escuela.id">{{ escuela.nombre_corto || escuela.nombre }}</option>
@@ -142,7 +142,7 @@
           </div>
         }
         @if (!cargandoSecciones() && seccionesExistentes().length > 0) {
-          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div class="bg-amber-50 border border-amber-200 rounded-md p-4">
             <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">
               Secciones ya registradas para este curso ({{ seccionesExistentes().length }})
             </p>
@@ -177,7 +177,7 @@
 
           <div class="space-y-3">
             @for (seccion of secciones(); track $index) {
-              <div class="bg-slate-50 rounded-2xl p-4 space-y-3">
+              <div class="bg-slate-50 rounded-md p-4 space-y-3">
 
                 <!-- Cabecera sección -->
                 <div class="flex items-center justify-between">
@@ -258,7 +258,7 @@
                     class="w-full pl-4 pr-10 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
 
                   @if (seccionDocenteActiva() === $index && docenteResultados().length > 0) {
-                    <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-2xl shadow-lg mt-1 overflow-hidden max-h-40 overflow-y-auto">
+                    <div class="absolute top-full left-0 right-0 z-10 bg-white border border-slate-200 rounded-md shadow-lg mt-1 overflow-hidden max-h-40 overflow-y-auto">
                       @for (doc of docenteResultados(); track doc.id) {
                         <button (click)="seleccionarDocente($index, doc)"
                           class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 text-sm font-medium text-slate-700 transition-colors border-b border-slate-50 last:border-0">

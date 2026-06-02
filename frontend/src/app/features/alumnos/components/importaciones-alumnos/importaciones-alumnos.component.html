@@ -1,10 +1,10 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
   <!-- Card 1: Importar ZIP de Historiales -->
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
     <div class="px-6 py-5 border-b border-slate-100">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+        <div class="w-10 h-10 rounded-md bg-violet-100 flex items-center justify-center flex-shrink-0">
           <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
@@ -20,7 +20,7 @@
     <div class="px-6 py-5 space-y-4">
 
       <!-- Descripción -->
-      <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-xl">
+      <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-md">
         <p class="text-xs text-violet-700 font-medium leading-relaxed">
           Sube el archivo ZIP que contiene los reportes de historial académico individuales
           del SIGA (un archivo .htm por alumno, nombrado con el código universitario).
@@ -47,7 +47,7 @@
 
       <!-- Estado: procesando en background -->
       @if (zipEstado() === 'procesando') {
-        <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-xl flex items-center gap-3">
+        <div class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-md flex items-center gap-3">
           <svg class="w-4 h-4 text-violet-500 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -58,7 +58,7 @@
 
       <!-- Error -->
       @if (errorZip()) {
-        <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+        <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-md">
           <p class="text-xs text-red-600 font-medium">{{ errorZip() }}</p>
         </div>
       }
@@ -68,25 +68,25 @@
         <div class="space-y-3">
           <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resultado</p>
           <div class="grid grid-cols-2 gap-2">
-            <div class="px-3 py-2.5 bg-emerald-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-emerald-50 rounded-md text-center">
               <p class="text-xl font-black text-emerald-600">{{ resultadoZip()!.estudiantes_creados }}</p>
               <p class="text-[10px] text-emerald-500 font-bold uppercase">Nuevos</p>
             </div>
-            <div class="px-3 py-2.5 bg-blue-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-blue-50 rounded-md text-center">
               <p class="text-xl font-black text-blue-600">{{ resultadoZip()!.estudiantes_actualizados }}</p>
               <p class="text-[10px] text-blue-500 font-bold uppercase">Actualizados</p>
             </div>
-            <div class="px-3 py-2.5 bg-indigo-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-indigo-50 rounded-md text-center">
               <p class="text-xl font-black text-indigo-600">{{ resultadoZip()!.historial_insertado }}</p>
               <p class="text-[10px] text-indigo-500 font-bold uppercase">Historial nuevo</p>
             </div>
-            <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-slate-50 rounded-md text-center">
               <p class="text-xl font-black text-slate-600">{{ resultadoZip()!.historial_actualizado }}</p>
               <p class="text-[10px] text-slate-500 font-bold uppercase">Historial actualizado</p>
             </div>
           </div>
           @if (resultadoZip()!.errores.length > 0) {
-            <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+            <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-md">
               <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
                 {{ resultadoZip()!.errores.length }} archivo(s) con error
               </p>
@@ -104,10 +104,10 @@
   </div>
 
   <!-- Card 2: Importar HTML de Inscripciones (ALUMNOS POR CURSO) -->
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
     <div class="px-6 py-5 border-b border-slate-100">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0">
+        <div class="w-10 h-10 rounded-md bg-sky-100 flex items-center justify-center flex-shrink-0">
           <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
@@ -123,7 +123,7 @@
     <div class="px-6 py-5 space-y-4">
 
       <!-- Descripción -->
-      <div class="px-4 py-3 bg-sky-50 border border-sky-100 rounded-xl">
+      <div class="px-4 py-3 bg-sky-50 border border-sky-100 rounded-md">
         <p class="text-xs text-sky-700 font-medium leading-relaxed">
           Sube el reporte HTML "ALUMNOS POR CURSO XXXXXX" del SIGA. Contiene todos los
           alumnos inscritos por sección. Se actualizarán las inscripciones y el contador
@@ -150,7 +150,7 @@
 
       <!-- Error -->
       @if (errorHtml()) {
-        <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+        <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-md">
           <p class="text-xs text-red-600 font-medium">{{ errorHtml() }}</p>
         </div>
       }
@@ -160,25 +160,25 @@
         <div class="space-y-3">
           <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resultado</p>
           <div class="grid grid-cols-2 gap-2">
-            <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-slate-50 rounded-md text-center">
               <p class="text-xl font-black text-slate-700">{{ resultadoHtml()!.programaciones_procesadas }}</p>
               <p class="text-[10px] text-slate-500 font-bold uppercase">Secciones</p>
             </div>
-            <div class="px-3 py-2.5 bg-emerald-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-emerald-50 rounded-md text-center">
               <p class="text-xl font-black text-emerald-600">{{ resultadoHtml()!.inscripciones_creadas }}</p>
               <p class="text-[10px] text-emerald-500 font-bold uppercase">Creadas</p>
             </div>
-            <div class="px-3 py-2.5 bg-blue-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-blue-50 rounded-md text-center">
               <p class="text-xl font-black text-blue-600">{{ resultadoHtml()!.alumnos_nuevos }}</p>
               <p class="text-[10px] text-blue-500 font-bold uppercase">Alumnos nuevos</p>
             </div>
-            <div class="px-3 py-2.5 bg-amber-50 rounded-xl text-center">
+            <div class="px-3 py-2.5 bg-amber-50 rounded-md text-center">
               <p class="text-xl font-black text-amber-600">{{ resultadoHtml()!.no_encontrados }}</p>
               <p class="text-[10px] text-amber-500 font-bold uppercase">No encontrados</p>
             </div>
           </div>
           @if (resultadoHtml()!.no_encontrados > 0) {
-            <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+            <div class="px-4 py-3 bg-amber-50 border border-amber-100 rounded-md">
               <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">
                 {{ resultadoHtml()!.no_encontrados }} sección(es) sin match en programación
               </p>
@@ -190,7 +190,7 @@
             </div>
           }
           @if (resultadoHtml()!.errores > 0) {
-            <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+            <div class="px-4 py-3 bg-red-50 border border-red-100 rounded-md">
               <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-2">
                 {{ resultadoHtml()!.errores }} error(es)
               </p>

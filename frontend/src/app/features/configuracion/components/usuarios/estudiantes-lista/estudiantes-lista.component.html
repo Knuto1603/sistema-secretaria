@@ -3,7 +3,7 @@
   <!-- Mensaje -->
   @if (mensaje()) {
     <div
-      class="p-4 rounded-2xl text-sm font-medium"
+      class="p-4 rounded-md text-sm font-medium"
       [class.bg-emerald-50]="mensaje()?.tipo === 'success'"
       [class.text-emerald-700]="mensaje()?.tipo === 'success'"
       [class.bg-red-50]="mensaje()?.tipo === 'error'"
@@ -127,7 +127,7 @@
 
   <!-- Formulario: Nuevo estudiante -->
   @if (mostrarFormCrear()) {
-    <div class="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+    <div class="border border-slate-200 rounded-md bg-white shadow-sm overflow-hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
         <div class="bg-white px-5 py-4">
           <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Nombre completo</label>
@@ -178,7 +178,7 @@
 
   <!-- Mensaje HTML import -->
   @if (importHtmlMensaje()) {
-    <div class="mx-0 mt-2 px-4 py-2.5 rounded-2xl text-sm font-medium"
+    <div class="mx-0 mt-2 px-4 py-2.5 rounded-md text-sm font-medium"
       [class.bg-emerald-50]="importHtmlMensaje()!.tipo === 'success'"
       [class.text-emerald-700]="importHtmlMensaje()!.tipo === 'success'"
       [class.bg-red-50]="importHtmlMensaje()!.tipo === 'error'"
@@ -327,7 +327,7 @@
 
   <!-- Paginación -->
   @if (pagination.lastPage > 1) {
-    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
       <app-shared-pagination
         [currentPage]="pagination.currentPage"
         [lastPage]="pagination.lastPage"
@@ -344,7 +344,7 @@
 
   <!-- Estado vacío -->
   @if (!loading() && estudiantes().length === 0) {
-    <div class="bg-slate-50 rounded-2xl p-12 text-center">
+    <div class="bg-slate-50 rounded-md p-12 text-center">
       <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
       </svg>
@@ -368,7 +368,7 @@
     <div class="absolute inset-0 bg-black/50" (click)="cerrarDetalle()"></div>
 
     <!-- Modal -->
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden">
+    <div class="relative bg-white rounded-md shadow-xl w-full max-w-2xl overflow-hidden">
 
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -423,7 +423,7 @@
         @if (tabDetalle() === 'perfil') {
           <div class="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
             <!-- Datos -->
-            <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-2xl p-4">
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 rounded-md p-4">
               <div>
                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Email</label>
                 <p class="text-sm text-slate-700">{{ estudianteDetalle()!.email }}</p>
@@ -490,7 +490,7 @@
               <!-- Cards resumen créditos -->
               <div class="grid grid-cols-2 gap-3">
                 <!-- Obligatorios -->
-                <div class="bg-indigo-50 rounded-xl p-4 space-y-2">
+                <div class="bg-indigo-50 rounded-md p-4 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Obligatorios</span>
                     @if (estudianteDetalle()!.progreso!.obligatorios.hechos >= estudianteDetalle()!.progreso!.obligatorios.requeridos) {
@@ -521,7 +521,7 @@
                 </div>
 
                 <!-- Electivos -->
-                <div class="bg-violet-50 rounded-xl p-4 space-y-2">
+                <div class="bg-violet-50 rounded-md p-4 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wide">Electivos</span>
                     @if (estudianteDetalle()!.progreso!.electivos.hechos >= estudianteDetalle()!.progreso!.electivos.requeridos && estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
@@ -559,7 +559,7 @@
                 <div class="space-y-2">
                   <h6 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cursos obligatorios pendientes</h6>
                   @for (cicloObj of estudianteDetalle()!.progreso!.obligatorios.pendientes_por_ciclo!; track cicloObj.ciclo) {
-                    <div class="border border-slate-100 rounded-xl overflow-hidden">
+                    <div class="border border-slate-100 rounded-md overflow-hidden">
                       <div class="bg-slate-50 px-3 py-1.5 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-600">Ciclo {{ cicloObj.ciclo }}</span>
                         <span class="text-[10px] text-slate-400">
@@ -583,7 +583,7 @@
               }
 
               <!-- Egresante toggle -->
-              <div class="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+              <div class="flex items-center justify-between bg-slate-50 rounded-md px-4 py-3">
                 <div>
                   <p class="text-xs font-semibold text-slate-700">Egresante manual</p>
                   <p class="text-[10px] text-slate-400">
@@ -646,7 +646,7 @@
             } @else {
               <div class="space-y-4">
                 @for (grupo of inscripcionesPorPeriodo(); track grupo.nombre) {
-                  <div class="border border-slate-100 rounded-xl overflow-hidden">
+                  <div class="border border-slate-100 rounded-md overflow-hidden">
                     <!-- Cabecera del periodo -->
                     <div class="bg-slate-50 px-4 py-2 flex items-center justify-between">
                       <span class="text-xs font-bold text-slate-700">{{ grupo.nombre }}</span>
@@ -746,7 +746,7 @@
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50" (click)="cerrarImportResultado()"></div>
 
-    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+    <div class="relative bg-white rounded-md shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
       <!-- Cabecera -->
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <h2 class="text-lg font-semibold text-slate-800">Resultado de la importación</h2>

@@ -1,7 +1,7 @@
 <div class="space-y-3">
 
   <!-- Banner mobile -->
-  <div class="md:hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+  <div class="md:hidden bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start gap-3">
     <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
@@ -34,7 +34,7 @@
   </div>
 
   <!-- Leyenda: tipo de curso -->
-  <div class="flex items-center flex-wrap gap-4 text-xs text-slate-500 bg-white border border-slate-100 rounded-xl px-4 py-2.5">
+  <div class="flex items-center flex-wrap gap-4 text-xs text-slate-500 bg-white border border-slate-100 rounded-md px-4 py-2.5">
     <div class="flex items-center gap-1.5">
       <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Oblig.</span>
       <span>Obligatorio</span>
@@ -52,7 +52,7 @@
   </div>
 
   <!-- Leyenda dinámica: color por (escuela, ciclo) -->
-  <details class="bg-white border border-slate-100 rounded-xl overflow-hidden">
+  <details class="bg-white border border-slate-100 rounded-md overflow-hidden">
     <summary class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-widest cursor-pointer select-none list-none flex items-center gap-2">
       <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
@@ -120,7 +120,7 @@
   </ng-template>
 
   <!-- Panel fijo "Sin Asignar" — siempre visible, fuera del scroll de la tabla -->
-  <div class="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm">
+  <div class="bg-amber-50 border border-amber-200 rounded-md overflow-hidden shadow-sm">
 
     <!-- Cabecera con título y conteo -->
     <div class="px-4 py-2.5 flex items-center gap-3 border-b border-amber-100">
@@ -306,7 +306,7 @@
                     [class.border-l-slate-300]="col.mostrarSepPabellon && !col.esInicioLabs"
                     [class.border-l-rose-400]="col.esInicioLabs">
                   <div
-                    class="min-h-16 max-h-64 overflow-y-auto rounded-xl border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
+                    class="min-h-16 max-h-64 overflow-y-auto rounded-md border-2 border-dashed border-slate-200 p-1.5 transition-all duration-150 space-y-1.5"
                     (dragover)="onDragOver($event)"
                     (dragenter)="onDragEnter($event, $any($event.currentTarget))"
                     (dragleave)="onDragLeave($event, $any($event.currentTarget))"
@@ -327,14 +327,14 @@
   </div>
 
   @if (aulasActivas().length === 0) {
-    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+    <div class="bg-amber-50 border border-amber-200 rounded-md p-5 text-center">
       <p class="text-sm font-medium text-amber-700">No hay aulas activas configuradas.</p>
       <p class="text-xs text-amber-600 mt-1">Ve a Configuración → Pabellones y Aulas para agregar aulas.</p>
     </div>
   }
 
   @if (gruposActivos().length === 0) {
-    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+    <div class="bg-amber-50 border border-amber-200 rounded-md p-5 text-center">
       <p class="text-sm font-medium text-amber-700">No hay grupos horarios activos configurados.</p>
       <p class="text-xs text-amber-600 mt-1">Ve a Configuración → Grupos Horario para definir los horarios G1–G14.</p>
     </div>

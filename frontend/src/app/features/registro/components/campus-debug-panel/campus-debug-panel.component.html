@@ -31,7 +31,7 @@
         En Campus pero sin programación en sistema ({{ resultado().omitidos }})
       </p>
       @if (resultado().detalle.length > 0) {
-        <div class="overflow-auto max-h-56 rounded-xl border border-amber-200 bg-white">
+        <div class="overflow-auto max-h-56 rounded-md border border-amber-200 bg-white">
           <table class="w-full text-xs">
             <thead class="bg-amber-50 sticky top-0">
               <tr>
@@ -63,7 +63,7 @@
         En sistema pero NO en Campus ({{ resultado().no_en_campus.length }})
       </p>
       @if (resultado().no_en_campus.length > 0) {
-        <div class="overflow-auto max-h-56 rounded-xl border border-red-200 bg-white">
+        <div class="overflow-auto max-h-56 rounded-md border border-red-200 bg-white">
           <table class="w-full text-xs">
             <thead class="bg-red-50 sticky top-0">
               <tr>

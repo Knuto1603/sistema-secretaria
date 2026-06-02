@@ -25,9 +25,9 @@
 
   <!-- Banner: historial no registrado -->
   @if (!historialRegistrado() && !loading()) {
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-md p-5">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-2xl flex-shrink-0">
+        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-md flex-shrink-0">
           <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
@@ -41,7 +41,7 @@
         </div>
       </div>
       <button (click)="abrirOnboarding()"
-        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-2xl hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
+        class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-md hover:bg-indigo-700 transition-colors sm:flex-shrink-0 w-full sm:w-auto">
         Registrar historial
       </button>
     </div>
@@ -49,8 +49,8 @@
 
   <!-- Banner: presentación de solicitudes cerrada -->
   @if (!solicitudesAbiertas() && !loading()) {
-    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-2xl p-5">
-      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-md p-5">
+      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-md flex-shrink-0">
         <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
@@ -66,7 +66,7 @@
   }
 
   <!-- Encabezado -->
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
 
     <!-- Título + Buscador -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-4">
@@ -107,7 +107,7 @@
           [ngModel]="searchTerm()"
           (ngModelChange)="onSearchChange($event)"
           placeholder="Buscar curso o docente..."
-          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
+          class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
       </div>
     </div>
 
@@ -232,7 +232,7 @@
 
     <!-- Paginación -->
     @if (paginationData() && !loading()) {
-      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
         <app-shared-pagination
           [currentPage]="currentPage()"
           [lastPage]="paginationData()!.last_page"
@@ -250,7 +250,7 @@
     @if (!loading() && isPeriodoActivo()) {
       <div class="flex justify-center pt-2">
         <button (click)="showTodosCursos.set(true)"
-          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-2xl border border-dashed border-violet-200 hover:border-violet-400 transition-all">
+          class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-md border border-dashed border-violet-200 hover:border-violet-400 transition-all">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>

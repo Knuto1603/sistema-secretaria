@@ -16,8 +16,8 @@
 
   <!-- Banner: solicitudes cerradas (solo estudiantes) -->
   @if (authService.isEstudiante() && !solicitudesAbiertas()) {
-    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-2xl p-5 mb-8">
-      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-2xl flex-shrink-0">
+    <div class="flex items-start gap-4 bg-red-50 border border-red-200 rounded-md p-5 mb-8">
+      <div class="w-10 h-10 flex items-center justify-center bg-red-100 rounded-md flex-shrink-0">
         <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
@@ -37,8 +37,8 @@
 
     <!-- Para Estudiantes -->
     @if (authService.isEstudiante()) {
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+      <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center mb-4">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
         <h3 class="font-bold text-slate-800">Mis Trámites</h3>
@@ -49,8 +49,8 @@
 
     <!-- Para Secretaría / Decanato / Admin / Developer -->
     @if (authService.hasRole('secretaria') || authService.hasRole('decano') || authService.hasRole('admin') || authService.isDeveloper()) {
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+      <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center mb-4">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </div>
         <h3 class="font-bold text-slate-800">Bandeja de Entrada</h3>
@@ -60,8 +60,8 @@
     }
 
     <!-- Común: Chatbot -->
-    <a routerLink="/app/chatbot" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow block">
-      <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+    <a routerLink="/app/chatbot" class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow block">
+      <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-md flex items-center justify-center mb-4">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
         </div>
       <h3 class="font-bold text-slate-800">Asistente IA</h3>
@@ -71,8 +71,8 @@
 
     <!-- Para Admin / Developer: Configuración -->
     @if (authService.hasRole('admin') || authService.isDeveloper()) {
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+      <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-md flex items-center justify-center mb-4">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </div>
         <h3 class="font-bold text-slate-800">Configuración</h3>
@@ -83,8 +83,8 @@
 
     <!-- Para Developer: Panel de desarrollo -->
     @if (authService.isDeveloper()) {
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center mb-4">
+      <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+        <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-md flex items-center justify-center mb-4">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
         </div>
         <h3 class="font-bold text-slate-800">Panel Developer</h3>

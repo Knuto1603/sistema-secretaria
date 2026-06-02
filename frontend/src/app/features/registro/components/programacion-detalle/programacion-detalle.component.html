@@ -1,6 +1,6 @@
 <!-- Overlay -->
 <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-7 py-5 border-b border-slate-100">
@@ -36,7 +36,7 @@
       <div class="flex-1 overflow-y-auto px-7 py-5 space-y-4">
 
         <!-- Curso + escuela programada -->
-        <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-start justify-between gap-3">
+        <div class="px-5 py-4 bg-indigo-50 border border-indigo-100 rounded-md flex items-start justify-between gap-3">
           <div class="min-w-0">
             <p class="text-[10px] font-semibold text-indigo-500 uppercase tracking-widest mb-1">Curso</p>
             <p class="text-base font-bold text-slate-800 leading-snug">{{ detalle()!.curso?.nombre }}</p>
@@ -54,19 +54,19 @@
 
         <!-- Grid datos: clave, grupo, sección, periodo, aula, docente -->
         <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+          <div class="px-3 py-2.5 bg-slate-50 rounded-md text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Clave</p>
             <p class="text-xs font-bold text-slate-700 mt-0.5 font-mono">{{ detalle()!.clave }}</p>
           </div>
-          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+          <div class="px-3 py-2.5 bg-slate-50 rounded-md text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Grupo</p>
             <p class="text-xs font-bold text-indigo-600 mt-0.5">{{ detalle()!.grupo || '—' }}</p>
           </div>
-          <div class="px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+          <div class="px-3 py-2.5 bg-slate-50 rounded-md text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Sección</p>
             <p class="text-xs font-bold text-slate-700 mt-0.5">{{ detalle()!.seccion || '—' }}</p>
           </div>
-          <div class="col-span-3 px-3 py-2.5 bg-slate-50 rounded-xl text-center">
+          <div class="col-span-3 px-3 py-2.5 bg-slate-50 rounded-md text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Periodo</p>
             <p class="text-xs font-bold text-slate-600 mt-0.5">{{ detalle()!.periodo?.nombre || '—' }}</p>
           </div>
@@ -74,14 +74,14 @@
 
         <!-- Aula y Docente -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+          <div class="px-4 py-3 bg-slate-50 rounded-md">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Aula</p>
             <p class="text-sm font-bold text-slate-700">{{ aulaNombre(detalle()!) }}</p>
             @if (detalle()!.aula_rel?.pabellon) {
               <p class="text-xs text-slate-400 mt-0.5">{{ detalle()!.aula_rel!.pabellon!.nombre }}</p>
             }
           </div>
-          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+          <div class="px-4 py-3 bg-slate-50 rounded-md">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Docente</p>
             <p class="text-sm font-bold text-slate-700"
               [ngClass]="{'italic text-slate-300': !detalle()!.docente?.nombre_completo}">
@@ -92,7 +92,7 @@
 
         <!-- Horario + Cupos (fila compacta) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+          <div class="px-4 py-3 bg-slate-50 rounded-md">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Horario</p>
             @if (detalle()!.grupo_horario?.detalles?.length) {
               <div class="flex flex-wrap gap-1.5">
@@ -107,7 +107,7 @@
             }
           </div>
 
-          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+          <div class="px-4 py-3 bg-slate-50 rounded-md">
             <div class="flex items-center justify-between mb-2">
               <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cupos</p>
               @if (detalle()!.esta_lleno) {
@@ -132,7 +132,7 @@
 
         <!-- Escuelas habilitadas -->
         @if (detalle()!.escuelas?.length) {
-          <div class="px-4 py-3 bg-slate-50 rounded-xl">
+          <div class="px-4 py-3 bg-slate-50 rounded-md">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Escuelas habilitadas</p>
             <div class="flex flex-wrap gap-2">
               @for (esc of detalle()!.escuelas!; track esc.id) {
@@ -146,7 +146,7 @@
 
         <!-- Inscritos por escuela (pie chart) -->
         @if (stats() && stats()!.total > 0) {
-          <div class="px-4 py-4 bg-slate-50 rounded-xl">
+          <div class="px-4 py-4 bg-slate-50 rounded-md">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-3">
               Inscritos por escuela
               <span class="ml-2 px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[9px]">
@@ -192,13 +192,13 @@
             </div>
           </div>
         } @else if (stats() && stats()!.total === 0) {
-          <div class="px-4 py-3 bg-slate-50 rounded-xl text-center">
+          <div class="px-4 py-3 bg-slate-50 rounded-md text-center">
             <p class="text-xs text-slate-400 italic">Sin alumnos inscritos aún</p>
           </div>
         }
 
         <!-- Lista de alumnos inscritos -->
-        <div class="px-4 py-4 bg-slate-50 rounded-xl">
+        <div class="px-4 py-4 bg-slate-50 rounded-md">
           <div class="flex items-center justify-between mb-3">
             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
               Lista de inscritos
@@ -220,7 +220,7 @@
           } @else if (alumnos().length === 0) {
             <p class="text-xs text-slate-400 italic text-center py-2">Sin alumnos inscritos</p>
           } @else {
-            <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <div class="overflow-x-auto rounded-md border border-slate-200">
               <table class="w-full text-xs">
                 <thead>
                   <tr class="bg-slate-100 border-b border-slate-200">

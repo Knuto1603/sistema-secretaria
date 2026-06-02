@@ -21,13 +21,13 @@
             Período
           </span>
           @if (estado.loading()) {
-            <div class="h-10 w-52 bg-slate-100 rounded-xl animate-pulse"></div>
+            <div class="h-10 w-52 bg-slate-100 rounded-md animate-pulse"></div>
           } @else {
             <div class="relative">
               <select
                 [ngModel]="estado.periodoId()"
                 (ngModelChange)="onChangePeriodo($event)"
-                class="pl-4 pr-10 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl bg-white
+                class="pl-4 pr-10 py-2.5 text-sm font-semibold border border-slate-200 rounded-md bg-white
                        focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer
                        shadow-sm hover:border-indigo-300 transition-colors">
                 <option value="" disabled>Seleccionar período…</option>

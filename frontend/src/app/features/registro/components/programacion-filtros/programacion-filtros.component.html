@@ -6,7 +6,7 @@
       <select
         [ngModel]="escuelaSeleccionada()"
         (ngModelChange)="escuelaChange.emit($event)"
-        class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px] transition-all"
+        class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[130px] transition-all"
         [ngClass]="escuelaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
         <option value="">Escuela</option>
         @for (e of escuelas(); track e.id) {
@@ -25,7 +25,7 @@
       <select
         [ngModel]="escuelaProgramadaSeleccionada()"
         (ngModelChange)="escuelaProgramadaChange.emit($event)"
-        class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[145px] transition-all"
+        class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[145px] transition-all"
         [ngClass]="escuelaProgramadaSeleccionada() ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-slate-200'">
         <option value="">Prog. para...</option>
         @for (e of escuelas(); track e.id) {
@@ -44,7 +44,7 @@
       <select
         [ngModel]="cicloSeleccionado()"
         (ngModelChange)="cicloChange.emit($event)"
-        class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px] transition-all"
+        class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[100px] transition-all"
         [ngClass]="cicloSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
         <option [value]="null">Ciclo</option>
         @for (c of ciclos; track c) {
@@ -64,7 +64,7 @@
         <select
           [ngModel]="areaSeleccionada()"
           (ngModelChange)="areaChange.emit($event)"
-          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
+          class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[140px] transition-all"
           [ngClass]="areaSeleccionada() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
           <option value="">Departamento</option>
           @for (dep of departamentos(); track dep.id) {
@@ -85,7 +85,7 @@
         <select
           [ngModel]="grupoSeleccionado()"
           (ngModelChange)="grupoChange.emit($event)"
-          class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[95px] transition-all"
+          class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[95px] transition-all"
           [ngClass]="grupoSeleccionado() ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200'">
           <option value="">Grupo</option>
           @for (g of grupos(); track g) {
@@ -105,7 +105,7 @@
       <select
         [ngModel]="tipoSeleccionado()"
         (ngModelChange)="tipoChange.emit($event)"
-        class="pl-3 pr-8 py-2 text-sm border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px] transition-all"
+        class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[120px] transition-all"
         [ngClass]="tipoSeleccionado() === 'O' ? 'border-blue-300 bg-blue-50 text-blue-700' :
                    tipoSeleccionado() === 'E' ? 'border-amber-300 bg-amber-50 text-amber-700' :
                    'border-slate-200'">
@@ -133,13 +133,13 @@
         [ngModel]="searchTerm()"
         (ngModelChange)="searchChange.emit($event)"
         placeholder="Buscar curso o docente..."
-        class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
+        class="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none w-full transition-all">
     </div>
 
     <!-- Botón limpiar filtros -->
     @if (hayFiltrosActivos()) {
       <button (click)="limpiar.emit()"
-        class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap bg-white">
+        class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors border border-slate-200 flex items-center gap-1.5 whitespace-nowrap bg-white">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>

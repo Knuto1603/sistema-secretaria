@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+  <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm flex items-center justify-between">
     <div>
       <h2 class="text-xl font-black text-slate-800 tracking-tight">Pabellones y Aulas</h2>
       <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2">
@@ -15,7 +15,7 @@
 
   <!-- Mensaje feedback -->
   @if (mensaje()) {
-    <div class="px-4 py-3 rounded-2xl text-sm font-medium"
+    <div class="px-4 py-3 rounded-md text-sm font-medium"
       [ngClass]="mensaje()!.tipo === 'success'
         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
         : 'bg-red-50 text-red-700 border border-red-200'">
@@ -25,7 +25,7 @@
 
   <!-- Formulario nuevo pabellón -->
   @if (mostrarFormPabellon()) {
-    <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-end gap-3">
+    <div class="bg-white border border-slate-200 rounded-md p-5 flex items-end gap-3">
       <div class="flex-1">
         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre del Pabellón</label>
         <input type="text" [(ngModel)]="nombrePabellon" placeholder="Ej: Pabellón A, Bloque 3..."
@@ -40,14 +40,14 @@
   @if (loading()) {
     <div class="space-y-3">
       @for (i of [1,2,3]; track i) {
-        <div class="bg-slate-100 rounded-2xl h-16 animate-pulse"></div>
+        <div class="bg-slate-100 rounded-md h-16 animate-pulse"></div>
       }
     </div>
   }
 
   <!-- Lista de pabellones -->
   @if (!loading() && pabellones().length === 0) {
-    <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+    <div class="bg-white border border-slate-200 rounded-md p-12 text-center">
       <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
@@ -59,7 +59,7 @@
 
   <!-- ─── Aulas sin pabellón ──────────────────────────────────────────── -->
   @if (!loading() && aulasHuerfanas().length > 0) {
-    <div class="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm">
+    <div class="bg-amber-50 border border-amber-200 rounded-md overflow-hidden shadow-sm">
       <div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-amber-200">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-lg flex-shrink-0">
@@ -121,7 +121,7 @@
   }
 
   @for (pabellon of pabellones(); track pabellon.id) {
-    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+    <div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-sm">
 
       <!-- Cabecera pabellón -->
       <div
@@ -228,7 +228,7 @@
 
           <!-- Formulario nueva aula -->
           @if (aulaFormPabellon() === pabellon.id) {
-            <div class="bg-slate-50 rounded-2xl p-4 flex flex-wrap items-end gap-3">
+            <div class="bg-slate-50 rounded-md p-4 flex flex-wrap items-end gap-3">
               <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre</label>
                 <input type="text" [(ngModel)]="nuevaAula.nombre" placeholder="Ej: A-101"

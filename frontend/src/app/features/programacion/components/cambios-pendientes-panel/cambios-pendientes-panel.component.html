@@ -19,7 +19,7 @@
   <!-- Lista de cambios -->
   <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
     @for (c of cambios(); track c.programacionId) {
-      <div class="p-3 rounded-xl bg-amber-50 border border-amber-100 text-xs">
+      <div class="p-3 rounded-md bg-amber-50 border border-amber-100 text-xs">
         <p class="font-bold text-slate-800 truncate">{{ c.cursoCode }} · {{ c.cursoNombre }}</p>
         <p class="text-slate-500 text-[10px] mt-0.5">Sec. {{ c.seccion }}</p>
 

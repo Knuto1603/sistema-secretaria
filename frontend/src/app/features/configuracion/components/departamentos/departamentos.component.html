@@ -3,9 +3,9 @@
   <!-- Modal: Confirmar Auto-asignación -->
   @if (mostrarConfirmAutoAsignar()) {
     <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-7">
+      <div class="bg-white rounded-md shadow-xl w-full max-w-md p-7">
         <div class="flex items-center gap-4 mb-5">
-          <div class="w-12 h-12 flex items-center justify-center bg-amber-100 rounded-2xl flex-shrink-0">
+          <div class="w-12 h-12 flex items-center justify-center bg-amber-100 rounded-md flex-shrink-0">
             <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -16,7 +16,7 @@
             <p class="text-sm text-slate-500 mt-0.5">Esta acción actualizará el departamento de los cursos según sus prefijos.</p>
           </div>
         </div>
-        <div class="px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl mb-5">
+        <div class="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md mb-5">
           <p class="text-xs font-bold text-amber-700 uppercase tracking-widest">¿Cómo funciona?</p>
           <p class="text-sm text-slate-700 mt-1">
             Por cada prefijo configurado, se actualizarán todos los cursos cuyo código comience con ese prefijo
@@ -26,11 +26,11 @@
         </div>
         <div class="flex gap-3 justify-end">
           <button (click)="cancelarAutoAsignar()"
-            class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors">
+            class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
             Cancelar
           </button>
           <button (click)="ejecutarAutoAsignar()"
-            class="px-4 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-2xl transition-colors flex items-center gap-2">
+            class="px-4 py-2.5 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-md transition-colors flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
@@ -42,7 +42,7 @@
   }
 
   <!-- Encabezado -->
-  <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+  <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
       <div>
         <h2 class="text-xl font-black text-slate-800 tracking-tight leading-none">Departamentos Académicos</h2>
@@ -53,7 +53,7 @@
       <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
         @if (authService.isDeveloper()) {
           <button (click)="confirmarAutoAsignar()" [disabled]="autoAsignando()"
-            class="px-4 py-2.5 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-2xl transition-colors flex items-center gap-2 disabled:opacity-60">
+            class="px-4 py-2.5 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-md transition-colors flex items-center gap-2 disabled:opacity-60">
             @if (autoAsignando()) {
               <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -69,7 +69,7 @@
           </button>
         }
         <button (click)="abrirCrear()"
-          class="px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl transition-colors flex items-center gap-2">
+          class="px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
@@ -81,7 +81,7 @@
 
   <!-- Banner de feedback -->
   @if (mensaje()) {
-    <div class="px-5 py-4 rounded-2xl border flex items-start gap-3"
+    <div class="px-5 py-4 rounded-md border flex items-start gap-3"
       [ngClass]="{
         'bg-emerald-50 border-emerald-200 text-emerald-800': mensaje()!.tipo === 'success',
         'bg-red-50 border-red-200 text-red-800': mensaje()!.tipo === 'error'
@@ -99,7 +99,7 @@
 
   <!-- Formulario: solo para NUEVO departamento (editar aparece inline en la tabla) -->
   @if (mostrarForm() && !editando()) {
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+    <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm">
       <h3 class="text-base font-bold text-slate-800 mb-5">Nuevo departamento</h3>
 
       <div class="space-y-4">
@@ -112,7 +112,7 @@
             type="text"
             [(ngModel)]="formNombre"
             placeholder="Ej: Departamento de Informática"
-            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
         </div>
 
         <!-- Prefijo -->
@@ -125,17 +125,17 @@
             [(ngModel)]="formPrefijo"
             placeholder="Ej: SI"
             maxlength="10"
-            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase">
+            class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase">
         </div>
       </div>
 
       <div class="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
         <button (click)="cancelarForm()"
-          class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors">
+          class="px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
           Cancelar
         </button>
         <button (click)="guardar()" [disabled]="!formNombre.trim() || guardando()"
-          class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-2xl transition-colors flex items-center gap-2">
+          class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2">
           @if (guardando()) {
             <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -151,7 +151,7 @@
   }
 
   <!-- Lista de departamentos -->
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
 
     @if (loading()) {
       <!-- Skeleton -->
@@ -166,7 +166,7 @@
     } @else if (departamentos().length === 0) {
       <!-- Estado vacío -->
       <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div class="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-2xl mb-4">
+        <div class="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-md mb-4">
           <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
@@ -175,7 +175,7 @@
         <p class="text-sm font-bold text-slate-600">No hay departamentos registrados</p>
         <p class="text-xs text-slate-400 mt-1">Crea el primer departamento para comenzar a organizar los cursos.</p>
         <button (click)="abrirCrear()"
-          class="mt-4 px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl transition-colors">
+          class="mt-4 px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors">
           Crear departamento
         </button>
       </div>
@@ -257,7 +257,7 @@
                 <tr class="bg-slate-50/70">
                   <td colspan="4" class="px-6 pt-0 pb-4">
                     <!-- Contenedor con borde izquierdo sutil y separador superior -->
-                    <div class="slide-down border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                    <div class="slide-down border border-slate-200 rounded-md bg-white shadow-sm overflow-hidden">
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100">
 
                         <!-- Campo: Nombre -->
