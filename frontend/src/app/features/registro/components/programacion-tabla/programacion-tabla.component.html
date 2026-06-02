@@ -277,7 +277,7 @@
                 </span>
               }
               @if (row.es_equivalente) {
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-50 text-violet-700 text-[9px] font-bold rounded-md border border-violet-200 leading-none">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 text-slate-700 text-[9px] font-bold rounded-md border border-slate-200 leading-none">
                   <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                   </svg>
@@ -298,7 +298,7 @@
         <!-- Escuela Programada -->
         @if (column.key === 'escuela_prog') {
           @if (row.escuela_programada) {
-            <span class="px-2 py-1 bg-violet-100 text-violet-700 text-[10px] font-bold rounded-lg border border-violet-200 whitespace-nowrap">
+            <span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 whitespace-nowrap">
               {{ row.escuela_programada.nombre_corto || row.escuela_programada.nombre }}
             </span>
           } @else {

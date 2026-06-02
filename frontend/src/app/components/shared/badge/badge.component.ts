@@ -20,12 +20,12 @@ export class AppBadgeComponent {
     };
     const base = `inline-flex items-center rounded font-semibold uppercase tracking-widest ${sizes[this.size()]} `;
     const colors: Record<string, string> = {
-      indigo: "bg-indigo-50 text-indigo-700",
-      emerald: "bg-emerald-50 text-emerald-700",
-      amber: "bg-amber-50 text-amber-700",
-      red: "bg-red-50 text-red-700",
+      indigo: "bg-slate-100 text-slate-700",
+      emerald: "bg-slate-100 text-slate-700",
+      amber: "bg-slate-100 text-slate-700",
+      red: "bg-slate-100 text-slate-700",
       slate: "bg-slate-100 text-slate-600",
-      violet: "bg-violet-50 text-violet-700"
+      violet: "bg-slate-100 text-slate-700"
     };
     return base + colors[this.color()];
   });

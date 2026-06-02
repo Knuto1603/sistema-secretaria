@@ -15,9 +15,9 @@ export class AppAlertComponent {
   alertClasses = computed(() => {
     const base = "p-4 rounded-md mb-4 border transition-all animate-in fade-in slide-in-from-top-4 ";
     const types = {
-      success: "bg-emerald-50 border-emerald-100 text-emerald-800",
-      error: "bg-red-50 border-red-100 text-red-800",
-      info: "bg-indigo-50 border-indigo-100 text-indigo-800"
+      success: "bg-white border-slate-200 border-l-4 border-l-emerald-500 text-slate-700",
+      error:   "bg-white border-slate-200 border-l-4 border-l-red-500 text-slate-700",
+      info:    "bg-white border-slate-200 border-l-4 border-l-indigo-500 text-slate-700"
     };
     return base + types[this.type()];
   });

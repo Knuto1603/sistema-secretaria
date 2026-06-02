@@ -26,7 +26,7 @@
         [ngModel]="escuelaProgramadaSeleccionada()"
         (ngModelChange)="escuelaProgramadaChange.emit($event)"
         class="pl-3 pr-8 py-2 text-sm border rounded-md bg-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer font-medium min-w-[145px] transition-all"
-        [ngClass]="escuelaProgramadaSeleccionada() ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-slate-200'">
+        [ngClass]="escuelaProgramadaSeleccionada() ? 'border-violet-300 bg-slate-50 text-slate-700' : 'border-slate-200'">
         <option value="">Prog. para...</option>
         @for (e of escuelas(); track e.id) {
           <option [value]="e.id">{{ e.nombre_corto || e.nombre }}</option>

@@ -30,9 +30,9 @@
         <p class="text-3xl font-black text-orange-700 mt-1">{{ stats()!.por_estado.apelado }}</p>
       </div>
       <!-- Cupo Extra -->
-      <div class="bg-violet-50 border border-violet-200 rounded-md p-4">
+      <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
         <p class="text-[10px] font-bold text-violet-500 uppercase tracking-widest">Cupo Extra</p>
-        <p class="text-3xl font-black text-violet-700 mt-1">{{ stats()!.por_tipo.cupo_ext }}</p>
+        <p class="text-3xl font-black text-slate-700 mt-1">{{ stats()!.por_tipo.cupo_ext }}</p>
       </div>
       <!-- Inscripción Escuela -->
       <div class="bg-rose-50 border border-rose-200 rounded-md p-4">
@@ -84,7 +84,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-700 font-medium truncate">{{ item.escuela }}</span>
-                    <span class="ml-auto text-xs font-semibold text-violet-600 flex-shrink-0">{{ item.total }}</span>
+                    <span class="ml-auto text-xs font-semibold text-slate-600 flex-shrink-0">{{ item.total }}</span>
                   </div>
                   <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div class="h-full bg-violet-400 rounded-full"
@@ -169,14 +169,14 @@
           <!-- Filtro escuela del curso -->
           <div class="relative">
             <select [ngModel]="escuelaProgramadaFiltro()" (ngModelChange)="onEscuelaProgramadaChange($event)"
-              class="pl-4 pr-10 py-2.5 text-sm border border-violet-200 rounded-md bg-violet-50 focus:ring-2 focus:ring-violet-500 outline-none min-w-[155px] appearance-none cursor-pointer font-medium text-violet-700">
+              class="pl-4 pr-10 py-2.5 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-violet-500 outline-none min-w-[155px] appearance-none cursor-pointer font-medium text-slate-700">
               <option value="">Escuela del curso</option>
               @for (esc of escuelas(); track esc.id) {
                 <option [value]="esc.id">{{ esc.nombre_corto ?? esc.nombre }}</option>
               }
             </select>
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
         }
@@ -350,7 +350,7 @@
                 <span class="text-[10px] font-mono text-slate-400">G: {{ row.programacion!.grupo }}</span>
               }
               @if (row.programacion!.escuela_programada) {
-                <span class="text-[10px] font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">
+                <span class="text-[10px] font-medium text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded">
                   {{ row.programacion!.escuela_programada!.nombre_corto ?? row.programacion!.escuela_programada!.nombre }}
                 </span>
               }

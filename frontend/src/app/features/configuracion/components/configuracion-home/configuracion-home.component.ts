@@ -111,62 +111,22 @@ export class ConfiguracionHomeComponent {
   }
 
   getColorClasses(color: string): { bg: string; border: string; icon: string; hover: string } {
-    const colors: Record<string, { bg: string; border: string; icon: string; hover: string }> = {
-      indigo: {
-        bg: 'bg-indigo-50',
-        border: 'border-indigo-200',
-        icon: 'text-indigo-600 bg-indigo-100',
-        hover: 'hover:border-indigo-400 hover:shadow-indigo-100'
-      },
-      emerald: {
-        bg: 'bg-emerald-50',
-        border: 'border-emerald-200',
-        icon: 'text-emerald-600 bg-emerald-100',
-        hover: 'hover:border-emerald-400 hover:shadow-emerald-100'
-      },
-      amber: {
-        bg: 'bg-amber-50',
-        border: 'border-amber-200',
-        icon: 'text-amber-600 bg-amber-100',
-        hover: 'hover:border-amber-400 hover:shadow-amber-100'
-      },
-      rose: {
-        bg: 'bg-rose-50',
-        border: 'border-rose-200',
-        icon: 'text-rose-600 bg-rose-100',
-        hover: 'hover:border-rose-400 hover:shadow-rose-100'
-      },
-      slate: {
-        bg: 'bg-slate-50',
-        border: 'border-slate-200',
-        icon: 'text-slate-600 bg-slate-100',
-        hover: 'hover:border-slate-400 hover:shadow-slate-100'
-      },
-      orange: {
-        bg: 'bg-orange-50',
-        border: 'border-orange-200',
-        icon: 'text-orange-600 bg-orange-100',
-        hover: 'hover:border-orange-400 hover:shadow-orange-100'
-      },
-      teal: {
-        bg: 'bg-teal-50',
-        border: 'border-teal-200',
-        icon: 'text-teal-600 bg-teal-100',
-        hover: 'hover:border-teal-400 hover:shadow-teal-100'
-      },
-      cyan: {
-        bg: 'bg-cyan-50',
-        border: 'border-cyan-200',
-        icon: 'text-cyan-600 bg-cyan-100',
-        hover: 'hover:border-cyan-400 hover:shadow-cyan-100'
-      },
-      purple: {
-        bg: 'bg-purple-50',
-        border: 'border-purple-200',
-        icon: 'text-purple-600 bg-purple-100',
-        hover: 'hover:border-purple-400 hover:shadow-purple-100'
-      }
+    const iconColors: Record<string, string> = {
+      indigo:  'text-indigo-600 bg-indigo-50',
+      emerald: 'text-emerald-600 bg-emerald-50',
+      amber:   'text-amber-600 bg-amber-50',
+      rose:    'text-rose-600 bg-rose-50',
+      slate:   'text-slate-600 bg-slate-100',
+      orange:  'text-slate-600 bg-slate-100',
+      teal:    'text-slate-600 bg-slate-100',
+      cyan:    'text-slate-600 bg-slate-100',
+      purple:  'text-slate-600 bg-slate-100',
     };
-    return colors[color] || colors['indigo'];
+    return {
+      bg:     'bg-white',
+      border: 'border-slate-200',
+      icon:   iconColors[color] || 'text-slate-600 bg-slate-100',
+      hover:  'hover:border-slate-300',
+    };
   }
 }

@@ -84,7 +84,7 @@
               <div>
                 <p class="text-lg font-bold text-slate-800">{{ solicitud()!.programacion!.curso!.nombre }}</p>
                 @if (solicitud()!.programacion!.escuela_programada) {
-                  <span class="inline-block mt-1 px-2 py-0.5 bg-violet-100 text-violet-700 rounded text-xs font-medium">
+                  <span class="inline-block mt-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium">
                     {{ solicitud()!.programacion!.escuela_programada!.nombre_corto ?? solicitud()!.programacion!.escuela_programada!.nombre }}
                   </span>
                 }

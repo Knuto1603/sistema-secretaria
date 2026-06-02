@@ -521,7 +521,7 @@
                 </div>
 
                 <!-- Electivos -->
-                <div class="bg-violet-50 rounded-md p-4 space-y-2">
+                <div class="bg-slate-50 rounded-md p-4 space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="text-[10px] font-bold text-violet-500 uppercase tracking-wide">Electivos</span>
                     @if (estudianteDetalle()!.progreso!.electivos.hechos >= estudianteDetalle()!.progreso!.electivos.requeridos && estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
@@ -532,17 +532,17 @@
                   </div>
                   <div class="flex items-end justify-between">
                     <div>
-                      <span class="text-2xl font-bold text-violet-700">{{ estudianteDetalle()!.progreso!.electivos.hechos }}</span>
-                      <span class="text-sm text-violet-400"> / {{ estudianteDetalle()!.progreso!.electivos.requeridos }} cr.</span>
+                      <span class="text-2xl font-bold text-slate-700">{{ estudianteDetalle()!.progreso!.electivos.hechos }}</span>
+                      <span class="text-sm text-slate-400"> / {{ estudianteDetalle()!.progreso!.electivos.requeridos }} cr.</span>
                     </div>
-                    <span class="text-sm font-bold text-violet-600">{{ estudianteDetalle()!.progreso!.electivos.porcentaje }}%</span>
+                    <span class="text-sm font-bold text-slate-600">{{ estudianteDetalle()!.progreso!.electivos.porcentaje }}%</span>
                   </div>
-                  <div class="h-2 bg-violet-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-violet-500 rounded-full transition-all"
+                  <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-slate-500 rounded-full transition-all"
                       [style.width.%]="estudianteDetalle()!.progreso!.electivos.porcentaje"></div>
                   </div>
                   <div class="flex justify-between text-[10px]">
-                    <span class="text-violet-400">Aprobados: <strong class="text-violet-600">{{ estudianteDetalle()!.progreso!.electivos.hechos }} cr.</strong></span>
+                    <span class="text-slate-400">Aprobados: <strong class="text-slate-600">{{ estudianteDetalle()!.progreso!.electivos.hechos }} cr.</strong></span>
                     @if (estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos > 0) {
                       <span class="text-rose-400">Faltan: <strong class="text-rose-500">{{ estudianteDetalle()!.progreso!.electivos.requeridos - estudianteDetalle()!.progreso!.electivos.hechos }} cr.</strong></span>
                     } @else if (estudianteDetalle()!.progreso!.electivos.requeridos > 0) {
