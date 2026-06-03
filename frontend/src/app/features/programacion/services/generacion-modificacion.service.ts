@@ -9,6 +9,18 @@ interface ApiResponse<T> {
   data: T;
 }
 
+export interface ModificacionResumen {
+  id: string;
+  tipo: string;
+  curso_codigo: string;
+  curso_nombre: string;
+  seccion: string;
+  grupo: string;
+  motivo: string;
+  fecha: string;
+}
+
+// ModificacionItem completo — usado en historial de modificaciones
 export interface ModificacionItem {
   id: string;
   tipo: string;
@@ -48,7 +60,8 @@ export interface PreviewGrupo {
   tipo_documento: string;
   tipo_label: string;
   total_modificaciones: number;
-  modificaciones: ModificacionItem[];
+  plantilla_existe: boolean;
+  modificaciones: ModificacionResumen[];
 }
 
 export interface GeneracionItem {
@@ -93,17 +106,17 @@ export class GeneracionModificacionService {
 
   // ── Generación de documentos ──────────────────────────────────────────────
 
-  preview(periodoId: string, fechaDesde: string, fechaHasta: string): Observable<PreviewGrupo[]> {
+  preview(periodoId: string): Observable<PreviewGrupo[]> {
     return this.http.post<ApiResponse<PreviewGrupo[]>>(
       `${this.base}/generar-preview`,
-      { periodo_id: periodoId, fecha_desde: fechaDesde, fecha_hasta: fechaHasta }
+      { periodo_id: periodoId }
     ).pipe(map(r => r.data));
   }
 
-  generar(periodoId: string, fechaDesde: string, fechaHasta: string, numeroOficio: string): Observable<Blob> {
+  generar(periodoId: string, numeroOficio: string, modificacionIds: string[]): Observable<Blob> {
     return this.http.post(
       `${this.base}/generar`,
-      { periodo_id: periodoId, fecha_desde: fechaDesde, fecha_hasta: fechaHasta, numero_oficio: numeroOficio },
+      { periodo_id: periodoId, numero_oficio: numeroOficio, modificacion_ids: modificacionIds },
       { responseType: 'blob' }
     );
   }

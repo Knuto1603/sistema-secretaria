@@ -92,6 +92,37 @@ class ModificacionRepository implements ModificacionRepositoryInterface
             ->get();
     }
 
+    public function getPendientesPorPeriodo(string $periodoId): Collection
+    {
+        return $this->model->newQuery()
+            ->with([
+                'programacion.curso.area:id,nombre,nombre_tabla,director_nombre,director_cargo,titulo_director',
+                'programacion.aulaRelacion:id,nombre',
+                'programacion.grupoHorario:id,nombre',
+                'user:id,name',
+            ])
+            ->where('periodo_id', $periodoId)
+            ->where('estado', 'pendiente')
+            ->orderBy('created_at')
+            ->get();
+    }
+
+    public function getPendientesPorIds(array $ids, string $periodoId): Collection
+    {
+        return $this->model->newQuery()
+            ->with([
+                'programacion.curso.area:id,nombre,nombre_tabla,director_nombre,director_cargo,titulo_director',
+                'programacion.aulaRelacion:id,nombre',
+                'programacion.grupoHorario:id,nombre',
+                'user:id,name',
+            ])
+            ->whereIn('id', $ids)
+            ->where('periodo_id', $periodoId)
+            ->where('estado', 'pendiente')
+            ->orderBy('created_at')
+            ->get();
+    }
+
     public function marcarDocumentados(array $ids): int
     {
         return $this->model->whereIn('id', $ids)->update(['estado' => 'documentado']);

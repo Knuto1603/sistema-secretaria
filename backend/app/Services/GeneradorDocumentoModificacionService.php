@@ -32,62 +32,57 @@ class GeneradorDocumentoModificacionService
     ) {}
 
     /**
-     * Calcula cómo se agruparían los documentos sin generarlos (para el wizard).
+     * Devuelve todas las modificaciones pendientes del periodo agrupadas por área y tipo,
+     * listas para selección con checkboxes en el frontend.
      */
-    public function preview(string $periodoId, string $fechaDesde, string $fechaHasta): array
+    public function preview(string $periodoId): array
     {
-        $modificaciones = $this->modificacionRepository->getPendientesPorAreaYTipo($periodoId, $fechaDesde, $fechaHasta);
+        $modificaciones = $this->modificacionRepository->getPendientesPorPeriodo($periodoId);
 
         if ($modificaciones->isEmpty()) {
-            return ['areas' => [], 'total_documentos' => 0, 'total_modificaciones' => 0];
+            return [];
         }
 
-        $grupos = $this->agruparPorAreaYTipoDoc($modificaciones);
+        $grupos    = $this->agruparPorAreaYTipoDoc($modificaciones);
+        $resultado = [];
 
-        $areas = [];
         foreach ($grupos as $areaId => $tiposDoc) {
-            $area     = $modificaciones->first(fn ($m) => $m->programacion?->curso?->area_id === $areaId)
-                ->programacion->curso->area;
+            $primero = $modificaciones->first(fn ($m) => $m->programacion?->curso?->area_id === $areaId);
+            $area    = $primero?->programacion?->curso?->area;
 
-            $docsArea = [];
             foreach ($tiposDoc as $tipoDoc => $mods) {
-                $docsArea[] = [
-                    'tipo_documento'   => $tipoDoc,
-                    'label'            => $this->labelTipoDoc($tipoDoc),
-                    'modificaciones'   => $mods->map(fn ($m) => $this->resumenModificacion($m))->values()->all(),
-                    'plantilla_existe' => $this->plantillaExiste($tipoDoc),
+                $resultado[] = [
+                    'area_id'             => $areaId,
+                    'area_nombre'         => $area?->nombre_tabla ?? $area?->nombre ?? '—',
+                    'tipo_documento'      => $tipoDoc,
+                    'tipo_label'          => $this->labelTipoDoc($tipoDoc),
+                    'total_modificaciones'=> $mods->count(),
+                    'plantilla_existe'    => $this->plantillaExiste($tipoDoc),
+                    'modificaciones'      => $mods->map(fn ($m) => $this->resumenModificacion($m))->values()->all(),
                 ];
             }
-
-            $areas[] = [
-                'area_id'    => $areaId,
-                'area_nombre'=> $area->nombre_tabla ?? $area->nombre,
-                'documentos' => $docsArea,
-            ];
         }
 
-        return [
-            'areas'               => $areas,
-            'total_documentos'    => array_sum(array_map(fn ($a) => count($a['documentos']), $areas)),
-            'total_modificaciones'=> $modificaciones->count(),
-        ];
+        return $resultado;
     }
 
     /**
-     * Genera los documentos Word, crea la generación y descarga el ZIP.
+     * Genera los documentos Word para los IDs seleccionados, crea la generación y devuelve el modelo.
      */
     public function generar(
         string $periodoId,
-        string $fechaDesde,
-        string $fechaHasta,
+        array  $modificacionIds,
         string $numeroOficio,
         User   $generadoPor
     ): GeneracionModificacion {
-        $modificaciones = $this->modificacionRepository->getPendientesPorAreaYTipo($periodoId, $fechaDesde, $fechaHasta);
+        $modificaciones = $this->modificacionRepository->getPendientesPorIds($modificacionIds, $periodoId);
 
         if ($modificaciones->isEmpty()) {
-            throw new RuntimeException('No hay modificaciones pendientes en el rango de fechas seleccionado.');
+            throw new RuntimeException('No hay modificaciones pendientes para los elementos seleccionados.');
         }
+
+        $fechaDesde = Carbon::parse($modificaciones->min('created_at'))->toDateString();
+        $fechaHasta = Carbon::parse($modificaciones->max('created_at'))->toDateString();
 
         $grupos = $this->agruparPorAreaYTipoDoc($modificaciones);
         $config = ConfiguracionInstitucional::getAll();
@@ -419,12 +414,14 @@ class GeneradorDocumentoModificacionService
     private function resumenModificacion(ModificacionProgramacion $mod): array
     {
         return [
-            'id'      => $mod->id,
-            'tipo'    => $mod->tipo,
-            'curso'   => $mod->programacion?->curso?->nombre ?? '—',
-            'grupo'   => $mod->programacion?->grupo ?? '—',
-            'motivo'  => $mod->motivo,
-            'fecha'   => $mod->created_at?->toDateString(),
+            'id'          => $mod->id,
+            'tipo'        => $mod->tipo,
+            'curso_codigo'=> $mod->programacion?->curso?->codigo ?? '—',
+            'curso_nombre'=> $mod->programacion?->curso?->nombre ?? '—',
+            'seccion'     => $mod->programacion?->seccion ?? '—',
+            'grupo'       => $mod->programacion?->grupo ?? '—',
+            'motivo'      => $mod->motivo,
+            'fecha'       => $mod->created_at?->toDateString(),
         ];
     }
 

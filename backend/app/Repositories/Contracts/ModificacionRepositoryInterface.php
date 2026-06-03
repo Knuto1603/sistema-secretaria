@@ -18,6 +18,12 @@ interface ModificacionRepositoryInterface
     /** Devuelve modificaciones pendientes en un rango de fechas, agrupadas por área y tipo */
     public function getPendientesPorAreaYTipo(string $periodoId, string $fechaDesde, string $fechaHasta): Collection;
 
+    /** Devuelve todas las modificaciones pendientes del periodo sin filtro de fechas */
+    public function getPendientesPorPeriodo(string $periodoId): Collection;
+
+    /** Devuelve modificaciones pendientes para un conjunto de IDs específicos del periodo */
+    public function getPendientesPorIds(array $ids, string $periodoId): Collection;
+
     /** Marca como 'documentado' un conjunto de IDs */
     public function marcarDocumentados(array $ids): int;
 }

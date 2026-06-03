@@ -47,14 +47,12 @@ class GeneracionModificacionController extends Controller
     public function preview(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'periodo_id'  => ['required', 'uuid', 'exists:periodos,id'],
-            'fecha_desde' => ['required', 'date'],
-            'fecha_hasta' => ['required', 'date', 'after_or_equal:fecha_desde'],
+            'periodo_id' => ['required', 'uuid', 'exists:periodos,id'],
         ]);
 
-        $preview = $this->service->preview($data['periodo_id'], $data['fecha_desde'], $data['fecha_hasta']);
+        $preview = $this->service->preview($data['periodo_id']);
 
-        return $this->success($preview, 'Vista previa de documentos a generar');
+        return $this->success($preview, 'Modificaciones pendientes de documentar');
     }
 
     /**
@@ -64,16 +62,15 @@ class GeneracionModificacionController extends Controller
     public function generar(Request $request): BinaryFileResponse
     {
         $data = $request->validate([
-            'periodo_id'   => ['required', 'uuid', 'exists:periodos,id'],
-            'fecha_desde'  => ['required', 'date'],
-            'fecha_hasta'  => ['required', 'date', 'after_or_equal:fecha_desde'],
-            'numero_oficio'=> ['required', 'string', 'max:100'],
+            'periodo_id'         => ['required', 'uuid', 'exists:periodos,id'],
+            'numero_oficio'      => ['required', 'string', 'max:100'],
+            'modificacion_ids'   => ['required', 'array', 'min:1'],
+            'modificacion_ids.*' => ['required', 'uuid'],
         ]);
 
         $generacion = $this->service->generar(
             $data['periodo_id'],
-            $data['fecha_desde'],
-            $data['fecha_hasta'],
+            $data['modificacion_ids'],
             $data['numero_oficio'],
             $request->user()
         );
