@@ -129,6 +129,6 @@ export class DeveloperService {
 
 export interface BackupItem {
   nombre: string;
-  tamaño_kb: number;
+  tamano_kb: number;
   creado_at: string;
 }

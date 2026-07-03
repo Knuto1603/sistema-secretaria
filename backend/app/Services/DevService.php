@@ -290,7 +290,7 @@ class DevService
         foreach ($files as $file) {
             $backups[] = [
                 'nombre'     => basename($file),
-                'tamaño_kb'  => round(filesize($file) / 1024, 1),
+                'tamano_kb'  => round(filesize($file) / 1024, 1),
                 'creado_at'  => date('Y-m-d H:i:s', filemtime($file)),
             ];
         }
