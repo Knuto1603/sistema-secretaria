@@ -102,4 +102,33 @@ export class DeveloperService {
       .get<ApiResponse<any>>(`${this.api}/mail/config`)
       .pipe(map(r => r.data));
   }
+
+  exportDatabase(): Observable<Blob> {
+    return this.http.get(`${this.api}/database/export`, { responseType: 'blob' });
+  }
+
+  importDatabase(archivo: File, confirmacion: string): Observable<{ backup_automatico: string; archivo_restaurado: string }> {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    form.append('confirmacion', confirmacion);
+    return this.http
+      .post<ApiResponse<{ backup_automatico: string; archivo_restaurado: string }>>(`${this.api}/database/import`, form)
+      .pipe(map(r => r.data));
+  }
+
+  listBackups(): Observable<BackupItem[]> {
+    return this.http
+      .get<ApiResponse<BackupItem[]>>(`${this.api}/database/backups`)
+      .pipe(map(r => r.data));
+  }
+
+  downloadBackup(filename: string): Observable<Blob> {
+    return this.http.get(`${this.api}/database/backups/${filename}`, { responseType: 'blob' });
+  }
+}
+
+export interface BackupItem {
+  nombre: string;
+  tamaño_kb: number;
+  creado_at: string;
 }

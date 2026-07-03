@@ -74,4 +74,12 @@ export const DEVELOPER_ROUTES: Routes = [
       ),
     canActivate: [developerGuard],
   },
+  {
+    path: 'database',
+    loadComponent: () =>
+      import('./components/database-manager/database-manager.component').then(
+        m => m.DatabaseManagerComponent
+      ),
+    canActivate: [developerGuard],
+  },
 ];
