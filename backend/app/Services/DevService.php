@@ -7,11 +7,13 @@ use App\Models\OtpCode;
 use App\Models\SystemSetting;
 use App\Models\User;
 use App\Transformers\DevTransformer;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DevService
 {
@@ -225,6 +227,164 @@ class DevService
     {
         // El token actual es de impersonación; lo revocamos
         $developer->currentAccessToken()->delete();
+    }
+
+    // =========================================================================
+    // DATABASE BACKUP / RESTORE
+    // =========================================================================
+
+    public function exportDatabase(): BinaryFileResponse
+    {
+        $dbName  = config('database.connections.' . config('database.default') . '.database');
+        $filename = 'backup_' . $dbName . '_' . now()->format('Y-m-d_His') . '.sql';
+        $tempFile = tempnam(sys_get_temp_dir(), 'secretaria_backup_');
+
+        $this->generateSqlDump($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/octet-stream',
+        ])->deleteFileAfterSend(true);
+    }
+
+    public function importDatabase(UploadedFile $file): array
+    {
+        $backupDir = storage_path('app/db-backups');
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        $dbName     = config('database.connections.' . config('database.default') . '.database');
+        $backupName = 'auto_' . $dbName . '_' . now()->format('Y-m-d_His') . '.sql';
+        $backupPath = $backupDir . '/' . $backupName;
+
+        $this->generateSqlDump($backupPath);
+
+        $content = file_get_contents($file->getRealPath());
+        $originalName = $file->getClientOriginalName();
+
+        if (str_ends_with($originalName, '.gz')) {
+            $content = gzdecode($content);
+            if ($content === false) {
+                throw new \RuntimeException('No se pudo descomprimir el archivo. Verifica que sea un .gz válido.');
+            }
+        }
+
+        $this->executeSqlContent($content);
+
+        return [
+            'backup_automatico'  => $backupName,
+            'archivo_restaurado' => $originalName,
+        ];
+    }
+
+    public function listBackups(): array
+    {
+        $backupDir = storage_path('app/db-backups');
+        if (!is_dir($backupDir)) {
+            return [];
+        }
+
+        $files   = glob($backupDir . '/*.sql') ?: [];
+        $backups = [];
+
+        foreach ($files as $file) {
+            $backups[] = [
+                'nombre'     => basename($file),
+                'tamaño_kb'  => round(filesize($file) / 1024, 1),
+                'creado_at'  => date('Y-m-d H:i:s', filemtime($file)),
+            ];
+        }
+
+        usort($backups, fn($a, $b) => strcmp($b['creado_at'], $a['creado_at']));
+
+        return array_slice($backups, 0, 20);
+    }
+
+    public function downloadBackup(string $filename): BinaryFileResponse
+    {
+        $path = storage_path('app/db-backups/' . $filename);
+
+        if (!file_exists($path)) {
+            throw new \RuntimeException('Backup no encontrado.');
+        }
+
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/octet-stream',
+        ]);
+    }
+
+    private function generateSqlDump(string $outputPath): void
+    {
+        $pdo    = DB::getPdo();
+        $dbName = config('database.connections.' . config('database.default') . '.database');
+        $handle = fopen($outputPath, 'w');
+
+        fwrite($handle, "-- Sistema Secretaría FII-UNP\n");
+        fwrite($handle, "-- Base de datos: {$dbName}\n");
+        fwrite($handle, "-- Generado: " . now()->toDateTimeString() . "\n\n");
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;\n\n");
+
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+
+        foreach ($tables as $table) {
+            fwrite($handle, "-- Tabla: `{$table}`\n");
+            fwrite($handle, "DROP TABLE IF EXISTS `{$table}`;\n");
+
+            $create = $pdo->query("SHOW CREATE TABLE `{$table}`")->fetch(\PDO::FETCH_NUM);
+            fwrite($handle, $create[1] . ";\n\n");
+
+            $stmt    = $pdo->query("SELECT * FROM `{$table}`");
+            $columns = null;
+            $batch   = [];
+
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                if ($columns === null) {
+                    $columns = '`' . implode('`, `', array_keys($row)) . '`';
+                }
+                $escaped = array_map(
+                    fn($val) => $val === null ? 'NULL' : $pdo->quote((string) $val),
+                    $row
+                );
+                $batch[] = '(' . implode(', ', $escaped) . ')';
+
+                if (count($batch) >= 500) {
+                    fwrite($handle, "INSERT INTO `{$table}` ({$columns}) VALUES\n" . implode(",\n", $batch) . ";\n");
+                    $batch = [];
+                }
+            }
+
+            if (!empty($batch)) {
+                fwrite($handle, "INSERT INTO `{$table}` ({$columns}) VALUES\n" . implode(",\n", $batch) . ";\n");
+            }
+
+            fwrite($handle, "\n");
+        }
+
+        fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;\n");
+        fclose($handle);
+    }
+
+    private function executeSqlContent(string $sql): void
+    {
+        $sql = preg_replace('/--[^\n]*/', '', $sql);
+        $sql = preg_replace('/\/\*.*?\*\//s', '', $sql);
+
+        $statements = array_filter(
+            array_map('trim', explode(";\n", $sql)),
+            fn($s) => !empty(trim($s))
+        );
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        try {
+            foreach ($statements as $statement) {
+                $trimmed = trim($statement);
+                if (!empty($trimmed)) {
+                    DB::unprepared($trimmed);
+                }
+            }
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
 
     // =========================================================================

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Services\DevService;
 use App\Transformers\DevTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class DevController extends Controller
@@ -195,5 +197,75 @@ class DevController extends Controller
         $this->devService->stopImpersonation($user);
 
         return $this->success(null, 'Impersonación finalizada');
+    }
+
+    // =========================================================================
+    // GET /dev/database/export
+    // =========================================================================
+    public function exportDatabase(): BinaryFileResponse|JsonResponse
+    {
+        try {
+            return $this->devService->exportDatabase();
+        } catch (Throwable $e) {
+            return $this->error('Error al exportar la base de datos: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // =========================================================================
+    // POST /dev/database/import
+    // =========================================================================
+    public function importDatabase(Request $request): JsonResponse
+    {
+        $request->validate([
+            'archivo'      => 'required|file|max:204800',
+            'confirmacion' => 'required|string',
+        ]);
+
+        if ($request->input('confirmacion') !== 'RESTAURAR BASE DE DATOS') {
+            return $this->error('Frase de confirmación incorrecta', 422);
+        }
+
+        try {
+            $result = $this->devService->importDatabase($request->file('archivo'));
+
+            ActivityLog::create([
+                'user_id'            => Auth::id(),
+                'accion'             => 'restaurar_base_de_datos',
+                'modelo'             => 'Database',
+                'modelo_id'          => null,
+                'valores_anteriores' => ['backup' => $result['backup_automatico']],
+                'valores_nuevos'     => ['archivo' => $result['archivo_restaurado']],
+                'ip'                 => $request->ip(),
+            ]);
+
+            return $this->success($result, 'Base de datos restaurada correctamente');
+        } catch (Throwable $e) {
+            return $this->error('Error al restaurar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // =========================================================================
+    // GET /dev/database/backups
+    // =========================================================================
+    public function listBackups(): JsonResponse
+    {
+        $backups = $this->devService->listBackups();
+        return $this->success($backups, 'Backups automáticos disponibles');
+    }
+
+    // =========================================================================
+    // GET /dev/database/backups/{filename}
+    // =========================================================================
+    public function downloadBackup(string $filename): BinaryFileResponse|JsonResponse
+    {
+        if (!preg_match('/^[\w\-]+\.sql$/', $filename)) {
+            return $this->error('Nombre de archivo inválido', 422);
+        }
+
+        try {
+            return $this->devService->downloadBackup($filename);
+        } catch (Throwable $e) {
+            return $this->error($e->getMessage(), 404);
+        }
     }
 }
