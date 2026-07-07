@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DeveloperService, BackupItem } from '../../services/developer.service';
+import { DownloadManagerService } from '../../../../shared/services/download-manager.service';
 
 @Component({
   selector: 'app-database-manager',
@@ -13,9 +14,7 @@ import { DeveloperService, BackupItem } from '../../services/developer.service';
 export class DatabaseManagerComponent implements OnInit {
   private devService = inject(DeveloperService);
   private router = inject(Router);
-
-  exportando = signal(false);
-  exportError = signal('');
+  private dm = inject(DownloadManagerService);
 
   archivoSeleccionado = signal<File | null>(null);
   confirmacionTexto = signal('');
@@ -40,26 +39,9 @@ export class DatabaseManagerComponent implements OnInit {
   }
 
   descargarBD(): void {
-    this.exportando.set(true);
-    this.exportError.set('');
-
-    this.devService.exportDatabase().subscribe({
-      next: (blob) => {
-        const fecha = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup_secretaria_${fecha}.sql`;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.exportando.set(false);
-        this.cargarBackups();
-      },
-      error: (err) => {
-        this.exportError.set(err?.error?.message ?? 'Error al generar el backup.');
-        this.exportando.set(false);
-      },
-    });
+    const fecha = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `backup_secretaria_${fecha}.sql`;
+    this.dm.start(filename, this.devService.exportDatabase());
   }
 
   onArchivoChange(event: Event): void {
