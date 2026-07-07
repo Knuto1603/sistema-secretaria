@@ -1,0 +1,73 @@
+@if (dm.tasks().length > 0) {
+  <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+    @for (task of dm.tasks(); track task.id) {
+      <div class="pointer-events-auto w-80 bg-white border rounded-lg shadow-xl overflow-hidden transition-all"
+        [class.border-slate-200]="task.status === 'downloading'"
+        [class.border-emerald-200]="task.status === 'completed'"
+        [class.border-red-200]="task.status === 'error'">
+
+        <!-- Barra de progreso indeterminada (solo mientras descarga) -->
+        @if (task.status === 'downloading') {
+          <div class="h-1 bg-slate-100 overflow-hidden">
+            <div class="h-full bg-indigo-500 animate-[progress_1.5s_ease-in-out_infinite]"
+              style="width: 40%; animation: progress 1.5s ease-in-out infinite;">
+            </div>
+          </div>
+        }
+        @if (task.status === 'completed') {
+          <div class="h-1 bg-emerald-500"></div>
+        }
+        @if (task.status === 'error') {
+          <div class="h-1 bg-red-500"></div>
+        }
+
+        <div class="px-4 py-3 flex items-start gap-3">
+
+          <!-- Icono de estado -->
+          <div class="shrink-0 mt-0.5">
+            @if (task.status === 'downloading') {
+              <svg class="w-5 h-5 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+            }
+            @if (task.status === 'completed') {
+              <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            }
+            @if (task.status === 'error') {
+              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            }
+          </div>
+
+          <!-- Texto -->
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-slate-700 truncate">{{ task.filename }}</p>
+            <p class="text-[11px] mt-0.5"
+              [class.text-slate-400]="task.status === 'downloading'"
+              [class.text-emerald-600]="task.status === 'completed'"
+              [class.text-red-500]="task.status === 'error'">
+              @if (task.status === 'downloading') { Generando archivo... }
+              @if (task.status === 'completed') { Descarga completada }
+              @if (task.status === 'error') { {{ task.errorMsg }} }
+            </p>
+          </div>
+
+          <!-- Botón cerrar -->
+          @if (task.status !== 'downloading') {
+            <button (click)="dm.dismiss(task.id)"
+              class="shrink-0 text-slate-300 hover:text-slate-500 transition-colors -mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          }
+
+        </div>
+      </div>
+    }
+  </div>
+}
