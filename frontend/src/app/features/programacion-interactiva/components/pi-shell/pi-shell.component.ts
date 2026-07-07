@@ -26,6 +26,7 @@ export class PiShellComponent implements OnInit {
   loadingBorradores   = signal(false);
   generando           = signal(false);
   eliminando          = signal<string | null>(null);
+  revirtiendo         = signal<string | null>(null);
 
   mostrarFormNuevo    = signal(false);
   nuevoNombre         = signal('');
@@ -96,7 +97,10 @@ export class PiShellComponent implements OnInit {
 
   eliminar(borrador: BorradorProgramacion, event: MouseEvent): void {
     event.stopPropagation();
-    if (!confirm(`¿Eliminar el borrador "${borrador.nombre}"? Esta acción no se puede deshacer.`)) return;
+    const advertencia = borrador.estado === 'publicado'
+      ? `¿Eliminar el borrador publicado "${borrador.nombre}"?\n\nSe eliminarán también todos los registros de programación académica que generó. Esta acción no se puede deshacer.`
+      : `¿Eliminar el borrador "${borrador.nombre}"? Esta acción no se puede deshacer.`;
+    if (!confirm(advertencia)) return;
     this.eliminando.set(borrador.id);
     this.piService.eliminar(borrador.id).subscribe({
       next: () => {
@@ -104,6 +108,24 @@ export class PiShellComponent implements OnInit {
         this.eliminando.set(null);
       },
       error: () => this.eliminando.set(null),
+    });
+  }
+
+  revertir(borrador: BorradorProgramacion, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!confirm(`¿Regresar "${borrador.nombre}" a borrador?\n\nSe eliminarán los registros de programación académica generados al publicar. Esta acción no se puede deshacer.`)) return;
+    this.revirtiendo.set(borrador.id);
+    this.piService.revertir(borrador.id).subscribe({
+      next: () => {
+        this.borradores.update(list =>
+          list.map(b => b.id === borrador.id
+            ? { ...b, estado: 'borrador' as const, publicado_por: undefined, publicado_at: undefined }
+            : b
+          )
+        );
+        this.revirtiendo.set(null);
+      },
+      error: () => this.revirtiendo.set(null),
     });
   }
 

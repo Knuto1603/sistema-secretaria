@@ -107,6 +107,12 @@ export class ProgramacionInteractivaService {
     );
   }
 
+  revertir(id: string): Observable<{ estado: string }> {
+    return this.http.post<ApiResponse<{ estado: string }>>(`${this.apiUrl}/${id}/revertir`, {}).pipe(
+      map(r => r.data)
+    );
+  }
+
   agregarSeccion(id: string, data: AgregarSeccionDTO): Observable<BorradorSeccion> {
     return this.http.post<ApiResponse<BorradorSeccion>>(`${this.apiUrl}/${id}/secciones`, data).pipe(
       map(r => r.data)
