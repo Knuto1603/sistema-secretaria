@@ -180,7 +180,23 @@ class BorradorProgramacionController extends Controller
     }
 
     /**
-     * Elimina un borrador completo.
+     * Revierte un borrador publicado a estado 'borrador',
+     * eliminando los registros de programacion_academica que generó.
+     * POST /programacion-interactiva/{id}/revertir
+     */
+    public function revertir(Request $request, string $id): JsonResponse
+    {
+        $borrador = BorradorProgramacion::findOrFail($id);
+        $borrador = $this->service->revertir($borrador);
+
+        return $this->success(
+            ['estado' => $borrador->estado],
+            'Borrador revertido a estado borrador. La programación académica generada fue eliminada.'
+        );
+    }
+
+    /**
+     * Elimina un borrador completo (funciona para ambos estados).
      * DELETE /programacion-interactiva/{id}
      */
     public function destroy(string $id): JsonResponse

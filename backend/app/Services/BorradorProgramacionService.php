@@ -238,12 +238,40 @@ class BorradorProgramacionService
     }
 
     /**
-     * Elimina un borrador completo (solo si está en estado 'borrador').
+     * Revierte un borrador publicado a estado 'borrador',
+     * eliminando los registros de programacion_academica que generó.
+     */
+    public function revertir(BorradorProgramacion $borrador): BorradorProgramacion
+    {
+        if ($borrador->esBorrador()) {
+            throw new Exception('Este borrador ya está en estado borrador.');
+        }
+
+        return DB::transaction(function () use ($borrador) {
+            $this->eliminarProgramacionAcademica($borrador);
+
+            $borrador->update([
+                'estado'        => 'borrador',
+                'publicado_por' => null,
+                'publicado_at'  => null,
+            ]);
+
+            return $borrador->fresh(['periodo', 'creadoPor', 'publicadoPor']);
+        });
+    }
+
+    /**
+     * Elimina un borrador completo. Si está publicado, primero elimina
+     * los registros de programacion_academica que generó.
      */
     public function eliminar(BorradorProgramacion $borrador): void
     {
-        $this->verificarEditable($borrador);
-        $borrador->delete();
+        DB::transaction(function () use ($borrador) {
+            if (!$borrador->esBorrador()) {
+                $this->eliminarProgramacionAcademica($borrador);
+            }
+            $borrador->delete();
+        });
     }
 
     /**
@@ -289,6 +317,26 @@ class BorradorProgramacionService
         if (!$borrador->esBorrador()) {
             throw new Exception('Este borrador ya fue publicado y no puede modificarse.');
         }
+    }
+
+    private function eliminarProgramacionAcademica(BorradorProgramacion $borrador): void
+    {
+        $secciones = $borrador->secciones()->get(['curso_id', 'escuela_id', 'seccion']);
+
+        if ($secciones->isEmpty()) {
+            return;
+        }
+
+        ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
+            ->where(function ($q) use ($secciones) {
+                foreach ($secciones as $s) {
+                    $q->orWhere(function ($sub) use ($s) {
+                        $sub->where('curso_id', $s->curso_id)
+                            ->where('escuela_programada_id', $s->escuela_id)
+                            ->where('seccion', $s->seccion);
+                    });
+                }
+            })->delete();
     }
 
     /**

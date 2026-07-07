@@ -310,6 +310,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'show']);
             Route::delete('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'destroy']);
             Route::post('/{id}/publicar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'publicar']);
+            Route::post('/{id}/revertir', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'revertir']);
             Route::post('/{id}/auto-asignar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'autoAsignar']);
             Route::post('/{id}/secciones', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'agregarSeccion']);
             Route::put('/{id}/secciones/{seccionId}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'updateSeccion']);
