@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/services/auth.service';
+import { DownloadToastComponent } from '../../shared/components/download-toast/download-toast.component';
 
 /**
  * Interface para los items del menú lateral
@@ -17,7 +18,7 @@ interface MenuItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, DownloadToastComponent],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css'
 })
