@@ -77,6 +77,8 @@ class PabellonController extends Controller
             'capacidad'  => 'required|integer|min:1|max:500',
         ]);
 
+        $data['activo'] = true;
+
         $aula = $pabellon->aulas()->create($data);
 
         return $this->success($this->formatAula($aula), 'Aula creada', 201);
