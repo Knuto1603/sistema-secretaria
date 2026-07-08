@@ -47,6 +47,11 @@ class BorradorProgramacion extends Model
         return $this->hasMany(BorradorSeccion::class, 'borrador_id');
     }
 
+    public function modificaciones(): HasMany
+    {
+        return $this->hasMany(ModificacionProgramacion::class, 'borrador_id');
+    }
+
     public function esBorrador(): bool
     {
         return $this->estado === 'borrador';

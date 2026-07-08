@@ -6,6 +6,7 @@ use App\Imports\BorradorMatrizImport;
 use App\Models\BorradorProgramacion;
 use App\Models\BorradorSeccion;
 use App\Models\Escuela;
+use App\Models\ModificacionProgramacion;
 use App\Models\Plan;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
@@ -224,6 +225,15 @@ class BorradorProgramacionService
     {
         $this->verificarEditable($borrador);
 
+        $yaPublicado = BorradorProgramacion::where('periodo_id', $borrador->periodo_id)
+            ->where('estado', 'publicado')
+            ->where('id', '!=', $borrador->id)
+            ->exists();
+
+        if ($yaPublicado) {
+            throw new \RuntimeException('Ya existe una programación publicada para este periodo. Solo puede haber una programación activa por periodo.');
+        }
+
         return DB::transaction(function () use ($borrador, $publicadoPor) {
             $secciones = $borrador->secciones()->with('curso')->get();
 
@@ -282,6 +292,10 @@ class BorradorProgramacionService
         }
 
         return DB::transaction(function () use ($borrador) {
+            // Desligar modificaciones de los programacion_academica antes de eliminarlos
+            ModificacionProgramacion::where('borrador_id', $borrador->id)
+                ->update(['programacion_id' => null]);
+
             $this->eliminarProgramacionAcademica($borrador);
 
             $borrador->update([

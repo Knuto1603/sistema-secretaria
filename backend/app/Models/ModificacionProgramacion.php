@@ -15,6 +15,7 @@ class ModificacionProgramacion extends Model
 
     protected $fillable = [
         'periodo_id',
+        'borrador_id',
         'tipo',
         'programacion_id',
         'secciones_origen_ids',
@@ -34,6 +35,11 @@ class ModificacionProgramacion extends Model
     public function periodo(): BelongsTo
     {
         return $this->belongsTo(Periodo::class);
+    }
+
+    public function borrador(): BelongsTo
+    {
+        return $this->belongsTo(BorradorProgramacion::class, 'borrador_id');
     }
 
     public function programacion(): BelongsTo

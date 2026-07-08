@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ModificacionException;
 use App\Models\Aula;
+use App\Models\BorradorProgramacion;
 use App\Models\GrupoHorario;
 use App\Models\ModificacionProgramacion;
 use App\Models\ProgramacionAcademica;
@@ -34,6 +35,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'       => $prog->periodo_id,
+                'borrador_id'      => $this->resolverBorradorId($prog->periodo_id),
                 'tipo'             => 'cerrar_curso',
                 'programacion_id'  => $prog->id,
                 'datos_anteriores' => $anterior,
@@ -66,6 +68,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'       => $data['periodo_id'],
+                'borrador_id'      => $this->resolverBorradorId($data['periodo_id']),
                 'tipo'             => 'abrir_seccion',
                 'programacion_id'  => $nuevaProg->id,
                 'datos_anteriores' => [],
@@ -93,6 +96,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'       => $prog->periodo_id,
+                'borrador_id'      => $this->resolverBorradorId($prog->periodo_id),
                 'tipo'             => 'cambio_aula',
                 'programacion_id'  => $prog->id,
                 'datos_anteriores' => $anterior,
@@ -120,6 +124,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'       => $prog->periodo_id,
+                'borrador_id'      => $this->resolverBorradorId($prog->periodo_id),
                 'tipo'             => 'cambio_grupo',
                 'programacion_id'  => $prog->id,
                 'datos_anteriores' => $anterior,
@@ -148,6 +153,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'       => $prog->periodo_id,
+                'borrador_id'      => $this->resolverBorradorId($prog->periodo_id),
                 'tipo'             => 'cambio_aula_y_grupo',
                 'programacion_id'  => $prog->id,
                 'datos_anteriores' => $anterior,
@@ -194,6 +200,7 @@ class ModificacionProgramacionService
 
             return $this->repository->create([
                 'periodo_id'          => $destino->periodo_id,
+                'borrador_id'         => $this->resolverBorradorId($destino->periodo_id),
                 'tipo'                => 'unificacion_secciones',
                 'programacion_id'     => $destinoId,
                 'secciones_origen_ids'=> $origenIds,
@@ -205,6 +212,15 @@ class ModificacionProgramacionService
                 'user_id'             => $userId,
             ]);
         });
+    }
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+
+    private function resolverBorradorId(string $periodoId): ?string
+    {
+        return BorradorProgramacion::where('periodo_id', $periodoId)
+            ->where('estado', 'publicado')
+            ->value('id');
     }
 
     // ─── Helpers de snapshot ────────────────────────────────────────────────
