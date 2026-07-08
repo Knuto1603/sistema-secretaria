@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { environment } from '@environments/environment';
+import { environment } from '@env/environment';
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
 
@@ -40,7 +40,7 @@ export interface DiffPreview {
 }
 
 export interface DiffAplicarResult {
-  aplicadas: Record<string, number>;
+  aplicadas: Record<string, number | undefined>;
   omitidos: DiffOmitido[];
 }
 

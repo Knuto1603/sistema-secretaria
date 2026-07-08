@@ -31,4 +31,8 @@ export class ProgramacionActivaShellComponent implements OnInit {
   onChangePeriodo(id: string): void {
     this.estado.seleccionarPeriodo(id);
   }
+
+  toggleImportDiff(): void {
+    this.showImportDiff.update(v => !v);
+  }
 }
