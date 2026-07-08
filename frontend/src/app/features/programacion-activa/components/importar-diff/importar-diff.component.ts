@@ -140,7 +140,7 @@ export class ImportarDiffComponent {
   }
 
   totalAplicadas(r: DiffAplicarResult): number {
-    return Object.values(r.aplicadas).reduce((a, b) => a + (b ?? 0), 0);
+    return Object.values(r.aplicadas).reduce<number>((a, b) => a + (b ?? 0), 0);
   }
 
   trackByIdx(_: number, __: unknown): number {
