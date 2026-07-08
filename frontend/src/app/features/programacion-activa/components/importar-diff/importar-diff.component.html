@@ -1,0 +1,522 @@
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm mb-6 overflow-hidden">
+
+  <!-- ── Cabecera del panel ───────────────────────────────────────────── -->
+  <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-100 bg-slate-50">
+    <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+      <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold text-slate-800">Actualizar programación desde archivo</h2>
+      <p class="text-xs text-slate-400">Compara y aplica cambios sin borrar la programación existente</p>
+    </div>
+
+    <!-- Indicador de paso -->
+    <div class="ml-auto flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+      <span [class]="paso() >= 1 ? 'text-indigo-600 font-bold' : ''">1. Archivo</span>
+      <span class="text-slate-300">›</span>
+      <span [class]="paso() >= 2 ? 'text-indigo-600 font-bold' : ''">2. Revisar</span>
+      <span class="text-slate-300">›</span>
+      <span [class]="paso() >= 3 ? 'text-indigo-600 font-bold' : ''">3. Listo</span>
+    </div>
+  </div>
+
+  <!-- ── Error global ────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="mx-5 mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-start gap-2">
+      <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+          clip-rule="evenodd"/>
+      </svg>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- PASO 1 — Seleccionar archivo                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  @if (paso() === 1) {
+    <div class="p-5 space-y-4">
+      <p class="text-sm text-slate-600">
+        Sube el archivo Excel o CSV de la matriz de programación para ver exactamente qué
+        secciones son nuevas, cuáles se deben cerrar y cuáles cambiaron de aula o grupo,
+        comparado con la programación actual del periodo seleccionado.
+      </p>
+
+      <!-- Drop zone -->
+      <div
+        (drop)="onDrop($event)"
+        (dragover)="onDragOver($event)"
+        class="border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-xl
+               p-8 text-center cursor-pointer transition-colors group">
+        <input
+          #fileInput
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          (change)="onFileChange($event)"
+          class="hidden"/>
+
+        @if (nombreArchivo) {
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">{{ nombreArchivo }}</p>
+            <button
+              type="button"
+              (click)="fileInput.click()"
+              class="text-xs text-indigo-600 hover:underline">
+              Cambiar archivo
+            </button>
+          </div>
+        } @else {
+          <div class="flex flex-col items-center gap-3" (click)="fileInput.click()">
+            <div class="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-slate-700">Arrastra el archivo aquí o <span class="text-indigo-600">selecciona</span></p>
+              <p class="text-xs text-slate-400 mt-0.5">Excel (.xlsx, .xls) o CSV</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="flex justify-end">
+        <button
+          type="button"
+          [disabled]="!nombreArchivo || analizando()"
+          (click)="analizar()"
+          class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors
+                 bg-indigo-600 text-white hover:bg-indigo-700
+                 disabled:opacity-40 disabled:cursor-not-allowed">
+          @if (analizando()) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Analizando...
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Analizar cambios
+          }
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- PASO 2 — Vista del diff                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  @if (paso() === 2 && diff()) {
+    <div class="p-5 space-y-5">
+
+      <!-- Resumen en badges -->
+      <div class="flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          {{ diff()!.nuevas.length }} nuevas
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          {{ diff()!.eliminadas.length }} a cerrar
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          {{ diff()!.cambios_aula.length }} cambios aula
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-violet-100 text-violet-700">
+          <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+          {{ diff()!.cambios_grupo.length }} cambios grupo
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-sky-100 text-sky-700">
+          <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+          {{ diff()!.cambios_aula_y_grupo.length }} cambios aula+grupo
+        </span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+          <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+          {{ diff()!.sin_cambios }} sin cambios
+        </span>
+      </div>
+
+      <!-- Secciones colapsables -->
+      @if (diff()!.nuevas.length > 0) {
+        <div class="border border-green-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('nuevas')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-green-50 text-sm font-semibold text-green-800 hover:bg-green-100 transition-colors">
+            <span>Secciones nuevas ({{ diff()!.nuevas.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('nuevas')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('nuevas')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-green-50 border-b border-green-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Curso</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Escuela</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Sec.</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Ciclo</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Aula</th>
+                    <th class="px-3 py-2 text-left font-semibold text-green-700">Grupo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-green-50">
+                  @for (item of diff()!.nuevas; track $index) {
+                    <tr class="hover:bg-green-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.curso_codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.curso_nombre }}</td>
+                      <td class="px-3 py-1.5 text-slate-500">{{ item.escuela_nombre ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.seccion ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.ciclo ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.aula_nombre ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.grupo_nombre ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (diff()!.eliminadas.length > 0) {
+        <div class="border border-red-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('eliminadas')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-red-50 text-sm font-semibold text-red-800 hover:bg-red-100 transition-colors">
+            <span>Secciones a cerrar ({{ diff()!.eliminadas.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('eliminadas')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('eliminadas')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-red-50 border-b border-red-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Curso</th>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Escuela</th>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Sec.</th>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Aula actual</th>
+                    <th class="px-3 py-2 text-left font-semibold text-red-700">Grupo actual</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-red-50">
+                  @for (item of diff()!.eliminadas; track $index) {
+                    <tr class="hover:bg-red-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.curso_codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.curso_nombre }}</td>
+                      <td class="px-3 py-1.5 text-slate-500">{{ item.escuela_nombre ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.seccion ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.aula_nombre ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.grupo_nombre ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (diff()!.cambios_aula.length > 0) {
+        <div class="border border-blue-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('cambios_aula')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-blue-50 text-sm font-semibold text-blue-800 hover:bg-blue-100 transition-colors">
+            <span>Cambios de aula ({{ diff()!.cambios_aula.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('cambios_aula')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('cambios_aula')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-blue-50 border-b border-blue-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-blue-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-blue-700">Curso</th>
+                    <th class="px-3 py-2 text-left font-semibold text-blue-700">Sec.</th>
+                    <th class="px-3 py-2 text-left font-semibold text-blue-700">Aula anterior</th>
+                    <th class="px-3 py-2 text-left font-semibold text-blue-700">Aula nueva</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-blue-50">
+                  @for (item of diff()!.cambios_aula; track $index) {
+                    <tr class="hover:bg-blue-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.curso_codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.curso_nombre }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.seccion ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-400 line-through">{{ item.aula_anterior ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-blue-700 font-semibold">{{ item.aula_nueva ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (diff()!.cambios_grupo.length > 0) {
+        <div class="border border-violet-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('cambios_grupo')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-violet-50 text-sm font-semibold text-violet-800 hover:bg-violet-100 transition-colors">
+            <span>Cambios de grupo horario ({{ diff()!.cambios_grupo.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('cambios_grupo')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('cambios_grupo')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-violet-50 border-b border-violet-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-violet-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-violet-700">Curso</th>
+                    <th class="px-3 py-2 text-left font-semibold text-violet-700">Sec.</th>
+                    <th class="px-3 py-2 text-left font-semibold text-violet-700">Grupo anterior</th>
+                    <th class="px-3 py-2 text-left font-semibold text-violet-700">Grupo nuevo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-violet-50">
+                  @for (item of diff()!.cambios_grupo; track $index) {
+                    <tr class="hover:bg-violet-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.curso_codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.curso_nombre }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.seccion ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-400 line-through">{{ item.grupo_anterior ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-violet-700 font-semibold">{{ item.grupo_nuevo ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (diff()!.cambios_aula_y_grupo.length > 0) {
+        <div class="border border-sky-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('cambios_aula_y_grupo')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-sky-50 text-sm font-semibold text-sky-800 hover:bg-sky-100 transition-colors">
+            <span>Cambios de aula y grupo ({{ diff()!.cambios_aula_y_grupo.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('cambios_aula_y_grupo')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('cambios_aula_y_grupo')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-sky-50 border-b border-sky-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Curso</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Sec.</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Aula anterior</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Aula nueva</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Grupo anterior</th>
+                    <th class="px-3 py-2 text-left font-semibold text-sky-700">Grupo nuevo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-sky-50">
+                  @for (item of diff()!.cambios_aula_y_grupo; track $index) {
+                    <tr class="hover:bg-sky-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.curso_codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.curso_nombre }}</td>
+                      <td class="px-3 py-1.5 text-slate-600">{{ item.seccion ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-400 line-through">{{ item.aula_anterior ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-sky-700 font-semibold">{{ item.aula_nueva ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-slate-400 line-through">{{ item.grupo_anterior ?? '—' }}</td>
+                      <td class="px-3 py-1.5 text-sky-700 font-semibold">{{ item.grupo_nuevo ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (diff()!.omitidos.length > 0) {
+        <div class="border border-amber-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            (click)="toggleColapso('omitidos')"
+            class="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 text-sm font-semibold text-amber-800 hover:bg-amber-100 transition-colors">
+            <span>Filas omitidas ({{ diff()!.omitidos.length }})</span>
+            <svg class="w-4 h-4 transition-transform" [class.rotate-180]="!esColapsada('omitidos')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          @if (!esColapsada('omitidos')) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-amber-50 border-b border-amber-100">
+                  <tr>
+                    <th class="px-3 py-2 text-left font-semibold text-amber-700">Código</th>
+                    <th class="px-3 py-2 text-left font-semibold text-amber-700">Nombre</th>
+                    <th class="px-3 py-2 text-left font-semibold text-amber-700">Motivo</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-amber-50">
+                  @for (item of diff()!.omitidos; track $index) {
+                    <tr class="hover:bg-amber-50/50">
+                      <td class="px-3 py-1.5 font-mono text-slate-600">{{ item.codigo }}</td>
+                      <td class="px-3 py-1.5 text-slate-700">{{ item.nombre }}</td>
+                      <td class="px-3 py-1.5 text-amber-700">{{ item.motivo }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (contarCambios(diff()!) === 0) {
+        <div class="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          El archivo coincide exactamente con la programación actual. No hay cambios para aplicar.
+        </div>
+      }
+
+      <!-- Motivo y botones -->
+      @if (contarCambios(diff()!) > 0) {
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide">
+            Motivo del ajuste <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            [ngModel]="motivo()"
+            (ngModelChange)="motivo.set($event)"
+            placeholder="Describe brevemente por qué se realizan estos cambios..."
+            rows="2"
+            class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 resize-none
+                   focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none
+                   placeholder:text-slate-300">
+          </textarea>
+        </div>
+      }
+
+      <div class="flex items-center justify-between pt-1">
+        <button
+          type="button"
+          (click)="paso.set(1)"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-slate-600
+                 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Volver
+        </button>
+
+        @if (contarCambios(diff()!) > 0) {
+          <button
+            type="button"
+            [disabled]="!motivo().trim() || aplicando()"
+            (click)="aplicar()"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors
+                   bg-indigo-600 text-white hover:bg-indigo-700
+                   disabled:opacity-40 disabled:cursor-not-allowed">
+            @if (aplicando()) {
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Aplicando...
+            } @else {
+              Aplicar cambios
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- PASO 3 — Resultado                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  @if (paso() === 3 && resultado()) {
+    <div class="p-5 space-y-5">
+
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-800">
+            {{ totalAplicadas(resultado()!) }} cambios aplicados correctamente
+          </p>
+          <p class="text-xs text-slate-400">La programación del periodo fue actualizada</p>
+        </div>
+      </div>
+
+      <!-- Cards de resultado -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-3 text-center">
+          <p class="text-2xl font-black text-green-700">{{ resultado()!.aplicadas['nuevas'] ?? 0 }}</p>
+          <p class="text-xs text-green-600 font-semibold mt-0.5">Nuevas</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-3 text-center">
+          <p class="text-2xl font-black text-red-700">{{ resultado()!.aplicadas['eliminadas'] ?? 0 }}</p>
+          <p class="text-xs text-red-600 font-semibold mt-0.5">Cerradas</p>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-3 text-center">
+          <p class="text-2xl font-black text-blue-700">{{ resultado()!.aplicadas['cambios_aula'] ?? 0 }}</p>
+          <p class="text-xs text-blue-600 font-semibold mt-0.5">Cambios aula</p>
+        </div>
+        <div class="bg-violet-50 border border-violet-200 rounded-lg px-3 py-3 text-center">
+          <p class="text-2xl font-black text-violet-700">{{ resultado()!.aplicadas['cambios_grupo'] ?? 0 }}</p>
+          <p class="text-xs text-violet-600 font-semibold mt-0.5">Cambios grupo</p>
+        </div>
+        <div class="bg-sky-50 border border-sky-200 rounded-lg px-3 py-3 text-center">
+          <p class="text-2xl font-black text-sky-700">{{ resultado()!.aplicadas['cambios_aula_y_grupo'] ?? 0 }}</p>
+          <p class="text-xs text-sky-600 font-semibold mt-0.5">Aula+Grupo</p>
+        </div>
+      </div>
+
+      @if (resultado()!.omitidos.length > 0) {
+        <p class="text-xs text-amber-600">
+          {{ resultado()!.omitidos.length }} fila(s) omitidas por curso no encontrado.
+        </p>
+      }
+
+      <div class="flex justify-end">
+        <button
+          type="button"
+          (click)="resetear()"
+          class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-white hover:bg-slate-900 transition-colors">
+          Listo
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

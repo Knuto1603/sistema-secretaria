@@ -68,6 +68,20 @@
               </svg>
               Gestión
             </a>
+
+            <!-- Botón: actualizar desde archivo (diff) -->
+            <button
+              type="button"
+              (click)="showImportDiff.update(v => !v)"
+              [class]="showImportDiff()
+                ? 'flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-md transition-colors'
+                : 'flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors'">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+              </svg>
+              Actualizar desde archivo
+            </button>
           }
 
         </div>
@@ -77,6 +91,9 @@
 
   <!-- ── Contenido ─────────────────────────────────────────────────── -->
   <div class="max-w-screen-2xl mx-auto px-6 py-6">
+    @if (showImportDiff() && esAdmin()) {
+      <app-importar-diff />
+    }
     <router-outlet />
   </div>
 
