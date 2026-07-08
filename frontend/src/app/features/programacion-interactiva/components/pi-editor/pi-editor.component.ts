@@ -106,7 +106,11 @@ export class PiEditorComponent implements OnInit {
         timer(4000).pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(() => this.publicadoExito.set(false));
       },
-      error: () => this.publicando.set(false)
+      error: (err) => {
+        this.publicando.set(false);
+        const msg = err?.error?.message ?? 'Error al publicar el borrador.';
+        alert(msg);
+      }
     });
   }
 

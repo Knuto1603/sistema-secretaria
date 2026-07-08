@@ -189,7 +189,12 @@ class BorradorProgramacionController extends Controller
     public function publicar(Request $request, string $id): JsonResponse
     {
         $borrador = BorradorProgramacion::findOrFail($id);
-        $borrador = $this->service->publicar($borrador, $request->user());
+
+        try {
+            $borrador = $this->service->publicar($borrador, $request->user());
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
 
         return $this->success(
             ['estado' => $borrador->estado, 'publicado_at' => $borrador->publicado_at],
