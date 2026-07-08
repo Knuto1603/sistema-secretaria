@@ -150,6 +150,10 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-matriz', [ProgramacionController::class, 'importMatriz'])
             ->middleware('role:secretaria|admin|developer');
+        Route::post('/importar-diff/preview', [ProgramacionController::class, 'importarDiffPreview'])
+            ->middleware('role:admin|secretaria|developer');
+        Route::post('/importar-diff/aplicar', [ProgramacionController::class, 'importarDiffAplicar'])
+            ->middleware('role:admin|secretaria|developer');
 
         // Inscripciones por sección
         Route::post('/inscripciones/import-html', [InscripcionController::class, 'importHtml'])

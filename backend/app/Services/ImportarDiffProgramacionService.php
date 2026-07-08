@@ -1,0 +1,507 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Aula;
+use App\Models\BorradorProgramacion;
+use App\Models\Curso;
+use App\Models\Escuela;
+use App\Models\GrupoHorario;
+use App\Models\ModificacionProgramacion;
+use App\Models\ProgramacionAcademica;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+
+class ImportarDiffProgramacionService
+{
+    private array $grupoCache   = [];
+    private array $aulaCache    = [];
+    private array $escuelaCache = [];
+
+    public function __construct()
+    {
+        GrupoHorario::all(['id', 'nombre'])->each(function ($g) {
+            $this->grupoCache[strtoupper(trim($g->nombre))] = $g->id;
+        });
+
+        Aula::all(['id', 'nombre'])->each(function ($a) {
+            $this->aulaCache[strtoupper(trim($a->nombre))] = $a->id;
+        });
+
+        Escuela::all(['id', 'nombre', 'nombre_corto'])->each(function ($e) {
+            $this->escuelaCache[$this->normalizar($e->nombre)] = $e->id;
+            if ($e->nombre_corto) {
+                $this->escuelaCache[$this->normalizar($e->nombre_corto)] = $e->id;
+            }
+        });
+    }
+
+    // ─── Público ────────────────────────────────────────────────────────────
+
+    /**
+     * Lee el archivo y devuelve el diff sin tocar la base de datos.
+     */
+    public function preview(UploadedFile $file, string $periodoId): array
+    {
+        [$filasArchivo, $omitidos] = $this->parsearArchivo($file);
+        $indiceActual  = $this->construirIndiceActual($periodoId);
+        $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
+
+        $nuevas            = [];
+        $eliminadas        = [];
+        $cambiosAula       = [];
+        $cambiosGrupo      = [];
+        $cambiosAulaYGrupo = [];
+        $sinCambios        = 0;
+
+        // Filas del archivo vs BD
+        foreach ($indiceArchivo as $clave => $fila) {
+            if (!isset($indiceActual[$clave])) {
+                $nuevas[] = $this->filaResumen($fila);
+                continue;
+            }
+
+            $prog     = $indiceActual[$clave];
+            $mismaAula  = ($prog->aula_id ?? null) === ($fila['aula_id'] ?? null);
+            $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
+
+            if ($mismaAula && $mismoGrupo) {
+                $sinCambios++;
+                continue;
+            }
+
+            $base = [
+                'programacion_id' => $prog->id,
+                'curso_codigo'    => $prog->curso?->codigo,
+                'curso_nombre'    => $prog->curso?->nombre,
+                'escuela_nombre'  => $prog->escuelaProgramada?->nombre_corto ?? $prog->escuelaProgramada?->nombre,
+                'seccion'         => $prog->seccion,
+                'ciclo'           => $prog->ciclo,
+                'aula_anterior'   => $prog->aulaRelacion?->nombre,
+                'aula_nueva'      => $fila['aula_nombre'] ?? null,
+                'grupo_anterior'  => $prog->grupoHorario?->nombre,
+                'grupo_nuevo'     => $fila['grupo_nombre'] ?? null,
+            ];
+
+            if (!$mismaAula && !$mismoGrupo) {
+                $cambiosAulaYGrupo[] = $base;
+            } elseif (!$mismaAula) {
+                $cambiosAula[] = $base;
+            } else {
+                $cambiosGrupo[] = $base;
+            }
+        }
+
+        // Registros BD que no aparecen en el archivo
+        foreach ($indiceActual as $clave => $prog) {
+            if (!isset($indiceArchivo[$clave])) {
+                $eliminadas[] = [
+                    'programacion_id' => $prog->id,
+                    'curso_codigo'    => $prog->curso?->codigo,
+                    'curso_nombre'    => $prog->curso?->nombre,
+                    'escuela_nombre'  => $prog->escuelaProgramada?->nombre_corto ?? $prog->escuelaProgramada?->nombre,
+                    'seccion'         => $prog->seccion,
+                    'ciclo'           => $prog->ciclo,
+                    'aula_nombre'     => $prog->aulaRelacion?->nombre,
+                    'grupo_nombre'    => $prog->grupoHorario?->nombre,
+                ];
+            }
+        }
+
+        return [
+            'nuevas'             => $nuevas,
+            'eliminadas'         => $eliminadas,
+            'cambios_aula'       => $cambiosAula,
+            'cambios_grupo'      => $cambiosGrupo,
+            'cambios_aula_y_grupo' => $cambiosAulaYGrupo,
+            'sin_cambios'        => $sinCambios,
+            'omitidos'           => $omitidos,
+        ];
+    }
+
+    /**
+     * Aplica el diff en una transacción.
+     */
+    public function aplicar(UploadedFile $file, string $periodoId, string $motivo, string $userId): array
+    {
+        [$filasArchivo, $omitidos] = $this->parsearArchivo($file);
+        $indiceActual  = $this->construirIndiceActual($periodoId);
+        $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
+
+        $borradorId = BorradorProgramacion::where('periodo_id', $periodoId)
+            ->where('estado', 'publicado')
+            ->value('id');
+
+        $conteos = [
+            'nuevas'             => 0,
+            'eliminadas'         => 0,
+            'cambios_aula'       => 0,
+            'cambios_grupo'      => 0,
+            'cambios_aula_y_grupo' => 0,
+        ];
+
+        DB::transaction(function () use (
+            $indiceArchivo, $indiceActual,
+            $periodoId, $motivo, $userId, $borradorId,
+            &$conteos
+        ) {
+            // Nuevas
+            foreach ($indiceArchivo as $clave => $fila) {
+                if (isset($indiceActual[$clave])) continue;
+
+                $id    = (string) Str::uuid();
+                $claveReg = 'M' . strtoupper(substr(str_replace('-', '', $id), 0, 8));
+
+                $prog = ProgramacionAcademica::create([
+                    'id'                    => $id,
+                    'curso_id'              => $fila['curso_id'],
+                    'periodo_id'            => $periodoId,
+                    'docente_id'            => null,
+                    'grupo_horario_id'      => $fila['grupo_horario_id'] ?? null,
+                    'aula_id'               => $fila['aula_id'] ?? null,
+                    'clave'                 => $claveReg,
+                    'grupo'                 => $fila['grupo_texto'] ?? null,
+                    'seccion'               => $fila['seccion'],
+                    'ciclo'                 => $fila['ciclo'],
+                    'aula'                  => $fila['aula_texto'] ?? null,
+                    'n_acta'                => null,
+                    'capacidad'             => 40,
+                    'n_inscritos'           => 0,
+                    'lleno_manual'          => false,
+                    'escuela_programada_id' => $fila['escuela_id'] ?? null,
+                ]);
+
+                if (!empty($fila['escuela_id'])) {
+                    $prog->escuelas()->sync([$fila['escuela_id']]);
+                }
+
+                ModificacionProgramacion::create([
+                    'periodo_id'       => $periodoId,
+                    'borrador_id'      => $borradorId,
+                    'tipo'             => 'abrir_seccion',
+                    'programacion_id'  => $prog->id,
+                    'datos_anteriores' => [],
+                    'datos_nuevos'     => [
+                        'aula_id'              => $fila['aula_id'] ?? null,
+                        'aula_nombre'          => $fila['aula_nombre'] ?? null,
+                        'grupo_horario_id'     => $fila['grupo_horario_id'] ?? null,
+                        'grupo_horario_nombre' => $fila['grupo_nombre'] ?? null,
+                    ],
+                    'motivo'  => $motivo,
+                    'user_id' => $userId,
+                ]);
+
+                $conteos['nuevas']++;
+            }
+
+            // Cambios y eliminadas
+            foreach ($indiceActual as $clave => $prog) {
+                if (!isset($indiceArchivo[$clave])) {
+                    // Eliminada
+                    $prog->update(['lleno_manual' => true]);
+
+                    ModificacionProgramacion::create([
+                        'periodo_id'       => $periodoId,
+                        'borrador_id'      => $borradorId,
+                        'tipo'             => 'cerrar_curso',
+                        'programacion_id'  => $prog->id,
+                        'datos_anteriores' => [
+                            'aula_id'              => $prog->aula_id,
+                            'aula_nombre'          => $prog->aulaRelacion?->nombre,
+                            'grupo_horario_id'     => $prog->grupo_horario_id,
+                            'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
+                            'lleno_manual'         => false,
+                        ],
+                        'datos_nuevos'     => [
+                            'aula_id'              => $prog->aula_id,
+                            'aula_nombre'          => $prog->aulaRelacion?->nombre,
+                            'grupo_horario_id'     => $prog->grupo_horario_id,
+                            'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
+                            'lleno_manual'         => true,
+                        ],
+                        'motivo'  => $motivo,
+                        'user_id' => $userId,
+                    ]);
+
+                    $conteos['eliminadas']++;
+                    continue;
+                }
+
+                $fila       = $indiceArchivo[$clave];
+                $mismaAula  = ($prog->aula_id ?? null) === ($fila['aula_id'] ?? null);
+                $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
+
+                if ($mismaAula && $mismoGrupo) continue;
+
+                $anterior = [
+                    'aula_id'              => $prog->aula_id,
+                    'aula_nombre'          => $prog->aulaRelacion?->nombre,
+                    'grupo_horario_id'     => $prog->grupo_horario_id,
+                    'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
+                ];
+
+                if (!$mismaAula && !$mismoGrupo) {
+                    $prog->update([
+                        'aula_id'          => $fila['aula_id'] ?? null,
+                        'grupo_horario_id' => $fila['grupo_horario_id'] ?? null,
+                    ]);
+                    $tipo = 'cambio_aula_y_grupo';
+                    $conteos['cambios_aula_y_grupo']++;
+                } elseif (!$mismaAula) {
+                    $prog->update(['aula_id' => $fila['aula_id'] ?? null]);
+                    $tipo = 'cambio_aula';
+                    $conteos['cambios_aula']++;
+                } else {
+                    $prog->update(['grupo_horario_id' => $fila['grupo_horario_id'] ?? null]);
+                    $tipo = 'cambio_grupo';
+                    $conteos['cambios_grupo']++;
+                }
+
+                ModificacionProgramacion::create([
+                    'periodo_id'       => $periodoId,
+                    'borrador_id'      => $borradorId,
+                    'tipo'             => $tipo,
+                    'programacion_id'  => $prog->id,
+                    'datos_anteriores' => $anterior,
+                    'datos_nuevos'     => [
+                        'aula_id'              => $fila['aula_id'] ?? null,
+                        'aula_nombre'          => $fila['aula_nombre'] ?? null,
+                        'grupo_horario_id'     => $fila['grupo_horario_id'] ?? null,
+                        'grupo_horario_nombre' => $fila['grupo_nombre'] ?? null,
+                    ],
+                    'motivo'  => $motivo,
+                    'user_id' => $userId,
+                ]);
+            }
+        });
+
+        return [
+            'aplicadas' => $conteos,
+            'omitidos'  => $omitidos,
+        ];
+    }
+
+    // ─── Parser ─────────────────────────────────────────────────────────────
+
+    /**
+     * Parsea el archivo y devuelve [filasParsadas, omitidos].
+     * Reutiliza la misma lógica de ProgramacionMatrizImport.
+     */
+    private function parsearArchivo(UploadedFile $file): array
+    {
+        // Cargamos las filas con la clase anónima (reutiliza lógica de Maatwebsite)
+        $collector = new class implements ToCollection, WithHeadingRow {
+            public Collection $rows;
+            public function collection(Collection $rows): void { $this->rows = $rows; }
+        };
+
+        Excel::import($collector, $file);
+        $rows = $collector->rows ?? collect();
+
+        $filas    = [];
+        $omitidos = [];
+
+        foreach ($rows as $rawRow) {
+            $row = [];
+            foreach ($rawRow->toArray() as $key => $value) {
+                $row[$this->sanitizeKey((string) $key)] = $value;
+            }
+
+            $codigoRaw = $row['codigo'] ?? null;
+            if (!$codigoRaw || trim((string) $codigoRaw) === '') continue;
+
+            $codigoLimpio = trim((string) $codigoRaw);
+            $curso = Curso::where('codigo', $codigoLimpio)->first();
+
+            if (!$curso) {
+                $omitidos[] = [
+                    'codigo' => $codigoLimpio,
+                    'nombre' => trim((string) ($row['nombre'] ?? '—')),
+                    'motivo' => 'Curso no existe en el sistema',
+                ];
+                continue;
+            }
+
+            $grupoTexto   = $row['grupo']   ?? null;
+            $aulaTexto    = $row['aula']    ?? null;
+            $escuelaTexto = $row['escuela'] ?? null;
+            $seccionTexto = $row['seccion'] ?? null;
+            $ciclo        = isset($row['ciclo']) && $row['ciclo'] !== '' ? (int) $row['ciclo'] : null;
+
+            $grupoHorarioId = $this->resolverGrupo($grupoTexto);
+            $aulaId         = $this->resolverAula($aulaTexto);
+            $escuelaId      = $this->resolverEscuela($escuelaTexto);
+            $seccion        = $this->parsearSeccion($seccionTexto);
+
+            // Nombre de aula/grupo para el diff UI
+            $aulaNombre  = null;
+            if ($aulaId) {
+                $aulaNombre = Aula::find($aulaId)?->nombre;
+            } elseif ($aulaTexto) {
+                $aulaNombre = strtoupper(trim($aulaTexto));
+            }
+
+            $grupoNombre = null;
+            if ($grupoHorarioId) {
+                $grupoNombre = GrupoHorario::find($grupoHorarioId)?->nombre;
+            } elseif ($grupoTexto) {
+                $grupoNombre = strtoupper(trim($grupoTexto));
+            }
+
+            $escuelaNombre = null;
+            if ($escuelaId) {
+                $escuelaNombre = Escuela::find($escuelaId)?->nombre_corto;
+            } elseif ($escuelaTexto) {
+                $escuelaNombre = $escuelaTexto;
+            }
+
+            $clave = $curso->id . '_' . ($escuelaId ?? '__null__') . '_' . ($seccion ?? '');
+
+            $filas[$clave] = [
+                'curso_id'         => $curso->id,
+                'curso_codigo'     => $codigoLimpio,
+                'curso_nombre'     => $curso->nombre,
+                'escuela_id'       => $escuelaId,
+                'escuela_nombre'   => $escuelaNombre,
+                'seccion'          => $seccion,
+                'ciclo'            => $ciclo,
+                'grupo_horario_id' => $grupoHorarioId,
+                'aula_id'          => $aulaId,
+                'aula_nombre'      => $aulaNombre,
+                'grupo_nombre'     => $grupoNombre,
+                'aula_texto'       => $aulaTexto ? strtoupper(trim($aulaTexto)) : null,
+                'grupo_texto'      => $grupoTexto ? strtoupper(trim($grupoTexto)) : null,
+            ];
+        }
+
+        return [$filas, $omitidos];
+    }
+
+    /**
+     * Construye el índice de la BD actual.
+     * Clave: {curso_id}_{escuela_programada_id|__null__}_{seccion}
+     *
+     * @return array<string, ProgramacionAcademica>
+     */
+    private function construirIndiceActual(string $periodoId): array
+    {
+        $registros = ProgramacionAcademica::where('periodo_id', $periodoId)
+            ->with(['curso:id,codigo,nombre', 'aulaRelacion:id,nombre', 'grupoHorario:id,nombre', 'escuelaProgramada:id,nombre,nombre_corto'])
+            ->get();
+
+        $indice = [];
+        foreach ($registros as $prog) {
+            $escuelaId = $prog->escuela_programada_id ?? '__null__';
+            $clave     = $prog->curso_id . '_' . $escuelaId . '_' . ($prog->seccion ?? '');
+            $indice[$clave] = $prog;
+        }
+
+        return $indice;
+    }
+
+    /**
+     * Construye el índice del archivo ya parseado.
+     * Clave idéntica a construirIndiceActual.
+     */
+    private function construirIndiceArchivo(array $filas): array
+    {
+        return $filas; // la clave ya está correcta desde parsearArchivo()
+    }
+
+    // ─── Helpers UI ─────────────────────────────────────────────────────────
+
+    private function filaResumen(array $fila): array
+    {
+        return [
+            'curso_codigo'  => $fila['curso_codigo'],
+            'curso_nombre'  => $fila['curso_nombre'],
+            'escuela_nombre'=> $fila['escuela_nombre'],
+            'seccion'       => $fila['seccion'],
+            'ciclo'         => $fila['ciclo'],
+            'aula_nombre'   => $fila['aula_nombre'],
+            'grupo_nombre'  => $fila['grupo_nombre'],
+        ];
+    }
+
+    // ─── Helpers de resolución (idénticos a ProgramacionMatrizImport) ────────
+
+    private function normalizar(string $texto): string
+    {
+        $texto = strtoupper(trim($texto));
+        return str_replace(
+            ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'],
+            ['A', 'E', 'I', 'O', 'U', 'N', 'A', 'E', 'I', 'O', 'U', 'N'],
+            $texto
+        );
+    }
+
+    private function sanitizeKey(string $key): string
+    {
+        $clean = trim($key, '. ');
+        $clean = str_replace(['N°', 'Nº', 'n°', 'nº'], 'n', $clean);
+        return Str::slug($clean, '_');
+    }
+
+    private function parsearSeccion(?string $valor): ?string
+    {
+        if (!$valor || trim($valor) === '') return null;
+        $valor = trim($valor);
+        if (preg_match('/sec\.?\s*(\w+)/i', $valor, $m)) {
+            return $m[1];
+        }
+        return $valor;
+    }
+
+    private function resolverGrupo(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+        $key = strtoupper(trim($nombre));
+        if (isset($this->grupoCache[$key])) {
+            return $this->grupoCache[$key];
+        }
+        $grupo = GrupoHorario::firstOrCreate(
+            ['nombre' => $key],
+            ['descripcion' => null, 'activo' => true]
+        );
+        $this->grupoCache[$key] = $grupo->id;
+        return $grupo->id;
+    }
+
+    private function resolverAula(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+        $key = strtoupper(trim($nombre));
+        if (isset($this->aulaCache[$key])) {
+            return $this->aulaCache[$key];
+        }
+        $aula = Aula::firstOrCreate(
+            ['nombre' => $key],
+            ['pabellon_id' => null, 'capacidad' => 40, 'activo' => true]
+        );
+        $this->aulaCache[$key] = $aula->id;
+        return $aula->id;
+    }
+
+    private function resolverEscuela(?string $nombre): ?string
+    {
+        if (!$nombre || trim($nombre) === '') return null;
+        $key = $this->normalizar($nombre);
+        if (array_key_exists($key, $this->escuelaCache)) {
+            return $this->escuelaCache[$key];
+        }
+        $encontrado = null;
+        foreach ($this->escuelaCache as $nombreNorm => $id) {
+            if (str_contains($nombreNorm, $key) || str_contains($key, $nombreNorm)) {
+                $encontrado = $id;
+                break;
+            }
+        }
+        $this->escuelaCache[$key] = $encontrado;
+        return $encontrado;
+    }
+}

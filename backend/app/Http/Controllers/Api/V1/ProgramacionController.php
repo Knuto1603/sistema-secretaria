@@ -13,6 +13,7 @@ use App\Models\Curso;
 use App\Models\Escuela;
 use App\Models\GrupoHorario;
 use App\Models\ProgramacionAcademica;
+use App\Services\ImportarDiffProgramacionService;
 use App\Services\ProgramacionService;
 use App\Transformers\ProgramacionTransformer;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,8 @@ class ProgramacionController extends Controller
 {
     public function __construct(
         protected ProgramacionService $service,
-        protected ProgramacionTransformer $transformer
+        protected ProgramacionTransformer $transformer,
+        protected ImportarDiffProgramacionService $diffService
     ) {}
 
     /**
@@ -622,6 +624,54 @@ class ProgramacionController extends Controller
             ])->deleteFileAfterSend(true);
         } catch (Exception $e) {
             return $this->error('Error al exportar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Vista previa del diff entre archivo Excel/CSV y la programación actual del periodo.
+     * No modifica la base de datos.
+     */
+    public function importarDiffPreview(ImportProgramacionRequest $request): JsonResponse
+    {
+        try {
+            $diff = $this->diffService->preview(
+                $request->file('file'),
+                $request->periodo_id
+            );
+
+            return $this->success($diff, 'Análisis de diferencias generado correctamente');
+        } catch (Exception $e) {
+            return $this->error('Error al analizar el archivo: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Aplica el diff entre archivo Excel/CSV y la programación actual del periodo.
+     */
+    public function importarDiffAplicar(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'file'       => 'required|mimes:xlsx,xls,csv',
+            'periodo_id' => 'required|uuid|exists:periodos,id',
+            'motivo'     => 'required|string|max:500',
+        ]);
+
+        try {
+            $resumen = $this->diffService->aplicar(
+                $request->file('file'),
+                $data['periodo_id'],
+                $data['motivo'],
+                (string) $request->user()?->id
+            );
+
+            $aplicadas = $resumen['aplicadas'];
+            $msg = "Diff aplicado: {$aplicadas['nuevas']} nuevas, {$aplicadas['eliminadas']} cerradas, "
+                 . "{$aplicadas['cambios_aula']} cambios aula, {$aplicadas['cambios_grupo']} cambios grupo, "
+                 . "{$aplicadas['cambios_aula_y_grupo']} cambios aula+grupo.";
+
+            return $this->success($resumen, $msg);
+        } catch (Exception $e) {
+            return $this->error('Error al aplicar los cambios: ' . $e->getMessage(), 500);
         }
     }
 
