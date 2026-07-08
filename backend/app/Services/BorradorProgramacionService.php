@@ -2,14 +2,17 @@
 
 namespace App\Services;
 
+use App\Imports\BorradorMatrizImport;
 use App\Models\BorradorProgramacion;
 use App\Models\BorradorSeccion;
 use App\Models\Escuela;
 use App\Models\Plan;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Exception;
 
 class BorradorProgramacionService
@@ -109,6 +112,37 @@ class BorradorProgramacionService
             }
 
             return $this->obtener($borrador->id);
+        });
+    }
+
+    /**
+     * Crea un borrador importando la Matriz de Programación Académica (Excel/CSV).
+     */
+    public function importarMatriz(
+        string $periodoId,
+        string $cicloTipo,
+        string $nombre,
+        User $creadoPor,
+        UploadedFile $file
+    ): array {
+        return DB::transaction(function () use ($periodoId, $cicloTipo, $nombre, $creadoPor, $file) {
+            $borrador = BorradorProgramacion::create([
+                'periodo_id' => $periodoId,
+                'nombre'     => $nombre,
+                'ciclo_tipo' => $cicloTipo,
+                'estado'     => 'borrador',
+                'creado_por' => $creadoPor->id,
+            ]);
+
+            $importer = new BorradorMatrizImport($borrador->id);
+            Excel::import($importer, $file);
+
+            $resumen = $importer->getResumen();
+
+            return [
+                'borrador' => $this->obtener($borrador->id),
+                'resumen'  => $resumen,
+            ];
         });
     }
 

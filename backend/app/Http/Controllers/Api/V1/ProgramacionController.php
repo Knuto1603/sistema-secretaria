@@ -229,6 +229,27 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Importar programación desde la Matriz de Programación Académica (CSV/Excel).
+     * Borra la programación existente del periodo y carga desde la matriz.
+     */
+    public function importMatriz(ImportProgramacionRequest $request): JsonResponse
+    {
+        try {
+            $dto = ImportProgramacionDTO::fromRequest(
+                $request->file('file'),
+                $request->periodo_id
+            );
+
+            $resumen = $this->service->importMatriz($dto);
+
+            $msg = "Matriz importada: {$resumen['importados']} secciones cargadas, {$resumen['omitidos']} omitidas.";
+            return $this->success($resumen, $msg);
+        } catch (Exception $e) {
+            return $this->error('Error al procesar la matriz: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Importar programación desde reporte HTML del SIGA
      */
     public function importHtml(ImportProgramacionHtmlRequest $request): JsonResponse

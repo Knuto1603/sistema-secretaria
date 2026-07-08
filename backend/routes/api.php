@@ -148,6 +148,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:secretaria|admin|developer');
         Route::post('/import-html', [ProgramacionController::class, 'importHtml'])
             ->middleware('role:secretaria|admin|developer');
+        Route::post('/import-matriz', [ProgramacionController::class, 'importMatriz'])
+            ->middleware('role:secretaria|admin|developer');
 
         // Inscripciones por sección
         Route::post('/inscripciones/import-html', [InscripcionController::class, 'importHtml'])
@@ -307,6 +309,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         ->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'index']);
             Route::post('/generar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'generar']);
+            Route::post('/importar-matriz', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'importarMatriz']);
             Route::get('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'show']);
             Route::delete('/{id}', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'destroy']);
             Route::post('/{id}/publicar', [\App\Http\Controllers\Api\V1\BorradorProgramacionController::class, 'publicar']);

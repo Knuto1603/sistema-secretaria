@@ -72,6 +72,41 @@ class BorradorProgramacionController extends Controller
     }
 
     /**
+     * Crea un borrador importando la Matriz de Programación Académica.
+     * POST /programacion-interactiva/importar-matriz
+     */
+    public function importarMatriz(Request $request): JsonResponse
+    {
+        $request->validate([
+            'periodo_id' => 'required|uuid|exists:periodos,id',
+            'ciclo_tipo' => 'required|in:par,impar',
+            'nombre'     => 'required|string|max:50',
+            'file'       => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $resultado = $this->service->importarMatriz(
+                $request->periodo_id,
+                $request->ciclo_tipo,
+                $request->nombre,
+                $request->user(),
+                $request->file('file')
+            );
+
+            $resumen  = $resultado['resumen'];
+            $borrador = $resultado['borrador'];
+            $msg = "Borrador creado: {$resumen['importados']} secciones importadas, {$resumen['omitidos']} omitidas.";
+
+            return $this->created([
+                'borrador' => $this->transformBorrador($borrador),
+                'resumen'  => $resumen,
+            ], $msg);
+        } catch (\Exception $e) {
+            return $this->error('Error al importar la matriz: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Agrega una sección manual al borrador.
      * POST /programacion-interactiva/{id}/secciones
      */

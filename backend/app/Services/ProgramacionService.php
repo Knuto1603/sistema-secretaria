@@ -6,6 +6,7 @@ use App\DTOs\Programacion\ImportProgramacionDTO;
 use App\DTOs\Programacion\ProgramacionFilterDTO;
 use App\Imports\ProgramacionCampusImport;
 use App\Imports\ProgramacionImport;
+use App\Imports\ProgramacionMatrizImport;
 use App\Models\Inscripcion;
 use App\Models\ProgramacionAcademica;
 use App\Models\User;
@@ -126,6 +127,21 @@ class ProgramacionService
 
         // No se borra la programación existente: Campus solo actualiza registros ya cargados
         $importer = new ProgramacionCampusImport($periodoId);
+        Excel::import($importer, $dto->file);
+
+        return $importer->getResumen();
+    }
+
+    public function importMatriz(ImportProgramacionDTO $dto): array
+    {
+        $periodoId = $dto->periodo_id ?? $this->periodoRepository->getActiveId();
+
+        if (!$periodoId) {
+            throw new Exception('No se pudo determinar el periodo académico.');
+        }
+
+        $this->programacionRepository->deleteByPeriodo($periodoId);
+        $importer = new ProgramacionMatrizImport($periodoId);
         Excel::import($importer, $dto->file);
 
         return $importer->getResumen();

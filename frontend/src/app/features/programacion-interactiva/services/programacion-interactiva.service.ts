@@ -137,6 +137,22 @@ export class ProgramacionInteractivaService {
     );
   }
 
+  importarMatriz(data: {
+    file: File;
+    periodo_id: string;
+    nombre: string;
+    ciclo_tipo: 'par' | 'impar';
+  }): Observable<{ borrador: BorradorProgramacion; resumen: { importados: number; omitidos: number; detalle: any[] } }> {
+    const fd = new FormData();
+    fd.append('file', data.file);
+    fd.append('periodo_id', data.periodo_id);
+    fd.append('nombre', data.nombre);
+    fd.append('ciclo_tipo', data.ciclo_tipo);
+    return this.http.post<{ success: boolean; message: string; data: any }>(
+      `${this.apiUrl}/importar-matriz`, fd
+    ).pipe(map(r => r.data));
+  }
+
   autoAsignar(id: string): Observable<AutoAsignarResult> {
     return this.http.post<ApiResponse<AutoAsignarResult>>(
       `${this.apiUrl}/${id}/auto-asignar`, {}

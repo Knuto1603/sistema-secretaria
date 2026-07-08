@@ -28,9 +28,19 @@ export class PiShellComponent implements OnInit {
   eliminando          = signal<string | null>(null);
   revirtiendo         = signal<string | null>(null);
 
-  mostrarFormNuevo    = signal(false);
+  // 'selector' muestra las dos opciones; 'generar'/'cargar' muestran el formulario respectivo
+  modoFormulario      = signal<null | 'selector' | 'generar' | 'cargar'>(null);
+
+  // Formulario "Generar"
   nuevoNombre         = signal('');
   nuevoCicloTipo      = signal<'par' | 'impar'>('impar');
+
+  // Formulario "Cargar desde archivo"
+  cargarNombre        = signal('');
+  cargarCicloTipo     = signal<'par' | 'impar'>('impar');
+  archivoMatriz       = signal<File | null>(null);
+  cargando            = signal(false);
+  resumenCarga        = signal<{ importados: number; omitidos: number; detalle: any[] } | null>(null);
 
   // Separa borradores en preparación vs publicados
   readonly enPreparacion = computed(() =>
@@ -64,14 +74,55 @@ export class PiShellComponent implements OnInit {
 
   abrirFormNuevo(): void {
     const p = this.estado.periodo();
-    if (p) this.nuevoNombre.set(p.nombre);
-    this.mostrarFormNuevo.set(true);
+    if (p) {
+      this.nuevoNombre.set(p.nombre);
+      this.cargarNombre.set(p.nombre);
+    }
+    this.modoFormulario.set('selector');
   }
 
   cancelarFormNuevo(): void {
-    this.mostrarFormNuevo.set(false);
+    this.modoFormulario.set(null);
     this.nuevoNombre.set('');
     this.nuevoCicloTipo.set('impar');
+    this.cargarNombre.set('');
+    this.cargarCicloTipo.set('impar');
+    this.archivoMatriz.set(null);
+    this.resumenCarga.set(null);
+  }
+
+  seleccionarArchivo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.archivoMatriz.set(input.files?.[0] ?? null);
+    this.resumenCarga.set(null);
+  }
+
+  cargarDesdeMatriz(): void {
+    const periodoId = this.estado.periodoId();
+    const archivo   = this.archivoMatriz();
+    if (!this.cargarNombre().trim() || !periodoId || !archivo) return;
+
+    this.cargando.set(true);
+    this.resumenCarga.set(null);
+
+    this.piService.importarMatriz({
+      file:       archivo,
+      periodo_id: periodoId,
+      nombre:     this.cargarNombre().trim(),
+      ciclo_tipo: this.cargarCicloTipo(),
+    }).subscribe({
+      next: ({ borrador, resumen }) => {
+        this.cargando.set(false);
+        this.borradores.update(list => [borrador, ...list]);
+        this.resumenCarga.set(resumen);
+
+        if (resumen.omitidos === 0) {
+          this.cancelarFormNuevo();
+          this.router.navigate(['/app/programacion/borradores', borrador.id]);
+        }
+      },
+      error: () => this.cargando.set(false),
+    });
   }
 
   generar(): void {

@@ -27,17 +27,75 @@
           <div class="w-2 h-2 rounded-full bg-slate-500"></div>
           <h2 class="text-sm font-bold text-slate-700 uppercase tracking-widest">En preparación</h2>
         </div>
-        @if (estado.periodoId() && !mostrarFormNuevo()) {
+        @if (estado.periodoId() && !modoFormulario()) {
           <app-btn variant="primary" (clicked)="abrirFormNuevo()">
             + Nuevo borrador
           </app-btn>
         }
       </div>
 
-      <!-- Formulario nuevo borrador -->
-      @if (mostrarFormNuevo()) {
+      <!-- ── Selector de modo ──────────────────────────────────── -->
+      @if (modoFormulario() === 'selector') {
         <div class="bg-slate-50 border border-slate-200 rounded-md p-5 mb-4 space-y-4">
-          <h3 class="text-sm font-bold text-slate-700">Nuevo borrador de programación</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-700">¿Cómo quieres crear el borrador?</h3>
+            <button (click)="cancelarFormNuevo()" class="text-slate-400 hover:text-slate-600 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Opción: Generar desde plan -->
+            <button
+              (click)="modoFormulario.set('generar')"
+              class="text-left border-2 border-violet-200 rounded-md p-4 hover:border-violet-500
+                     hover:bg-violet-50 transition-all duration-150 group">
+              <div class="w-10 h-10 rounded-md bg-violet-100 flex items-center justify-center mb-3
+                          group-hover:bg-violet-200 transition-colors">
+                <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <p class="text-sm font-bold text-slate-800 mb-1">Generar desde plan</p>
+              <p class="text-xs text-slate-500">
+                Crea secciones automáticamente a partir del plan de estudios activo.
+              </p>
+            </button>
+
+            <!-- Opción: Cargar desde archivo -->
+            <button
+              (click)="modoFormulario.set('cargar')"
+              class="text-left border-2 border-emerald-200 rounded-md p-4 hover:border-emerald-500
+                     hover:bg-emerald-50 transition-all duration-150 group">
+              <div class="w-10 h-10 rounded-md bg-emerald-100 flex items-center justify-center mb-3
+                          group-hover:bg-emerald-200 transition-colors">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                </svg>
+              </div>
+              <p class="text-sm font-bold text-slate-800 mb-1">Cargar desde archivo</p>
+              <p class="text-xs text-slate-500">
+                Importa la Matriz de Programación Académica (Excel o CSV).
+              </p>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ── Formulario: Generar desde plan ───────────────────── -->
+      @if (modoFormulario() === 'generar') {
+        <div class="bg-slate-50 border border-slate-200 rounded-md p-5 mb-4 space-y-4">
+          <div class="flex items-center gap-2 mb-1">
+            <button (click)="modoFormulario.set('selector')" class="text-slate-400 hover:text-slate-700 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <h3 class="text-sm font-bold text-slate-700">Generar borrador desde plan activo</h3>
+          </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
@@ -83,14 +141,122 @@
             </div>
           </div>
           <p class="text-xs text-slate-600">
-            Se crearán secciones <strong>A</strong> para cada curso obligatorio del plan activo
+            Se crearán secciones para cada curso obligatorio del plan activo
             (ciclos {{ nuevoCicloTipo() === 'impar' ? 'impares: 1,3,5,7,9' : 'pares: 2,4,6,8,10' }}).
           </p>
         </div>
       }
 
+      <!-- ── Formulario: Cargar desde archivo ─────────────────── -->
+      @if (modoFormulario() === 'cargar') {
+        <div class="bg-slate-50 border border-slate-200 rounded-md p-5 mb-4 space-y-4">
+          <div class="flex items-center gap-2 mb-1">
+            <button (click)="modoFormulario.set('selector')" class="text-slate-400 hover:text-slate-700 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <h3 class="text-sm font-bold text-slate-700">Cargar borrador desde Matriz de Programación</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                Nombre del borrador
+              </label>
+              <input
+                type="text"
+                [ngModel]="cargarNombre()"
+                (ngModelChange)="cargarNombre.set($event)"
+                placeholder="Ej: 2026-II"
+                class="w-full px-4 py-2.5 text-sm border border-emerald-300 rounded-md bg-white
+                       focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                Tipo de ciclo
+              </label>
+              <div class="relative">
+                <select
+                  [ngModel]="cargarCicloTipo()"
+                  (ngModelChange)="cargarCicloTipo.set($event)"
+                  class="w-full pl-4 pr-10 py-2.5 text-sm font-medium border border-emerald-300 rounded-md
+                         bg-white focus:ring-2 focus:ring-emerald-500 outline-none appearance-none cursor-pointer">
+                  <option value="impar">Impar (ciclos 1,3,5,7,9)</option>
+                  <option value="par">Par (ciclos 2,4,6,8,10)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                Archivo (Excel o CSV)
+              </label>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                (change)="seleccionarArchivo($event)"
+                class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-md
+                       file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-700
+                       hover:file:bg-emerald-200 cursor-pointer">
+            </div>
+          </div>
+
+          <!-- Archivo seleccionado -->
+          @if (archivoMatriz()) {
+            <p class="text-xs text-emerald-700 font-medium">
+              Archivo: {{ archivoMatriz()!.name }}
+            </p>
+          }
+
+          <div class="flex items-center gap-2">
+            <app-btn
+              variant="success"
+              [loading]="cargando()"
+              [disabled]="!cargarNombre().trim() || !archivoMatriz()"
+              (clicked)="cargarDesdeMatriz()">
+              Cargar borrador
+            </app-btn>
+            <app-btn variant="ghost" (clicked)="cancelarFormNuevo()">Cancelar</app-btn>
+          </div>
+
+          <!-- Resumen de la carga (si hubo omitidos) -->
+          @if (resumenCarga()) {
+            <div class="border border-amber-200 bg-amber-50 rounded-md p-4 space-y-2">
+              <p class="text-xs font-bold text-amber-800">
+                Importados: {{ resumenCarga()!.importados }} &nbsp;·&nbsp;
+                Omitidos: {{ resumenCarga()!.omitidos }}
+              </p>
+              @if (resumenCarga()!.detalle.length > 0) {
+                <div class="max-h-32 overflow-y-auto space-y-1">
+                  @for (d of resumenCarga()!.detalle; track d.codigo) {
+                    <p class="text-[11px] text-amber-700">
+                      <span class="font-mono font-bold">{{ d.codigo }}</span> — {{ d.motivo }}
+                    </p>
+                  }
+                </div>
+              }
+              <p class="text-xs text-amber-700">
+                El borrador fue creado con las secciones que se pudieron importar. Puedes abrirlo y agregar las que faltan manualmente.
+              </p>
+              <div class="flex gap-2 pt-1">
+                <app-btn variant="primary"
+                  (clicked)="abrirEditor(borradores()[0].id)">
+                  Abrir borrador
+                </app-btn>
+                <app-btn variant="ghost" (clicked)="cancelarFormNuevo()">Cerrar</app-btn>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Estado vacío: no hay borradores en preparación -->
-      @if (enPreparacion().length === 0 && !mostrarFormNuevo()) {
+      @if (enPreparacion().length === 0 && !modoFormulario()) {
         <div class="bg-white border-2 border-dashed border-slate-200 rounded-md p-10 text-center">
           <div class="w-14 h-14 rounded-md bg-slate-50 flex items-center justify-center mx-auto mb-4">
             <svg class="w-7 h-7 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
