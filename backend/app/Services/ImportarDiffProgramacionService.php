@@ -492,7 +492,9 @@ class ImportarDiffProgramacionService
     private function resolverGrupo(?string $nombre): ?string
     {
         if (!$nombre || trim($nombre) === '') return null;
-        $key = strtoupper(trim($nombre));
+        $raw = strtoupper(trim($nombre));
+        // "G1abh" → "G1": conservar solo la letra G seguida de dígitos
+        $key = preg_match('/^(G\d+)/i', $raw, $m) ? strtoupper($m[1]) : $raw;
         if (isset($this->grupoCache[$key])) {
             return $this->grupoCache[$key];
         }
