@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class ImportarDiffProgramacionService
 {
@@ -290,26 +289,47 @@ class ImportarDiffProgramacionService
 
     /**
      * Parsea el archivo y devuelve [filasParsadas, omitidos].
-     * Reutiliza la misma lógica de ProgramacionMatrizImport.
+     * Detecta automáticamente dos formatos:
+     *   - Formato propio (CSV/XLSX): cabecera en fila 1
+     *   - Reporte universidad (XLSX UNP): 7 filas de metadata + cabecera en fila 8
      */
     private function parsearArchivo(UploadedFile $file): array
     {
-        // Cargamos las filas con la clase anónima (reutiliza lógica de Maatwebsite)
-        $collector = new class implements ToCollection, WithHeadingRow {
+        $collector = new class implements ToCollection {
             public Collection $rows;
             public function collection(Collection $rows): void { $this->rows = $rows; }
         };
 
         Excel::import($collector, $file);
-        $rows = $collector->rows ?? collect();
+        $rawRows = $collector->rows ?? collect();
+
+        // Detección de formato: el reporte UNP tiene la fila 1 completamente vacía
+        $primeraFila        = $rawRows->get(0);
+        $esFormatoUniversidad = $primeraFila &&
+            $primeraFila->filter(fn($v) => $v !== null && trim((string) $v) !== '')->isEmpty();
+
+        $filaEncabezado = $esFormatoUniversidad ? $rawRows->get(7)  : $rawRows->get(0);
+        $filasData      = $esFormatoUniversidad ? $rawRows->slice(8) : $rawRows->slice(1);
+
+        // Construir mapa posición → clave normalizada
+        $indiceColumnas = [];
+        if ($filaEncabezado) {
+            foreach ($filaEncabezado as $idx => $val) {
+                $key = $this->sanitizeKey((string) ($val ?? ''));
+                $indiceColumnas[$idx] = $this->normalizarColumna($key);
+            }
+        }
 
         $filas    = [];
         $omitidos = [];
 
-        foreach ($rows as $rawRow) {
+        foreach ($filasData as $rawRow) {
             $row = [];
-            foreach ($rawRow->toArray() as $key => $value) {
-                $row[$this->sanitizeKey((string) $key)] = $value;
+            foreach ($rawRow as $idx => $value) {
+                $key = $indiceColumnas[$idx] ?? null;
+                if ($key !== null && $key !== '') {
+                    $row[$key] = $value;
+                }
             }
 
             $codigoRaw = $row['codigo'] ?? null;
@@ -440,6 +460,18 @@ class ImportarDiffProgramacionService
         );
     }
 
+    private function normalizarColumna(string $key): string
+    {
+        return match($key) {
+            'grp'              => 'grupo',
+            'sec'              => 'seccion',
+            'nombre_del_curso' => 'nombre',
+            'n_inscr'          => 'n_inscritos',
+            'cap'              => 'capacidad',
+            default            => $key,
+        };
+    }
+
     private function sanitizeKey(string $key): string
     {
         $clean = trim($key, '. ');
@@ -491,17 +523,38 @@ class ImportarDiffProgramacionService
     {
         if (!$nombre || trim($nombre) === '') return null;
         $key = $this->normalizar($nombre);
+
         if (array_key_exists($key, $this->escuelaCache)) {
             return $this->escuelaCache[$key];
         }
-        $encontrado = null;
+
+        // Comparación por palabras significativas: ignora prefijos genéricos ("INGENIERIA",
+        // "DE", "E"...) y elige la escuela cuya intersección de palabras sea mayor.
+        // Esto evita falsos positivos como "INDUSTRIAL" dentro de "AGROINDUSTRIAL".
+        $palabrasKey  = $this->palabrasSignificativas($key);
+        $encontrado   = null;
+        $mejorPuntaje = 0;
+
         foreach ($this->escuelaCache as $nombreNorm => $id) {
-            if (str_contains($nombreNorm, $key) || str_contains($key, $nombreNorm)) {
-                $encontrado = $id;
-                break;
+            if ($id === null) continue;
+
+            $palabrasNorm = $this->palabrasSignificativas($nombreNorm);
+            $interseccion = count(array_intersect($palabrasKey, $palabrasNorm));
+
+            if ($interseccion > $mejorPuntaje) {
+                $mejorPuntaje = $interseccion;
+                $encontrado   = $id;
             }
         }
+
         $this->escuelaCache[$key] = $encontrado;
         return $encontrado;
+    }
+
+    private function palabrasSignificativas(string $texto): array
+    {
+        static $stopWords = ['INGENIERIA', 'DE', 'E', 'Y', 'EN', 'LA', 'LAS', 'LOS', 'DEL'];
+        $palabras = array_filter(explode(' ', $texto), fn($w) => strlen($w) > 1);
+        return array_values(array_diff($palabras, $stopWords));
     }
 }
