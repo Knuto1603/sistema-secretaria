@@ -160,4 +160,10 @@ export class GeneracionModificacionService {
   descargarPlantilla(tipo: string): Observable<Blob> {
     return this.http.get(`${this.plantillasUrl}/${tipo}/descargar`, { responseType: 'blob' });
   }
+
+  listarTodasDelPeriodo(periodoId: string): Observable<ModificacionItem[]> {
+    return this.http.get<ApiResponse<ModificacionesPageResponse>>(this.base, {
+      params: { periodo_id: periodoId, per_page: '500' } as Record<string, string>
+    }).pipe(map(r => r.data.items));
+  }
 }
