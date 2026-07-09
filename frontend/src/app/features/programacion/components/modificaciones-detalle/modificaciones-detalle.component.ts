@@ -129,6 +129,10 @@ export class ModificacionesDetalleComponent {
     );
   }
 
+  pendientesCount(grupo: GrupoProgramacion): number {
+    return grupo.modificaciones.filter(m => m.estado === 'pendiente').length;
+  }
+
   tienePendientes(grupo: GrupoProgramacion): boolean {
     return grupo.modificaciones.some(m => m.estado === 'pendiente');
   }
