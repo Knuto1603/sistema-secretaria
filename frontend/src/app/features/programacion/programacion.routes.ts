@@ -18,9 +18,20 @@ export const PROGRAMACION_ROUTES: Routes = [
       },
       {
         path: 'modificaciones',
-        loadComponent: () =>
-          import('./components/modificaciones-historial/modificaciones-historial.component')
-            .then(m => m.ModificacionesHistorialComponent)
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./components/modificaciones-historial/modificaciones-historial.component')
+                .then(m => m.ModificacionesHistorialComponent)
+          },
+          {
+            path: ':borrador_id',
+            loadComponent: () =>
+              import('./components/modificaciones-detalle/modificaciones-detalle.component')
+                .then(m => m.ModificacionesDetalleComponent)
+          }
+        ]
       },
       {
         path: 'generar-documentos',

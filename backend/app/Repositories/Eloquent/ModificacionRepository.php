@@ -29,6 +29,10 @@ class ModificacionRepository implements ModificacionRepositoryInterface
             $query->where('periodo_id', $filters->periodo_id);
         }
 
+        if ($filters->borrador_id) {
+            $query->where('borrador_id', $filters->borrador_id);
+        }
+
         if ($filters->tipo) {
             $query->where('tipo', $filters->tipo);
         }

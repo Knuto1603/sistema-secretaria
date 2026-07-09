@@ -6,6 +6,7 @@ class ModificacionFilterDTO
 {
     public function __construct(
         public readonly ?string $periodo_id   = null,
+        public readonly ?string $borrador_id  = null,
         public readonly ?string $tipo         = null,
         public readonly ?string $area_id      = null,
         public readonly ?string $estado       = null,
@@ -21,7 +22,8 @@ class ModificacionFilterDTO
         $estadosValidos = ['pendiente', 'documentado'];
 
         return new self(
-            periodo_id:  $data['periodo_id'] ?? null,
+            periodo_id:  $data['periodo_id']  ?? null,
+            borrador_id: $data['borrador_id'] ?? null,
             tipo:        isset($data['tipo']) && in_array($data['tipo'], $tiposValidos) ? $data['tipo'] : null,
             area_id:     $data['area_id'] ?? null,
             estado:      isset($data['estado']) && in_array($data['estado'], $estadosValidos) ? $data['estado'] : null,

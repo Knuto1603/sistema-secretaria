@@ -166,4 +166,10 @@ export class GeneracionModificacionService {
       params: { periodo_id: periodoId, per_page: '500' } as Record<string, string>
     }).pipe(map(r => r.data.items));
   }
+
+  listarPorBorrador(borradorId: string): Observable<ModificacionItem[]> {
+    return this.http.get<ApiResponse<ModificacionesPageResponse>>(this.base, {
+      params: { borrador_id: borradorId, per_page: '500' } as Record<string, string>
+    }).pipe(map(r => r.data.items));
+  }
 }

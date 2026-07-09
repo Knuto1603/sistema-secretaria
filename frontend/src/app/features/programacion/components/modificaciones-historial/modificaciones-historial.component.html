@@ -1,8 +1,8 @@
 <!-- Encabezado -->
 <div class="flex items-center justify-between mb-6">
   <div>
-    <h1 class="text-xl font-bold text-slate-800">Modificaciones por Programación</h1>
-    <p class="text-sm text-slate-500 mt-0.5">Historial de cambios agrupado por sección.</p>
+    <h1 class="text-xl font-bold text-slate-800">Modificaciones</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Selecciona una programación para ver sus cambios.</p>
   </div>
   <button (click)="irAGenerar()"
     class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-md transition-colors">
@@ -14,42 +14,17 @@
   </button>
 </div>
 
-<!-- Controles -->
-<div class="bg-white border border-slate-200 rounded-lg p-4 mb-5 shadow-sm flex flex-wrap items-center gap-3">
-
-  <!-- Selector de período -->
-  <div class="flex items-center gap-2">
-    <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">Período</label>
-    <select
-      [value]="estadoSvc.periodoId()"
-      (change)="onPeriodoChange($any($event.target).value)"
-      class="px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white min-w-[140px]">
-      @for (p of estadoSvc.periodos(); track p.id) {
-        <option [value]="p.id">{{ p.nombre }}</option>
-      }
-    </select>
-  </div>
-
-  <!-- Búsqueda -->
-  <input
-    type="text"
-    [value]="busqueda()"
-    (input)="busqueda.set($any($event.target).value)"
-    placeholder="Buscar por código o nombre..."
-    class="flex-1 min-w-[200px] px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300">
-
-  <!-- Pills de estadísticas -->
-  <div class="flex items-center gap-2 ml-auto">
-    <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full">
-      {{ items().length }} programaciones
-    </span>
-    <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
-      {{ totalConMods() }} con cambios
-    </span>
-    <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-      {{ totalPendientes() }} pendientes
-    </span>
-  </div>
+<!-- Selector de período -->
+<div class="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm flex items-center gap-3">
+  <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">Período</label>
+  <select
+    [value]="estadoSvc.periodoId()"
+    (change)="onPeriodoChange($any($event.target).value)"
+    class="px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white min-w-[160px]">
+    @for (p of estadoSvc.periodos(); track p.id) {
+      <option [value]="p.id">{{ p.nombre }}</option>
+    }
+  </select>
 </div>
 
 <!-- Cargando -->
@@ -63,136 +38,73 @@
 }
 
 <!-- Sin datos -->
-@if (!cargando() && items().length === 0) {
+@if (!cargando() && borradores().length === 0) {
   <div class="flex flex-col items-center justify-center py-16 text-slate-400">
     <svg class="w-12 h-12 mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
     </svg>
-    <p class="text-sm font-medium">Sin programaciones para este período</p>
+    <p class="text-sm font-medium">No hay programaciones para este período</p>
   </div>
 }
 
-<!-- Lista accordion -->
-@if (!cargando() && items().length > 0) {
-  <div class="space-y-2">
-    @for (item of itemsFiltrados(); track item.prog.id) {
-      <div>
+<!-- Lista de borradores -->
+@if (!cargando() && borradores().length > 0) {
+  <div class="grid gap-3">
+    @for (b of borradores(); track b.id) {
+      <button
+        type="button"
+        (click)="verDetalle(b)"
+        class="w-full bg-white border border-slate-200 rounded-lg p-4 text-left hover:border-purple-300 hover:shadow-md transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400">
 
-        <!-- Fila cabecera -->
-        <button
-          type="button"
-          (click)="toggleExpandir(item)"
-          class="w-full flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 text-left transition-all hover:bg-slate-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-          [class.rounded-lg]="!item.expandido"
-          [class.rounded-t-lg]="item.expandido"
-          [class.border-l-4]="item.modificaciones.length > 0"
-          [class.border-l-amber-400]="tienePendientes(item)"
-          [class.border-l-emerald-400]="soloDocumentadas(item)">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- Ícono -->
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              [class.bg-emerald-100]="b.estado === 'publicado'"
+              [class.bg-amber-100]="b.estado === 'borrador'">
+              @if (b.estado === 'publicado') {
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              } @else {
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              }
+            </div>
+
+            <!-- Info principal -->
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-800">{{ b.nombre }}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                  [class.bg-emerald-100]="b.estado === 'publicado'"
+                  [class.text-emerald-700]="b.estado === 'publicado'"
+                  [class.bg-amber-100]="b.estado === 'borrador'"
+                  [class.text-amber-700]="b.estado === 'borrador'">
+                  {{ b.estado === 'publicado' ? 'Publicado' : 'Borrador' }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                {{ b.total_secciones ?? 0 }} secciones
+                &nbsp;·&nbsp;
+                Creado por {{ b.creado_por }}
+                &nbsp;·&nbsp;
+                {{ b.created_at | date:'dd/MM/yyyy' }}
+              </p>
+            </div>
+          </div>
 
           <!-- Flecha -->
-          <svg
-            class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200"
-            [class.rotate-90]="item.expandido"
+          <svg class="w-5 h-5 text-slate-300 group-hover:text-purple-400 transition-colors shrink-0"
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
-
-          <!-- Código + nombre curso -->
-          <div class="w-40 shrink-0 min-w-0">
-            <p class="text-xs font-bold text-slate-800 leading-tight">{{ item.prog.curso?.codigo ?? '—' }}</p>
-            <p class="text-[10px] text-slate-500 truncate" [title]="item.prog.curso?.nombre ?? ''">
-              {{ item.prog.curso?.nombre ?? '—' }}
-            </p>
-          </div>
-
-          <!-- Escuela -->
-          <span
-            class="text-[10px] text-slate-500 w-28 truncate shrink-0 hidden sm:block"
-            [title]="item.prog.escuela_programada?.nombre ?? ''">
-            {{ item.prog.escuela_programada?.nombre_corto ?? item.prog.escuela_programada?.nombre ?? '—' }}
-          </span>
-
-          <!-- Sección y ciclo -->
-          <span class="text-xs text-slate-600 shrink-0">Sec.&nbsp;{{ item.prog.seccion ?? '—' }}</span>
-          <span class="text-[10px] text-slate-400 shrink-0 hidden md:block">Ciclo&nbsp;{{ item.prog.ciclo ?? '—' }}</span>
-
-          <!-- Aula actual -->
-          <span class="text-[10px] text-slate-500 shrink-0 hidden lg:block truncate max-w-[90px]"
-            [title]="item.prog.aula_nombre ?? item.prog.aula ?? ''">
-            {{ item.prog.aula_nombre ?? item.prog.aula ?? '—' }}
-          </span>
-
-          <!-- Grupo actual -->
-          <span class="text-[10px] text-slate-500 shrink-0 hidden lg:block truncate max-w-[80px]"
-            [title]="item.prog.grupo_horario?.nombre ?? item.prog.grupo ?? ''">
-            {{ item.prog.grupo_horario?.nombre ?? item.prog.grupo ?? '—' }}
-          </span>
-
-          <!-- Badge cambios -->
-          <span
-            class="ml-auto shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-bold"
-            [class.bg-purple-100]="item.modificaciones.length > 0"
-            [class.text-purple-700]="item.modificaciones.length > 0"
-            [class.bg-slate-100]="item.modificaciones.length === 0"
-            [class.text-slate-400]="item.modificaciones.length === 0">
-            {{ item.modificaciones.length }}&nbsp;{{ item.modificaciones.length === 1 ? 'cambio' : 'cambios' }}
-          </span>
-        </button>
-
-        <!-- Panel expandido -->
-        @if (item.expandido) {
-          <div class="border border-t-0 border-slate-200 rounded-b-lg bg-slate-50 overflow-hidden">
-            @if (item.modificaciones.length === 0) {
-              <p class="text-center text-xs text-slate-400 py-5">Sin cambios registrados para esta sección.</p>
-            } @else {
-              <table class="w-full text-xs">
-                <thead>
-                  <tr class="border-b border-slate-200 bg-slate-100/70">
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Tipo</th>
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Cambio</th>
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden md:table-cell">Motivo</th>
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden sm:table-cell">Usuario</th>
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden sm:table-cell">Fecha</th>
-                    <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (mod of item.modificaciones; track mod.id) {
-                    <tr class="border-b border-slate-100 last:border-0 hover:bg-white/60 transition-colors">
-                      <td class="px-3 py-2">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ tipoInfo(mod.tipo).color }}">
-                          {{ tipoInfo(mod.tipo).label }}
-                        </span>
-                      </td>
-                      <td class="px-3 py-2 text-slate-600 max-w-[200px]">
-                        <p class="truncate" [title]="cambioResumen(mod)">{{ cambioResumen(mod) }}</p>
-                      </td>
-                      <td class="px-3 py-2 text-slate-500 max-w-[160px] hidden md:table-cell">
-                        <p class="truncate" [title]="mod.motivo">{{ mod.motivo }}</p>
-                      </td>
-                      <td class="px-3 py-2 text-slate-500 whitespace-nowrap hidden sm:table-cell">
-                        {{ mod.usuario?.nombre ?? '—' }}
-                      </td>
-                      <td class="px-3 py-2 text-slate-400 whitespace-nowrap hidden sm:table-cell">
-                        {{ mod.created_at | date:'dd/MM/yy HH:mm' }}
-                      </td>
-                      <td class="px-3 py-2">
-                        @if (mod.estado === 'documentado') {
-                          <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold">Documentado</span>
-                        } @else {
-                          <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">Pendiente</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
-          </div>
-        }
-
-      </div>
+        </div>
+      </button>
     }
   </div>
 }
