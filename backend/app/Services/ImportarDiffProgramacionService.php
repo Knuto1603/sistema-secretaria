@@ -105,6 +105,8 @@ class ImportarDiffProgramacionService
         // Registros BD que no aparecen en el archivo
         foreach ($indiceActual as $clave => $prog) {
             if (!isset($indiceArchivo[$clave])) {
+                // Si ya está cerrado manualmente, no hay nueva acción que aplicar
+                if ($prog->lleno_manual) continue;
                 $eliminadas[] = [
                     'programacion_id' => $prog->id,
                     'curso_codigo'    => $prog->curso?->codigo,
@@ -221,7 +223,9 @@ class ImportarDiffProgramacionService
             // Cambios y eliminadas
             foreach ($indiceActual as $clave => $prog) {
                 if (!isset($indiceArchivo[$clave])) {
-                    // Eliminada
+                    // Si ya está cerrado manualmente, no duplicar la acción
+                    if ($prog->lleno_manual) continue;
+
                     $prog->update(['lleno_manual' => true]);
 
                     ModificacionProgramacion::create([
