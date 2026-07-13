@@ -80,7 +80,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         });
     }
 
-    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = [], ?string $tipo = null, bool $ocultarLlenos = false): Builder
+    public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = [], ?string $tipo = null): Builder
     {
         $query = $this->model
             ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
@@ -153,9 +153,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             )', [$tipo]);
         }
 
-        if ($ocultarLlenos) {
-            $query->where('programacion_academica.lleno_manual', false);
-        }
+        $query->where('programacion_academica.activo', true);
 
         return $query;
     }

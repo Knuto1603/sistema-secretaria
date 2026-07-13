@@ -71,8 +71,8 @@ class ImportarDiffProgramacionService
             $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
 
             if ($mismaAula && $mismoGrupo) {
-                // Si estaba cerrada manualmente, el archivo indica que debe reabrirse
-                if ($prog->lleno_manual) {
+                // Si estaba inactiva, el archivo indica que debe reactivarse
+                if (!$prog->activo) {
                     $reabiertas[] = $this->filaResumenDesdeProg($prog);
                 } else {
                     $sinCambios++;
@@ -105,8 +105,8 @@ class ImportarDiffProgramacionService
         // Registros BD que no aparecen en el archivo
         foreach ($indiceActual as $clave => $prog) {
             if (!isset($indiceArchivo[$clave])) {
-                // Si ya está cerrado manualmente, no hay nueva acción que aplicar
-                if ($prog->lleno_manual) continue;
+                // Si ya está inactivo, no hay nueva acción que aplicar
+                if (!$prog->activo) continue;
                 $eliminadas[] = [
                     'programacion_id' => $prog->id,
                     'curso_codigo'    => $prog->curso?->codigo,
@@ -223,30 +223,18 @@ class ImportarDiffProgramacionService
             // Cambios y eliminadas
             foreach ($indiceActual as $clave => $prog) {
                 if (!isset($indiceArchivo[$clave])) {
-                    // Si ya está cerrado manualmente, no duplicar la acción
-                    if ($prog->lleno_manual) continue;
+                    // Si ya está inactivo, no duplicar la acción
+                    if (!$prog->activo) continue;
 
-                    $prog->update(['lleno_manual' => true]);
+                    $prog->update(['activo' => false]);
 
                     ModificacionProgramacion::create([
                         'periodo_id'       => $periodoId,
                         'borrador_id'      => $borradorId,
                         'tipo'             => 'cerrar_curso',
                         'programacion_id'  => $prog->id,
-                        'datos_anteriores' => [
-                            'aula_id'              => $prog->aula_id,
-                            'aula_nombre'          => $prog->aulaRelacion?->nombre,
-                            'grupo_horario_id'     => $prog->grupo_horario_id,
-                            'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
-                            'lleno_manual'         => false,
-                        ],
-                        'datos_nuevos'     => [
-                            'aula_id'              => $prog->aula_id,
-                            'aula_nombre'          => $prog->aulaRelacion?->nombre,
-                            'grupo_horario_id'     => $prog->grupo_horario_id,
-                            'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
-                            'lleno_manual'         => true,
-                        ],
+                        'datos_anteriores' => ['activo' => true],
+                        'datos_nuevos'     => ['activo' => false],
                         'motivo'  => $motivo,
                         'user_id' => $userId,
                     ]);
@@ -260,17 +248,17 @@ class ImportarDiffProgramacionService
                 $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
 
                 if ($mismaAula && $mismoGrupo) {
-                    // Reabrir si estaba cerrada manualmente
-                    if ($prog->lleno_manual) {
-                        $prog->update(['lleno_manual' => false]);
+                    // Reactivar si estaba inactivo
+                    if (!$prog->activo) {
+                        $prog->update(['activo' => true]);
 
                         ModificacionProgramacion::create([
                             'periodo_id'       => $periodoId,
                             'borrador_id'      => $borradorId,
                             'tipo'             => 'reabrir_seccion',
                             'programacion_id'  => $prog->id,
-                            'datos_anteriores' => ['lleno_manual' => true],
-                            'datos_nuevos'     => ['lleno_manual' => false],
+                            'datos_anteriores' => ['activo' => false],
+                            'datos_nuevos'     => ['activo' => true],
                             'motivo'           => $motivo,
                             'user_id'          => $userId,
                         ]);
@@ -285,28 +273,27 @@ class ImportarDiffProgramacionService
                     'aula_nombre'          => $prog->aulaRelacion?->nombre,
                     'grupo_horario_id'     => $prog->grupo_horario_id,
                     'grupo_horario_nombre' => $prog->grupoHorario?->nombre,
-                    'lleno_manual'         => $prog->lleno_manual,
                 ];
 
                 if (!$mismaAula && !$mismoGrupo) {
                     $prog->update([
                         'aula_id'          => $fila['aula_id'] ?? null,
                         'grupo_horario_id' => $fila['grupo_horario_id'] ?? null,
-                        'lleno_manual'     => false,
+                        'activo'           => true,
                     ]);
                     $tipo = 'cambio_aula_y_grupo';
                     $conteos['cambios_aula_y_grupo']++;
                 } elseif (!$mismaAula) {
                     $prog->update([
-                        'aula_id'      => $fila['aula_id'] ?? null,
-                        'lleno_manual' => false,
+                        'aula_id' => $fila['aula_id'] ?? null,
+                        'activo'  => true,
                     ]);
                     $tipo = 'cambio_aula';
                     $conteos['cambios_aula']++;
                 } else {
                     $prog->update([
                         'grupo_horario_id' => $fila['grupo_horario_id'] ?? null,
-                        'lleno_manual'     => false,
+                        'activo'           => true,
                     ]);
                     $tipo = 'cambio_grupo';
                     $conteos['cambios_grupo']++;

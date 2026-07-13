@@ -50,8 +50,7 @@ class ProgramacionService
             $dto->grupo,
             $dto->escuela_programada_id,
             $codigosEquivalentes,
-            $dto->tipo,
-            $dto->ocultar_llenos
+            $dto->tipo
         );
 
         return $this->applyFiltersAndPaginate(

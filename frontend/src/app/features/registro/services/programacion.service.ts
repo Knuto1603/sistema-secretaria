@@ -125,7 +125,6 @@ export class ProgramacionService {
     grupo?: string,
     escuelaProgramadaId?: string,
     tipo?: string,
-    ocultarLlenos: boolean = false,
   ): Observable<PaginatedResponse<Programacion>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -138,7 +137,6 @@ export class ProgramacionService {
     if (grupo)               params = params.set('grupo', grupo);
     if (escuelaProgramadaId) params = params.set('escuela_programada_id', escuelaProgramadaId);
     if (tipo)                params = params.set('tipo', tipo);
-    if (ocultarLlenos)       params = params.set('ocultar_llenos', '1');
 
     return this.http
       .get<ApiResponse<ApiPaginatedData<Programacion>>>(this.apiUrl, { params })

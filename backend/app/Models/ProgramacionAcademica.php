@@ -30,6 +30,7 @@ class ProgramacionAcademica extends Model
         'capacidad',
         'n_inscritos',
         'lleno_manual',
+        'activo',
         'escuela_programada_id',
     ];
 
@@ -38,6 +39,7 @@ class ProgramacionAcademica extends Model
         'n_inscritos' => 'integer',
         'ciclo' => 'integer',
         'lleno_manual' => 'boolean',
+        'activo' => 'boolean',
     ];
 
     /**
