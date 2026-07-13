@@ -671,6 +671,8 @@ class ProgramacionController extends Controller
                  . "{$aplicadas['cambios_aula_y_grupo']} cambios aula+grupo.";
 
             return $this->success($resumen, $msg);
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
         } catch (Exception $e) {
             return $this->error('Error al aplicar los cambios: ' . $e->getMessage(), 500);
         }

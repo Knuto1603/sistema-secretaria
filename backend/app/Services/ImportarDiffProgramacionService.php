@@ -47,7 +47,7 @@ class ImportarDiffProgramacionService
      */
     public function preview(UploadedFile $file, string $periodoId): array
     {
-        [$filasArchivo, $omitidos] = $this->parsearArchivo($file);
+        [$filasArchivo, $omitidos, $debug] = $this->parsearArchivo($file);
         $indiceActual  = $this->construirIndiceActual($periodoId);
         $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
 
@@ -127,6 +127,7 @@ class ImportarDiffProgramacionService
             'cambios_aula_y_grupo' => $cambiosAulaYGrupo,
             'sin_cambios'        => $sinCambios,
             'omitidos'           => $omitidos,
+            'debug'              => $debug,
         ];
     }
 
@@ -135,9 +136,20 @@ class ImportarDiffProgramacionService
      */
     public function aplicar(UploadedFile $file, string $periodoId, string $motivo, string $userId): array
     {
-        [$filasArchivo, $omitidos] = $this->parsearArchivo($file);
+        [$filasArchivo, $omitidos, $debug] = $this->parsearArchivo($file);
         $indiceActual  = $this->construirIndiceActual($periodoId);
         $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
+
+        // Guarda de seguridad: si el archivo no produjo ninguna fila válida pero hay
+        // registros en la BD, es casi seguro que el formato no se detectó correctamente.
+        // Evita cerrar toda la programación por un error de parsing.
+        if (empty($indiceArchivo) && !empty($indiceActual)) {
+            throw new \RuntimeException(
+                'El archivo no contiene filas válidas (0 cursos reconocidos). '
+                . 'Verifique el formato del archivo. '
+                . 'Columnas detectadas: ' . implode(', ', array_filter(array_values($debug['columnas_detectadas'] ?? [])))
+            );
+        }
 
         $borradorId = BorradorProgramacion::where('periodo_id', $periodoId)
             ->where('estado', 'publicado')
@@ -357,6 +369,12 @@ class ImportarDiffProgramacionService
 
         $filas    = [];
         $omitidos = [];
+        $debug    = [
+            'formato'             => $esFormatoUniversidad ? 'reporte_unp' : 'propio',
+            'total_filas_archivo' => $rawRows->count(),
+            'columnas_detectadas' => $indiceColumnas,
+            'primera_fila_raw'    => $primeraFila ? $primeraFila->toArray() : [],
+        ];
 
         foreach ($filasData as $rawRow) {
             $row = [];
@@ -434,7 +452,7 @@ class ImportarDiffProgramacionService
             ];
         }
 
-        return [$filas, $omitidos];
+        return [$filas, $omitidos, $debug];
     }
 
     /**
