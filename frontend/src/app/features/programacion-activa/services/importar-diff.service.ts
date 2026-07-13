@@ -32,6 +32,7 @@ export interface DiffOmitido {
 export interface DiffPreview {
   nuevas: DiffSeccion[];
   eliminadas: DiffSeccion[];
+  reabiertas: DiffSeccion[];
   cambios_aula: DiffCambio[];
   cambios_grupo: DiffCambio[];
   cambios_aula_y_grupo: DiffCambio[];

@@ -133,6 +133,7 @@ export class ImportarDiffComponent {
     return (
       d.nuevas.length +
       d.eliminadas.length +
+      d.reabiertas.length +
       d.cambios_aula.length +
       d.cambios_grupo.length +
       d.cambios_aula_y_grupo.length

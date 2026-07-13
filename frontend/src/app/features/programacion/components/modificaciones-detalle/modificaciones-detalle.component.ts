@@ -32,6 +32,7 @@ interface GrupoProgramacion {
 const TIPO_LABELS: Record<string, { label: string; color: string }> = {
   cerrar_curso:          { label: 'Cierre',       color: 'bg-red-100 text-red-700' },
   abrir_seccion:         { label: 'Apertura',     color: 'bg-emerald-100 text-emerald-700' },
+  reabrir_seccion:       { label: 'Reapertura',   color: 'bg-teal-100 text-teal-700' },
   cambio_aula:           { label: 'Cambio Aula',  color: 'bg-blue-100 text-blue-700' },
   cambio_grupo:          { label: 'Cambio Grupo', color: 'bg-violet-100 text-violet-700' },
   cambio_aula_y_grupo:   { label: 'Aula+Grupo',   color: 'bg-sky-100 text-sky-700' },
