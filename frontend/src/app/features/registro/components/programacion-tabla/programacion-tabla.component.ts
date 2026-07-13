@@ -212,7 +212,7 @@ export class ProgramacionTablaComponent implements OnInit {
     const escuelaProgramadaId  = this.escuelaProgramadaSeleccionada() || undefined;
     const tipo                 = this.tipoSeleccionado() || undefined;
 
-    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId, grupo, escuelaProgramadaId, tipo).subscribe({
+    this.programacionService.getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId, grupo, escuelaProgramadaId, tipo, this.soloLectura()).subscribe({
       next: res => {
         this.programacion.set(res.data);
         this.paginationData.set(res);
