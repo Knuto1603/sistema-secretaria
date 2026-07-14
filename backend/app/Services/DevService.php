@@ -388,6 +388,196 @@ class DevService
     }
 
     // =========================================================================
+    // ERROR LOGS
+    // =========================================================================
+
+    public function getErrorLogs(array $filters): array
+    {
+        $logFile = storage_path('logs/laravel.log');
+
+        if (!file_exists($logFile) || filesize($logFile) === 0) {
+            return ['items' => [], 'total' => 0, 'file_size_kb' => 0];
+        }
+
+        $fileSizeKb = round(filesize($logFile) / 1024, 1);
+
+        // Lee las últimas N KB para no cargar archivos enormes en memoria
+        $maxBytes = 2 * 1024 * 1024; // 2 MB
+        $handle   = fopen($logFile, 'r');
+        $fileSize = filesize($logFile);
+
+        if ($fileSize > $maxBytes) {
+            fseek($handle, -$maxBytes, SEEK_END);
+            fgets($handle); // descartar línea parcial
+        }
+
+        $content = stream_get_contents($handle);
+        fclose($handle);
+
+        $entries = $this->parseLogEntries($content);
+
+        // Filtrar por nivel
+        if (!empty($filters['level'])) {
+            $level = strtoupper($filters['level']);
+            $entries = array_values(array_filter($entries, fn($e) => $e['level'] === $level));
+        }
+
+        // Filtrar por búsqueda de texto
+        if (!empty($filters['search'])) {
+            $needle  = strtolower($filters['search']);
+            $entries = array_values(array_filter(
+                $entries,
+                fn($e) => str_contains(strtolower($e['message']), $needle)
+            ));
+        }
+
+        // Filtrar por fecha
+        if (!empty($filters['desde'])) {
+            $entries = array_values(array_filter($entries, fn($e) => $e['timestamp'] >= $filters['desde']));
+        }
+
+        if (!empty($filters['hasta'])) {
+            $hasta   = $filters['hasta'] . ' 23:59:59';
+            $entries = array_values(array_filter($entries, fn($e) => $e['timestamp'] <= $hasta));
+        }
+
+        // Ordenar más recientes primero
+        $entries = array_reverse($entries);
+
+        $total   = count($entries);
+        $perPage = (int) ($filters['per_page'] ?? 20);
+        $page    = max(1, (int) ($filters['page'] ?? 1));
+        $offset  = ($page - 1) * $perPage;
+        $items   = array_slice($entries, $offset, $perPage);
+
+        return [
+            'items'         => $items,
+            'total'         => $total,
+            'per_page'      => $perPage,
+            'current_page'  => $page,
+            'last_page'     => max(1, (int) ceil($total / $perPage)),
+            'file_size_kb'  => $fileSizeKb,
+        ];
+    }
+
+    private function parseLogEntries(string $content): array
+    {
+        // Patrón: [YYYY-MM-DD HH:MM:SS] env.LEVEL: message {context}
+        $pattern = '/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \w+\.(\w+): (.*?)(?=^\[\d{4}|\z)/ms';
+
+        preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
+
+        $entries = [];
+
+        foreach ($matches as $match) {
+            $timestamp = $match[1];
+            $level     = strtoupper($match[2]);
+            $body      = trim($match[3]);
+
+            // Separar mensaje de contexto JSON y stack trace
+            $jsonStart = $this->findJsonStart($body);
+            if ($jsonStart !== false) {
+                $message  = trim(substr($body, 0, $jsonStart));
+                $rest     = substr($body, $jsonStart);
+                $context  = $this->extractJson($rest);
+                $trace    = $this->extractStackTrace($body);
+            } else {
+                $message  = $body;
+                $context  = null;
+                $trace    = $this->extractStackTrace($body);
+            }
+
+            // Extraer excepción del contexto si existe
+            $exception = null;
+            if ($context && isset($context['exception'])) {
+                $exception = is_string($context['exception'])
+                    ? $context['exception']
+                    : json_encode($context['exception']);
+                unset($context['exception']);
+            }
+
+            $entries[] = [
+                'timestamp' => $timestamp,
+                'level'     => $level,
+                'message'   => $message,
+                'exception' => $exception,
+                'context'   => $context && !empty($context) ? $context : null,
+                'trace'     => $trace,
+            ];
+        }
+
+        return $entries;
+    }
+
+    private function findJsonStart(string $text): int|false
+    {
+        $pos = strpos($text, ' {');
+        return $pos !== false ? $pos + 1 : false;
+    }
+
+    private function extractJson(string $text): ?array
+    {
+        $start = strpos($text, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        // Busca el final del JSON balanceando llaves
+        $depth  = 0;
+        $end    = $start;
+        $len    = strlen($text);
+        $inStr  = false;
+        $escape = false;
+
+        for ($i = $start; $i < $len; $i++) {
+            $ch = $text[$i];
+            if ($escape) {
+                $escape = false;
+                continue;
+            }
+            if ($ch === '\\' && $inStr) {
+                $escape = true;
+                continue;
+            }
+            if ($ch === '"') {
+                $inStr = !$inStr;
+                continue;
+            }
+            if (!$inStr) {
+                if ($ch === '{') $depth++;
+                elseif ($ch === '}') {
+                    $depth--;
+                    if ($depth === 0) {
+                        $end = $i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $json = substr($text, $start, $end - $start + 1);
+        $decoded = json_decode($json, true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function extractStackTrace(string $body): ?string
+    {
+        $pos = strpos($body, "\n#");
+        if ($pos === false) {
+            $pos = strpos($body, "\r\n#");
+        }
+        if ($pos === false) {
+            return null;
+        }
+
+        $trace = substr($body, $pos + 1);
+        // Limpiar artefactos de log al final
+        $trace = preg_replace('/\[stacktrace\]\s*$/i', '', $trace);
+        return trim($trace) ?: null;
+    }
+
+    // =========================================================================
     // TEST MAIL
     // =========================================================================
 

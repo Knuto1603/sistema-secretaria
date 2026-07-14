@@ -82,4 +82,12 @@ export const DEVELOPER_ROUTES: Routes = [
       ),
     canActivate: [developerGuard],
   },
+  {
+    path: 'error-logs',
+    loadComponent: () =>
+      import('./components/error-log/error-log.component').then(
+        m => m.ErrorLogComponent
+      ),
+    canActivate: [developerGuard],
+  },
 ];

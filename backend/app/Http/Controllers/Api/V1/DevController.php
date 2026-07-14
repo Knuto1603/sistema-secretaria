@@ -200,6 +200,17 @@ class DevController extends Controller
     }
 
     // =========================================================================
+    // GET /dev/error-logs
+    // =========================================================================
+    public function errorLogs(Request $request): JsonResponse
+    {
+        $filters = $request->only(['level', 'search', 'desde', 'hasta', 'page', 'per_page']);
+        $result  = $this->devService->getErrorLogs($filters);
+
+        return $this->success($result, 'Logs de errores');
+    }
+
+    // =========================================================================
     // GET /dev/database/export
     // =========================================================================
     public function exportDatabase(): BinaryFileResponse|JsonResponse

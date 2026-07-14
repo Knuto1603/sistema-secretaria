@@ -5,6 +5,7 @@ import { environment } from '@env/environment';
 import {
   ActivityLogItem,
   EmailLogItem,
+  ErrorLogItem,
   HealthStatus,
   RouteItem,
   SystemSetting,
@@ -124,6 +125,19 @@ export class DeveloperService {
 
   downloadBackup(filename: string): Observable<Blob> {
     return this.http.get(`${this.api}/database/backups/${filename}`, { responseType: 'blob' });
+  }
+
+  getErrorLogs(params: Record<string, string | number> = {}): Observable<{
+    items: ErrorLogItem[];
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    file_size_kb: number;
+  }> {
+    return this.http
+      .get<ApiResponse<any>>(`${this.api}/error-logs`, { params: params as any })
+      .pipe(map(r => r.data));
   }
 }
 

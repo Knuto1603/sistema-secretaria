@@ -569,6 +569,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::get('mail/config', [DevController::class, 'mailConfig']);
             Route::post('mail/test', [DevController::class, 'testMail']);
             Route::get('routes', [DevController::class, 'routes']);
+            Route::get('error-logs', [DevController::class, 'errorLogs']);
             Route::post('impersonate/{userId}', [DevController::class, 'impersonate']);
             Route::delete('impersonate', [DevController::class, 'stopImpersonation']);
             Route::get('database/export', [DevController::class, 'exportDatabase']);

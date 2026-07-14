@@ -48,3 +48,12 @@ export interface RouteItem {
   name: string | null;
   middleware: string[];
 }
+
+export interface ErrorLogItem {
+  timestamp: string;
+  level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG' | 'CRITICAL' | string;
+  message: string;
+  exception: string | null;
+  context: Record<string, unknown> | null;
+  trace: string | null;
+}
