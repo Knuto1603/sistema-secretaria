@@ -57,7 +57,7 @@ class ProgramacionService
         return $this->applyFiltersAndPaginate(
             $query,
             $request,
-            ['clave', 'grupo'],
+            ['programacion_secciones.clave', 'programacion_secciones.grupo'],
             [
                 'curso'   => ['nombre', 'codigo'],
                 'docente' => ['nombre_completo']

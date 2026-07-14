@@ -63,6 +63,7 @@ export class ProgramacionTablaComponent implements OnInit {
   private route                = inject(ActivatedRoute);
 
   private loadSub: Subscription | null = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly soloLectura = computed(() => !!this.route.snapshot.data['soloLectura']);
 
@@ -501,8 +502,11 @@ export class ProgramacionTablaComponent implements OnInit {
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
     this.todosLosItems.set([]);
-    this.cargarProgramacion(1);
-    if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.cargarProgramacion(1);
+      if (this.vistaActiva() === 'matriz') this.cargarMatriz();
+    }, 300);
   }
 
   handlePageChange(page: number): void {
