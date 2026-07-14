@@ -11,6 +11,8 @@ interface Pagination {
   last_page: number;
   per_page: number;
   total: number;
+  from: number;
+  to: number;
 }
 
 @Component({
@@ -66,6 +68,8 @@ export class ErrorLogComponent implements OnInit {
           last_page:    data.last_page,
           per_page:     data.per_page,
           total:        data.total,
+          from:         data.total === 0 ? 0 : (data.current_page - 1) * data.per_page + 1,
+          to:           Math.min(data.current_page * data.per_page, data.total),
         });
         this.loading.set(false);
       },

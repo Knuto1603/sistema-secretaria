@@ -155,6 +155,8 @@
           [lastPage]="pag.last_page"
           [perPage]="pag.per_page"
           [total]="pag.total"
+          [from]="pag.from"
+          [to]="pag.to"
           (pageChange)="load($event)">
         </app-shared-pagination>
       }
