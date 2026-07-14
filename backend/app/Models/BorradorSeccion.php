@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class BorradorSeccion extends Model
 {
@@ -73,6 +74,11 @@ class BorradorSeccion extends Model
     public function grupoHorario(): BelongsTo
     {
         return $this->belongsTo(GrupoHorario::class, 'grupo_horario_id');
+    }
+
+    public function escuelas(): BelongsToMany
+    {
+        return $this->belongsToMany(Escuela::class, 'programacion_escuelas', 'programacion_id', 'escuela_id');
     }
 
     public function estaAsignado(): bool
