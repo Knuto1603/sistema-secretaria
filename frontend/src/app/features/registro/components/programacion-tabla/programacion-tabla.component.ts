@@ -1,5 +1,4 @@
-import { Component, inject, OnInit, signal, computed, effect, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -17,8 +16,7 @@ import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
 import { HttpClient } from '@angular/common/http';
-import { map, forkJoin, Subject, EMPTY } from 'rxjs';
-import { switchMap, catchError } from 'rxjs/operators';
+import { map, forkJoin, Subscription } from 'rxjs';
 import { environment } from '@env/environment';
 import { ModificacionService } from '../../../programacion/services/modificacion.service';
 import { ProgramacionEstadoService } from '../../../programacion/services/programacion-estado.service';
@@ -64,8 +62,7 @@ export class ProgramacionTablaComponent implements OnInit {
   private router               = inject(Router);
   private route                = inject(ActivatedRoute);
 
-  private readonly destroyRef      = inject(DestroyRef);
-  private readonly loadTrigger$    = new Subject<{ page: number; size: number }>();
+  private loadSub: Subscription | null = null;
 
   readonly soloLectura = computed(() => !!this.route.snapshot.data['soloLectura']);
 
@@ -149,32 +146,6 @@ export class ProgramacionTablaComponent implements OnInit {
   );
 
   constructor() {
-    // Pipeline con switchMap: cancela el request anterior antes de lanzar el nuevo
-    this.loadTrigger$.pipe(
-      switchMap(({ page, size }) => {
-        this.loading.set(true);
-        this.currentPage.set(page);
-        this.perPage.set(size);
-
-        const periodoId           = this.estadoService.periodoId() || undefined;
-        const escuelaId           = this.escuelaSeleccionada() || undefined;
-        const ciclo               = this.cicloSeleccionado() || undefined;
-        const areaId              = this.areaSeleccionada() || undefined;
-        const grupo               = this.grupoSeleccionado() || undefined;
-        const escuelaProgramadaId = this.escuelaProgramadaSeleccionada() || undefined;
-        const tipo                = this.tipoSeleccionado() || undefined;
-
-        return this.programacionService
-          .getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId, grupo, escuelaProgramadaId, tipo)
-          .pipe(catchError(() => { this.loading.set(false); return EMPTY; }));
-      }),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(res => {
-      this.programacion.set(res.data);
-      this.paginationData.set(res);
-      this.loading.set(false);
-    });
-
     // Recarga completa al cambiar de período
     effect(() => {
       const periodoId = this.estadoService.periodoId();
@@ -231,7 +202,29 @@ export class ProgramacionTablaComponent implements OnInit {
   }
 
   cargarProgramacion(page: number = this.currentPage(), size: number = this.perPage()): void {
-    this.loadTrigger$.next({ page, size });
+    this.loadSub?.unsubscribe();
+    this.loading.set(true);
+    this.currentPage.set(page);
+    this.perPage.set(size);
+
+    const periodoId           = this.estadoService.periodoId() || undefined;
+    const escuelaId           = this.escuelaSeleccionada() || undefined;
+    const ciclo               = this.cicloSeleccionado() || undefined;
+    const areaId              = this.areaSeleccionada() || undefined;
+    const grupo               = this.grupoSeleccionado() || undefined;
+    const escuelaProgramadaId = this.escuelaProgramadaSeleccionada() || undefined;
+    const tipo                = this.tipoSeleccionado() || undefined;
+
+    this.loadSub = this.programacionService
+      .getProgramacion(page, this.searchTerm(), size, periodoId, escuelaId, ciclo, areaId, grupo, escuelaProgramadaId, tipo)
+      .subscribe({
+        next: res => {
+          this.programacion.set(res.data);
+          this.paginationData.set(res);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   cargarMatriz(): void {
