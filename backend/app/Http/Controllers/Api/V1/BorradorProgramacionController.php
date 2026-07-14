@@ -277,7 +277,7 @@ class BorradorProgramacionController extends Controller
                 'codigo' => $s->curso->codigo,
                 'nombre' => $s->curso->nombre,
             ] : ['id' => $s->curso_id],
-            'escuela'          => $s->relationLoaded('escuela') ? [
+            'escuela'          => ($s->relationLoaded('escuela') && $s->escuela) ? [
                 'id'          => $s->escuela->id,
                 'nombre'      => $s->escuela->nombre,
                 'nombre_corto' => $s->escuela->nombre_corto,
