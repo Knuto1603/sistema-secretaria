@@ -14,9 +14,9 @@ class UnificarSeccionesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'programacion_destino_id'  => ['required', 'uuid', 'exists:programacion_academica,id'],
+            'programacion_destino_id'  => ['required', 'uuid', 'exists:programacion_secciones,id'],
             'secciones_origen_ids'     => ['required', 'array', 'min:1'],
-            'secciones_origen_ids.*'   => ['required', 'uuid', 'exists:programacion_academica,id', 'different:programacion_destino_id'],
+            'secciones_origen_ids.*'   => ['required', 'uuid', 'exists:programacion_secciones,id', 'different:programacion_destino_id'],
             'motivo'                   => ['required', 'string', 'min:10', 'max:1000'],
         ];
     }

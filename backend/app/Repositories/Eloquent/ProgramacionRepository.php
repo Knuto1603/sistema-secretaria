@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\ProgramacionAcademica;
+use App\Models\ProgramacionSeccion;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,8 +22,8 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
 
         if ($search) {
             $query->where(function (Builder $q) use ($search) {
-                $q->where('clave', 'like', "%{$search}%")
-                    ->orWhere('grupo', 'like', "%{$search}%")
+                $q->where('programacion_secciones.clave', 'like', "%{$search}%")
+                    ->orWhere('programacion_secciones.grupo', 'like', "%{$search}%")
                     ->orWhereHas('curso', function (Builder $q) use ($search) {
                         $q->where('nombre', 'like', "%{$search}%")
                             ->orWhere('codigo', 'like', "%{$search}%");
@@ -33,30 +34,31 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
             });
         }
 
-        return $query->latest()->paginate($perPage);
+        return $query->latest('programacion_secciones.created_at')->paginate($perPage);
     }
 
     public function findById(string $id): ?ProgramacionAcademica
     {
         return $this->model
-            ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
+            ->with(['curso.area', 'docente', 'programacion.periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
             ->find($id);
     }
 
     public function deleteByPeriodo(string $periodoId): array
     {
         return DB::transaction(function () use ($periodoId) {
-            $ids = $this->model->where('periodo_id', $periodoId)->pluck('id');
+            $ids = ProgramacionSeccion::whereHas('programacion', fn($q) => $q->where('periodo_id', $periodoId))
+                ->pluck('programacion_secciones.id');
 
             if ($ids->isEmpty()) {
                 return ['programacion' => 0, 'inscripciones' => 0, 'solicitudes' => 0];
             }
 
-            $solicitudes    = DB::table('solicitud')->whereIn('programacion_id', $ids)->delete();
-            $inscripciones  = DB::table('inscripciones')->whereIn('programacion_id', $ids)->delete();
+            $solicitudes   = DB::table('solicitud')->whereIn('programacion_id', $ids)->delete();
+            $inscripciones = DB::table('inscripciones')->whereIn('programacion_id', $ids)->delete();
             DB::table('programacion_escuelas')->whereIn('programacion_id', $ids)->delete();
 
-            $programacion = $this->model->where('periodo_id', $periodoId)->delete();
+            $programacion = ProgramacionSeccion::whereIn('id', $ids)->delete();
 
             return [
                 'programacion'  => $programacion,
@@ -83,39 +85,39 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
     public function getBaseQuery(string $periodoId, ?string $escuelaId = null, ?int $ciclo = null, ?string $areaId = null, ?string $grupo = null, ?string $escuelaProgramadaId = null, array $codigosEquivalentes = [], ?string $tipo = null): Builder
     {
         $query = $this->model
-            ->with(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
-            ->where('periodo_id', $periodoId)
-            ->selectRaw('programacion_academica.*,
-                (CASE WHEN lleno_manual = 1 OR n_inscritos >= capacidad THEN 1 ELSE 0 END) as esta_lleno_orden,
+            ->with(['curso.area', 'docente', 'programacion.periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada'])
+            ->join('programaciones', 'programaciones.id', '=', 'programacion_secciones.programacion_id')
+            ->join('cursos', 'programacion_secciones.curso_id', '=', 'cursos.id')
+            ->where('programaciones.periodo_id', $periodoId)
+            ->where('programaciones.estado', 'publicado')
+            ->selectRaw('programacion_secciones.*,
+                (CASE WHEN programacion_secciones.lleno_manual = 1 OR programacion_secciones.n_inscritos >= programacion_secciones.capacidad THEN 1 ELSE 0 END) as esta_lleno_orden,
                 (SELECT pe.tipo FROM plan_estudios pe
-                 WHERE pe.curso_id = programacion_academica.curso_id
+                 WHERE pe.curso_id = programacion_secciones.curso_id
                    AND pe.escuela_id = COALESCE(
-                     programacion_academica.escuela_programada_id,
+                     programacion_secciones.escuela_programada_id,
                      (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
                       FROM programacion_escuelas
-                      WHERE programacion_id = programacion_academica.id)
+                      WHERE programacion_id = programacion_secciones.id)
                    )
                  LIMIT 1) as tipo_plan')
-            ->leftJoin('cursos', 'programacion_academica.curso_id', '=', 'cursos.id')
             ->orderByDesc('esta_lleno_orden')
             ->orderBy('cursos.nombre', 'asc');
 
         if ($escuelaId) {
             $query->where(function ($q) use ($escuelaId, $codigosEquivalentes) {
-                // Cursos normales: asignados a la escuela del estudiante
                 $q->whereExists(function ($sub) use ($escuelaId) {
                     $sub->from('programacion_escuelas')
-                        ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                        ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                         ->where('programacion_escuelas.escuela_id', $escuelaId);
                 });
 
-                // Cursos equivalentes: mismo código, pero de OTRA escuela
                 if (!empty($codigosEquivalentes)) {
                     $q->orWhere(function ($eq) use ($escuelaId, $codigosEquivalentes) {
                         $eq->whereIn('cursos.codigo', $codigosEquivalentes)
                             ->whereNotExists(function ($ne) use ($escuelaId) {
                                 $ne->from('programacion_escuelas')
-                                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                                     ->where('programacion_escuelas.escuela_id', $escuelaId);
                             });
                     });
@@ -124,7 +126,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         }
 
         if ($ciclo) {
-            $query->where('programacion_academica.ciclo', $ciclo);
+            $query->where('programacion_secciones.ciclo', $ciclo);
         }
 
         if ($areaId) {
@@ -132,28 +134,28 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         }
 
         if ($grupo) {
-            $query->where('programacion_academica.grupo', strtoupper(trim($grupo)));
+            $query->where('programacion_secciones.grupo', strtoupper(trim($grupo)));
         }
 
         if ($escuelaProgramadaId) {
-            $query->where('programacion_academica.escuela_programada_id', $escuelaProgramadaId);
+            $query->where('programacion_secciones.escuela_programada_id', $escuelaProgramadaId);
         }
 
         if ($tipo) {
             $query->whereRaw('EXISTS (
                 SELECT 1 FROM plan_estudios pe_f
-                WHERE pe_f.curso_id = programacion_academica.curso_id
+                WHERE pe_f.curso_id = programacion_secciones.curso_id
                   AND pe_f.tipo = ?
                   AND pe_f.escuela_id = COALESCE(
-                    programacion_academica.escuela_programada_id,
+                    programacion_secciones.escuela_programada_id,
                     (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
                      FROM programacion_escuelas
-                     WHERE programacion_id = programacion_academica.id)
+                     WHERE programacion_id = programacion_secciones.id)
                   )
             )', [$tipo]);
         }
 
-        $query->where('programacion_academica.activo', true);
+        $query->where('programacion_secciones.activo', true);
 
         return $query;
     }
@@ -164,7 +166,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
 
         if ($search) {
             $query->where(function (Builder $q) use ($search) {
-                $q->where('clave', 'like', "%{$search}%")
+                $q->where('programacion_secciones.clave', 'like', "%{$search}%")
                     ->orWhereHas('curso', fn($q) => $q->where('nombre', 'like', "%{$search}%")->orWhere('codigo', 'like', "%{$search}%"))
                     ->orWhereHas('docente', fn($q) => $q->where('nombre_completo', 'like', "%{$search}%"));
             });
@@ -180,7 +182,7 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         if ($programacion) {
             $programacion->lleno_manual = !$programacion->lleno_manual;
             $programacion->save();
-            $programacion->load(['curso.area', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario', 'escuelaProgramada']);
+            $programacion->load(['curso.area', 'docente', 'programacion.periodo', 'aulaRelacion.pabellon', 'grupoHorario', 'escuelaProgramada']);
         }
 
         return $programacion;
@@ -191,7 +193,6 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
         return $this->model->create($data);
     }
 
-    /** Bulk update intencional: omite observers para eficiencia en lotes grandes. */
     public function cerrarMasivo(array $ids): int
     {
         return $this->model->whereIn('id', $ids)->update(['lleno_manual' => true]);

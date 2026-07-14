@@ -271,7 +271,7 @@ class BorradorProgramacionController extends Controller
     {
         return [
             'id'               => $s->id,
-            'borrador_id'      => $s->borrador_id,
+            'borrador_id'      => $s->programacion_id,
             'curso'            => $s->relationLoaded('curso') ? [
                 'id'     => $s->curso->id,
                 'codigo' => $s->curso->codigo,
@@ -281,7 +281,7 @@ class BorradorProgramacionController extends Controller
                 'id'          => $s->escuela->id,
                 'nombre'      => $s->escuela->nombre,
                 'nombre_corto' => $s->escuela->nombre_corto,
-            ] : ['id' => $s->escuela_id],
+            ] : ['id' => $s->escuela_programada_id],
             'ciclo'            => $s->ciclo,
             'tipo'             => $s->tipo,
             'seccion'          => $s->seccion,

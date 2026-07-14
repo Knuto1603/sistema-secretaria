@@ -10,12 +10,12 @@ class BorradorSeccion extends Model
 {
     use HasUuids;
 
-    protected $table = 'borradores_secciones';
+    protected $table = 'programacion_secciones';
 
     protected $fillable = [
-        'borrador_id',
+        'programacion_id',
         'curso_id',
-        'escuela_id',
+        'escuela_programada_id',
         'ciclo',
         'tipo',
         'seccion',
@@ -23,16 +23,31 @@ class BorradorSeccion extends Model
         'aula_id',
         'grupo_horario_id',
         'capacidad',
+        'n_inscritos',
+        'lleno_manual',
+        'activo',
+        'clave',
+        'grupo',
+        'aula',
+        'n_acta',
     ];
 
     protected $casts = [
-        'ciclo'     => 'integer',
-        'capacidad' => 'integer',
+        'ciclo'        => 'integer',
+        'capacidad'    => 'integer',
+        'n_inscritos'  => 'integer',
+        'lleno_manual' => 'boolean',
+        'activo'       => 'boolean',
     ];
 
     public function borrador(): BelongsTo
     {
-        return $this->belongsTo(BorradorProgramacion::class, 'borrador_id');
+        return $this->belongsTo(BorradorProgramacion::class, 'programacion_id');
+    }
+
+    public function programacion(): BelongsTo
+    {
+        return $this->belongsTo(BorradorProgramacion::class, 'programacion_id');
     }
 
     public function curso(): BelongsTo
@@ -42,7 +57,7 @@ class BorradorSeccion extends Model
 
     public function escuela(): BelongsTo
     {
-        return $this->belongsTo(Escuela::class);
+        return $this->belongsTo(Escuela::class, 'escuela_programada_id');
     }
 
     public function docente(): BelongsTo
@@ -52,7 +67,7 @@ class BorradorSeccion extends Model
 
     public function aula(): BelongsTo
     {
-        return $this->belongsTo(Aula::class);
+        return $this->belongsTo(Aula::class, 'aula_id');
     }
 
     public function grupoHorario(): BelongsTo

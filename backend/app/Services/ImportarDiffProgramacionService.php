@@ -8,6 +8,7 @@ use App\Models\Curso;
 use App\Models\Escuela;
 use App\Models\GrupoHorario;
 use App\Models\ModificacionProgramacion;
+use App\Models\Programacion;
 use App\Models\ProgramacionAcademica;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -155,7 +156,7 @@ class ImportarDiffProgramacionService
 
         $borradorId = BorradorProgramacion::where('periodo_id', $periodoId)
             ->where('estado', 'publicado')
-            ->value('id');
+            ->value('id'); // id de la programacion maestra publicada
 
         $conteos = [
             'nuevas'             => 0,
@@ -178,10 +179,14 @@ class ImportarDiffProgramacionService
                 $id    = (string) Str::uuid();
                 $claveReg = 'M' . strtoupper(substr(str_replace('-', '', $id), 0, 8));
 
+                $progMaestroId = Programacion::where('periodo_id', $periodoId)
+                    ->where('estado', 'publicado')
+                    ->value('id');
+
                 $prog = ProgramacionAcademica::create([
                     'id'                    => $id,
                     'curso_id'              => $fila['curso_id'],
-                    'periodo_id'            => $periodoId,
+                    'programacion_id'       => $progMaestroId,
                     'docente_id'            => null,
                     'grupo_horario_id'      => $fila['grupo_horario_id'] ?? null,
                     'aula_id'               => $fila['aula_id'] ?? null,
@@ -454,7 +459,8 @@ class ImportarDiffProgramacionService
      */
     private function construirIndiceActual(string $periodoId): array
     {
-        $registros = ProgramacionAcademica::where('periodo_id', $periodoId)
+        $registros = ProgramacionAcademica::periodo($periodoId)
+            ->select('programacion_secciones.*')
             ->with(['curso:id,codigo,nombre', 'aulaRelacion:id,nombre', 'grupoHorario:id,nombre', 'escuelaProgramada:id,nombre,nombre_corto'])
             ->get();
 

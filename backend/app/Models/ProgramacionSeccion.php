@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ProgramacionAcademica extends Model
+class ProgramacionSeccion extends Model
 {
     use HasUuids;
 
@@ -17,27 +17,27 @@ class ProgramacionAcademica extends Model
     protected $fillable = [
         'programacion_id',
         'curso_id',
+        'escuela_programada_id',
+        'ciclo',
+        'tipo',
+        'seccion',
         'docente_id',
         'aula_id',
         'grupo_horario_id',
-        'escuela_programada_id',
-        'clave',
-        'grupo',
-        'seccion',
-        'ciclo',
-        'tipo',
-        'aula',
-        'n_acta',
         'capacidad',
         'n_inscritos',
         'lleno_manual',
         'activo',
+        'clave',
+        'grupo',
+        'aula',
+        'n_acta',
     ];
 
     protected $casts = [
+        'ciclo'        => 'integer',
         'capacidad'    => 'integer',
         'n_inscritos'  => 'integer',
-        'ciclo'        => 'integer',
         'lleno_manual' => 'boolean',
         'activo'       => 'boolean',
     ];
@@ -47,20 +47,9 @@ class ProgramacionAcademica extends Model
         return $this->lleno_manual || $this->n_inscritos >= $this->capacidad;
     }
 
-    /**
-     * Filtra por periodo_id uniéndose a la tabla programaciones (estado=publicado).
-     * Reemplaza el antiguo ->where('periodo_id', $id) directo en la tabla.
-     */
-    public function scopePeriodo($query, string $periodoId): void
-    {
-        $query->join('programaciones', 'programaciones.id', '=', 'programacion_secciones.programacion_id')
-            ->where('programaciones.periodo_id', $periodoId)
-            ->where('programaciones.estado', 'publicado');
-    }
-
     public function programacion(): BelongsTo
     {
-        return $this->belongsTo(BorradorProgramacion::class, 'programacion_id');
+        return $this->belongsTo(Programacion::class, 'programacion_id');
     }
 
     public function curso(): BelongsTo
@@ -68,27 +57,9 @@ class ProgramacionAcademica extends Model
         return $this->belongsTo(Curso::class);
     }
 
-    /**
-     * Accessor de compatibilidad retroactiva: permite leer $model->periodo_id
-     * aunque la columna ya no exista directamente en programacion_secciones.
-     */
-    public function getPeriodoIdAttribute(): ?string
-    {
-        if ($this->relationLoaded('programacion')) {
-            return $this->programacion?->periodo_id;
-        }
-        return \Illuminate\Support\Facades\DB::table('programaciones')
-            ->where('id', $this->programacion_id)->value('periodo_id');
-    }
-
     public function docente(): BelongsTo
     {
         return $this->belongsTo(Docente::class);
-    }
-
-    public function solicitudes(): HasMany
-    {
-        return $this->hasMany(Solicitud::class, 'programacion_id');
     }
 
     public function escuelaProgramada(): BelongsTo
@@ -101,11 +72,6 @@ class ProgramacionAcademica extends Model
         return $this->belongsToMany(Escuela::class, 'programacion_escuelas', 'programacion_id', 'escuela_id');
     }
 
-    public function inscripciones(): HasMany
-    {
-        return $this->hasMany(Inscripcion::class, 'programacion_id');
-    }
-
     public function aulaRelacion(): BelongsTo
     {
         return $this->belongsTo(Aula::class, 'aula_id');
@@ -114,5 +80,15 @@ class ProgramacionAcademica extends Model
     public function grupoHorario(): BelongsTo
     {
         return $this->belongsTo(GrupoHorario::class, 'grupo_horario_id');
+    }
+
+    public function inscripciones(): HasMany
+    {
+        return $this->hasMany(Inscripcion::class, 'programacion_id');
+    }
+
+    public function solicitudes(): HasMany
+    {
+        return $this->hasMany(Solicitud::class, 'programacion_id');
     }
 }

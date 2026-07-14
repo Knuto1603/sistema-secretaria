@@ -39,8 +39,9 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
     public function getResumen(): array
     {
         // Programaciones del periodo que Campus NO actualizó → no están en Campus
-        $noEnCampus = ProgramacionAcademica::where('periodo_id', $this->periodoId)
-            ->whereNotIn('id', $this->actualizadosIds)
+        $noEnCampus = ProgramacionAcademica::periodo($this->periodoId)
+            ->select('programacion_secciones.*')
+            ->whereNotIn('programacion_secciones.id', $this->actualizadosIds)
             ->with(['curso:id,codigo,nombre', 'escuelas:id,nombre,nombre_corto'])
             ->get()
             ->map(fn($p) => [
@@ -193,12 +194,13 @@ class ProgramacionCampusImport implements ToCollection, WithHeadingRow
         ?string $aulaId,
         ?string $escuelaId
     ): ?ProgramacionAcademica {
-        $base = ProgramacionAcademica::where('periodo_id', $periodoId)
-                    ->where('curso_id', $cursoId);
+        $base = ProgramacionAcademica::periodo($periodoId)
+                    ->select('programacion_secciones.*')
+                    ->where('programacion_secciones.curso_id', $cursoId);
 
         $conEscuela = fn($q) => $q->whereExists(function ($sub) use ($escuelaId) {
             $sub->from('programacion_escuelas')
-                ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                 ->where('programacion_escuelas.escuela_id', $escuelaId);
         });
 

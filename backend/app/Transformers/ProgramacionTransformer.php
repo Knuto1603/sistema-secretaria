@@ -86,10 +86,18 @@ class ProgramacionTransformer
             $esEquivalente = !$model->escuelas->contains('id', $escuelaEstudianteId);
         }
 
+        // Resolver periodo via programacion->periodo (evita el accessor con query extra)
+        $periodoObj = null;
+        if ($model->relationLoaded('programacion') && $model->programacion) {
+            $periodoObj = $model->programacion->relationLoaded('periodo')
+                ? $model->programacion->periodo
+                : null;
+        }
+
         return new ProgramacionResponseDTO(
             id:               $model->id,
             curso_id:         $model->curso_id,
-            periodo_id:       $model->periodo_id,
+            periodo_id:       $model->programacion_id ? ($periodoObj?->id ?? $model->getPeriodoIdAttribute()) : null,
             docente_id:       $model->docente_id,
             grupo_horario_id: $model->grupo_horario_id,
             aula_id:          $model->aula_id,
@@ -108,10 +116,10 @@ class ProgramacionTransformer
                 'codigo' => $model->curso->codigo,
                 'nombre' => $model->curso->nombre,
             ] : null,
-            periodo: $model->periodo ? [
-                'id'     => $model->periodo->id,
-                'nombre' => $model->periodo->nombre,
-                'activo' => (bool) $model->periodo->activo,
+            periodo: $periodoObj ? [
+                'id'     => $periodoObj->id,
+                'nombre' => $periodoObj->nombre,
+                'activo' => (bool) $periodoObj->activo,
             ] : null,
             docente: $model->docente ? [
                 'id'             => $model->docente->id,

@@ -46,7 +46,7 @@ class AutoAsignadorProgramacion
     {
         // Agrupar por (escuela, ciclo, seccion): la sección "1" va en un aula,
         // la sección "2" en otra, pero usando los mismos grupos horarios gracias a grupoDelPar.
-        $bloques = $secciones->groupBy(fn($s) => $s->escuela_id . '|' . $s->ciclo . '|' . $s->seccion);
+        $bloques = $secciones->groupBy(fn($s) => $s->escuela_programada_id . '|' . $s->ciclo . '|' . $s->seccion);
 
         // Informática primero → reserva aulas FII antes que las demás escuelas
         $bloquesOrdenados = $bloques->sortBy(function (Collection $secs) {
@@ -151,7 +151,7 @@ class AutoAsignadorProgramacion
         foreach ($seccionesOrdenadas as $seccion) {
             // Coordinación intra-escuela: mismo curso+ciclo dentro de la misma escuela
             // siempre comparte grupo, sin importar el número de sección.
-            $parKey = $seccion->escuela_id . '|' . $ciclo . '|' . $seccion->curso_id;
+            $parKey = $seccion->escuela_programada_id . '|' . $ciclo . '|' . $seccion->curso_id;
             $grupoPreferido = $this->grupoDelPar[$parKey] ?? null;
             $grupoId = null;
 

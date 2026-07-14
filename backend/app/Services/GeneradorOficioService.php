@@ -25,7 +25,8 @@ class GeneradorOficioService
     ): GeneracionDocumento {
         $config = ConfiguracionInstitucional::getAll();
 
-        $programaciones = ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
+        $programaciones = ProgramacionAcademica::periodo($borrador->periodo_id)
+            ->select('programacion_secciones.*')
             ->with([
                 'curso.area',
                 'aulaRelacion.pabellon',
@@ -91,7 +92,8 @@ class GeneradorOficioService
 
     public function cursosSinArea(BorradorProgramacion $borrador): array
     {
-        $programaciones = ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
+        $programaciones = ProgramacionAcademica::periodo($borrador->periodo_id)
+            ->select('programacion_secciones.*')
             ->with('curso.area')
             ->get();
 

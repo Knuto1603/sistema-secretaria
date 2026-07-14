@@ -7,6 +7,7 @@ use App\Exports\MetricasExport;
 use App\Exports\SolicitudesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
+use App\Models\Periodo;
 use App\Models\ProgramacionAcademica;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
@@ -201,10 +202,10 @@ class SolicitudController extends Controller
         // Cursos más solicitados agrupados por curso (no por sección)
         $cursosTop = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada', 'tipoSolicitud'])
             ->whereNotNull('programacion_id')
-            ->join('programacion_academica', 'solicitud.programacion_id', '=', 'programacion_academica.id')
-            ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
-            ->selectRaw('cursos.id as curso_id, cursos.codigo, cursos.nombre as curso_nombre, programacion_academica.escuela_programada_id, count(*) as total_solicitudes')
-            ->groupBy('cursos.id', 'cursos.codigo', 'cursos.nombre', 'programacion_academica.escuela_programada_id')
+            ->join('programacion_secciones', 'solicitud.programacion_id', '=', 'programacion_secciones.id')
+            ->join('cursos', 'cursos.id', '=', 'programacion_secciones.curso_id')
+            ->selectRaw('cursos.id as curso_id, cursos.codigo, cursos.nombre as curso_nombre, programacion_secciones.escuela_programada_id, count(*) as total_solicitudes')
+            ->groupBy('cursos.id', 'cursos.codigo', 'cursos.nombre', 'programacion_secciones.escuela_programada_id')
             ->orderByDesc('total_solicitudes')
             ->limit(10)
             ->get()
@@ -280,11 +281,16 @@ class SolicitudController extends Controller
             $curso = $sols->first()->programacion->curso;
 
             // Todas las secciones programadas del curso en el periodo activo
-            $secciones = ProgramacionAcademica::where('curso_id', $cursoId)
-                ->whereHas('periodo', fn($q) => $q->where('activo', true))
-                ->with(['docente', 'aulaRelacion', 'escuelaProgramada'])
-                ->orderBy('grupo')
-                ->get()
+            $periodoActivo = Periodo::where('activo', true)->value('id');
+            $seccionesQuery = $periodoActivo
+                ? ProgramacionAcademica::periodo($periodoActivo)
+                    ->select('programacion_secciones.*')
+                    ->where('programacion_secciones.curso_id', $cursoId)
+                    ->with(['docente', 'aulaRelacion', 'escuelaProgramada'])
+                    ->orderBy('programacion_secciones.grupo')
+                : ProgramacionAcademica::whereRaw('0=1')
+                    ->with(['docente', 'aulaRelacion', 'escuelaProgramada']);
+            $secciones = $seccionesQuery->get()
                 ->map(fn($p) => [
                     'id'               => $p->id,
                     'grupo'            => $p->grupo,

@@ -608,8 +608,9 @@ class DbContextService
             $lines = ["DOCENTE: {$docente->nombre_completo}"];
 
             if ($periodo) {
-                $programaciones = ProgramacionAcademica::where('docente_id', $docente->id)
-                    ->where('periodo_id', $periodo->id)
+                $programaciones = ProgramacionAcademica::periodo($periodo->id)
+                    ->select('programacion_secciones.*')
+                    ->where('programacion_secciones.docente_id', $docente->id)
                     ->with(['curso', 'grupoHorario.detalles'])
                     ->get();
 
@@ -698,11 +699,11 @@ class DbContextService
         }
 
         // --- Modo 2: resumen general ---
-        $baseQuery = ProgramacionAcademica::where('periodo_id', $periodo->id);
+        $baseQuery = ProgramacionAcademica::periodo($periodo->id)->select('programacion_secciones.*');
         if ($escuelaId) {
             $baseQuery->whereExists(function ($sub) use ($escuelaId) {
                 $sub->from('programacion_escuelas')
-                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                     ->where('programacion_escuelas.escuela_id', $escuelaId);
             });
         }
@@ -888,8 +889,9 @@ class DbContextService
         bool    $fuzzy,
         ?string $escuelaId = null
     ): \Illuminate\Support\Collection {
-        $q = ProgramacionAcademica::with(['curso', 'docente', 'grupoHorario.detalles'])
-            ->where('periodo_id', $periodoId)
+        $q = ProgramacionAcademica::periodo($periodoId)
+            ->select('programacion_secciones.*')
+            ->with(['curso', 'docente', 'grupoHorario.detalles'])
             ->whereHas('curso', function ($q) use ($keywords, $fuzzy) {
                 $q->where(function ($inner) use ($keywords, $fuzzy) {
                     foreach ($keywords as $kw) {
@@ -913,7 +915,7 @@ class DbContextService
         if ($escuelaId) {
             $q->whereExists(function ($sub) use ($escuelaId) {
                 $sub->from('programacion_escuelas')
-                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                     ->where('programacion_escuelas.escuela_id', $escuelaId);
             });
         }

@@ -12,6 +12,7 @@ use App\Imports\ProgramacionHtmlImport;
 use App\Models\Curso;
 use App\Models\Escuela;
 use App\Models\GrupoHorario;
+use App\Models\Programacion;
 use App\Models\ProgramacionAcademica;
 use App\Services\ImportarDiffProgramacionService;
 use App\Services\ProgramacionService;
@@ -43,10 +44,11 @@ class ProgramacionController extends Controller
             return $this->success([], 'Sin periodo activo');
         }
 
-        $grupos = ProgramacionAcademica::where('periodo_id', $periodoId)
-            ->whereNotNull('grupo')
+        $grupos = ProgramacionAcademica::periodo($periodoId)
+            ->select('programacion_secciones.grupo')
+            ->whereNotNull('programacion_secciones.grupo')
             ->distinct()
-            ->pluck('grupo')
+            ->pluck('programacion_secciones.grupo')
             ->filter()
             ->sortBy(fn($g) => (int) preg_replace('/\D/', '', $g))
             ->values();
@@ -185,16 +187,16 @@ class ProgramacionController extends Controller
             $user      = $request->user();
             $escuelaId = $user?->escuela_id;
 
-            $query = \App\Models\ProgramacionAcademica::where('periodo_id', $periodoId)
+            $query = \App\Models\ProgramacionAcademica::periodo($periodoId)
                 ->with(['curso', 'docente', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas'])
-                ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
-                ->select('programacion_academica.*');
+                ->join('cursos', 'cursos.id', '=', 'programacion_secciones.curso_id')
+                ->select('programacion_secciones.*');
 
             // Solo mostrar cursos de OTRAS escuelas (no de la escuela propia del alumno)
             if ($escuelaId) {
                 $query->whereNotExists(function ($q) use ($escuelaId) {
                     $q->from('programacion_escuelas')
-                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                      ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                       ->where('programacion_escuelas.escuela_id', $escuelaId);
                 });
             }
@@ -287,8 +289,8 @@ class ProgramacionController extends Controller
             return $this->success([]);
         }
 
-        $secciones = ProgramacionAcademica::where('curso_id', $cursoId)
-            ->where('periodo_id', $periodoId)
+        $secciones = ProgramacionAcademica::periodo($periodoId)
+            ->where('programacion_secciones.curso_id', $cursoId)
             ->with(['docente', 'aulaRelacion', 'grupoHorario', 'escuelaProgramada'])
             ->orderByRaw('CAST(IFNULL(seccion, 0) AS UNSIGNED) ASC')
             ->get()
@@ -328,10 +330,19 @@ class ProgramacionController extends Controller
             $curso   = Curso::findOrFail($data['curso_id']);
             $created = [];
 
+            // Buscar la programación maestra publicada para este periodo
+            $progMaestro = Programacion::where('periodo_id', $data['periodo_id'])
+                ->where('estado', 'publicado')
+                ->first();
+
+            if (!$progMaestro) {
+                return $this->error('No existe una programación publicada para el periodo indicado.', 422);
+            }
+
             // Calcular el máximo número de sección existente para continuar la numeración
-            $maxSeccionExistente = ProgramacionAcademica::where('periodo_id', $data['periodo_id'])
-                ->where('curso_id', $data['curso_id'])
-                ->whereNotNull('seccion')
+            $maxSeccionExistente = ProgramacionAcademica::where('programacion_id', $progMaestro->id)
+                ->where('programacion_secciones.curso_id', $data['curso_id'])
+                ->whereNotNull('programacion_secciones.seccion')
                 ->get()
                 ->map(fn($p) => is_numeric($p->seccion) ? (int) $p->seccion : 0)
                 ->max() ?? 0;
@@ -344,7 +355,7 @@ class ProgramacionController extends Controller
 
                 if (!$grupoId || !$aulaId) continue;
 
-                $ocupadaBD = ProgramacionAcademica::where('periodo_id', $data['periodo_id'])
+                $ocupadaBD = ProgramacionAcademica::where('programacion_id', $progMaestro->id)
                     ->where('grupo_horario_id', $grupoId)
                     ->where('aula_id', $aulaId)
                     ->with(['curso', 'grupoHorario'])
@@ -386,7 +397,7 @@ class ProgramacionController extends Controller
                 $prog = ProgramacionAcademica::create([
                     'id'                   => $id,
                     'curso_id'             => $data['curso_id'],
-                    'periodo_id'           => $data['periodo_id'],
+                    'programacion_id'      => $progMaestro->id,
                     'docente_id'           => $seccionData['docente_id'] ?? null,
                     'aula_id'              => $seccionData['aula_id'] ?? null,
                     'grupo_horario_id'     => $seccionData['grupo_horario_id'] ?? null,
@@ -438,7 +449,7 @@ class ProgramacionController extends Controller
         try {
             // Verificar conflicto de grupo+aula (excluyendo el mismo registro)
             if (!empty($data['grupo_horario_id']) && !empty($data['aula_id'])) {
-                $conflicto = ProgramacionAcademica::where('periodo_id', $programacion->periodo_id)
+                $conflicto = ProgramacionAcademica::where('programacion_id', $programacion->programacion_id)
                     ->where('grupo_horario_id', $data['grupo_horario_id'])
                     ->where('aula_id', $data['aula_id'])
                     ->where('id', '!=', $id)
@@ -478,7 +489,7 @@ class ProgramacionController extends Controller
                 $programacion->escuelas()->sync($data['escuelas']);
             }
 
-            $programacion->load(['curso', 'docente', 'periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada']);
+            $programacion->load(['curso', 'docente', 'programacion.periodo', 'aulaRelacion.pabellon', 'grupoHorario.detalles', 'escuelas', 'escuelaProgramada']);
 
             return $this->success(
                 $this->transformer->toArray($programacion),

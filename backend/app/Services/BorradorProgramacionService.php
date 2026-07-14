@@ -8,7 +8,7 @@ use App\Models\BorradorSeccion;
 use App\Models\Escuela;
 use App\Models\ModificacionProgramacion;
 use App\Models\Plan;
-use App\Models\ProgramacionAcademica;
+use App\Models\ProgramacionSeccion;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -18,9 +18,6 @@ use Exception;
 
 class BorradorProgramacionService
 {
-    /**
-     * Lista borradores de un período, ordenados por fecha de creación desc.
-     */
     public function listar(string $periodoId): Collection
     {
         return BorradorProgramacion::with(['periodo', 'creadoPor'])
@@ -29,9 +26,6 @@ class BorradorProgramacionService
             ->get();
     }
 
-    /**
-     * Obtiene un borrador con todas sus secciones y sus relaciones.
-     */
     public function obtener(string $id): BorradorProgramacion
     {
         return BorradorProgramacion::with([
@@ -46,10 +40,6 @@ class BorradorProgramacionService
         ])->findOrFail($id);
     }
 
-    /**
-     * Genera un nuevo borrador con una sección 'A' por cada curso obligatorio
-     * del plan activo de cada escuela, según el tipo de ciclo (par/impar).
-     */
     public function generar(
         string $periodoId,
         string $cicloTipo,
@@ -90,17 +80,20 @@ class BorradorProgramacionService
 
                 foreach ($cursosDePlan as $cursoPlan) {
                     $base = [
-                        'borrador_id'      => $borrador->id,
-                        'curso_id'         => $cursoPlan->curso_id,
-                        'escuela_id'       => $escuela->id,
-                        'ciclo'            => $cursoPlan->ciclo,
-                        'tipo'             => 'O',
-                        'docente_id'       => null,
-                        'aula_id'          => null,
-                        'grupo_horario_id' => null,
-                        'capacidad'        => 30,
-                        'created_at'       => now(),
-                        'updated_at'       => now(),
+                        'programacion_id'     => $borrador->id,
+                        'curso_id'            => $cursoPlan->curso_id,
+                        'escuela_programada_id' => $escuela->id,
+                        'ciclo'               => $cursoPlan->ciclo,
+                        'tipo'                => 'O',
+                        'docente_id'          => null,
+                        'aula_id'             => null,
+                        'grupo_horario_id'    => null,
+                        'capacidad'           => 30,
+                        'n_inscritos'         => 0,
+                        'lleno_manual'        => false,
+                        'activo'              => true,
+                        'created_at'          => now(),
+                        'updated_at'          => now(),
                     ];
 
                     $secciones[] = array_merge($base, ['id' => (string) \Illuminate\Support\Str::uuid(), 'seccion' => '1']);
@@ -116,9 +109,6 @@ class BorradorProgramacionService
         });
     }
 
-    /**
-     * Crea un borrador importando la Matriz de Programación Académica (Excel/CSV).
-     */
     public function importarMatriz(
         string $periodoId,
         string $cicloTipo,
@@ -138,44 +128,41 @@ class BorradorProgramacionService
             $importer = new BorradorMatrizImport($borrador->id);
             Excel::import($importer, $file);
 
-            $resumen = $importer->getResumen();
-
             return [
                 'borrador' => $this->obtener($borrador->id),
-                'resumen'  => $resumen,
+                'resumen'  => $importer->getResumen(),
             ];
         });
     }
 
-    /**
-     * Agrega una sección manual (obligatorio extra o electivo) al borrador.
-     */
     public function agregarSeccion(BorradorProgramacion $borrador, array $data): BorradorSeccion
     {
         $this->verificarEditable($borrador);
 
-        // Siguiente número de sección para este curso dentro de la misma escuela
-        $total = BorradorSeccion::where('borrador_id', $borrador->id)
+        $total = BorradorSeccion::where('programacion_id', $borrador->id)
             ->where('curso_id', $data['curso_id'])
-            ->where('escuela_id', $data['escuela_id'])
+            ->where('escuela_programada_id', $data['escuela_id'] ?? $data['escuela_programada_id'])
             ->count();
 
-        $data['seccion'] = (string) ($total + 1);
-        $data['borrador_id'] = $borrador->id;
+        $data['seccion']         = (string) ($total + 1);
+        $data['programacion_id'] = $borrador->id;
+
+        // Normalizar campo escuela
+        if (isset($data['escuela_id']) && !isset($data['escuela_programada_id'])) {
+            $data['escuela_programada_id'] = $data['escuela_id'];
+            unset($data['escuela_id']);
+        }
 
         $seccion = BorradorSeccion::create($data);
 
         return $seccion->load(['curso', 'escuela', 'docente', 'aula.pabellon', 'grupoHorario.detalles']);
     }
 
-    /**
-     * Actualiza los datos de asignación de una sección (aula, horario, docente, capacidad).
-     */
     public function actualizarSeccion(BorradorProgramacion $borrador, string $seccionId, array $data): BorradorSeccion
     {
         $this->verificarEditable($borrador);
 
-        $seccion = BorradorSeccion::where('borrador_id', $borrador->id)
+        $seccion = BorradorSeccion::where('programacion_id', $borrador->id)
             ->findOrFail($seccionId);
 
         $campos = ['aula_id', 'grupo_horario_id', 'docente_id', 'capacidad'];
@@ -184,17 +171,13 @@ class BorradorProgramacionService
         return $seccion->load(['curso', 'escuela', 'docente', 'aula.pabellon', 'grupoHorario.detalles']);
     }
 
-    /**
-     * Actualización masiva de secciones (para drag & drop).
-     * Recibe array de [{ id, aula_id, grupo_horario_id }].
-     */
     public function bulkActualizar(BorradorProgramacion $borrador, array $cambios): void
     {
         $this->verificarEditable($borrador);
 
         DB::transaction(function () use ($borrador, $cambios) {
             foreach ($cambios as $cambio) {
-                BorradorSeccion::where('borrador_id', $borrador->id)
+                BorradorSeccion::where('programacion_id', $borrador->id)
                     ->where('id', $cambio['id'])
                     ->update([
                         'aula_id'          => $cambio['aula_id'] ?? null,
@@ -205,21 +188,19 @@ class BorradorProgramacionService
         });
     }
 
-    /**
-     * Elimina una sección del borrador.
-     */
     public function eliminarSeccion(BorradorProgramacion $borrador, string $seccionId): void
     {
         $this->verificarEditable($borrador);
 
-        BorradorSeccion::where('borrador_id', $borrador->id)
+        BorradorSeccion::where('programacion_id', $borrador->id)
             ->findOrFail($seccionId)
             ->delete();
     }
 
     /**
-     * Publica el borrador: crea registros en programacion_academica.
-     * Si ya existe una sección del mismo curso+escuela+seccion en el período, la omite.
+     * Publica el borrador: cambia estado a 'publicado'.
+     * En el nuevo modelo, las secciones ya existen en programacion_secciones;
+     * solo se cambia el estado y se asocian las escuelas habilitadas.
      */
     public function publicar(BorradorProgramacion $borrador, User $publicadoPor): BorradorProgramacion
     {
@@ -235,40 +216,11 @@ class BorradorProgramacionService
         }
 
         return DB::transaction(function () use ($borrador, $publicadoPor) {
-            $secciones = $borrador->secciones()->with('curso')->get();
-
-            foreach ($secciones as $seccion) {
-                // Evitar duplicados por curso + escuela_programada + seccion en el período
-                $existe = ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
-                    ->where('curso_id', $seccion->curso_id)
-                    ->where('escuela_programada_id', $seccion->escuela_id)
-                    ->where('seccion', $seccion->seccion)
-                    ->exists();
-
-                if ($existe) {
-                    continue;
+            // Asociar escuela_programada como escuela habilitada en cada sección
+            foreach ($borrador->secciones()->get() as $seccion) {
+                if ($seccion->escuela_programada_id) {
+                    $seccion->escuelas()->syncWithoutDetaching([$seccion->escuela_programada_id]);
                 }
-
-                $prog = ProgramacionAcademica::create([
-                    'curso_id'            => $seccion->curso_id,
-                    'periodo_id'          => $borrador->periodo_id,
-                    'docente_id'          => $seccion->docente_id,
-                    'aula_id'             => $seccion->aula_id,
-                    'grupo_horario_id'    => $seccion->grupo_horario_id,
-                    'seccion'             => $seccion->seccion,
-                    'ciclo'               => $seccion->ciclo,
-                    'capacidad'           => $seccion->capacidad,
-                    'n_inscritos'         => 0,
-                    'lleno_manual'        => false,
-                    'escuela_programada_id' => $seccion->escuela_id,
-                    'clave'               => null,
-                    'grupo'               => null,
-                    'aula'                => null,
-                    'n_acta'              => null,
-                ]);
-
-                // Asociar la escuela como escuela habilitada
-                $prog->escuelas()->attach($seccion->escuela_id);
             }
 
             $borrador->update([
@@ -282,8 +234,9 @@ class BorradorProgramacionService
     }
 
     /**
-     * Revierte un borrador publicado a estado 'borrador',
-     * eliminando los registros de programacion_academica que generó.
+     * Revierte un borrador publicado a estado 'borrador'.
+     * En el nuevo modelo solo se cambia el estado — las secciones permanecen
+     * pero se resetean los campos operativos (n_inscritos, lleno_manual).
      */
     public function revertir(BorradorProgramacion $borrador): BorradorProgramacion
     {
@@ -292,11 +245,25 @@ class BorradorProgramacionService
         }
 
         return DB::transaction(function () use ($borrador) {
-            // Desligar modificaciones de los programacion_academica antes de eliminarlos
+            $ids = $borrador->secciones()->pluck('id');
+
+            // Desligar modificaciones
             ModificacionProgramacion::where('borrador_id', $borrador->id)
                 ->update(['programacion_id' => null]);
 
-            $this->eliminarProgramacionAcademica($borrador);
+            // Limpiar datos operativos de inscripciones y solicitudes
+            if ($ids->isNotEmpty()) {
+                DB::table('solicitud')->whereIn('programacion_id', $ids)->delete();
+                DB::table('inscripciones')->whereIn('programacion_id', $ids)->delete();
+                DB::table('programacion_escuelas')->whereIn('programacion_id', $ids)->delete();
+            }
+
+            // Resetear campos operativos de las secciones
+            $borrador->secciones()->update([
+                'n_inscritos'  => 0,
+                'lleno_manual' => false,
+                'activo'       => true,
+            ]);
 
             $borrador->update([
                 'estado'        => 'borrador',
@@ -309,29 +276,34 @@ class BorradorProgramacionService
     }
 
     /**
-     * Elimina un borrador completo. Si está publicado, primero elimina
-     * los registros de programacion_academica que generó.
+     * Elimina un borrador completo junto con todas sus secciones (cascade).
      */
     public function eliminar(BorradorProgramacion $borrador): void
     {
         DB::transaction(function () use ($borrador) {
             if (!$borrador->esBorrador()) {
-                $this->eliminarProgramacionAcademica($borrador);
+                $ids = $borrador->secciones()->pluck('id');
+
+                if ($ids->isNotEmpty()) {
+                    ModificacionProgramacion::where('borrador_id', $borrador->id)
+                        ->update(['programacion_id' => null]);
+
+                    DB::table('solicitud')->whereIn('programacion_id', $ids)->delete();
+                    DB::table('inscripciones')->whereIn('programacion_id', $ids)->delete();
+                    DB::table('programacion_escuelas')->whereIn('programacion_id', $ids)->delete();
+                }
             }
-            $borrador->delete();
+
+            $borrador->delete(); // cascade elimina programacion_secciones y modificaciones
         });
     }
 
-    /**
-     * Orquesta la distribución automática de secciones del borrador.
-     * La lógica del algoritmo vive en AutoAsignadorProgramacion.
-     */
     public function autoAsignar(BorradorProgramacion $borrador): array
     {
         $this->verificarEditable($borrador);
 
         return DB::transaction(function () use ($borrador) {
-            $secciones = BorradorSeccion::where('borrador_id', $borrador->id)
+            $secciones = BorradorSeccion::where('programacion_id', $borrador->id)
                 ->with(['escuela', 'curso'])
                 ->get();
 
@@ -367,29 +339,6 @@ class BorradorProgramacionService
         }
     }
 
-    private function eliminarProgramacionAcademica(BorradorProgramacion $borrador): void
-    {
-        $secciones = $borrador->secciones()->get(['curso_id', 'escuela_id', 'seccion']);
-
-        if ($secciones->isEmpty()) {
-            return;
-        }
-
-        ProgramacionAcademica::where('periodo_id', $borrador->periodo_id)
-            ->where(function ($q) use ($secciones) {
-                foreach ($secciones as $s) {
-                    $q->orWhere(function ($sub) use ($s) {
-                        $sub->where('curso_id', $s->curso_id)
-                            ->where('escuela_programada_id', $s->escuela_id)
-                            ->where('seccion', $s->seccion);
-                    });
-                }
-            })->delete();
-    }
-
-    /**
-     * Persiste las asignaciones en una sola query (upsert) en lugar de N updates.
-     */
     private function persistirAsignaciones(Collection $secciones, array $asignaciones): void
     {
         $seccionesMap = $secciones->keyBy('id');
@@ -399,9 +348,9 @@ class BorradorProgramacionService
             $s = $seccionesMap[$seccionId];
             return [
                 'id'               => $s->id,
-                'borrador_id'      => $s->borrador_id,
+                'programacion_id'  => $s->programacion_id,
                 'curso_id'         => $s->curso_id,
-                'escuela_id'       => $s->escuela_id,
+                'escuela_programada_id' => $s->escuela_programada_id,
                 'ciclo'            => $s->ciclo,
                 'tipo'             => $s->tipo,
                 'seccion'          => $s->seccion,
@@ -420,5 +369,4 @@ class BorradorProgramacionService
             ['aula_id', 'grupo_horario_id', 'updated_at']
         );
     }
-
 }

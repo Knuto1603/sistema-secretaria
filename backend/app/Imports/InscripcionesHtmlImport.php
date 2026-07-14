@@ -300,8 +300,9 @@ class InscripcionesHtmlImport
         if ($clave && $semestre) {
             $periodo = $this->buscarPeriodo($semestre);
             if ($periodo) {
-                $prog = ProgramacionAcademica::where('clave', $clave)
-                    ->where('periodo_id', $periodo->id)
+                $prog = ProgramacionAcademica::periodo($periodo->id)
+                    ->select('programacion_secciones.*')
+                    ->where('programacion_secciones.clave', $clave)
                     ->first();
                 if ($prog) return $prog;
             }
@@ -313,8 +314,9 @@ class InscripcionesHtmlImport
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
-                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
-                        ->where('periodo_id', $periodo->id)
+                    $candidatos = ProgramacionAcademica::periodo($periodo->id)
+                        ->select('programacion_secciones.*')
+                        ->where('programacion_secciones.curso_id', $curso->id)
                         ->tap($matchSeccion)
                         ->whereHas('escuelas', fn ($q) => $q->where('escuelas.id', $escuela->id))
                         ->get();
@@ -329,8 +331,9 @@ class InscripcionesHtmlImport
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
-                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
-                        ->where('periodo_id', $periodo->id)
+                    $candidatos = ProgramacionAcademica::periodo($periodo->id)
+                        ->select('programacion_secciones.*')
+                        ->where('programacion_secciones.curso_id', $curso->id)
                         ->tap($matchSeccion)
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
@@ -344,8 +347,9 @@ class InscripcionesHtmlImport
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
-                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
-                        ->where('periodo_id', $periodo->id)
+                    $candidatos = ProgramacionAcademica::periodo($periodo->id)
+                        ->select('programacion_secciones.*')
+                        ->where('programacion_secciones.curso_id', $curso->id)
                         ->whereHas('escuelas', fn ($q) => $q->where('escuelas.id', $escuela->id))
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
@@ -359,8 +363,9 @@ class InscripcionesHtmlImport
             if ($periodo) {
                 $curso = Curso::where('codigo', $cursoCodigo)->first();
                 if ($curso) {
-                    $candidatos = ProgramacionAcademica::where('curso_id', $curso->id)
-                        ->where('periodo_id', $periodo->id)
+                    $candidatos = ProgramacionAcademica::periodo($periodo->id)
+                        ->select('programacion_secciones.*')
+                        ->where('programacion_secciones.curso_id', $curso->id)
                         ->get();
                     if ($candidatos->count() === 1) return $candidatos->first();
                 }

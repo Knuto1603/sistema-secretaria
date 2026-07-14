@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class BorradorProgramacion extends Model
+class Programacion extends Model
 {
     use HasUuids;
 
@@ -44,7 +44,7 @@ class BorradorProgramacion extends Model
 
     public function secciones(): HasMany
     {
-        return $this->hasMany(BorradorSeccion::class, 'programacion_id');
+        return $this->hasMany(ProgramacionSeccion::class, 'programacion_id');
     }
 
     public function modificaciones(): HasMany
@@ -55,5 +55,10 @@ class BorradorProgramacion extends Model
     public function esBorrador(): bool
     {
         return $this->estado === 'borrador';
+    }
+
+    public function estaPublicado(): bool
+    {
+        return $this->estado === 'publicado';
     }
 }

@@ -187,16 +187,16 @@ class BorradorMatrizImport implements ToCollection, WithHeadingRow
             $tipo           = in_array($tipoRaw, ['O', 'E']) ? $tipoRaw : 'O';
 
             BorradorSeccion::create([
-                'borrador_id'      => $this->borradorId,
-                'curso_id'         => $curso->id,
-                'escuela_id'       => $escuelaId,
-                'ciclo'            => $ciclo,
-                'tipo'             => $tipo,
-                'seccion'          => $seccion,
-                'docente_id'       => null,
-                'aula_id'          => $aulaId,
-                'grupo_horario_id' => $grupoHorarioId,
-                'capacidad'        => 40,
+                'programacion_id'      => $this->borradorId,
+                'curso_id'             => $curso->id,
+                'escuela_programada_id' => $escuelaId,
+                'ciclo'                => $ciclo,
+                'tipo'                 => $tipo,
+                'seccion'              => $seccion,
+                'docente_id'           => null,
+                'aula_id'              => $aulaId,
+                'grupo_horario_id'     => $grupoHorarioId,
+                'capacidad'            => 40,
             ]);
 
             $this->importados++;

@@ -14,7 +14,7 @@ class CreateSolicitudRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'programacion_id' => ['required', 'uuid', 'exists:programacion_academica,id'],
+            'programacion_id' => ['required', 'uuid', 'exists:programacion_secciones,id'],
             'motivo' => ['required', 'string', 'min:20'],
             'firma' => ['required', 'string'],
             'archivo_sustento' => ['nullable', 'file', 'mimes:pdf,jpg,png', 'max:2048'],

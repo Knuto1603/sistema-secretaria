@@ -9,6 +9,7 @@ use App\Imports\ProgramacionImport;
 use App\Imports\ProgramacionMatrizImport;
 use App\Models\Inscripcion;
 use App\Models\ProgramacionAcademica;
+use App\Models\ProgramacionSeccion;
 use App\Models\User;
 use App\Repositories\Contracts\PeriodoRepositoryInterface;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
@@ -71,14 +72,15 @@ class ProgramacionService
      */
     private function getCodigosEquivalentes(string $periodoId, string $escuelaId): array
     {
-        // Códigos de cursos asignados a la escuela del estudiante en este periodo
-        $codigosEscuela = ProgramacionAcademica::where('periodo_id', $periodoId)
+        $codigosEscuela = ProgramacionSeccion::join('programaciones', 'programaciones.id', '=', 'programacion_secciones.programacion_id')
+            ->join('cursos', 'cursos.id', '=', 'programacion_secciones.curso_id')
+            ->where('programaciones.periodo_id', $periodoId)
+            ->where('programaciones.estado', 'publicado')
             ->whereExists(function ($q) use ($escuelaId) {
                 $q->from('programacion_escuelas')
-                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                     ->where('programacion_escuelas.escuela_id', $escuelaId);
             })
-            ->join('cursos', 'cursos.id', '=', 'programacion_academica.curso_id')
             ->pluck('cursos.codigo')
             ->unique()
             ->values()
@@ -88,14 +90,15 @@ class ProgramacionService
             return [];
         }
 
-        // De esos mismos códigos, verificar cuáles tienen secciones en OTRA escuela
-        $codigosConOtraEscuela = ProgramacionAcademica::where('periodo_id', $periodoId)
+        $codigosConOtraEscuela = ProgramacionSeccion::join('programaciones', 'programaciones.id', '=', 'programacion_secciones.programacion_id')
+            ->join('cursos as c2', 'c2.id', '=', 'programacion_secciones.curso_id')
+            ->where('programaciones.periodo_id', $periodoId)
+            ->where('programaciones.estado', 'publicado')
             ->whereNotExists(function ($q) use ($escuelaId) {
                 $q->from('programacion_escuelas')
-                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_academica.id')
+                    ->whereColumn('programacion_escuelas.programacion_id', 'programacion_secciones.id')
                     ->where('programacion_escuelas.escuela_id', $escuelaId);
             })
-            ->join('cursos as c2', 'c2.id', '=', 'programacion_academica.curso_id')
             ->whereIn('c2.codigo', $codigosEscuela)
             ->pluck('c2.codigo')
             ->unique()
@@ -210,10 +213,10 @@ class ProgramacionService
             ->getBaseQuery($periodoId)
             ->where(function ($q) use ($inscritosProgramacionIds, $user) {
                 // Rama 1: secciones programadas para la escuela del alumno
-                $q->where('programacion_academica.escuela_programada_id', $user->escuela_id);
+                $q->where('programacion_secciones.escuela_programada_id', $user->escuela_id);
                 // Rama 2: cursos en los que ya está inscrito este periodo
                 if (!empty($inscritosProgramacionIds)) {
-                    $q->orWhereIn('programacion_academica.id', $inscritosProgramacionIds);
+                    $q->orWhereIn('programacion_secciones.id', $inscritosProgramacionIds);
                 }
             });
 
