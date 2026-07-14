@@ -290,12 +290,12 @@ class BorradorProgramacionController extends Controller
             'docente'          => $s->relationLoaded('docente') && $s->docente
                 ? ['id' => $s->docente->id, 'nombre_completo' => $s->docente->nombre_completo]
                 : null,
-            'aula'             => $s->relationLoaded('aula') && $s->aula ? [
-                'id'       => $s->aula->id,
-                'nombre'   => $s->aula->nombre,
-                'capacidad' => $s->aula->capacidad,
-                'pabellon' => $s->aula->relationLoaded('pabellon') && $s->aula->pabellon
-                    ? ['id' => $s->aula->pabellon->id, 'nombre' => $s->aula->pabellon->nombre]
+            'aula'             => ($s->relationLoaded('aulaRelacion') && $s->aulaRelacion) ? [
+                'id'       => $s->aulaRelacion->id,
+                'nombre'   => $s->aulaRelacion->nombre,
+                'capacidad' => $s->aulaRelacion->capacidad,
+                'pabellon' => ($s->aulaRelacion->relationLoaded('pabellon') && $s->aulaRelacion->pabellon)
+                    ? ['id' => $s->aulaRelacion->pabellon->id, 'nombre' => $s->aulaRelacion->pabellon->nombre]
                     : null,
             ] : null,
             'grupo_horario'    => $s->relationLoaded('grupoHorario') && $s->grupoHorario ? [

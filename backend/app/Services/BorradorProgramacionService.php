@@ -35,7 +35,7 @@ class BorradorProgramacionService
             'secciones.curso',
             'secciones.escuela',
             'secciones.docente',
-            'secciones.aula.pabellon',
+            'secciones.aulaRelacion.pabellon',
             'secciones.grupoHorario.detalles',
         ])->findOrFail($id);
     }

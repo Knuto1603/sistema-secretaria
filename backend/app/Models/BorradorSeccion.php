@@ -71,6 +71,11 @@ class BorradorSeccion extends Model
         return $this->belongsTo(Aula::class, 'aula_id');
     }
 
+    public function aulaRelacion(): BelongsTo
+    {
+        return $this->belongsTo(Aula::class, 'aula_id');
+    }
+
     public function grupoHorario(): BelongsTo
     {
         return $this->belongsTo(GrupoHorario::class, 'grupo_horario_id');
