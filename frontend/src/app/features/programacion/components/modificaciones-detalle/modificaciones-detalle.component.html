@@ -45,7 +45,7 @@
 @if (!cargando() && grupos().length > 0) {
   <div class="flex items-center gap-2 mb-5">
     <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full">
-      {{ grupos().length }} sección{{ grupos().length !== 1 ? 'es' : '' }} con cambios
+      {{ grupos().length }} tipo{{ grupos().length !== 1 ? 's' : '' }} de modificación
     </span>
     <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
       {{ totalPendientes() }} pendiente{{ totalPendientes() !== 1 ? 's' : '' }}
@@ -80,17 +80,15 @@
 <!-- Accordion de secciones con cambios -->
 @if (!cargando() && grupos().length > 0) {
   <div class="space-y-2">
-    @for (grupo of grupos(); track grupo.programacion_id) {
+    @for (grupo of grupos(); track grupo.tipo) {
       <div>
         <!-- Fila cabecera -->
         <button
           type="button"
           (click)="toggleExpandir(grupo)"
-          class="w-full flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 text-left transition-all hover:bg-slate-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 border-l-4"
+          class="w-full flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 text-left transition-all hover:bg-slate-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 border-l-4 {{ tipoInfo(grupo.tipo).borde }}"
           [class.rounded-lg]="!grupo.expandido"
-          [class.rounded-t-lg]="grupo.expandido"
-          [class.border-l-amber-400]="tienePendientes(grupo)"
-          [class.border-l-emerald-400]="soloDocumentadas(grupo)">
+          [class.rounded-t-lg]="grupo.expandido">
 
           <!-- Flecha -->
           <svg
@@ -100,28 +98,19 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
 
-          <!-- Código + nombre -->
-          <div class="w-44 shrink-0 min-w-0">
-            <p class="text-xs font-bold text-slate-800 leading-tight">{{ grupo.curso_codigo }}</p>
-            <p class="text-[10px] text-slate-500 truncate" [title]="grupo.curso_nombre">
-              {{ grupo.curso_nombre }}
-            </p>
-          </div>
+          <!-- Tipo -->
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 {{ tipoInfo(grupo.tipo).color }}">
+            {{ tipoInfo(grupo.tipo).label }}
+          </span>
 
-          <!-- Sección y ciclo -->
-          <span class="text-xs text-slate-600 shrink-0">Sec.&nbsp;{{ grupo.seccion }}</span>
-          @if (grupo.ciclo) {
-            <span class="text-[10px] text-slate-400 shrink-0">Ciclo&nbsp;{{ grupo.ciclo }}</span>
-          }
-
-          <!-- Badge de modificaciones -->
+          <!-- Badges de conteo -->
           <div class="ml-auto flex items-center gap-2 shrink-0">
             @if (tienePendientes(grupo)) {
               <span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold">
                 {{ pendientesCount(grupo) }} pendiente{{ pendientesCount(grupo) !== 1 ? 's' : '' }}
               </span>
             }
-            <span class="px-2.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-[10px] font-bold">
+            <span class="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold">
               {{ grupo.modificaciones.length }} cambio{{ grupo.modificaciones.length !== 1 ? 's' : '' }}
             </span>
           </div>
@@ -133,7 +122,7 @@
             <table class="w-full text-xs">
               <thead>
                 <tr class="border-b border-slate-200 bg-slate-100/70">
-                  <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Tipo</th>
+                  <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Sección</th>
                   <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Cambio</th>
                   <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden md:table-cell">Motivo</th>
                   <th class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden sm:table-cell">Usuario</th>
@@ -144,10 +133,8 @@
               <tbody>
                 @for (mod of grupo.modificaciones; track mod.id) {
                   <tr class="border-b border-slate-100 last:border-0 hover:bg-white/60 transition-colors">
-                    <td class="px-3 py-2">
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ tipoInfo(mod.tipo).color }}">
-                        {{ tipoInfo(mod.tipo).label }}
-                      </span>
+                    <td class="px-3 py-2 text-slate-700 font-medium whitespace-nowrap">
+                      {{ seccionLabel(mod) }}
                     </td>
                     <td class="px-3 py-2 text-slate-600 max-w-[200px]">
                       <p class="truncate" [title]="cambioResumen(mod)">{{ cambioResumen(mod) }}</p>
