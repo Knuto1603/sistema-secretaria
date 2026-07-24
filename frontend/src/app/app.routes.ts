@@ -3,6 +3,7 @@ import { LoginComponent } from './core/auth/components/login/login.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { authGuard } from './core/auth/guards/auth.guard';
 import { guestGuard } from './core/auth/guards/guest.guard';
+import { developerGuard } from './features/developer/guards/developer.guard';
 
 /**
  * Configuración de rutas principal.
@@ -50,9 +51,10 @@ export const routes: Routes = [
           path: 'solicitudes',
          loadChildren: () => import('./features/solicitudes/components/solicitudes.routes').then(m => m.routes),
        },
-       { 
-         path: 'chatbot', 
-         loadComponent: () => import('./features/chatbot/components/chatbot/chatbot.component').then(m => m.ChatbotComponent) 
+       {
+         path: 'chatbot',
+         loadComponent: () => import('./features/chatbot/components/chatbot/chatbot.component').then(m => m.ChatbotComponent),
+         canActivate: [developerGuard]
        },
        {
          path: 'analitica',

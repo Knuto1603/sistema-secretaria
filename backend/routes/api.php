@@ -488,18 +488,17 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         });
 
     // =============================================
-    // CHATBOT (todos los autenticados)
+    // CHATBOT (solo developer)
     // =============================================
-    Route::prefix('chatbot')->group(function () {
+    Route::prefix('chatbot')->middleware('role:developer')->group(function () {
         Route::get('conversations', [ChatbotController::class, 'conversations']);
         Route::post('conversations', [ChatbotController::class, 'newConversation']);
         Route::get('conversations/{id}', [ChatbotController::class, 'conversation']);
         Route::post('conversations/{id}/messages', [ChatbotController::class, 'sendMessage']);
         Route::delete('conversations/{id}', [ChatbotController::class, 'deleteConversation']);
 
-        // Analytics (admin, secretaria, developer)
-        Route::middleware('role:admin|secretaria|secretario academico|decano|developer')
-            ->prefix('analytics')
+        // Analytics (heredan role:developer del grupo padre)
+        Route::prefix('analytics')
             ->group(function () {
                 Route::get('top-topics', [ChatAnalyticsController::class, 'topTopics']);
                 Route::get('knowledge-gaps', [ChatAnalyticsController::class, 'knowledgeGaps']);
