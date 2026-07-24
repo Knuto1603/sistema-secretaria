@@ -201,7 +201,7 @@ class SolicitudController extends Controller
 
         // Cursos más solicitados agrupados por curso (no por sección)
         $cursosTop = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada', 'tipoSolicitud'])
-            ->whereNotNull('programacion_id')
+            ->whereNotNull('solicitud.programacion_id')
             ->join('programacion_secciones', 'solicitud.programacion_id', '=', 'programacion_secciones.id')
             ->join('cursos', 'cursos.id', '=', 'programacion_secciones.curso_id')
             ->selectRaw('cursos.id as curso_id, cursos.codigo, cursos.nombre as curso_nombre, programacion_secciones.escuela_programada_id, count(*) as total_solicitudes')
