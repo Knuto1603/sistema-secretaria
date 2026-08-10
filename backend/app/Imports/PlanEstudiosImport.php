@@ -69,6 +69,16 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     $tipo = 'O';
                 }
 
+                // Códigos de requisito de esta fila (se guardan tal cual para mostrarlos en
+                // la UI, y además se resuelven al final contra cursos reales para la relación).
+                $codigoRequisito = trim((string) ($row['requisitos'] ?? ''));
+                $codigos = $codigoRequisito !== ''
+                    ? array_values(array_filter(array_map('trim', explode(',', $codigoRequisito))))
+                    : [];
+                if (!empty($codigos)) {
+                    $this->requisitosMap[$codigoCurso] = $codigos;
+                }
+
                 $updateData = [
                     'escuela_id'      => $escuela->id,
                     'ciclo'           => $row['ciclo'] ?? null,
@@ -76,6 +86,7 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     'tipo'            => $tipo,
                     'horas_teoricas'  => $row['ht_semanal'] ?? null,
                     'horas_practicas' => $row['hp_semanal'] ?? null,
+                    'requisitos'      => $codigos,
                 ];
                 if ($planId) {
                     $updateData['plan_id'] = $planId;
@@ -87,15 +98,6 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     : ['escuela_id' => $escuela->id, 'curso_id' => $curso->id];
 
                 PlanEstudios::updateOrCreate($whereClause, $updateData);
-
-                // Guardar requisitos para resolverlos al final (todos los cursos deben existir)
-                $codigoRequisito = trim((string) ($row['requisitos'] ?? ''));
-                if ($codigoRequisito !== '') {
-                    $codigos = array_values(array_filter(array_map('trim', explode(',', $codigoRequisito))));
-                    if (!empty($codigos)) {
-                        $this->requisitosMap[$codigoCurso] = $codigos;
-                    }
-                }
 
                 $this->resultados[] = [
                     'fila'    => $fila,
