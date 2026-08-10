@@ -40,7 +40,11 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // 2000s: por encima del timeout más largo de nuestros jobs en background
+            // (ProcessHistorialesZipJob = 1800s). Si queda corto, el driver de cola
+            // da por "abandonado" un job que en realidad sigue corriendo y lo vuelve
+            // a entregar a un worker, reiniciándolo en loop sin que nunca termine.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 2000),
             'after_commit' => false,
         ],
 

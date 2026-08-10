@@ -16,8 +16,8 @@ class ProcessEstudianteReporteMatriculaImportJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** Tiempo máximo de ejecución: 15 minutos. */
-    public int $timeout = 900;
+    /** Tiempo máximo de ejecución: 30 minutos. */
+    public int $timeout = 1800;
 
     /** Sin reintentos automáticos. */
     public int $tries = 1;
@@ -29,6 +29,11 @@ class ProcessEstudianteReporteMatriculaImportJob implements ShouldQueue
 
     public function handle(): void
     {
+        // El php.ini del contenedor limita max_execution_time/memory_limit pensando
+        // en requests web; este proceso corre en el worker de cola y necesita más margen.
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+
         $importJob = ImportJob::find($this->importJobId);
 
         if (!$importJob) {
@@ -69,6 +74,23 @@ class ProcessEstudianteReporteMatriculaImportJob implements ShouldQueue
             if (Storage::disk('local')->exists($this->storedPath)) {
                 Storage::disk('local')->delete($this->storedPath);
             }
+        }
+    }
+
+    /**
+     * Se invoca cuando Laravel mata el job por timeout (pcntl) o por agotar
+     * los intentos. Sin esto, el ImportJob se queda colgado en "procesando"
+     * para siempre porque el proceso muere antes de llegar al catch de handle().
+     */
+    public function failed(\Throwable $exception): void
+    {
+        ImportJob::find($this->importJobId)?->update([
+            'estado'        => 'fallido',
+            'error_mensaje' => $exception->getMessage(),
+        ]);
+
+        if (Storage::disk('local')->exists($this->storedPath)) {
+            Storage::disk('local')->delete($this->storedPath);
         }
     }
 }
