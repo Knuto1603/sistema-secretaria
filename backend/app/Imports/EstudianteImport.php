@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Spatie\Permission\Models\Role;
 
 class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
 {
@@ -16,6 +17,8 @@ class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
 
     public function collection(Collection $rows): void
     {
+        $rolEstudiante = Role::where('name', 'estudiante')->where('guard_name', 'web')->first();
+
         foreach ($rows as $index => $row) {
             $fila = $index + 2; // +2 porque la fila 1 es el header
 
@@ -45,15 +48,21 @@ class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
                     continue;
                 }
 
-                User::create([
+                $user = User::create([
                     'name'                  => trim((string) $row['nombre']),
                     'codigo_universitario'  => $codigo,
+                    'email'                 => User::generarEmailEstudiante($codigo),
                     'escuela_id'            => $escuela->id,
                     'anio_ingreso'          => $row['anio_ingreso'] ? (int) $row['anio_ingreso'] : null,
                     'tipo_usuario'          => 'estudiante',
                     'password'              => Hash::make($codigo), // password temporal = código
+                    'password_set_at'       => now(),
                     'activo'                => true,
                 ]);
+
+                if ($rolEstudiante) {
+                    $user->assignRole($rolEstudiante);
+                }
 
                 $this->resultados[] = [
                     'fila'    => $fila,
