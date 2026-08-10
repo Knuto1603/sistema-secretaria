@@ -123,6 +123,27 @@
         }
         <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoSeleccionado($event)" />
       </label>
+
+      <!-- Importar reporte de matrícula SIGA (password = DNI) -->
+      <label class="flex items-center gap-1.5 px-3 py-2.5 text-sm text-emerald-700 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors cursor-pointer"
+        title="Reporte 'Matriculados por Periodo y Promoción' de SIGA. La contraseña inicial de cada alumno será su DNI."
+        [class.opacity-60]="importandoReporte()"
+        [class.pointer-events-none]="importandoReporte()">
+        @if (importandoReporte()) {
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Importando...
+        } @else {
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Reporte matrícula SIGA
+        }
+        <input type="file" accept=".xlsx,.xls" class="hidden" (change)="onArchivoReporteSeleccionado($event)" />
+      </label>
     </div>
 
   <!-- Formulario: Nuevo estudiante -->

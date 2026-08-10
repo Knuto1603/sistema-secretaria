@@ -74,6 +74,9 @@ export class EstudiantesListaComponent implements OnInit {
   importandoHtml = signal(false);
   importHtmlMensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
+  // Import Reporte Matrícula (SIGA, password = DNI)
+  importandoReporte = signal(false);
+
   // Filtros
   search = '';
   escuelaFilter = '';
@@ -370,6 +373,31 @@ export class EstudiantesListaComponent implements OnInit {
 
   cerrarImportResultado(): void {
     this.importResultado.set(null);
+  }
+
+  onArchivoReporteSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    this.importandoReporte.set(true);
+    this.importResultado.set(null);
+
+    this.usuarioService.importarReporteMatricula(archivo).subscribe({
+      next: (resultado) => {
+        this.importResultado.set(resultado);
+        this.importandoReporte.set(false);
+        if (resultado.resumen.importados > 0) {
+          this.cargarDatos();
+        }
+        input.value = '';
+      },
+      error: (err) => {
+        this.mostrarMensaje('error', err.error?.message || 'Error al importar el reporte de matrícula');
+        this.importandoReporte.set(false);
+        input.value = '';
+      }
+    });
   }
 
   onArchivoHtmlSeleccionado(event: Event): void {

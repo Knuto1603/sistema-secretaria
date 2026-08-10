@@ -328,6 +328,18 @@ export class UsuarioService {
     ).pipe(map(response => response.data));
   }
 
+  /**
+   * Importa estudiantes desde el reporte SIGA "Matriculados por Periodo y Promoción".
+   * La contraseña inicial de cada estudiante creado es su número de documento (DNI).
+   */
+  importarReporteMatricula(archivo: File): Observable<{ resumen: ImportResumen; resultados: ImportFila[] }> {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    return this.http.post<ApiResponse<{ resumen: ImportResumen; resultados: ImportFila[] }>>(
+      `${this.baseUrl}/estudiantes/import-reporte-matricula`, form
+    ).pipe(map(response => response.data));
+  }
+
   descargarPlantillaEstudiantes(): void {
     this.http.get(`${this.baseUrl}/estudiantes/import/template`, { responseType: 'blob' }).subscribe(blob => {
       const url = URL.createObjectURL(blob);
