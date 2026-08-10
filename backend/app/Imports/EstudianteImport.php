@@ -24,14 +24,15 @@ class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
 
             try {
                 $codigo = trim((string) $row['codigo_universitario']);
+                $email  = User::generarEmailEstudiante($codigo);
 
-                // Verificar si ya existe
-                if (User::where('codigo_universitario', $codigo)->exists()) {
+                // Verificar si ya existe (por código o por el email que se derivaría de él)
+                if (User::where('codigo_universitario', $codigo)->orWhere('email', $email)->exists()) {
                     $this->resultados[] = [
                         'fila'    => $fila,
                         'codigo'  => $codigo,
                         'estado'  => 'omitido',
-                        'mensaje' => 'El código ya existe',
+                        'mensaje' => 'El código o el email ya existen',
                     ];
                     continue;
                 }
@@ -51,7 +52,7 @@ class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
                 $user = User::create([
                     'name'                  => trim((string) $row['nombre']),
                     'codigo_universitario'  => $codigo,
-                    'email'                 => User::generarEmailEstudiante($codigo),
+                    'email'                 => $email,
                     'escuela_id'            => $escuela->id,
                     'anio_ingreso'          => $row['anio_ingreso'] ? (int) $row['anio_ingreso'] : null,
                     'tipo_usuario'          => 'estudiante',

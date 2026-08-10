@@ -70,12 +70,15 @@ class EstudianteReporteMatriculaImport
             return;
         }
 
-        if (User::where('codigo_universitario', $codigo)->exists()) {
+        $email = User::generarEmailEstudiante($codigo);
+
+        // Verificar si ya existe (por código o por el email que se derivaría de él)
+        if (User::where('codigo_universitario', $codigo)->orWhere('email', $email)->exists()) {
             $this->resultados[] = [
                 'fila'    => $fila,
                 'codigo'  => $codigo,
                 'estado'  => 'omitido',
-                'mensaje' => 'El código ya existe.',
+                'mensaje' => 'El código o el email ya existen.',
             ];
             return;
         }
@@ -96,7 +99,7 @@ class EstudianteReporteMatriculaImport
             $user = User::create([
                 'name'                 => $this->formatearNombre($nombreCrudo),
                 'codigo_universitario' => $codigo,
-                'email'                => User::generarEmailEstudiante($codigo),
+                'email'                => $email,
                 'escuela_id'           => $escuela->id,
                 'tipo_usuario'         => 'estudiante',
                 'password'             => Hash::make($documento),
