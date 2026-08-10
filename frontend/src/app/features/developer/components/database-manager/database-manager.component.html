@@ -127,6 +127,73 @@
     </button>
   </div>
 
+  <!-- Limpiar estudiantes -->
+  <div class="bg-white border border-red-200 rounded-md p-6 mb-5 shadow-sm">
+    <div class="flex items-start gap-4 mb-5">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100 text-red-600 shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="font-bold text-slate-800 mb-1">Eliminar Todos los Estudiantes</h2>
+        <p class="text-sm text-slate-500">Borra todos los usuarios con tipo <code class="bg-slate-100 px-1 rounded text-xs">estudiante</code> y sus datos asociados. Pensado para limpiar datos de prueba antes de una carga masiva real.</p>
+      </div>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="mb-5 flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-md">
+      <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div class="text-sm text-amber-800">
+        <p class="font-semibold mb-1">Operación destructiva e irreversible</p>
+        <p>Se eliminan también en cascada: historial académico, inscripciones, solicitudes, OTPs y conversaciones de chatbot de cada estudiante. No afecta a usuarios administrativos ni developer.</p>
+      </div>
+    </div>
+
+    <!-- Frase de confirmación -->
+    <div class="mb-5">
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">
+        Escribe <span class="font-mono font-bold text-red-700">{{ FRASE_LIMPIAR_ESTUDIANTES }}</span> para confirmar
+      </label>
+      <input type="text" [ngModel]="confirmacionLimpiarEstudiantes()" (ngModelChange)="confirmacionLimpiarEstudiantes.set($event)"
+        placeholder="Escribe la frase exacta..."
+        class="w-full px-3 py-2 text-sm border rounded-md outline-none transition-colors
+               border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100" />
+    </div>
+
+    @if (limpiarEstudiantesError()) {
+      <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+        {{ limpiarEstudiantesError() }}
+      </div>
+    }
+
+    @if (limpiarEstudiantesExito()) {
+      <div class="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded text-sm text-emerald-800">
+        Se eliminaron {{ limpiarEstudiantesExito()!.eliminados }} estudiante(s) correctamente.
+      </div>
+    }
+
+    <button (click)="limpiarEstudiantes()" [disabled]="!puedeLimpiarEstudiantes()"
+      class="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-md
+             hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+      @if (limpiandoEstudiantes()) {
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        Eliminando...
+      } @else {
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Eliminar todos los estudiantes
+      }
+    </button>
+  </div>
+
   <!-- Backups automáticos -->
   <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
     <div class="flex items-center justify-between mb-4">

@@ -127,6 +127,12 @@ export class DeveloperService {
     return this.http.get(`${this.api}/database/backups/${filename}`, { responseType: 'blob' });
   }
 
+  limpiarEstudiantes(confirmacion: string): Observable<{ eliminados: number }> {
+    return this.http
+      .post<ApiResponse<{ eliminados: number }>>(`${this.api}/estudiantes/limpiar`, { confirmacion })
+      .pipe(map(r => r.data));
+  }
+
   getErrorLogs(params: Record<string, string | number> = {}): Observable<{
     items: ErrorLogItem[];
     total: number;
