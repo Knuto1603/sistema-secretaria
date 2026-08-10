@@ -13,6 +13,7 @@ export interface User {
   escuela: string | null;
   anio_ingreso: number | null;
   ultima_actualizacion_historial: string | null;
+  must_change_password: boolean;
   roles: string[];
   permissions: string[];
 }

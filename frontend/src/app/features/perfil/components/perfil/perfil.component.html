@@ -25,6 +25,16 @@
     </div>
   </div>
 
+  <!-- Aviso cambio de contraseña obligatorio -->
+  @if (cambioObligatorio()) {
+    <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-700 font-medium">
+      <svg class="w-5 h-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      Estás usando una contraseña temporal. Debes establecer una nueva antes de continuar.
+    </div>
+  }
+
   <!-- Aviso impersonación -->
   @if (esImpersonando()) {
     <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-700 font-medium">
@@ -41,6 +51,8 @@
       <button
         (click)="setTab('datos')"
         class="px-6 py-4 text-sm font-semibold transition-colors"
+        [class.opacity-40]="cambioObligatorio()"
+        [class.cursor-not-allowed]="cambioObligatorio()"
         [class.text-indigo-600]="tabActiva() === 'datos'"
         [class.border-b-2]="tabActiva() === 'datos'"
         [class.border-indigo-600]="tabActiva() === 'datos'"
@@ -62,6 +74,8 @@
         <button
           (click)="setTab('historial')"
           class="px-6 py-4 text-sm font-semibold transition-colors"
+          [class.opacity-40]="cambioObligatorio()"
+          [class.cursor-not-allowed]="cambioObligatorio()"
           [class.text-indigo-600]="tabActiva() === 'historial'"
           [class.border-b-2]="tabActiva() === 'historial'"
           [class.border-indigo-600]="tabActiva() === 'historial'"
@@ -76,6 +90,8 @@
         <button
           (click)="setTab('progreso')"
           class="px-6 py-4 text-sm font-semibold transition-colors"
+          [class.opacity-40]="cambioObligatorio()"
+          [class.cursor-not-allowed]="cambioObligatorio()"
           [class.text-indigo-600]="tabActiva() === 'progreso'"
           [class.border-b-2]="tabActiva() === 'progreso'"
           [class.border-indigo-600]="tabActiva() === 'progreso'"

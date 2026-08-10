@@ -31,9 +31,10 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   {
-    path: 'app', 
+    path: 'app',
     component: MainLayoutComponent,
     canActivate: [authGuard], // Si no ha iniciado sesión, lo redirige al login
+    canActivateChild: [authGuard], // Repite la verificación al navegar entre secciones internas
     children: [
        { 
          path: 'home', 

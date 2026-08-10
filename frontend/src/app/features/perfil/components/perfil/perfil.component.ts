@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '@core/auth/services/auth.service';
 import { HistorialService, HistorialResponse, ImportPdfResumen } from '@core/services/historial.service';
 import { ProgresoService, ProgresoAcademico } from '@core/services/progreso.service';
@@ -18,12 +19,14 @@ export class PerfilComponent implements OnInit {
   private authService      = inject(AuthService);
   private historialService = inject(HistorialService);
   private progresoService  = inject(ProgresoService);
+  private route             = inject(ActivatedRoute);
 
   user    = this.authService.currentUser;
   tabActiva = signal<Tab>('datos');
 
   esEstudiante    = computed(() => this.authService.isEstudiante());
   esImpersonando  = computed(() => this.authService.isImpersonating());
+  cambioObligatorio = computed(() => this.user()?.must_change_password ?? false);
 
   // Cambio de contraseña
   passwordActual     = '';
@@ -51,6 +54,9 @@ export class PerfilComponent implements OnInit {
     if (this.esEstudiante()) {
       this.cargarHistorial();
     }
+    if (this.cambioObligatorio() || this.route.snapshot.queryParamMap.get('cambio_obligatorio') === '1') {
+      this.tabActiva.set('password');
+    }
   }
 
   cargarProgreso(): void {
@@ -66,6 +72,7 @@ export class PerfilComponent implements OnInit {
   }
 
   setTab(tab: Tab): void {
+    if (this.cambioObligatorio() && tab !== 'password') return;
     this.tabActiva.set(tab);
     this.mensaje.set(null);
     this.mensajeHistorial.set(null);
@@ -101,6 +108,7 @@ export class PerfilComponent implements OnInit {
         this.passwordNuevo     = '';
         this.passwordConfirmar = '';
         this.loadingPassword.set(false);
+        this.authService.patchCurrentUser({ must_change_password: false });
       },
       error: (err) => {
         const msg = err?.error?.message || 'Error al cambiar la contraseña.';
