@@ -47,6 +47,9 @@ export class PlanEstudiosComponent implements OnInit {
   nuevoPlanCredE = 0;
   creandoPlan = signal(false);
 
+  // Archivo Excel en espera de que se cree un plan activo (cuando no hay ninguno)
+  archivoPendiente = signal<File | null>(null);
+
   // ── Edición de plan ──────────────────────────────────────────────────────
 
   editandoPlan = signal<PlanVersion | null>(null);
@@ -241,17 +244,39 @@ export class PlanEstudiosComponent implements OnInit {
 
   cerrarFormNuevoPlan(): void {
     this.mostrarFormNuevoPlan.set(false);
+    this.archivoPendiente.set(null);
   }
 
   crearPlan(): void {
     if (!this.nuevoPlanNombre.trim()) return;
     this.creandoPlan.set(true);
+    const archivoPendiente = this.archivoPendiente();
+
     this.service.crearPlan(this.escuelaSeleccionada(), this.nuevoPlanNombre, this.nuevoPlanCredO, this.nuevoPlanCredE).subscribe({
       next: (plan) => {
-        this.mostrarMensaje('success', `Plan "${plan.nombre}" creado`);
         this.creandoPlan.set(false);
-        this.cerrarFormNuevoPlan();
+        this.mostrarFormNuevoPlan.set(false);
+        this.archivoPendiente.set(null);
         this.cargarPlanes();
+
+        if (!archivoPendiente) {
+          this.mostrarMensaje('success', `Plan "${plan.nombre}" creado`);
+          return;
+        }
+
+        // Este plan se creó para poder importar el Excel pendiente: lo activamos
+        // (no había ningún plan activo para la escuela) y recién ahí importamos.
+        this.service.activarPlan(plan.id).subscribe({
+          next: () => {
+            this.mostrarMensaje('success', `Plan "${plan.nombre}" creado y activado. Importando cursos...`);
+            this.cargarPlan();
+            this.cargarPlanes();
+            this.ejecutarImportExcel(archivoPendiente, plan.id);
+          },
+          error: (err) => {
+            this.mostrarMensaje('error', err.error?.message || 'El plan se creó pero no se pudo activar. Actívalo manualmente e importa de nuevo.');
+          },
+        });
       },
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al crear el plan');
@@ -280,13 +305,24 @@ export class PlanEstudiosComponent implements OnInit {
   onArchivoSeleccionado(event: Event): void {
     const input = event.target as HTMLInputElement;
     const archivo = input.files?.[0];
+    input.value = ''; // reset ya, el archivo queda referenciado en memoria
     if (!archivo) return;
 
+    // Sin plan activo para esta escuela: primero pedimos crearlo, y recién
+    // con ese plan creado (y activado) importamos los cursos del Excel.
+    if (!this.plan()?.plan) {
+      this.archivoPendiente.set(archivo);
+      this.abrirFormNuevoPlan();
+      return;
+    }
+
+    this.ejecutarImportExcel(archivo, this.plan()!.plan!.id);
+  }
+
+  private ejecutarImportExcel(archivo: File, planId?: string): void {
     this.importando.set(true);
     this.importResultado.set(null);
     this.importPdfResultado.set(null);
-
-    const planId = this.plan()?.plan?.id;
 
     this.service.importar(this.escuelaSeleccionada(), archivo, planId).subscribe({
       next: (resultado) => {
@@ -296,12 +332,10 @@ export class PlanEstudiosComponent implements OnInit {
           this.cargarPlan();
           this.cargarPlanes();
         }
-        input.value = '';
       },
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al importar el archivo');
         this.importando.set(false);
-        input.value = '';
       },
     });
   }
