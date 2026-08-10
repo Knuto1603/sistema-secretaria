@@ -576,5 +576,6 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             Route::post('database/import', [DevController::class, 'importDatabase']);
             Route::get('database/backups', [DevController::class, 'listBackups']);
             Route::get('database/backups/{filename}', [DevController::class, 'downloadBackup']);
+            Route::post('estudiantes/limpiar', [DevController::class, 'limpiarEstudiantes']);
         });
 });

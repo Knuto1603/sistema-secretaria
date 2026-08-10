@@ -161,6 +161,33 @@ class DevService
     }
 
     // =========================================================================
+    // ESTUDIANTES (mantenimiento / pruebas)
+    // =========================================================================
+
+    /**
+     * Elimina TODOS los usuarios estudiante. Uso pensado para limpiar
+     * datos de prueba antes de una carga masiva real. Los tokens de
+     * acceso de esos usuarios se eliminan primero; el resto de sus
+     * datos relacionados (historial, inscripciones, solicitudes, OTPs,
+     * conversaciones de chatbot) se borra en cascada por FK.
+     */
+    public function limpiarEstudiantes(): int
+    {
+        $ids = User::estudiantes()->pluck('id');
+
+        if ($ids->isEmpty()) {
+            return 0;
+        }
+
+        DB::table('personal_access_tokens')
+            ->where('tokenable_type', User::class)
+            ->whereIn('tokenable_id', $ids)
+            ->delete();
+
+        return User::whereIn('id', $ids)->delete();
+    }
+
+    // =========================================================================
     // ROUTES
     // =========================================================================
 

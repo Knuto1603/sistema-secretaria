@@ -256,6 +256,38 @@ class DevController extends Controller
     }
 
     // =========================================================================
+    // POST /dev/estudiantes/limpiar
+    // =========================================================================
+    public function limpiarEstudiantes(Request $request): JsonResponse
+    {
+        $request->validate([
+            'confirmacion' => 'required|string',
+        ]);
+
+        if ($request->input('confirmacion') !== 'ELIMINAR TODOS LOS ESTUDIANTES') {
+            return $this->error('Frase de confirmación incorrecta', 422);
+        }
+
+        try {
+            $eliminados = $this->devService->limpiarEstudiantes();
+
+            ActivityLog::create([
+                'user_id'            => Auth::id(),
+                'accion'             => 'limpiar_estudiantes',
+                'modelo'             => 'User',
+                'modelo_id'          => null,
+                'valores_anteriores' => ['total_eliminados' => $eliminados],
+                'valores_nuevos'     => null,
+                'ip'                 => $request->ip(),
+            ]);
+
+            return $this->success(['eliminados' => $eliminados], "Se eliminaron {$eliminados} estudiante(s)");
+        } catch (Throwable $e) {
+            return $this->error('Error al eliminar los estudiantes: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // =========================================================================
     // GET /dev/database/backups
     // =========================================================================
     public function listBackups(): JsonResponse
