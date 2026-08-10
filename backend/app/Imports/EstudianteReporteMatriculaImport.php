@@ -101,6 +101,7 @@ class EstudianteReporteMatriculaImport
                 'tipo_usuario'         => 'estudiante',
                 'password'             => Hash::make($documento),
                 'password_set_at'      => now(),
+                'must_change_password' => true,
                 'activo'               => true,
             ]);
 

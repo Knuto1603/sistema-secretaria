@@ -17,6 +17,7 @@ class AuthenticatedUserDTO
         public readonly ?string $escuela,
         public readonly ?int $anio_ingreso,
         public readonly ?string $ultima_actualizacion_historial,
+        public readonly bool $must_change_password,
         public readonly Collection $roles,
         public readonly Collection $permissions
     ) {}
@@ -38,6 +39,7 @@ class AuthenticatedUserDTO
             escuela: $user->escuela?->nombre_corto,
             anio_ingreso: $user->anio_ingreso,
             ultima_actualizacion_historial: $user->ultima_actualizacion_historial?->toIso8601String(),
+            must_change_password: $user->must_change_password,
             roles: $user->getRoleNames(),
             permissions: $user->getAllPermissions()->pluck('name')
         );
@@ -55,6 +57,7 @@ class AuthenticatedUserDTO
             'escuela' => $this->escuela,
             'anio_ingreso' => $this->anio_ingreso,
             'ultima_actualizacion_historial' => $this->ultima_actualizacion_historial,
+            'must_change_password' => $this->must_change_password,
             'roles' => $this->roles,
             'permissions' => $this->permissions,
         ];

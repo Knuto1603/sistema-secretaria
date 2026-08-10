@@ -83,7 +83,10 @@ class AuthController extends Controller
             return $this->error('La contraseña actual es incorrecta.', 422);
         }
 
-        $user->update(['password' => Hash::make($request->password_nuevo)]);
+        $user->update([
+            'password' => Hash::make($request->password_nuevo),
+            'must_change_password' => false,
+        ]);
 
         return $this->success(null, 'Contraseña actualizada correctamente.');
     }

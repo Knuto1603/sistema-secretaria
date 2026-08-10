@@ -57,6 +57,7 @@ class EstudianteImport implements ToCollection, WithHeadingRow, WithValidation
                     'tipo_usuario'          => 'estudiante',
                     'password'              => Hash::make($codigo), // password temporal = código
                     'password_set_at'       => now(),
+                    'must_change_password'  => true,
                     'activo'                => true,
                 ]);
 
