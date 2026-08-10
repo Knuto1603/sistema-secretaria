@@ -30,6 +30,7 @@ class User extends Authenticatable
         'email',
         'password',
         'password_set_at',
+        'must_change_password',
         'activo',
         'ultima_actualizacion_historial',
         'egresante',
@@ -58,6 +59,7 @@ class User extends Authenticatable
             'ultima_actualizacion_historial' => 'datetime',
             'password' => 'hashed',
             'egresante' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 
