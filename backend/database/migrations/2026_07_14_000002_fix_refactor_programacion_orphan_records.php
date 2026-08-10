@@ -18,11 +18,19 @@ use Illuminate\Support\Facades\Schema;
  *
  * Causa del fallo: registros en programacion_academica sin borrador publicado para su período
  * (creados por importar-diff o import directo). No fueron migrados en el paso 5.
+ *
+ * En una migración corrida desde cero (migrate:fresh, instalación nueva), la 001
+ * no falla y ya deja programacion_academica y borradores_secciones eliminadas —
+ * en ese caso esta migración no tiene nada que reparar y no debe hacer nada.
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (!Schema::hasTable('programacion_academica')) {
+            return;
+        }
+
         // ── 1. Para períodos sin programacion publicada, crear una ──────────
         //    (necesario para poder migrar los registros huérfanos)
         $primerUsuario = DB::table('users')->orderBy('created_at')->value('id');
