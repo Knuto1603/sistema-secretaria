@@ -170,7 +170,7 @@ export interface ImportJobStatus {
   id: string;
   tipo: string;
   estado: 'pendiente' | 'procesando' | 'completado' | 'fallido';
-  resultado: HistorialesZipResumen | null;
+  resultado: HistorialesZipResumen | { resumen: ImportResumen; resultados: ImportFila[] } | null;
   error_mensaje: string | null;
   created_at: string;
   updated_at: string;
@@ -309,10 +309,10 @@ export class UsuarioService {
     );
   }
 
-  importarEstudiantes(archivo: File): Observable<{ resumen: ImportResumen; resultados: ImportFila[] }> {
+  importarEstudiantes(archivo: File): Observable<{ job_id: string }> {
     const form = new FormData();
     form.append('archivo', archivo);
-    return this.http.post<ApiResponse<{ resumen: ImportResumen; resultados: ImportFila[] }>>(`${this.baseUrl}/estudiantes/import`, form).pipe(
+    return this.http.post<ApiResponse<{ job_id: string }>>(`${this.baseUrl}/estudiantes/import`, form).pipe(
       map(response => response.data)
     );
   }
@@ -332,10 +332,10 @@ export class UsuarioService {
    * Importa estudiantes desde el reporte SIGA "Matriculados por Periodo y Promoción".
    * La contraseña inicial de cada estudiante creado es su número de documento (DNI).
    */
-  importarReporteMatricula(archivo: File): Observable<{ resumen: ImportResumen; resultados: ImportFila[] }> {
+  importarReporteMatricula(archivo: File): Observable<{ job_id: string }> {
     const form = new FormData();
     form.append('archivo', archivo);
-    return this.http.post<ApiResponse<{ resumen: ImportResumen; resultados: ImportFila[] }>>(
+    return this.http.post<ApiResponse<{ job_id: string }>>(
       `${this.baseUrl}/estudiantes/import-reporte-matricula`, form
     ).pipe(map(response => response.data));
   }

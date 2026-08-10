@@ -1,7 +1,7 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, interval, of, Subscription, switchMap, takeWhile, tap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { UsuarioService, Estudiante, EstudianteFilters, EstudianteInscripcion, ImportResumen, ImportFila, CursoPendienteResumen } from '@core/services/usuario.service';
 import { ProgresoService } from '@core/services/progreso.service';
@@ -31,9 +31,11 @@ interface Escuela {
   imports: [CommonModule, FormsModule, AppTableComponent, AppBadgeComponent, AppButtonComponent, PaginationComponent],
   templateUrl: './estudiantes-lista.component.html'
 })
-export class EstudiantesListaComponent implements OnInit {
+export class EstudiantesListaComponent implements OnInit, OnDestroy {
   private usuarioService = inject(UsuarioService);
   private progresoService = inject(ProgresoService);
+  private pollSubExcel?: Subscription;
+  private pollSubReporte?: Subscription;
 
   estudiantes = signal<Estudiante[]>([]);
   loading = signal(false);
@@ -62,6 +64,7 @@ export class EstudiantesListaComponent implements OnInit {
 
   // Import Excel
   importando = signal(false);
+  procesandoExcelEnServidor = signal(false);
   importResultado = signal<{ resumen: ImportResumen; resultados: ImportFila[] } | null>(null);
 
   // Crear estudiante
@@ -74,8 +77,9 @@ export class EstudiantesListaComponent implements OnInit {
   importandoHtml = signal(false);
   importHtmlMensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
-  // Import Reporte Matrícula (SIGA, password = DNI)
+  // Import Reporte Matrícula (password = DNI)
   importandoReporte = signal(false);
+  procesandoReporteEnServidor = signal(false);
 
   // Filtros
   search = '';
@@ -353,22 +357,16 @@ export class EstudiantesListaComponent implements OnInit {
 
     this.importando.set(true);
     this.importResultado.set(null);
+    this.pollSubExcel?.unsubscribe();
 
     this.usuarioService.importarEstudiantes(archivo).subscribe({
-      next: (resultado) => {
-        this.importResultado.set(resultado);
-        this.importando.set(false);
-        if (resultado.resumen.importados > 0) {
-          this.cargarDatos();
-        }
-        input.value = ''; // reset input
-      },
+      next: ({ job_id }) => this.pollImportJob(job_id, 'excel'),
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al importar el archivo');
         this.importando.set(false);
-        input.value = '';
       }
     });
+    input.value = ''; // reset input
   }
 
   cerrarImportResultado(): void {
@@ -382,22 +380,50 @@ export class EstudiantesListaComponent implements OnInit {
 
     this.importandoReporte.set(true);
     this.importResultado.set(null);
+    this.pollSubReporte?.unsubscribe();
 
     this.usuarioService.importarReporteMatricula(archivo).subscribe({
-      next: (resultado) => {
-        this.importResultado.set(resultado);
-        this.importandoReporte.set(false);
-        if (resultado.resumen.importados > 0) {
-          this.cargarDatos();
-        }
-        input.value = '';
-      },
+      next: ({ job_id }) => this.pollImportJob(job_id, 'reporte'),
       error: (err) => {
         this.mostrarMensaje('error', err.error?.message || 'Error al importar el reporte de matrícula');
         this.importandoReporte.set(false);
-        input.value = '';
       }
     });
+    input.value = '';
+  }
+
+  /**
+   * Hace polling del estado de un import job (carga por Excel/reporte de matrícula
+   * corre en background porque con ~1500 alumnos supera el timeout del request síncrono).
+   */
+  private pollImportJob(jobId: string, origen: 'excel' | 'reporte'): void {
+    const enServidor = origen === 'excel' ? this.procesandoExcelEnServidor : this.procesandoReporteEnServidor;
+    enServidor.set(true);
+
+    const finalizar = () => {
+      enServidor.set(false);
+      origen === 'excel' ? this.importando.set(false) : this.importandoReporte.set(false);
+    };
+
+    const sub = interval(3000).pipe(
+      switchMap(() => this.usuarioService.getImportJobStatus(jobId)),
+      tap(status => {
+        if (status.estado === 'completado') {
+          this.importResultado.set(status.resultado as { resumen: ImportResumen; resultados: ImportFila[] });
+          finalizar();
+          const resumen = (status.resultado as { resumen: ImportResumen } | null)?.resumen;
+          if (resumen && resumen.importados > 0) {
+            this.cargarDatos();
+          }
+        } else if (status.estado === 'fallido') {
+          this.mostrarMensaje('error', status.error_mensaje || 'Error en el procesamiento de la importación');
+          finalizar();
+        }
+      }),
+      takeWhile(status => status.estado === 'pendiente' || status.estado === 'procesando'),
+    ).subscribe();
+
+    if (origen === 'excel') this.pollSubExcel = sub; else this.pollSubReporte = sub;
   }
 
   onArchivoHtmlSeleccionado(event: Event): void {
@@ -438,5 +464,10 @@ export class EstudiantesListaComponent implements OnInit {
   private mostrarMensaje(tipo: 'success' | 'error', texto: string): void {
     this.mensaje.set({ tipo, texto });
     setTimeout(() => this.mensaje.set(null), 4000);
+  }
+
+  ngOnDestroy(): void {
+    this.pollSubExcel?.unsubscribe();
+    this.pollSubReporte?.unsubscribe();
   }
 }

@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Estudiante\ImportAlumnosHtmlRequest;
 use App\Http\Requests\Usuario\UpdateEstudianteRequest;
 use App\Imports\AlumnosHtmlImport;
-use App\Imports\EstudianteImport;
-use App\Imports\EstudianteReporteMatriculaImport;
+use App\Jobs\ProcessEstudianteImportJob;
+use App\Jobs\ProcessEstudianteReporteMatriculaImportJob;
 use App\Jobs\ProcessHistorialesZipJob;
 use App\Models\ImportJob;
 use App\Models\User;
@@ -189,7 +189,8 @@ class EstudianteController extends Controller
     }
 
     /**
-     * Importa estudiantes desde un archivo Excel
+     * Importa estudiantes desde un archivo Excel (plantilla).
+     * Despacha un job en background y retorna un job_id para consultar el estado.
      */
     public function import(Request $request): JsonResponse
     {
@@ -197,16 +198,30 @@ class EstudianteController extends Controller
             'archivo' => ['required', 'file', 'mimes:xlsx,xls', 'max:5120'],
         ]);
 
-        $import = new EstudianteImport();
-        Excel::import($import, $request->file('archivo'));
+        Storage::disk('local')->makeDirectory('imports/excel_temp');
 
-        $resumen = $import->getResumen();
-        $resultados = $import->getResultados();
+        $storedPath = $request->file('archivo')->storeAs(
+            'imports/excel_temp',
+            uniqid('excel_', true) . '.' . $request->file('archivo')->getClientOriginalExtension(),
+            'local'
+        );
 
-        return $this->success([
-            'resumen'     => $resumen,
-            'resultados'  => $resultados,
-        ], "Importación completada: {$resumen['importados']} importados, {$resumen['omitidos']} omitidos, {$resumen['errores']} errores.");
+        if (!$storedPath) {
+            return $this->error('No se pudo almacenar el archivo temporalmente.', 500);
+        }
+
+        $importJob = ImportJob::create([
+            'tipo'   => 'estudiantes_excel',
+            'estado' => 'pendiente',
+        ]);
+
+        ProcessEstudianteImportJob::dispatch($importJob->id, $storedPath);
+
+        return $this->success(
+            ['job_id' => $importJob->id],
+            'Importación iniciada. Consulta el estado con el job_id.',
+            202
+        );
     }
 
     /**
@@ -300,8 +315,9 @@ class EstudianteController extends Controller
     /**
      * POST /usuarios/estudiantes/import-reporte-matricula
      *
-     * Importa el reporte SIGA "Matriculados por Periodo y Promoción" (Excel).
+     * Importa el reporte "Matriculados por Periodo y Promoción" (Excel).
      * La contraseña inicial de cada estudiante creado es su número de documento (DNI).
+     * Despacha un job en background y retorna un job_id para consultar el estado.
      */
     public function importReporteMatricula(Request $request): JsonResponse
     {
@@ -309,19 +325,30 @@ class EstudianteController extends Controller
             'archivo' => ['required', 'file', 'mimes:xlsx,xls', 'max:5120'],
         ]);
 
-        $sheets = Excel::toArray([], $request->file('archivo'));
-        $rows = $sheets[0] ?? [];
+        Storage::disk('local')->makeDirectory('imports/excel_temp');
 
-        $import = new EstudianteReporteMatriculaImport();
-        $import->procesar($rows);
+        $storedPath = $request->file('archivo')->storeAs(
+            'imports/excel_temp',
+            uniqid('reporte_', true) . '.' . $request->file('archivo')->getClientOriginalExtension(),
+            'local'
+        );
 
-        $resumen = $import->getResumen();
-        $resultados = $import->getResultados();
+        if (!$storedPath) {
+            return $this->error('No se pudo almacenar el archivo temporalmente.', 500);
+        }
 
-        return $this->success([
-            'resumen'     => $resumen,
-            'resultados'  => $resultados,
-        ], "Importación completada: {$resumen['importados']} importados, {$resumen['omitidos']} omitidos, {$resumen['errores']} errores.");
+        $importJob = ImportJob::create([
+            'tipo'   => 'estudiantes_reporte_matricula',
+            'estado' => 'pendiente',
+        ]);
+
+        ProcessEstudianteReporteMatriculaImportJob::dispatch($importJob->id, $storedPath);
+
+        return $this->success(
+            ['job_id' => $importJob->id],
+            'Importación iniciada. Consulta el estado con el job_id.',
+            202
+        );
     }
 
     /**

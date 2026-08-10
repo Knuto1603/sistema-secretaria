@@ -71,7 +71,7 @@ export class ImportacionesAlumnosComponent implements OnDestroy {
       switchMap(() => this.service.getImportJobStatus(jobId)),
       tap(status => {
         if (status.estado === 'completado') {
-          this.resultadoZip.set(status.resultado);
+          this.resultadoZip.set(status.resultado as HistorialesZipResumen);
           this.zipEstado.set('completado');
         } else if (status.estado === 'fallido') {
           this.errorZip.set(status.error_mensaje || 'Error en el procesamiento');
