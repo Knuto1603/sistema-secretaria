@@ -8,6 +8,7 @@ use App\Http\Requests\Estudiante\ImportAlumnosHtmlRequest;
 use App\Http\Requests\Usuario\UpdateEstudianteRequest;
 use App\Imports\AlumnosHtmlImport;
 use App\Imports\EstudianteImport;
+use App\Imports\EstudianteReporteMatriculaImport;
 use App\Jobs\ProcessHistorialesZipJob;
 use App\Models\ImportJob;
 use App\Models\User;
@@ -294,6 +295,33 @@ class EstudianteController extends Controller
         } catch (\Exception $e) {
             return $this->error('Error al procesar el archivo: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * POST /usuarios/estudiantes/import-reporte-matricula
+     *
+     * Importa el reporte SIGA "Matriculados por Periodo y Promoción" (Excel).
+     * La contraseña inicial de cada estudiante creado es su número de documento (DNI).
+     */
+    public function importReporteMatricula(Request $request): JsonResponse
+    {
+        $request->validate([
+            'archivo' => ['required', 'file', 'mimes:xlsx,xls', 'max:5120'],
+        ]);
+
+        $sheets = Excel::toArray([], $request->file('archivo'));
+        $rows = $sheets[0] ?? [];
+
+        $import = new EstudianteReporteMatriculaImport();
+        $import->procesar($rows);
+
+        $resumen = $import->getResumen();
+        $resultados = $import->getResultados();
+
+        return $this->success([
+            'resumen'     => $resumen,
+            'resultados'  => $resultados,
+        ], "Importación completada: {$resumen['importados']} importados, {$resumen['omitidos']} omitidos, {$resumen['errores']} errores.");
     }
 
     /**
