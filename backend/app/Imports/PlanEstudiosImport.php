@@ -14,6 +14,7 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
 {
     private array $resultados  = [];
     private array $requisitosMap = []; // ['CODIGO_CURSO' => ['REQ1', 'REQ2']]
+    private array $resultadoIndexPorCurso = []; // ['CODIGO_CURSO' => índice en $resultados]
 
     public function __construct(
         private readonly string $escuelaCodigo,
@@ -69,10 +70,12 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                 }
 
                 $updateData = [
-                    'escuela_id' => $escuela->id,
-                    'ciclo'      => $row['ciclo'] ?? null,
-                    'creditos'   => $row['creditos'] ?? null,
-                    'tipo'       => $tipo,
+                    'escuela_id'      => $escuela->id,
+                    'ciclo'           => $row['ciclo'] ?? null,
+                    'creditos'        => $row['creditos'] ?? null,
+                    'tipo'            => $tipo,
+                    'horas_teoricas'  => $row['ht_semanal'] ?? null,
+                    'horas_practicas' => $row['hp_semanal'] ?? null,
                 ];
                 if ($planId) {
                     $updateData['plan_id'] = $planId;
@@ -86,7 +89,7 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                 PlanEstudios::updateOrCreate($whereClause, $updateData);
 
                 // Guardar requisitos para resolverlos al final (todos los cursos deben existir)
-                $codigoRequisito = trim((string) ($row['codigo_requisito'] ?? ''));
+                $codigoRequisito = trim((string) ($row['requisitos'] ?? ''));
                 if ($codigoRequisito !== '') {
                     $codigos = array_values(array_filter(array_map('trim', explode(',', $codigoRequisito))));
                     if (!empty($codigos)) {
@@ -100,6 +103,7 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                     'estado'  => 'importado',
                     'mensaje' => $nombreCurso,
                 ];
+                $this->resultadoIndexPorCurso[$codigoCurso] = count($this->resultados) - 1;
             } catch (\Exception $e) {
                 $this->resultados[] = [
                     'fila'    => $fila,
@@ -124,8 +128,17 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $requisitoIds = Curso::whereIn('codigo', $requisitosCodigos)->pluck('id')->toArray();
-            $curso->requisitos()->sync($requisitoIds);
+            $cursosRequisito = Curso::whereIn('codigo', $requisitosCodigos)->get(['id', 'codigo']);
+            $curso->requisitos()->sync($cursosRequisito->pluck('id')->toArray());
+
+            // Códigos de requisito que no corresponden a ningún curso (p.ej. "100cred.",
+            // requisitos por créditos acumulados en vez de por curso): se ignoran, pero se
+            // anota en el mensaje de la fila del curso para que quede visible en el resultado.
+            $noResueltos = array_diff($requisitosCodigos, $cursosRequisito->pluck('codigo')->toArray());
+            if (!empty($noResueltos) && isset($this->resultadoIndexPorCurso[$cursoCodigo])) {
+                $idx = $this->resultadoIndexPorCurso[$cursoCodigo];
+                $this->resultados[$idx]['mensaje'] .= ' (requisito(s) no reconocido(s), ignorados: ' . implode(', ', $noResueltos) . ')';
+            }
         }
     }
 
