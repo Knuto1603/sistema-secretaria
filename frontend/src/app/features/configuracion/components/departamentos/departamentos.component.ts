@@ -30,12 +30,27 @@ export class DepartamentosComponent implements OnInit {
 
   // Form state
   formNombre         = '';
-  formPrefijo        = '';
+  formPrefijos: string[] = [];
+  formPrefijoNuevo    = '';
   formTituloDirector = '';
   formDirectorNombre = '';
   formDirectorCargo  = '';
   formNombreTabla    = '';
   guardando   = signal(false);
+
+  agregarPrefijo(): void {
+    const prefijo = this.formPrefijoNuevo.trim().toUpperCase();
+    if (!prefijo || this.formPrefijos.includes(prefijo)) {
+      this.formPrefijoNuevo = '';
+      return;
+    }
+    this.formPrefijos.push(prefijo);
+    this.formPrefijoNuevo = '';
+  }
+
+  quitarPrefijo(prefijo: string): void {
+    this.formPrefijos = this.formPrefijos.filter(p => p !== prefijo);
+  }
 
   // Confirmaciones
   mostrarConfirmAutoAsignar = signal(false);
@@ -59,7 +74,8 @@ export class DepartamentosComponent implements OnInit {
   abrirCrear(): void {
     this.editando.set(null);
     this.formNombre         = '';
-    this.formPrefijo        = '';
+    this.formPrefijos       = [];
+    this.formPrefijoNuevo   = '';
     this.formTituloDirector = '';
     this.formDirectorNombre = '';
     this.formDirectorCargo  = '';
@@ -70,7 +86,8 @@ export class DepartamentosComponent implements OnInit {
   abrirEditar(dep: Departamento): void {
     this.editando.set(dep);
     this.formNombre         = dep.nombre;
-    this.formPrefijo        = dep.prefijos[0] ?? '';
+    this.formPrefijos       = [...dep.prefijos];
+    this.formPrefijoNuevo   = '';
     this.formTituloDirector = dep.titulo_director ?? '';
     this.formDirectorNombre = dep.director_nombre ?? '';
     this.formDirectorCargo  = dep.director_cargo  ?? '';
@@ -82,7 +99,8 @@ export class DepartamentosComponent implements OnInit {
     this.mostrarForm.set(false);
     this.editando.set(null);
     this.formNombre         = '';
-    this.formPrefijo        = '';
+    this.formPrefijos       = [];
+    this.formPrefijoNuevo   = '';
     this.formTituloDirector = '';
     this.formDirectorNombre = '';
     this.formDirectorCargo  = '';
@@ -92,10 +110,12 @@ export class DepartamentosComponent implements OnInit {
   guardar(): void {
     if (!this.formNombre.trim() || this.guardando()) return;
 
-    const prefijo  = this.formPrefijo.trim().toUpperCase();
+    // Si quedó texto sin confirmar en el input de prefijo, lo agregamos también
+    this.agregarPrefijo();
+
     const payload  = {
       nombre: this.formNombre.trim(),
-      prefijos: prefijo ? [prefijo] : [],
+      prefijos: this.formPrefijos,
       titulo_director: this.formTituloDirector.trim() || null,
       director_nombre: this.formDirectorNombre.trim() || null,
       director_cargo:  this.formDirectorCargo.trim()  || null,
