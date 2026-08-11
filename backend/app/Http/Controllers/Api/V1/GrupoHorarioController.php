@@ -27,7 +27,10 @@ class GrupoHorarioController extends Controller
             'descripcion' => 'nullable|string|max:255',
         ]);
 
-        $grupo = GrupoHorario::create($data);
+        $grupo = GrupoHorario::resolverPorCodigo($data['nombre']);
+        if ($data['descripcion'] ?? null) {
+            $grupo->update(['descripcion' => $data['descripcion']]);
+        }
         $grupo->load('detalles');
 
         return $this->success($this->format($grupo), 'Grupo creado', 201);

@@ -95,10 +95,7 @@ class BorradorMatrizImport implements ToCollection, WithHeadingRow
             return $this->grupoCache[$key];
         }
 
-        $grupo = GrupoHorario::firstOrCreate(
-            ['nombre' => $key],
-            ['descripcion' => null, 'activo' => true]
-        );
+        $grupo = GrupoHorario::resolverPorCodigo($key);
 
         $this->grupoCache[$key] = $grupo->id;
         return $grupo->id;

@@ -145,10 +145,7 @@ class ProgramacionHtmlImport
         $key = $this->normalizarGrupo($nombre);
         if (isset($this->grupoCache[$key])) return $this->grupoCache[$key];
 
-        $grupo = GrupoHorario::firstOrCreate(
-            ['nombre' => $key],
-            ['descripcion' => null, 'activo' => true]
-        );
+        $grupo = GrupoHorario::resolverPorCodigo($key);
 
         $this->grupoCache[$key] = $grupo->id;
         return $grupo->id;
