@@ -111,11 +111,18 @@
         <span class="text-[10px] text-slate-500">Sec.&nbsp;{{ sec.seccion }}</span>
       </div>
 
-      <!-- Escuela -->
-      <span class="mt-1 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/60"
-        [ngClass]="seccionColor(sec).text">
-        {{ sec.escuela.nombre_corto }}
-      </span>
+      <!-- Escuela + subgrupo específico (letras) -->
+      <div class="flex items-center gap-1 mt-1 flex-wrap">
+        <span class="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/60"
+          [ngClass]="seccionColor(sec).text">
+          {{ sec.escuela.nombre_corto }}
+        </span>
+        @if (sec.grupo_horario?.nombre) {
+          <span class="text-[10px] font-mono font-bold text-slate-400 bg-white/70 px-1 rounded" title="Subgrupo horario asignado">
+            {{ sec.grupo_horario?.nombre }}
+          </span>
+        }
+      </div>
     </div>
   </ng-template>
 
@@ -289,14 +296,14 @@
         </thead>
 
         <tbody>
-          <!-- Una fila por cada grupo horario -->
-          @for (grupo of gruposActivos(); track grupo.id) {
+          <!-- Una fila por cada grupo base (G1-G14), sin importar el subgrupo/letras -->
+          @for (numero of gruposBase(); track numero) {
             <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
 
-              <!-- Header de fila (grupo horario) -->
+              <!-- Header de fila (grupo base) -->
               <td class="sticky left-0 z-10 bg-white border-r border-slate-200 px-3 py-2">
-                <p class="text-xs font-black text-slate-800">{{ grupo.nombre }}</p>
-                <p class="text-xs text-slate-400 mt-0.5 leading-snug">{{ formatHorario(grupo) }}</p>
+                <p class="text-xs font-black text-slate-800">G{{ numero }}</p>
+                <p class="text-xs text-slate-400 mt-0.5 leading-snug">{{ diasBaseGrupo(numero) }}</p>
               </td>
 
               <!-- Una celda por cada aula (mismo orden que el thead) -->
@@ -310,9 +317,9 @@
                     (dragover)="onDragOver($event)"
                     (dragenter)="onDragEnter($event, $any($event.currentTarget))"
                     (dragleave)="onDragLeave($event, $any($event.currentTarget))"
-                    (drop)="onDrop($event, col.aula.id, grupo.id, $any($event.currentTarget))">
+                    (drop)="onDrop($event, col.aula.id, numero, $any($event.currentTarget))">
 
-                    @for (sec of seccionesEnCelda(col.aula.id, grupo.id); track sec.id) {
+                    @for (sec of seccionesEnCelda(col.aula.id, numero); track sec.id) {
                       <ng-container *ngTemplateOutlet="seccionCard; context: { $implicit: sec }"></ng-container>
                     }
 
@@ -330,13 +337,6 @@
     <div class="bg-amber-50 border border-amber-200 rounded-md p-5 text-center">
       <p class="text-sm font-medium text-amber-700">No hay aulas activas configuradas.</p>
       <p class="text-xs text-amber-600 mt-1">Ve a Configuración → Pabellones y Aulas para agregar aulas.</p>
-    </div>
-  }
-
-  @if (gruposActivos().length === 0) {
-    <div class="bg-amber-50 border border-amber-200 rounded-md p-5 text-center">
-      <p class="text-sm font-medium text-amber-700">No hay grupos horarios activos configurados.</p>
-      <p class="text-xs text-amber-600 mt-1">Ve a Configuración → Grupos Horario para definir los horarios G1–G14.</p>
     </div>
   }
 

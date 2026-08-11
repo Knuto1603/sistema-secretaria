@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\BorradorProgramacion;
+use App\Models\PlanEstudios;
 use App\Services\BorradorProgramacionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -251,6 +252,32 @@ class BorradorProgramacionController extends Controller
 
     private function transformBorrador(BorradorProgramacion $b): array
     {
+        $horasMap = collect();
+
+        if ($b->relationLoaded('secciones')) {
+            $pares = $b->secciones
+                ->map(fn($s) => [$s->escuela_programada_id, $s->curso_id])
+                ->unique(fn($p) => $p[0] . '|' . $p[1])
+                ->values();
+
+            if ($pares->isNotEmpty()) {
+                $horasMap = PlanEstudios::query()
+                    ->join('planes_estudios', 'planes_estudios.id', '=', 'plan_estudios.plan_id')
+                    ->where('planes_estudios.activo', true)
+                    ->where(function ($q) use ($pares) {
+                        foreach ($pares as [$escuelaId, $cursoId]) {
+                            $q->orWhere(function ($qq) use ($escuelaId, $cursoId) {
+                                $qq->where('plan_estudios.escuela_id', $escuelaId)
+                                   ->where('plan_estudios.curso_id', $cursoId);
+                            });
+                        }
+                    })
+                    ->select('plan_estudios.*')
+                    ->get()
+                    ->keyBy(fn($p) => $p->escuela_id . '|' . $p->curso_id);
+            }
+        }
+
         return [
             'id'          => $b->id,
             'nombre'      => $b->nombre,
@@ -262,13 +289,28 @@ class BorradorProgramacionController extends Controller
             'publicado_at'  => $b->publicado_at,
             'created_at'  => $b->created_at,
             'secciones'   => $b->relationLoaded('secciones')
-                ? $b->secciones->map(fn($s) => $this->transformSeccion($s))->values()
+                ? $b->secciones->map(fn($s) => $this->transformSeccion($s, $horasMap))->values()
                 : [],
         ];
     }
 
-    private function transformSeccion(\App\Models\BorradorSeccion $s): array
+    private function transformSeccion(\App\Models\BorradorSeccion $s, ?\Illuminate\Support\Collection $horasMap = null): array
     {
+        $plan = $horasMap
+            ? $horasMap->get($s->escuela_programada_id . '|' . $s->curso_id)
+            : PlanEstudios::query()
+                ->join('planes_estudios', 'planes_estudios.id', '=', 'plan_estudios.plan_id')
+                ->where('planes_estudios.activo', true)
+                ->where('plan_estudios.escuela_id', $s->escuela_programada_id)
+                ->where('plan_estudios.curso_id', $s->curso_id)
+                ->select('plan_estudios.*')
+                ->first();
+
+        $horasSemanales = $plan
+            ? ((int) ($plan->horas_teoricas ?? 0) + (int) ($plan->horas_practicas ?? 0))
+            : null;
+        if ($horasSemanales === 0) $horasSemanales = null;
+
         return [
             'id'               => $s->id,
             'borrador_id'      => $s->programacion_id,
@@ -286,6 +328,7 @@ class BorradorProgramacionController extends Controller
             'tipo'             => $s->tipo,
             'seccion'          => $s->seccion,
             'capacidad'        => $s->capacidad,
+            'horas_semanales'  => $horasSemanales,
             'esta_asignado'    => $s->estaAsignado(),
             'docente'          => $s->relationLoaded('docente') && $s->docente
                 ? ['id' => $s->docente->id, 'nombre_completo' => $s->docente->nombre_completo]

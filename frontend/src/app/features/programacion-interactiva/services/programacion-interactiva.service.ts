@@ -12,6 +12,7 @@ export interface BorradorSeccion {
   tipo: 'O' | 'E';
   seccion: string;
   capacidad: number;
+  horas_semanales?: number | null;
   esta_asignado: boolean;
   docente?: { id: string; nombre_completo: string } | null;
   aula?: {
