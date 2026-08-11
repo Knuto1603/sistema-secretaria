@@ -96,8 +96,6 @@ class ProgramacionTransformer
 
         return new ProgramacionResponseDTO(
             id:               $model->id,
-            curso_id:         $model->curso_id,
-            periodo_id:       $model->programacion_id ? ($periodoObj?->id ?? $model->getPeriodoIdAttribute()) : null,
             docente_id:       $model->docente_id,
             grupo_horario_id: $model->grupo_horario_id,
             aula_id:          $model->aula_id,
@@ -106,7 +104,6 @@ class ProgramacionTransformer
             seccion:          $model->seccion,
             aula:             $model->aula,
             aula_nombre:      $aulaNombre,
-            n_acta:           $model->n_acta,
             capacidad:        $model->capacidad,
             n_inscritos:      $model->n_inscritos,
             lleno_manual:     (bool) $model->lleno_manual,
@@ -129,7 +126,6 @@ class ProgramacionTransformer
             grupo_horario: $grupoHorario,
             escuelas:           $escuelas,
             escuela_programada: $escuelaProgramada,
-            created_at:         $model->created_at->toISOString(),
             es_equivalente:     $esEquivalente,
             tipo_plan:          $model->tipo_plan ?? null,
         );

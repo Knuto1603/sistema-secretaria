@@ -6,8 +6,6 @@ readonly class ProgramacionResponseDTO
 {
     public function __construct(
         public string $id,
-        public string $curso_id,
-        public string $periodo_id,
         public ?string $docente_id,
         public ?string $grupo_horario_id,
         public ?string $aula_id,
@@ -16,7 +14,6 @@ readonly class ProgramacionResponseDTO
         public ?string $seccion,
         public ?string $aula,
         public ?string $aula_nombre,
-        public ?string $n_acta,
         public ?int $capacidad,
         public ?int $n_inscritos,
         public bool $lleno_manual,
@@ -28,7 +25,6 @@ readonly class ProgramacionResponseDTO
         public ?array $grupo_horario,
         public ?array $escuelas,
         public ?array $escuela_programada,
-        public string $created_at,
         public bool $es_equivalente = false,
         public ?string $tipo_plan = null,
     ) {}
@@ -37,8 +33,6 @@ readonly class ProgramacionResponseDTO
     {
         return [
             'id'                  => $this->id,
-            'curso_id'            => $this->curso_id,
-            'periodo_id'          => $this->periodo_id,
             'docente_id'          => $this->docente_id,
             'grupo_horario_id'    => $this->grupo_horario_id,
             'aula_id'             => $this->aula_id,
@@ -47,7 +41,6 @@ readonly class ProgramacionResponseDTO
             'seccion'             => $this->seccion,
             'aula'                => $this->aula,
             'aula_nombre'         => $this->aula_nombre,
-            'n_acta'              => $this->n_acta,
             'capacidad'           => $this->capacidad,
             'n_inscritos'         => $this->n_inscritos,
             'lleno_manual'        => $this->lleno_manual,
@@ -59,7 +52,6 @@ readonly class ProgramacionResponseDTO
             'grupo_horario'       => $this->grupo_horario,
             'escuelas'            => $this->escuelas,
             'escuela_programada'  => $this->escuela_programada,
-            'created_at'          => $this->created_at,
             'es_equivalente'      => $this->es_equivalente,
             'tipo_plan'           => $this->tipo_plan,
         ];
