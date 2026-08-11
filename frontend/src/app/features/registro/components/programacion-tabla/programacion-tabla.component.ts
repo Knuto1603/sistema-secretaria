@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -151,21 +151,30 @@ export class ProgramacionTablaComponent implements OnInit {
     // Recarga completa al cambiar de período
     effect(() => {
       const periodoId = this.estadoService.periodoId();
-      if (periodoId && !this.esEstudiante()) {
-        this.searchTerm.set('');
-        this.grupoSeleccionado.set('');
-        this.todosLosItems.set([]);
-        this.cargarGrupos(periodoId);
-        this.cargarProgramacion(1);
+      const esEstudiante = this.esEstudiante();
+      if (periodoId && !esEstudiante) {
+        // untracked: cargarProgramacion() lee searchTerm/escuelaSeleccionada/etc.
+        // internamente; sin esto, este effect quedaría "enganchado" a esas señales
+        // y se re-ejecutaría (reseteando el buscador) en cada tecleo del usuario.
+        untracked(() => {
+          this.searchTerm.set('');
+          this.grupoSeleccionado.set('');
+          this.todosLosItems.set([]);
+          this.cargarGrupos(periodoId);
+          this.cargarProgramacion(1);
+        });
       }
     });
 
     // Refresco silencioso al guardar una modificación desde otro módulo
     effect(() => {
       const refresh = this.estadoService.ultimaModificacion();
-      if (refresh > 0 && !this.esEstudiante()) {
-        this.todosLosItems.set([]);
-        this.cargarProgramacion(this.currentPage());
+      const esEstudiante = this.esEstudiante();
+      if (refresh > 0 && !esEstudiante) {
+        untracked(() => {
+          this.todosLosItems.set([]);
+          this.cargarProgramacion(this.currentPage());
+        });
       }
     });
   }
