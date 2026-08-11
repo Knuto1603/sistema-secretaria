@@ -182,11 +182,13 @@ export class PerfilComponent implements OnInit {
   }
 
   getEscuelaNombre(): string {
+    // El backend ya manda el nombre resuelto (user.escuela = nombre_corto), este
+    // mapa por codigo nunca matchea contra ese valor; se deja como fallback.
     const escuelas: Record<string, string> = {
       '0': 'Ing. Industrial',
       '1': 'Ing. Informática',
-      '2': 'Ing. Mecatrónica',
-      '3': 'Ing. Agroindustrial',
+      '2': 'Ing. Agroindustrial',
+      '3': 'Ing. Mecatrónica',
     };
     return escuelas[this.user()?.escuela ?? ''] ?? this.user()?.escuela ?? '-';
   }

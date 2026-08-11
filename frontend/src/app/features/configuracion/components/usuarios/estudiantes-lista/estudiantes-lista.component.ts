@@ -97,12 +97,13 @@ export class EstudiantesListaComponent implements OnInit, OnDestroy {
     to: 0
   };
 
-  // Escuelas (hardcoded porque son fijas en FII)
+  // Escuelas (hardcoded porque son fijas en FII). id = escuelas.codigo en backend:
+  // 0=Industrial, 1=Informática, 2=Agroindustrial, 3=Mecatrónica.
   escuelas: Escuela[] = [
     { id: '0', nombre: 'Industrial' },
     { id: '1', nombre: 'Informática' },
-    { id: '2', nombre: 'Mecatrónica' },
-    { id: '3', nombre: 'Agroindustrial' }
+    { id: '2', nombre: 'Agroindustrial' },
+    { id: '3', nombre: 'Mecatrónica' }
   ];
 
   columnas: TableColumn[] = [
