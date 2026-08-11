@@ -94,13 +94,19 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
                 (CASE WHEN programacion_secciones.lleno_manual = 1 OR programacion_secciones.n_inscritos >= programacion_secciones.capacidad THEN 1 ELSE 0 END) as esta_lleno_orden,
                 (SELECT pe.tipo FROM plan_estudios pe
                  WHERE pe.curso_id = programacion_secciones.curso_id
-                   AND pe.escuela_id = COALESCE(
-                     programacion_secciones.escuela_programada_id,
-                     (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
-                      FROM programacion_escuelas
-                      WHERE programacion_id = programacion_secciones.id)
+                   AND (
+                     pe.escuela_id = programacion_secciones.escuela_programada_id
+                     OR (
+                       programacion_secciones.escuela_programada_id IS NULL
+                       AND (pe.escuela_id = ? OR EXISTS (
+                         SELECT 1 FROM programacion_escuelas pesc
+                         WHERE pesc.programacion_id = programacion_secciones.id
+                           AND pesc.escuela_id = pe.escuela_id
+                       ))
+                     )
                    )
-                 LIMIT 1) as tipo_plan')
+                 ORDER BY (pe.escuela_id = ?) DESC
+                 LIMIT 1) as tipo_plan', [$escuelaId, $escuelaId])
             ->orderByDesc('esta_lleno_orden')
             ->orderBy('cursos.nombre', 'asc');
 
@@ -146,11 +152,16 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
                 SELECT 1 FROM plan_estudios pe_f
                 WHERE pe_f.curso_id = programacion_secciones.curso_id
                   AND pe_f.tipo = ?
-                  AND pe_f.escuela_id = COALESCE(
-                    programacion_secciones.escuela_programada_id,
-                    (SELECT CASE WHEN COUNT(*) = 1 THEN MIN(escuela_id) ELSE NULL END
-                     FROM programacion_escuelas
-                     WHERE programacion_id = programacion_secciones.id)
+                  AND (
+                    pe_f.escuela_id = programacion_secciones.escuela_programada_id
+                    OR (
+                      programacion_secciones.escuela_programada_id IS NULL
+                      AND EXISTS (
+                        SELECT 1 FROM programacion_escuelas pesc_f
+                        WHERE pesc_f.programacion_id = programacion_secciones.id
+                          AND pesc_f.escuela_id = pe_f.escuela_id
+                      )
+                    )
                   )
             )', [$tipo]);
         }
