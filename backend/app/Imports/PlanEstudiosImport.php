@@ -17,16 +17,16 @@ class PlanEstudiosImport implements ToCollection, WithHeadingRow
     private array $resultadoIndexPorCurso = []; // ['CODIGO_CURSO' => índice en $resultados]
 
     public function __construct(
-        private readonly string $escuelaCodigo,
+        private readonly string $escuelaId,
         private readonly ?string $planId = null
     ) {}
 
     public function collection(Collection $rows): void
     {
-        $escuela = Escuela::findByCodigo($this->escuelaCodigo);
+        $escuela = Escuela::find($this->escuelaId);
 
         if (! $escuela) {
-            throw new \InvalidArgumentException("Escuela con código '{$this->escuelaCodigo}' no encontrada.");
+            throw new \InvalidArgumentException("Escuela '{$this->escuelaId}' no encontrada.");
         }
 
         // Resolver plan activo si no se especificó uno

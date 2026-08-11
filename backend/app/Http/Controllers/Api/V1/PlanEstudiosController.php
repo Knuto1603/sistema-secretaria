@@ -24,13 +24,13 @@ class PlanEstudiosController extends Controller
 
     /**
      * Lista todos los planes de una escuela
-     * GET /plan-estudios/planes?escuela_codigo=X
+     * GET /plan-estudios/planes?escuela_id=X
      */
     public function planes(Request $request): JsonResponse
     {
-        $request->validate(['escuela_codigo' => ['required', 'in:0,1,2,3']]);
+        $request->validate(['escuela_id' => ['required', 'uuid', 'exists:escuelas,id']]);
 
-        $escuela = Escuela::findByCodigo($request->escuela_codigo);
+        $escuela = Escuela::find($request->escuela_id);
         if (!$escuela) {
             return $this->notFound('Escuela no encontrada');
         }
@@ -61,13 +61,13 @@ class PlanEstudiosController extends Controller
     public function crearPlan(Request $request): JsonResponse
     {
         $request->validate([
-            'escuela_codigo'                => ['required', 'in:0,1,2,3'],
+            'escuela_id'                    => ['required', 'uuid', 'exists:escuelas,id'],
             'nombre'                        => ['required', 'string', 'max:100'],
             'total_creditos_obligatorios'   => ['nullable', 'integer', 'min:0'],
             'creditos_electivos_requeridos' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $escuela = Escuela::findByCodigo($request->escuela_codigo);
+        $escuela = Escuela::find($request->escuela_id);
         if (!$escuela) {
             return $this->notFound('Escuela no encontrada');
         }
@@ -179,15 +179,15 @@ class PlanEstudiosController extends Controller
 
     /**
      * Lista el plan de estudios activo de una escuela
-     * GET /plan-estudios?escuela_codigo=0
+     * GET /plan-estudios?escuela_id=X
      */
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'escuela_codigo' => ['required', 'in:0,1,2,3'],
+            'escuela_id' => ['required', 'uuid', 'exists:escuelas,id'],
         ]);
 
-        $escuela = Escuela::findByCodigo($request->escuela_codigo);
+        $escuela = Escuela::find($request->escuela_id);
         if (!$escuela) {
             return $this->notFound('Escuela no encontrada');
         }
@@ -289,12 +289,12 @@ class PlanEstudiosController extends Controller
     public function import(Request $request): JsonResponse
     {
         $request->validate([
-            'escuela_codigo' => ['required', 'in:0,1,2,3'],
-            'archivo'        => ['required', 'file', 'mimes:xlsx,xls', 'max:5120'],
-            'plan_id'        => ['nullable', 'uuid', 'exists:planes_estudios,id'],
+            'escuela_id' => ['required', 'uuid', 'exists:escuelas,id'],
+            'archivo'    => ['required', 'file', 'mimes:xlsx,xls', 'max:5120'],
+            'plan_id'    => ['nullable', 'uuid', 'exists:planes_estudios,id'],
         ]);
 
-        $import = new PlanEstudiosImport($request->escuela_codigo, $request->plan_id);
+        $import = new PlanEstudiosImport($request->escuela_id, $request->plan_id);
         Excel::import($import, $request->file('archivo'));
 
         $resumen = $import->getResumen();
@@ -312,12 +312,12 @@ class PlanEstudiosController extends Controller
     public function importPdf(Request $request): JsonResponse
     {
         $request->validate([
-            'escuela_codigo' => ['required', 'in:0,1,2,3'],
-            'archivo'        => ['required', 'file', 'mimes:pdf', 'max:10240'],
-            'plan_id'        => ['nullable', 'uuid', 'exists:planes_estudios,id'],
+            'escuela_id' => ['required', 'uuid', 'exists:escuelas,id'],
+            'archivo'    => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'plan_id'    => ['nullable', 'uuid', 'exists:planes_estudios,id'],
         ]);
 
-        $escuela = Escuela::findByCodigo($request->escuela_codigo);
+        $escuela = Escuela::find($request->escuela_id);
         if (!$escuela) {
             return $this->notFound('Escuela no encontrada');
         }
@@ -401,16 +401,16 @@ class PlanEstudiosController extends Controller
 
     /**
      * Elimina todos los cursos del plan de una escuela (para reimportar)
-     * DELETE /plan-estudios?escuela_codigo=0
+     * DELETE /plan-estudios?escuela_id=X
      */
     public function destroy(Request $request): JsonResponse
     {
         $request->validate([
-            'escuela_codigo' => ['required', 'in:0,1,2,3'],
-            'plan_id'        => ['nullable', 'uuid', 'exists:planes_estudios,id'],
+            'escuela_id' => ['required', 'uuid', 'exists:escuelas,id'],
+            'plan_id'    => ['nullable', 'uuid', 'exists:planes_estudios,id'],
         ]);
 
-        $escuela = Escuela::findByCodigo($request->escuela_codigo);
+        $escuela = Escuela::find($request->escuela_id);
         if (!$escuela) {
             return $this->notFound('Escuela no encontrada');
         }
