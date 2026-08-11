@@ -11,7 +11,7 @@ import {
   ImportPlanResumen,
   ImportPlanFila,
   ImportPdfResumen,
-  ESCUELAS,
+  Escuela,
 } from '@core/services/plan-estudios.service';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
@@ -25,9 +25,10 @@ export class PlanEstudiosComponent implements OnInit {
   private service = inject(PlanEstudiosService);
   private router = inject(Router);
 
-  readonly escuelas = ESCUELAS;
+  escuelas = signal<Escuela[]>([]);
+  loadingEscuelas = signal(false);
 
-  escuelaSeleccionada = signal('0');
+  escuelaSeleccionada = signal('');
   plan = signal<PlanEstudios | null>(null);
   planes = signal<PlanVersion[]>([]);
   loading = signal(false);
@@ -177,15 +178,34 @@ export class PlanEstudiosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarPlan();
-    this.cargarPlanes();
+    this.cargarEscuelas();
+  }
+
+  cargarEscuelas(): void {
+    this.loadingEscuelas.set(true);
+    this.service.getEscuelas().subscribe({
+      next: (escuelas) => {
+        this.escuelas.set(escuelas);
+        this.loadingEscuelas.set(false);
+        if (!this.escuelaSeleccionada() && escuelas.length > 0) {
+          this.escuelaSeleccionada.set(escuelas[0].id);
+          this.cargarPlan();
+          this.cargarPlanes();
+        }
+      },
+      error: () => {
+        this.mostrarMensaje('error', 'Error al cargar las escuelas');
+        this.loadingEscuelas.set(false);
+      },
+    });
   }
 
   volver(): void {
     this.router.navigate(['/app/configuracion']);
   }
 
-  onEscuelaChange(): void {
+  onEscuelaChange(escuelaId: string): void {
+    this.escuelaSeleccionada.set(escuelaId);
     this.cicloFiltro.set(null);
     this.planes.set([]);
     this.cargarPlan();
@@ -431,7 +451,7 @@ export class PlanEstudiosComponent implements OnInit {
   }
 
   getNombreEscuela(): string {
-    return this.escuelas.find(e => e.codigo === this.escuelaSeleccionada())?.nombre ?? '';
+    return this.escuelas().find(e => e.id === this.escuelaSeleccionada())?.nombre ?? '';
   }
 
   private mostrarMensaje(tipo: 'success' | 'error', texto: string): void {

@@ -77,23 +77,32 @@ interface ApiResponse<T> {
   data: T;
 }
 
-export const ESCUELAS = [
-  { codigo: '0', nombre: 'Ingeniería Industrial', nombre_corto: 'Industrial' },
-  { codigo: '1', nombre: 'Ingeniería Informática', nombre_corto: 'Informática' },
-  { codigo: '2', nombre: 'Ingeniería Mecatrónica', nombre_corto: 'Mecatrónica' },
-  { codigo: '3', nombre: 'Ing. Agroindustrial e Industrias Alimentarias', nombre_corto: 'Agroindustrial' },
-];
+export interface Escuela {
+  id: string;
+  codigo: string;
+  nombre: string;
+  nombre_corto: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PlanEstudiosService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/plan-estudios`;
   private cursosUrl = `${environment.apiUrl}/cursos`;
+  private escuelasUrl = `${environment.apiUrl}/escuelas`;
+
+  // ── Escuelas ─────────────────────────────────────────────────────────────
+
+  getEscuelas(): Observable<Escuela[]> {
+    return this.http.get<ApiResponse<Escuela[]>>(this.escuelasUrl).pipe(
+      map(r => r.data)
+    );
+  }
 
   // ── Plan activo (cursos) ────────────────────────────────────────────────
 
-  getPlan(escuelaCodigo: string): Observable<PlanEstudios> {
-    const params = new HttpParams().set('escuela_codigo', escuelaCodigo);
+  getPlan(escuelaId: string): Observable<PlanEstudios> {
+    const params = new HttpParams().set('escuela_id', escuelaId);
     return this.http.get<ApiResponse<PlanEstudios>>(this.apiUrl, { params }).pipe(
       map(r => r.data)
     );
@@ -101,16 +110,16 @@ export class PlanEstudiosService {
 
   // ── Versiones de planes ─────────────────────────────────────────────────
 
-  getPlanes(escuelaCodigo: string): Observable<{ escuela: { codigo: string; nombre: string }; planes: PlanVersion[] }> {
-    const params = new HttpParams().set('escuela_codigo', escuelaCodigo);
+  getPlanes(escuelaId: string): Observable<{ escuela: { codigo: string; nombre: string }; planes: PlanVersion[] }> {
+    const params = new HttpParams().set('escuela_id', escuelaId);
     return this.http.get<ApiResponse<any>>(`${this.apiUrl}/planes`, { params }).pipe(
       map(r => r.data)
     );
   }
 
-  crearPlan(escuelaCodigo: string, nombre: string, creditosObligatorios = 0, creditosElectivos = 0): Observable<PlanVersion> {
+  crearPlan(escuelaId: string, nombre: string, creditosObligatorios = 0, creditosElectivos = 0): Observable<PlanVersion> {
     return this.http.post<ApiResponse<PlanVersion>>(`${this.apiUrl}/planes`, {
-      escuela_codigo: escuelaCodigo,
+      escuela_id: escuelaId,
       nombre,
       total_creditos_obligatorios: creditosObligatorios,
       creditos_electivos_requeridos: creditosElectivos,
@@ -137,9 +146,9 @@ export class PlanEstudiosService {
 
   // ── Importación ─────────────────────────────────────────────────────────
 
-  importar(escuelaCodigo: string, archivo: File, planId?: string): Observable<{ resumen: ImportPlanResumen; resultados: ImportPlanFila[] }> {
+  importar(escuelaId: string, archivo: File, planId?: string): Observable<{ resumen: ImportPlanResumen; resultados: ImportPlanFila[] }> {
     const form = new FormData();
-    form.append('escuela_codigo', escuelaCodigo);
+    form.append('escuela_id', escuelaId);
     form.append('archivo', archivo);
     if (planId) form.append('plan_id', planId);
     return this.http.post<ApiResponse<{ resumen: ImportPlanResumen; resultados: ImportPlanFila[] }>>(`${this.apiUrl}/import`, form).pipe(
@@ -147,9 +156,9 @@ export class PlanEstudiosService {
     );
   }
 
-  importarPdf(escuelaCodigo: string, archivo: File, planId?: string): Observable<ImportPdfResumen> {
+  importarPdf(escuelaId: string, archivo: File, planId?: string): Observable<ImportPdfResumen> {
     const form = new FormData();
-    form.append('escuela_codigo', escuelaCodigo);
+    form.append('escuela_id', escuelaId);
     form.append('archivo', archivo);
     if (planId) form.append('plan_id', planId);
     return this.http.post<ApiResponse<ImportPdfResumen>>(`${this.apiUrl}/import-pdf`, form).pipe(
@@ -157,8 +166,8 @@ export class PlanEstudiosService {
     );
   }
 
-  limpiar(escuelaCodigo: string, planId?: string): Observable<{ eliminados: number }> {
-    let params = new HttpParams().set('escuela_codigo', escuelaCodigo);
+  limpiar(escuelaId: string, planId?: string): Observable<{ eliminados: number }> {
+    let params = new HttpParams().set('escuela_id', escuelaId);
     if (planId) params = params.set('plan_id', planId);
     return this.http.delete<ApiResponse<{ eliminados: number }>>(this.apiUrl, { params }).pipe(
       map(r => r.data)

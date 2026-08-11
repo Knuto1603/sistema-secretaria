@@ -106,11 +106,11 @@
         Escuela Profesional
       </label>
       <select
-        [(ngModel)]="escuelaSeleccionada"
-        (ngModelChange)="onEscuelaChange()"
+        [ngModel]="escuelaSeleccionada()"
+        (ngModelChange)="onEscuelaChange($event)"
         class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50">
-        @for (e of escuelas; track e.codigo) {
-          <option [value]="e.codigo">{{ e.nombre }}</option>
+        @for (e of escuelas(); track e.id) {
+          <option [value]="e.id">{{ e.nombre }}</option>
         }
       </select>
     </div>
