@@ -72,6 +72,7 @@ export class ProgramacionTablaComponent implements OnInit {
   todosLosItems    = signal<Programacion[]>([]); // para la matriz
 
   loading           = signal(false);
+  errorCarga        = signal<string | null>(null);
   loadingMatriz     = signal(false);
   isUploading         = signal(false);
   isUploadingHtml     = signal(false);
@@ -222,9 +223,13 @@ export class ProgramacionTablaComponent implements OnInit {
         next: res => {
           this.programacion.set(res.data);
           this.paginationData.set(res);
+          this.errorCarga.set(null);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false),
+        error: err => {
+          this.errorCarga.set(err.error?.message || 'No se pudo cargar la programación. Intenta de nuevo.');
+          this.loading.set(false);
+        },
       });
   }
 
