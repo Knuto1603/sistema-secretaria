@@ -17,6 +17,7 @@ class Solicitud extends Model
         'user_id',
         'tipo_solicitud_id',
         'programacion_id',
+        'periodo_id',
         'metadatos',
         'motivo',
         'estado',
@@ -49,6 +50,11 @@ class Solicitud extends Model
     public function programacion(): BelongsTo
     {
         return $this->belongsTo(ProgramacionAcademica::class, 'programacion_id');
+    }
+
+    public function periodo(): BelongsTo
+    {
+        return $this->belongsTo(Periodo::class, 'periodo_id');
     }
 
     public function asignado(): BelongsTo

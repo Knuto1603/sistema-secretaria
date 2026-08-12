@@ -9,6 +9,7 @@ readonly class SolicitudResponseDTO
         public string $user_id,
         public string $tipo_solicitud_id,
         public ?string $programacion_id,
+        public ?string $periodo_id,
         public string $motivo,
         public string $estado,
         public ?string $firma_digital_path,
@@ -24,6 +25,7 @@ readonly class SolicitudResponseDTO
         public ?array $user,
         public ?array $tipo_solicitud,
         public ?array $programacion,
+        public ?array $periodo,
         public string $created_at,
         public string $updated_at
     ) {}
@@ -35,6 +37,7 @@ readonly class SolicitudResponseDTO
             'user_id' => $this->user_id,
             'tipo_solicitud_id' => $this->tipo_solicitud_id,
             'programacion_id' => $this->programacion_id,
+            'periodo_id' => $this->periodo_id,
             'motivo' => $this->motivo,
             'estado' => $this->estado,
             'firma_digital_path' => $this->firma_digital_path,
@@ -50,6 +53,7 @@ readonly class SolicitudResponseDTO
             'user' => $this->user,
             'tipo_solicitud' => $this->tipo_solicitud,
             'programacion' => $this->programacion,
+            'periodo' => $this->periodo,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

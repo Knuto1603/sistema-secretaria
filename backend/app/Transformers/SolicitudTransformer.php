@@ -16,6 +16,7 @@ class SolicitudTransformer
             user_id: $model->user_id,
             tipo_solicitud_id: $model->tipo_solicitud_id,
             programacion_id: $model->programacion_id,
+            periodo_id: $model->periodo_id,
             motivo: $model->motivo,
             estado: $model->estado,
             firma_digital_path: $model->firma_digital_path,
@@ -66,6 +67,10 @@ class SolicitudTransformer
                 'aula' => $model->programacion->aulaRelacion ? [
                     'nombre' => $model->programacion->aulaRelacion->nombre,
                 ] : null,
+            ] : null,
+            periodo: $model->periodo ? [
+                'id'     => $model->periodo->id,
+                'nombre' => $model->periodo->nombre,
             ] : null,
             created_at: $model->created_at->toISOString(),
             updated_at: $model->updated_at->toISOString()

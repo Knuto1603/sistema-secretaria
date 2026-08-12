@@ -24,7 +24,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
 
         if ($solicitud) {
             $solicitud->update($data);
-            $solicitud->load(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada']);
+            $solicitud->load(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada', 'periodo']);
         }
 
         return $solicitud;
@@ -33,14 +33,14 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function findById(string $id): ?Solicitud
     {
         return $this->model
-            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada', 'asignado'])
+            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada', 'periodo', 'asignado'])
             ->find($id);
     }
 
     public function findByUserId(string $userId, int $perPage = 10): LengthAwarePaginator
     {
         return $this->model
-            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada'])
+            ->with(['tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada', 'periodo'])
             ->where('user_id', $userId)
             ->latest()
             ->paginate($perPage);
@@ -49,7 +49,7 @@ class SolicitudRepository implements SolicitudRepositoryInterface
     public function getBaseQuery(): Builder
     {
         return $this->model
-            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada']);
+            ->with(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada', 'periodo']);
     }
 
     public function getPaginated(array $filters = [], int $perPage = 10): LengthAwarePaginator
@@ -81,6 +81,10 @@ class SolicitudRepository implements SolicitudRepositoryInterface
 
         if (isset($filters['programacion_id']) && $filters['programacion_id']) {
             $query->where('programacion_id', $filters['programacion_id']);
+        }
+
+        if (isset($filters['periodo_id']) && $filters['periodo_id']) {
+            $query->where('periodo_id', $filters['periodo_id']);
         }
 
         if (isset($filters['curso_id']) && $filters['curso_id']) {
@@ -123,6 +127,9 @@ class SolicitudRepository implements SolicitudRepositoryInterface
         }
         if (isset($filters['programacion_id']) && $filters['programacion_id']) {
             $query->where('programacion_id', $filters['programacion_id']);
+        }
+        if (isset($filters['periodo_id']) && $filters['periodo_id']) {
+            $query->where('periodo_id', $filters['periodo_id']);
         }
         if (isset($filters['curso_id']) && $filters['curso_id']) {
             $query->whereHas('programacion', fn($q) => $q->where('curso_id', $filters['curso_id']));
