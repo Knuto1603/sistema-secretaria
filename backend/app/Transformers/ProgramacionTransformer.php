@@ -129,6 +129,7 @@ class ProgramacionTransformer
             escuela_programada: $escuelaProgramada,
             es_equivalente:     $esEquivalente,
             tipo_plan:          $model->tipo_plan ?? null,
+            seccion_hermana_disponible: $model->seccion_hermana_disponible ?? null,
         );
     }
 

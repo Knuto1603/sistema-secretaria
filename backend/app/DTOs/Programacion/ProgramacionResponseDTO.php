@@ -27,6 +27,7 @@ readonly class ProgramacionResponseDTO
         public ?array $escuela_programada,
         public bool $es_equivalente = false,
         public ?string $tipo_plan = null,
+        public ?array $seccion_hermana_disponible = null,
     ) {}
 
     public function toArray(): array
@@ -54,6 +55,7 @@ readonly class ProgramacionResponseDTO
             'escuela_programada'  => $this->escuela_programada,
             'es_equivalente'      => $this->es_equivalente,
             'tipo_plan'           => $this->tipo_plan,
+            'seccion_hermana_disponible' => $this->seccion_hermana_disponible,
         ];
     }
 }

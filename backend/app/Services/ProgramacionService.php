@@ -231,10 +231,58 @@ class ProgramacionService
             false
         );
 
+        $this->attachSeccionesHermanas(collect($paginated->items()), $periodoId);
+
         return [
             'ciclo_actual'        => $cicloActual,
             'historial_registrado' => $tieneHistorial,
             'paginated'           => $paginated,
         ];
+    }
+
+    /**
+     * Para cada sección llena de la página actual, busca si existe una "sección hermana"
+     * (mismo curso + mismo grupo horario + misma escuela programada, distinta sección) que
+     * todavía tenga cupo disponible. Se usa en el frontend para avisar al alumno que, si al
+     * momento de evaluar su solicitud la hermana sigue con cupo, será inscrito ahí directamente.
+     */
+    private function attachSeccionesHermanas(\Illuminate\Support\Collection $items, string $periodoId): void
+    {
+        $llenas = $items->filter(fn($m) => $m->estaLleno() && $m->grupo_horario_id && $m->escuela_programada_id);
+
+        if ($llenas->isEmpty()) {
+            return;
+        }
+
+        $candidatas = ProgramacionAcademica::query()
+            ->periodo($periodoId)
+            ->whereIn('programacion_secciones.escuela_programada_id', $llenas->pluck('escuela_programada_id')->unique()->values())
+            ->whereIn('programacion_secciones.curso_id', $llenas->pluck('curso_id')->unique()->values())
+            ->whereIn('programacion_secciones.grupo_horario_id', $llenas->pluck('grupo_horario_id')->unique()->values())
+            ->where('programacion_secciones.lleno_manual', false)
+            ->whereColumn('programacion_secciones.n_inscritos', '<', 'programacion_secciones.capacidad')
+            ->get([
+                'programacion_secciones.id',
+                'programacion_secciones.curso_id',
+                'programacion_secciones.grupo_horario_id',
+                'programacion_secciones.escuela_programada_id',
+                'programacion_secciones.seccion',
+            ]);
+
+        foreach ($llenas as $item) {
+            $hermana = $candidatas->first(fn($c) =>
+                $c->curso_id === $item->curso_id
+                && $c->grupo_horario_id === $item->grupo_horario_id
+                && $c->escuela_programada_id === $item->escuela_programada_id
+                && $c->id !== $item->id
+            );
+
+            if ($hermana) {
+                $item->seccion_hermana_disponible = [
+                    'id'      => $hermana->id,
+                    'seccion' => $hermana->seccion,
+                ];
+            }
+        }
     }
 }
