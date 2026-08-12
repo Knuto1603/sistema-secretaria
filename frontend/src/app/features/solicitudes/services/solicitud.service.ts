@@ -254,11 +254,11 @@ export class SolicitudService {
   }
 
   /**
-   * Devuelve los programacion_ids donde el estudiante ya tiene solicitud activa.
-   * Usado para mostrar badge "Solicitado" en la tabla de programación.
+   * Devuelve los curso_ids del periodo activo donde el estudiante ya tiene solicitud activa.
+   * Usado para deshabilitar el botón "Solicitar cupo" en la tabla de programación.
    */
-  getProgramacionesConSolicitudActiva(): Observable<string[]> {
-    return this.http.get<ApiResponse<string[]>>(`${this.apiUrl}/programaciones-activas`).pipe(
+  getCursosConSolicitudActiva(): Observable<string[]> {
+    return this.http.get<ApiResponse<string[]>>(`${this.apiUrl}/cursos-con-solicitud-activa`).pipe(
       map(response => response.data)
     );
   }
