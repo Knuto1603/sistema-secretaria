@@ -114,9 +114,10 @@ class ProgramacionTransformer
                 'nombre' => $model->curso->nombre,
             ] : null,
             periodo: $periodoObj ? [
-                'id'     => $periodoObj->id,
-                'nombre' => $periodoObj->nombre,
-                'activo' => (bool) $periodoObj->activo,
+                'id'                  => $periodoObj->id,
+                'nombre'              => $periodoObj->nombre,
+                'activo'              => (bool) $periodoObj->activo,
+                'solicitudes_abiertas'=> (bool) $periodoObj->solicitudes_abiertas,
             ] : null,
             docente: $model->docente ? [
                 'id'             => $model->docente->id,
