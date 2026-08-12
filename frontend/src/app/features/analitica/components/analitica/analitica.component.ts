@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SolicitudService, MetricaCurso, SeccionMetrica } from '@features/solicitudes/services/solicitud.service';
+import { PeriodoService, Periodo } from '@core/services/periodo.service';
 
 @Component({
   selector: 'app-analitica',
@@ -12,9 +13,13 @@ import { SolicitudService, MetricaCurso, SeccionMetrica } from '@features/solici
 })
 export class AnaliticaComponent implements OnInit {
   private solicitudService = inject(SolicitudService);
+  private periodoService = inject(PeriodoService);
   private router = inject(Router);
 
   tipoActivo = signal<'CUPO_EXT' | 'INSC_ESCUELA'>('CUPO_EXT');
+
+  periodos = signal<Periodo[]>([]);
+  periodoSeleccionado = signal<string | null>(null);
 
   cursos = signal<MetricaCurso[]>([]);
   loading = signal(true);
@@ -46,14 +51,23 @@ export class AnaliticaComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.cargar();
+    this.periodoService.getPeriodos().subscribe({
+      next: (periodos) => {
+        this.periodos.set(periodos);
+        const activo = periodos.find(p => p.activo);
+        this.periodoSeleccionado.set(activo?.id ?? periodos[0]?.id ?? null);
+        this.cargar();
+      },
+      error: () => this.cargar()
+    });
   }
 
   cargar(): void {
     this.loading.set(true);
     this.error.set(null);
     this.cursosExpandidos.set(new Set());
-    this.solicitudService.getMetricasCupo(this.tipoActivo()).subscribe({
+    const periodoId = this.periodoSeleccionado() ?? undefined;
+    this.solicitudService.getMetricasCupo(this.tipoActivo(), periodoId).subscribe({
       next: (data) => { this.cursos.set(data); this.loading.set(false); },
       error: () => { this.error.set('No se pudieron cargar las métricas.'); this.loading.set(false); }
     });
@@ -66,13 +80,21 @@ export class AnaliticaComponent implements OnInit {
     this.cargar();
   }
 
+  cambiarPeriodo(periodoId: string): void {
+    if (this.periodoSeleccionado() === periodoId) return;
+    this.periodoSeleccionado.set(periodoId);
+    this.busqueda.set('');
+    this.cargar();
+  }
+
   esInscEscuela(): boolean {
     return this.tipoActivo() === 'INSC_ESCUELA';
   }
 
   exportar(): void {
     this.exportando.set(true);
-    this.solicitudService.exportarMetricas().subscribe({
+    const periodoId = this.periodoSeleccionado() ?? undefined;
+    this.solicitudService.exportarMetricas(periodoId).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

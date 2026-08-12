@@ -8,6 +8,7 @@ export interface Solicitud {
   user_id: string;
   tipo_solicitud_id: string;
   programacion_id: string | null;
+  periodo_id: string | null;
   motivo: string;
   estado: string;
   firma_digital_path: string | null;
@@ -43,6 +44,7 @@ export interface Solicitud {
     docente: { nombre: string } | null;
     aula: { nombre: string } | null;
   } | null;
+  periodo?: { id: string; nombre: string } | null;
 }
 
 export interface SeccionMetrica {
@@ -277,8 +279,10 @@ export class SolicitudService {
   /**
    * Exporta métricas completas a Excel (4 hojas)
    */
-  exportarMetricas(): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/exportar-metricas`, { responseType: 'blob' });
+  exportarMetricas(periodoId?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (periodoId) params = params.set('periodo_id', periodoId);
+    return this.http.get(`${this.apiUrl}/exportar-metricas`, { params, responseType: 'blob' });
   }
 
   /**
@@ -293,8 +297,9 @@ export class SolicitudService {
   /**
    * Métricas de cupo extra por curso (secciones + solicitantes)
    */
-  getMetricasCupo(tipo: 'CUPO_EXT' | 'INSC_ESCUELA' = 'CUPO_EXT'): Observable<MetricaCurso[]> {
-    const params = new HttpParams().set('tipo', tipo);
+  getMetricasCupo(tipo: 'CUPO_EXT' | 'INSC_ESCUELA' = 'CUPO_EXT', periodoId?: string): Observable<MetricaCurso[]> {
+    let params = new HttpParams().set('tipo', tipo);
+    if (periodoId) params = params.set('periodo_id', periodoId);
     return this.http.get<ApiResponse<MetricaCurso[]>>(`${this.apiUrl}/metricas-cupo`, { params }).pipe(
       map(r => r.data)
     );
@@ -303,14 +308,17 @@ export class SolicitudService {
   /**
    * Estadísticas de solicitudes (admin/secretaria)
    */
-  getEstadisticas(): Observable<{
+  getEstadisticas(periodoId?: string): Observable<{
+    periodo_id: string | null;
     por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
     total: number;
     por_tipo: { cupo_ext: number; insc_escuela: number };
     por_escuela: Array<{ escuela: string; total: number }>;
     cursos_top: Array<{ curso: string; codigo: string; total_solicitudes: number; escuela_programada?: string }>;
   }> {
-    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/estadisticas`).pipe(
+    let params = new HttpParams();
+    if (periodoId) params = params.set('periodo_id', periodoId);
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/estadisticas`, { params }).pipe(
       map(response => response.data)
     );
   }
