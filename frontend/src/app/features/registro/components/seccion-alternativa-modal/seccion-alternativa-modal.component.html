@@ -1,0 +1,57 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-xl p-7">
+
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-12 h-12 flex items-center justify-center bg-amber-100 rounded-md flex-shrink-0">
+        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800">Hay una sección con cupo disponible</h3>
+        <p class="text-sm text-slate-500 mt-0.5">
+          {{ programacion().curso?.nombre }} — Sec {{ programacion().seccion }}, Grupo {{ programacion().grupo }}
+        </p>
+      </div>
+    </div>
+
+    <div class="p-4 bg-amber-50 border border-amber-200 rounded-md mb-6">
+      <p class="text-sm text-amber-800">
+        Esta sección está llena, pero la <strong>Sección {{ programacion().seccion_hermana_disponible?.seccion }}</strong>
+        de este mismo curso y grupo horario todavía tiene cupo disponible.
+      </p>
+      <p class="text-xs text-amber-700 mt-2">
+        Si presentas la solicitud de ampliación de cupo y, al momento de evaluarla, esa sección
+        sigue con cupo disponible, se te inscribirá automáticamente ahí en lugar de ampliar el
+        cupo de esta sección.
+      </p>
+    </div>
+
+    <div class="space-y-3 mb-6">
+      <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-700">Esperar</p>
+          <p class="text-xs text-slate-500 mt-0.5">No presentar la solicitud por ahora y esperar a que ambas secciones se llenen.</p>
+        </div>
+        <app-btn variant="ghost" (clicked)="cerrado.emit()">Esperar</app-btn>
+      </div>
+
+      <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-700">Ver la sección con cupo</p>
+          <p class="text-xs text-slate-500 mt-0.5">Revisar el horario y docente de la Sección {{ programacion().seccion_hermana_disponible?.seccion }} para inscribirte ahí directamente.</p>
+        </div>
+        <app-btn variant="secondary" (clicked)="verDisponible.emit()">Ver sección</app-btn>
+      </div>
+
+      <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-700">Presentar la solicitud igual</p>
+          <p class="text-xs text-slate-500 mt-0.5">Continuar con la solicitud de ampliación de cupo y aceptar el resultado de la evaluación.</p>
+        </div>
+        <app-btn variant="primary" (clicked)="continuarSolicitud.emit()">Presentar solicitud</app-btn>
+      </div>
+    </div>
+  </div>
+</div>

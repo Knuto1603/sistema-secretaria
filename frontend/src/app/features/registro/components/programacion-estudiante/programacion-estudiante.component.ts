@@ -9,6 +9,7 @@ import { SolicitudService } from '../../../solicitudes/services/solicitud.servic
 import { HistorialOnboardingComponent } from '../historial-onboarding/historial-onboarding.component';
 import { ProgramacionDetalleComponent } from '../programacion-detalle/programacion-detalle.component';
 import { TodosCursosModalComponent } from '../todos-cursos-modal/todos-cursos-modal.component';
+import { SeccionAlternativaModalComponent } from '../seccion-alternativa-modal/seccion-alternativa-modal.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -27,6 +28,7 @@ import { PaginationComponent } from '@shared/pagination/pagination.component';
     HistorialOnboardingComponent,
     ProgramacionDetalleComponent,
     TodosCursosModalComponent,
+    SeccionAlternativaModalComponent,
   ],
   templateUrl: './programacion-estudiante.component.html'
 })
@@ -47,10 +49,11 @@ export class ProgramacionEstudianteComponent implements OnInit {
   cicloActual                = signal<number | null>(null);
   historialRegistrado        = signal<boolean>(false);
   showOnboarding             = signal(false);
-  programacionesConSolicitud = signal<Set<string>>(new Set());
+  cursosConSolicitud         = signal<Set<string>>(new Set());
   solicitudesAbiertas        = signal<boolean>(true);
   showTodosCursos            = signal(false);
   programacionDetalleId      = signal<string | null>(null);
+  seccionLlenaAviso          = signal<Programacion | null>(null);
 
   isPeriodoActivo = signal(true);
 
@@ -90,14 +93,14 @@ export class ProgramacionEstudianteComponent implements OnInit {
       error: () => this.loading.set(false),
     });
 
-    this.solicitudService.getProgramacionesConSolicitudActiva().subscribe({
-      next: ids => this.programacionesConSolicitud.set(new Set(ids)),
+    this.solicitudService.getCursosConSolicitudActiva().subscribe({
+      next: ids => this.cursosConSolicitud.set(new Set(ids)),
       error: () => {},
     });
   }
 
-  tieneSolicitudActiva(id: string): boolean {
-    return this.programacionesConSolicitud().has(id);
+  tieneSolicitudActiva(item: Programacion): boolean {
+    return !!item.curso?.id && this.cursosConSolicitud().has(item.curso.id);
   }
 
   onSearchChange(value: string): void {
@@ -117,6 +120,30 @@ export class ProgramacionEstudianteComponent implements OnInit {
   }
 
   solicitarCupo(item: Programacion): void {
+    if (item.seccion_hermana_disponible) {
+      this.seccionLlenaAviso.set(item);
+      return;
+    }
+    this.irASolicitud(item);
+  }
+
+  cerrarAvisoSeccionLlena(): void {
+    this.seccionLlenaAviso.set(null);
+  }
+
+  verSeccionDisponible(): void {
+    const hermana = this.seccionLlenaAviso()?.seccion_hermana_disponible;
+    this.seccionLlenaAviso.set(null);
+    if (hermana) this.programacionDetalleId.set(hermana.id);
+  }
+
+  confirmarPresentarSolicitud(): void {
+    const item = this.seccionLlenaAviso();
+    this.seccionLlenaAviso.set(null);
+    if (item) this.irASolicitud(item);
+  }
+
+  private irASolicitud(item: Programacion): void {
     this.router.navigate(['app/solicitudes/nueva/', item.id]);
   }
 

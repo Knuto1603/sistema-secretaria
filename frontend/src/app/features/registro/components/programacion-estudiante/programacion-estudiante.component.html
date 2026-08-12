@@ -23,6 +23,16 @@
     </app-programacion-detalle>
   }
 
+  <!-- Modal: Aviso de sección con cupo disponible en el mismo grupo -->
+  @if (seccionLlenaAviso()) {
+    <app-seccion-alternativa-modal
+      [programacion]="seccionLlenaAviso()!"
+      (cerrado)="cerrarAvisoSeccionLlena()"
+      (verDisponible)="verSeccionDisponible()"
+      (continuarSolicitud)="confirmarPresentarSolicitud()">
+    </app-seccion-alternativa-modal>
+  }
+
   <!-- Banner: historial no registrado. Oculto temporalmente: cambió el sistema/formato de historial y aún no se actualiza el flujo de carga -->
   @if (false && !historialRegistrado() && !loading()) {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-md p-5">
@@ -202,11 +212,11 @@
       <!-- Acciones de fila -->
       <ng-template #actionsTemplate let-row>
         <div class="flex items-center gap-1.5">
-          @if (tieneSolicitudActiva(row.id)) {
-            <!-- Ya tiene solicitud activa para este curso -->
-            <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-lg tracking-widest">
-              Solicitado
-            </span>
+          @if (tieneSolicitudActiva(row)) {
+            <!-- Ya tiene solicitud activa para este curso en el periodo actual -->
+            <app-btn variant="secondary" [disabled]="true" title="Ya tienes una solicitud activa para este curso">
+              Ya solicitado
+            </app-btn>
           } @else if (!isPeriodoActivo()) {
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Inactivo</span>
           } @else if (row.esta_lleno) {
