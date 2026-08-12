@@ -43,12 +43,13 @@ class SolicitudService
             }
 
             // Verificar que el periodo esté activo
-            if (!$programacion->periodo || !$programacion->periodo->activo) {
+            $periodo = $programacion->programacion?->periodo;
+            if (!$periodo || !$periodo->activo) {
                 throw new Exception('No se pueden presentar solicitudes para periodos académicos inactivos.');
             }
 
             // Verificar que la presentación de solicitudes esté abierta
-            if (!$programacion->periodo->solicitudes_abiertas) {
+            if (!$periodo->solicitudes_abiertas) {
                 throw new Exception('La presentación de solicitudes está cerrada. No se aceptan nuevas solicitudes en este momento.');
             }
 
