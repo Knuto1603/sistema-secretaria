@@ -22,6 +22,7 @@ interface SolicitudRepositoryInterface
 
     /**
      * Verifica si existe una solicitud activa (no rechazada) del usuario para el mismo curso
+     * dentro del periodo académico indicado.
      */
-    public function existsSolicitudActivaParaCurso(string $userId, string $cursoId): bool;
+    public function existsSolicitudActivaParaCurso(string $userId, string $cursoId, string $periodoId): bool;
 }

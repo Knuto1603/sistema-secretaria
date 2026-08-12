@@ -63,9 +63,9 @@ class SolicitudService
                 }
             }
 
-            // Verificar si ya existe una solicitud activa para este curso
-            if ($this->repository->existsSolicitudActivaParaCurso($user->id, $programacion->curso_id)) {
-                throw new Exception('Ya tienes una solicitud activa para este curso. No puedes presentar otra hasta que sea resuelta.');
+            // Verificar si ya existe una solicitud activa para este curso en el mismo periodo
+            if ($this->repository->existsSolicitudActivaParaCurso($user->id, $programacion->curso_id, $periodo->id)) {
+                throw new Exception('Ya tienes una solicitud activa para este curso en el periodo actual. No puedes presentar otra hasta que sea resuelta.');
             }
 
             // Elegir el tipo de solicitud según el contexto

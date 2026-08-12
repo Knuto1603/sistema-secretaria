@@ -152,12 +152,13 @@ class SolicitudRepository implements SolicitudRepositoryInterface
 
     /**
      * Verifica si existe una solicitud activa (no rechazada) del usuario para el mismo curso
-     * Busca por código de curso, sin importar el grupo
+     * dentro del mismo periodo académico. Busca por código de curso, sin importar el grupo.
      */
-    public function existsSolicitudActivaParaCurso(string $userId, string $cursoId): bool
+    public function existsSolicitudActivaParaCurso(string $userId, string $cursoId, string $periodoId): bool
     {
         return $this->model
             ->where('user_id', $userId)
+            ->where('periodo_id', $periodoId)
             ->whereNotIn('estado', ['rechazada']) // Solo excluimos rechazadas, el resto son activas
             ->whereHas('programacion.curso', function ($query) use ($cursoId) {
                 $query->where('id', $cursoId);
