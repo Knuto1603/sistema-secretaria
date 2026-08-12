@@ -39,6 +39,7 @@ export class SolicitudFormComponent implements OnInit {
   programacionInfo = signal<Programacion | null>(null);
   cursoInfo = signal<any | null>(null);
   solicitudesCerradas = signal(false);
+  periodoInactivo = signal(false);
   loading = signal(false);
   isSubmitting = signal(false);
   successMessage = signal('');
@@ -66,6 +67,7 @@ ngOnInit(): void {
     switchMap(programacion => {
       this.programacionInfo.set(programacion);
       this.solicitudesCerradas.set(programacion.periodo?.solicitudes_abiertas === false);
+      this.periodoInactivo.set(programacion.periodo?.activo === false);
       if (!programacion.curso?.id) {
         throw new Error('No se encontró información del curso');
       }
@@ -94,6 +96,10 @@ ngOnInit(): void {
   }
 
   enviarSolicitud() {
+
+    if (this.solicitudesCerradas() || this.periodoInactivo()) {
+      return;
+    }
 
     if (this.solicitudForm.invalid || !this.firmaBase64()) {
       this.errorMessage.set('Por favor, completa el motivo y firma el documento antes de enviar.');
