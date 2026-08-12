@@ -13,12 +13,13 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, WithColumnWidths, WithStyles
 {
-    public function __construct(protected string $tipo) {}
+    public function __construct(protected string $tipo, protected ?string $periodoId = null) {}
 
     public function collection(): Collection
     {
         return Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
             ->whereNotNull('programacion_id')
+            ->when($this->periodoId, fn($q) => $q->where('periodo_id', $this->periodoId))
             ->with(['user.escuela', 'programacion.curso', 'programacion.escuelaProgramada'])
             ->orderBy('created_at')
             ->get()

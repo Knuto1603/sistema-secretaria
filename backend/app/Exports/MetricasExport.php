@@ -6,13 +6,15 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class MetricasExport implements WithMultipleSheets
 {
+    public function __construct(protected ?string $periodoId = null) {}
+
     public function sheets(): array
     {
         return [
-            new MetricasResumenSheet('CUPO_EXT'),
-            new MetricasDetalleSheet('CUPO_EXT'),
-            new MetricasResumenSheet('INSC_ESCUELA'),
-            new MetricasDetalleSheet('INSC_ESCUELA'),
+            new MetricasResumenSheet('CUPO_EXT', $this->periodoId),
+            new MetricasDetalleSheet('CUPO_EXT', $this->periodoId),
+            new MetricasResumenSheet('INSC_ESCUELA', $this->periodoId),
+            new MetricasDetalleSheet('INSC_ESCUELA', $this->periodoId),
         ];
     }
 }

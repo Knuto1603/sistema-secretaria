@@ -14,18 +14,19 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, WithColumnWidths, WithStyles
 {
-    public function __construct(protected string $tipo) {}
+    public function __construct(protected string $tipo, protected ?string $periodoId = null) {}
 
     public function collection(): Collection
     {
-        // IDs de programaciones con solicitudes del tipo indicado, con conteo
+        // IDs de programaciones con solicitudes del tipo indicado, con conteo, del periodo seleccionado
         $conteos = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
             ->whereNotNull('programacion_id')
+            ->when($this->periodoId, fn($q) => $q->where('periodo_id', $this->periodoId))
             ->selectRaw('programacion_id, count(*) as total')
             ->groupBy('programacion_id')
             ->pluck('total', 'programacion_id');
 
-        if ($conteos->isEmpty()) {
+        if ($conteos->isEmpty() || !$this->periodoId) {
             return collect();
         }
 
@@ -34,12 +35,13 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
             ->pluck('curso_id')
             ->unique();
 
-        // Todas las secciones de esos cursos en el periodo activo
-        $secciones = ProgramacionAcademica::whereIn('curso_id', $cursoIds)
-            ->whereHas('periodo', fn($q) => $q->where('activo', true))
+        // Todas las secciones de esos cursos en el periodo seleccionado
+        $secciones = ProgramacionAcademica::periodo($this->periodoId)
+            ->select('programacion_secciones.*')
+            ->whereIn('programacion_secciones.curso_id', $cursoIds)
             ->with(['curso', 'docente', 'aulaRelacion', 'escuelaProgramada'])
-            ->orderBy('curso_id')
-            ->orderBy('grupo')
+            ->orderBy('programacion_secciones.curso_id')
+            ->orderBy('programacion_secciones.grupo')
             ->get();
 
         return $secciones->map(function ($p) use ($conteos) {

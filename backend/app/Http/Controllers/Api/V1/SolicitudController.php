@@ -188,13 +188,17 @@ class SolicitudController extends Controller
      * Estadísticas de solicitudes de cupo (para secretaría/admin).
      * Devuelve conteos por estado y los cursos más solicitados.
      */
-    public function estadisticas(): JsonResponse
+    public function estadisticas(Request $request): JsonResponse
     {
-        $porEstado = Solicitud::selectRaw('estado, count(*) as total')
+        $periodoId = $request->get('periodo_id') ?: Periodo::where('activo', true)->value('id');
+
+        $porEstado = Solicitud::when($periodoId, fn($q) => $q->where('solicitud.periodo_id', $periodoId))
+            ->selectRaw('estado, count(*) as total')
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
         $porTipo = Solicitud::join('tipo_solicitudes', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitudes.id')
+            ->when($periodoId, fn($q) => $q->where('solicitud.periodo_id', $periodoId))
             ->selectRaw('tipo_solicitudes.codigo, tipo_solicitudes.nombre, count(*) as total')
             ->groupBy('tipo_solicitudes.codigo', 'tipo_solicitudes.nombre')
             ->pluck('total', 'tipo_solicitudes.codigo');
@@ -202,6 +206,7 @@ class SolicitudController extends Controller
         // Cursos más solicitados agrupados por curso (no por sección)
         $cursosTop = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada', 'tipoSolicitud'])
             ->whereNotNull('solicitud.programacion_id')
+            ->when($periodoId, fn($q) => $q->where('solicitud.periodo_id', $periodoId))
             ->join('programacion_secciones', 'solicitud.programacion_id', '=', 'programacion_secciones.id')
             ->join('cursos', 'cursos.id', '=', 'programacion_secciones.curso_id')
             ->selectRaw('cursos.id as curso_id, cursos.codigo, cursos.nombre as curso_nombre, programacion_secciones.escuela_programada_id, count(*) as total_solicitudes')
@@ -222,6 +227,7 @@ class SolicitudController extends Controller
             ->join('escuelas', 'users.escuela_id', '=', 'escuelas.id')
             ->join('tipo_solicitudes', 'solicitud.tipo_solicitud_id', '=', 'tipo_solicitudes.id')
             ->where('tipo_solicitudes.codigo', 'CUPO_EXT')
+            ->when($periodoId, fn($q) => $q->where('solicitud.periodo_id', $periodoId))
             ->selectRaw('escuelas.id, escuelas.nombre_corto, escuelas.nombre, count(*) as total')
             ->groupBy('escuelas.id', 'escuelas.nombre_corto', 'escuelas.nombre')
             ->orderByDesc('total')
@@ -232,6 +238,7 @@ class SolicitudController extends Controller
             ]);
 
         return $this->success([
+            'periodo_id'  => $periodoId,
             'por_estado' => [
                 'pendiente'   => (int) ($porEstado['pendiente']   ?? 0),
                 'en_revision' => (int) ($porEstado['en_revision'] ?? 0),
@@ -260,9 +267,12 @@ class SolicitudController extends Controller
             ? $request->get('tipo')
             : 'CUPO_EXT';
 
-        // Todas las solicitudes del tipo indicado con relaciones
+        $periodoId = $request->get('periodo_id') ?: Periodo::where('activo', true)->value('id');
+
+        // Todas las solicitudes del tipo indicado con relaciones, del periodo seleccionado
         $solicitudes = Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $tipo))
             ->whereNotNull('programacion_id')
+            ->when($periodoId, fn($q) => $q->where('periodo_id', $periodoId))
             ->with([
                 'user.escuela',
                 'programacion.curso',
@@ -280,10 +290,9 @@ class SolicitudController extends Controller
 
             $curso = $sols->first()->programacion->curso;
 
-            // Todas las secciones programadas del curso en el periodo activo
-            $periodoActivo = Periodo::where('activo', true)->value('id');
-            $seccionesQuery = $periodoActivo
-                ? ProgramacionAcademica::periodo($periodoActivo)
+            // Todas las secciones programadas del curso en el mismo periodo que las solicitudes
+            $seccionesQuery = $periodoId
+                ? ProgramacionAcademica::periodo($periodoId)
                     ->select('programacion_secciones.*')
                     ->where('programacion_secciones.curso_id', $cursoId)
                     ->with(['docente', 'aulaRelacion', 'escuelaProgramada'])
@@ -343,10 +352,12 @@ class SolicitudController extends Controller
     /**
      * Exportar métricas completas (4 hojas: resumen + detalle para cada tipo)
      */
-    public function exportarMetricas(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function exportarMetricas(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
+        $periodoId = $request->get('periodo_id') ?: Periodo::where('activo', true)->value('id');
+
         $filename = 'metricas_solicitudes_' . now()->format('Y-m-d') . '.xlsx';
-        return Excel::download(new MetricasExport(), $filename);
+        return Excel::download(new MetricasExport($periodoId), $filename);
     }
 
     /**
