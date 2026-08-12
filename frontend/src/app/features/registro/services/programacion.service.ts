@@ -81,6 +81,7 @@ export interface Programacion {
   es_equivalente?: boolean;
   tipo_plan?: 'O' | 'E' | null;
   ciclo?: number | null;
+  seccion_hermana_disponible?: { id: string; seccion: string | null } | null;
 }
 
 export interface PaginatedResponse<T> {
