@@ -96,6 +96,40 @@ class TelegramController extends Controller
     }
 
     // =========================================================================
+    // PANEL ADMIN (Sanctum, role:admin|developer)
+    // =========================================================================
+
+    /**
+     * GET /api/telegram/estadisticas
+     *
+     * Cuántos estudiantes están vinculados al bot, del total.
+     */
+    public function estadisticas(): JsonResponse
+    {
+        return $this->success($this->bot->estadisticasVinculacion(), 'Estadísticas de vinculación');
+    }
+
+    /**
+     * GET /api/telegram/vinculados
+     *
+     * Lista paginada de estudiantes vinculados, con búsqueda opcional por nombre/código.
+     */
+    public function vinculados(Request $request): JsonResponse
+    {
+        $vinculados = $this->bot->listarVinculados($request->get('search'));
+
+        $items = collect($vinculados->items())->map(fn ($u) => [
+            'id'                 => $u->id,
+            'name'               => $u->name,
+            'codigo_universitario' => $u->codigo_universitario,
+            'escuela'            => $u->escuela?->nombre_corto,
+            'vinculado_desde'    => $u->telegram_linked_at?->toISOString(),
+        ]);
+
+        return $this->paginated($items, $vinculados, 'Estudiantes vinculados');
+    }
+
+    // =========================================================================
     // PRIVADOS
     // =========================================================================
 

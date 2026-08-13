@@ -130,6 +130,14 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         Route::delete('/', [TelegramController::class, 'desvincular']);
     });
 
+    // Panel admin de Telegram (solo admin/developer)
+    Route::prefix('telegram')
+        ->middleware('role:admin|developer')
+        ->group(function () {
+            Route::get('/estadisticas', [TelegramController::class, 'estadisticas']);
+            Route::get('/vinculados', [TelegramController::class, 'vinculados']);
+        });
+
     // Rutas de Periodos
     Route::prefix('periodos')->group(function () {
         Route::get('/', [PeriodoController::class, 'index']);
