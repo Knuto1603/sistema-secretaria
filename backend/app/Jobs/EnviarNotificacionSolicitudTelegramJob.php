@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Solicitud;
 use App\Services\TelegramBotService;
-use App\Services\TelegramService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,21 +16,28 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
 
     public int $tries = 3;
 
+    /**
+     * @param string $tipo 'creada' | 'apelacion' | 'cambio_estado'
+     */
     public function __construct(
         private readonly string $solicitudId,
+        private readonly string $tipo = 'cambio_estado',
     ) {}
 
-    public function handle(TelegramBotService $bot, TelegramService $telegram): void
+    public function handle(TelegramBotService $bot): void
     {
         $solicitud = Solicitud::with(['user', 'programacion.curso'])->find($this->solicitudId);
 
-        if (!$solicitud || !$solicitud->user || !$solicitud->user->telegram_chat_id) {
+        if (!$solicitud || !$solicitud->user) {
             return;
         }
 
-        $telegram->sendMessage(
-            $solicitud->user->telegram_chat_id,
-            $bot->mensajeCambioEstado($solicitud),
-        );
+        $texto = match ($this->tipo) {
+            'creada'    => $bot->mensajeSolicitudCreada($solicitud),
+            'apelacion' => $bot->mensajeApelacionRecibida($solicitud),
+            default     => $bot->mensajeCambioEstado($solicitud),
+        };
+
+        $bot->notificar($solicitud->user, $texto);
     }
 }

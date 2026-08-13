@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Solicitud;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -47,6 +48,23 @@ class TelegramBotService
     }
 
     /**
+     * Envía una notificación asíncrona (disparada por un Job, no por el webhook).
+     * Si Telegram responde error_code 403 (el alumno bloqueó al bot), desvincula la cuenta.
+     */
+    public function notificar(User $user, string $texto): void
+    {
+        if (!$user->telegram_chat_id) {
+            return;
+        }
+
+        $resultado = $this->telegram->sendMessage($user->telegram_chat_id, $texto);
+
+        if (!($resultado['ok'] ?? false) && (int) ($resultado['error_code'] ?? 0) === 403) {
+            $this->desvincular($user);
+        }
+    }
+
+    /**
      * Procesa un update entrante del webhook de Telegram.
      */
     public function procesarUpdate(array $update): void
@@ -60,14 +78,15 @@ class TelegramBotService
         $chatId = (string) $message['chat']['id'];
         $texto  = trim($message['text']);
 
-        if (!Str::startsWith($texto, '/start')) {
-            $this->telegram->sendMessage(
-                $chatId,
-                'Este bot solo envía notificaciones sobre tus solicitudes de cupo extra. Para vincular tu cuenta, ve a tu Perfil en el sistema.'
-            );
-            return;
-        }
+        match (true) {
+            Str::startsWith($texto, '/start') => $this->manejarStart($chatId, $texto),
+            Str::startsWith($texto, '/misolicitudes') => $this->manejarMisSolicitudes($chatId),
+            default => $this->telegram->sendMessage($chatId, $this->mensajeAyuda()),
+        };
+    }
 
+    private function manejarStart(string $chatId, string $texto): void
+    {
         $codigo = strtoupper(trim(Str::after($texto, '/start')));
 
         if ($codigo === '') {
@@ -79,6 +98,21 @@ class TelegramBotService
         }
 
         $this->vincularConCodigo($chatId, $codigo);
+    }
+
+    private function manejarMisSolicitudes(string $chatId): void
+    {
+        $user = User::where('telegram_chat_id', $chatId)->first();
+
+        if (!$user) {
+            $this->telegram->sendMessage(
+                $chatId,
+                'Tu cuenta no está vinculada. Ve a tu Perfil en el sistema para vincularla.'
+            );
+            return;
+        }
+
+        $this->telegram->sendMessage($chatId, $this->mensajeMisSolicitudes($user));
     }
 
     private function vincularConCodigo(string $chatId, string $codigo): void
@@ -137,11 +171,24 @@ class TelegramBotService
 
     public function mensajeBienvenida(User $user): string
     {
+        return "✅ ¡Cuenta vinculada correctamente!\n\n"
+            . "Hola <b>{$user->name}</b>, a partir de ahora te avisaré aquí cuando haya novedades en tus solicitudes de cupo extra.\n\n"
+            . $this->construirListaSolicitudes($user);
+    }
+
+    /**
+     * Respuesta al comando /misolicitudes: mismo listado que la bienvenida, sin el saludo.
+     */
+    public function mensajeMisSolicitudes(User $user): string
+    {
+        return $this->construirListaSolicitudes($user);
+    }
+
+    private function construirListaSolicitudes(User $user): string
+    {
         ['items' => $items, 'total' => $total] = $this->resumenSolicitudes($user);
 
-        $texto = "✅ ¡Cuenta vinculada correctamente!\n\n"
-            . "Hola <b>{$user->name}</b>, a partir de ahora te avisaré aquí cuando haya novedades en tus solicitudes de cupo extra.\n\n"
-            . "📋 <b>Tus solicitudes actuales:</b>\n";
+        $texto = "📋 <b>Tus solicitudes actuales:</b>\n";
 
         if ($items->isEmpty()) {
             return $texto . 'Actualmente no tienes solicitudes registradas.';
@@ -179,6 +226,34 @@ class TelegramBotService
         return $texto . "\nIngresa al sistema para más detalles.";
     }
 
+    /**
+     * Confirmación enviada apenas se registra una nueva solicitud.
+     */
+    public function mensajeSolicitudCreada(Solicitud $solicitud): string
+    {
+        $curso = $solicitud->programacion?->curso?->nombre ?? 'tu curso';
+
+        return "✅ Recibimos tu solicitud para <b>{$curso}</b>. Te avisaremos por aquí cuando sea revisada.";
+    }
+
+    /**
+     * Confirmación enviada cuando el alumno apela una solicitud rechazada.
+     */
+    public function mensajeApelacionRecibida(Solicitud $solicitud): string
+    {
+        $curso = $solicitud->programacion?->curso?->nombre ?? 'tu curso';
+
+        return "🔁 Registramos tu apelación para <b>{$curso}</b>. La secretaría la revisará nuevamente.";
+    }
+
+    public function mensajeAyuda(): string
+    {
+        return "🤖 <b>Comandos disponibles:</b>\n\n"
+            . "/misolicitudes — Consulta el estado de tus solicitudes de cupo extra\n"
+            . "/ayuda — Muestra este mensaje\n\n"
+            . "Este bot te avisa automáticamente cuando hay novedades en tus solicitudes. Para vincular tu cuenta, ve a tu Perfil en el sistema.";
+    }
+
     private function formatearLineaSolicitud(int $numero, Solicitud $solicitud): string
     {
         $curso  = $solicitud->programacion?->curso?->nombre ?? 'Curso';
@@ -192,5 +267,37 @@ class TelegramBotService
         }
 
         return $linea;
+    }
+
+    // =========================================================================
+    // PANEL ADMIN
+    // =========================================================================
+
+    /**
+     * @return array{total_estudiantes: int, vinculados: int, porcentaje: float}
+     */
+    public function estadisticasVinculacion(): array
+    {
+        $total = User::estudiantes()->count();
+        $vinculados = User::estudiantes()->whereNotNull('telegram_chat_id')->count();
+
+        return [
+            'total_estudiantes' => $total,
+            'vinculados'        => $vinculados,
+            'porcentaje'        => $total > 0 ? round(($vinculados / $total) * 100, 1) : 0.0,
+        ];
+    }
+
+    public function listarVinculados(?string $search, int $perPage = 20): LengthAwarePaginator
+    {
+        return User::estudiantes()
+            ->whereNotNull('telegram_chat_id')
+            ->with('escuela')
+            ->when($search, fn ($q) => $q->where(function ($inner) use ($search) {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('codigo_universitario', 'like', "%{$search}%");
+            }))
+            ->orderByDesc('telegram_linked_at')
+            ->paginate($perPage);
     }
 }

@@ -6,6 +6,7 @@ use App\DTOs\Solicitud\CreateSolicitudDTO;
 use App\Exports\MetricasExport;
 use App\Exports\SolicitudesExport;
 use App\Http\Controllers\Controller;
+use App\Jobs\EnviarNotificacionSolicitudTelegramJob;
 use App\Http\Requests\Solicitud\CreateSolicitudRequest;
 use App\Models\Periodo;
 use App\Models\ProgramacionAcademica;
@@ -401,6 +402,8 @@ class SolicitudController extends Controller
             'respuesta_alumno' => $request->respuesta,
             'fecha_respuesta'  => now(),
         ]);
+
+        EnviarNotificacionSolicitudTelegramJob::dispatch($actualizada->id, 'apelacion');
 
         return $this->success(
             $this->transformer->toArray($actualizada->fresh(['user.escuela', 'tipoSolicitud', 'programacion.curso', 'programacion.docente', 'programacion.aulaRelacion', 'programacion.escuelaProgramada'])),

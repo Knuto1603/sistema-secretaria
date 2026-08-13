@@ -104,7 +104,10 @@ class SolicitudService
                 ]
             ]);
 
-            return $this->repository->findById($solicitud->id);
+            $nueva = $this->repository->findById($solicitud->id);
+            EnviarNotificacionSolicitudTelegramJob::dispatch($nueva->id, 'creada');
+
+            return $nueva;
         });
     }
 
@@ -179,8 +182,8 @@ class SolicitudService
 
         $solicitud = $this->repository->update($id, $data);
 
-        if ($solicitud && in_array($estado, ['aprobada', 'rechazada'], true)) {
-            EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id);
+        if ($solicitud && in_array($estado, ['en_revision', 'aprobada', 'rechazada'], true)) {
+            EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id, 'cambio_estado');
         }
 
         return $solicitud;

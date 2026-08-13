@@ -16,8 +16,10 @@ class TelegramService
 
     /**
      * Envía un mensaje de texto a un chat de Telegram.
+     *
+     * @return array Respuesta cruda de la API de Telegram (incluye 'ok' y, en fallos, 'error_code').
      */
-    public function sendMessage(string $chatId, string $texto): bool
+    public function sendMessage(string $chatId, string $texto): array
     {
         $response = Http::timeout(10)->post("{$this->baseUrl}/sendMessage", [
             'chat_id'    => $chatId,
@@ -33,7 +35,7 @@ class TelegramService
             ]);
         }
 
-        return $response->successful();
+        return $response->json() ?? ['ok' => false];
     }
 
     /**
