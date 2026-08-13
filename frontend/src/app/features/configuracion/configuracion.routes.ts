@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from '@core/auth/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -51,6 +52,12 @@ export const routes: Routes = [
       {
         path: 'usuarios/editar/:id',
         loadComponent: () => import('./components/usuarios/administrativo-form/administrativo-form.component').then(m => m.AdministrativoFormComponent)
+      },
+      // Telegram (solo admin/developer)
+      {
+        path: 'telegram',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./components/telegram-panel/telegram-panel.component').then(m => m.TelegramPanelComponent)
       },
       // Grupos Horario
       {

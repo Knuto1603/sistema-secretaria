@@ -10,7 +10,7 @@
 
   <!-- Grid de tarjetas -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    @for (card of cards; track card.route) {
+    @for (card of visibleCards; track card.route) {
       <div
         (click)="navigateTo(card.route)"
         class="bg-white p-6 rounded-md border cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg group"

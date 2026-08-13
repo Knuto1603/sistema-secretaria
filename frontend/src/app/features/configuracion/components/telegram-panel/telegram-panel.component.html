@@ -1,0 +1,88 @@
+<div class="space-y-6">
+
+  <!-- Estadísticas -->
+  @if (estadisticas(); as stats) {
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white border border-slate-200 rounded-md p-5">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Estudiantes vinculados</p>
+        <p class="text-3xl font-black text-indigo-700 mt-2">{{ stats.vinculados }}</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-md p-5">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total de estudiantes</p>
+        <p class="text-3xl font-black text-slate-700 mt-2">{{ stats.total_estudiantes }}</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-md p-5">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Adopción</p>
+        <p class="text-3xl font-black text-emerald-600 mt-2">{{ stats.porcentaje }}%</p>
+      </div>
+    </div>
+  }
+
+  <!-- Búsqueda -->
+  <div class="relative w-72">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+    <input
+      type="text"
+      [(ngModel)]="search"
+      (keyup.enter)="buscar()"
+      placeholder="Buscar por nombre o código..."
+      class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full">
+  </div>
+
+  <!-- Tabla -->
+  <div class="space-y-4">
+    <app-table
+      [columns]="columnas"
+      [data]="vinculados()"
+      [loading]="loading()">
+
+      <ng-template #cellTemplate let-row let-column="column">
+        @if (column.key === 'name') {
+          <span class="text-sm font-semibold text-slate-800">{{ row.name }}</span>
+        }
+        @if (column.key === 'codigo_universitario') {
+          <span class="px-2 py-1 bg-slate-100 rounded-lg text-xs font-mono text-slate-700">
+            {{ row.codigo_universitario }}
+          </span>
+        }
+        @if (column.key === 'escuela') {
+          <span class="text-sm text-slate-600">{{ row.escuela ?? '-' }}</span>
+        }
+        @if (column.key === 'vinculado_desde') {
+          <span class="text-sm text-slate-600">{{ row.vinculado_desde | date:'dd/MM/yyyy HH:mm' }}</span>
+        }
+      </ng-template>
+    </app-table>
+
+    @if (pagination.lastPage > 1) {
+      <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
+        <app-shared-pagination
+          [currentPage]="pagination.currentPage"
+          [lastPage]="pagination.lastPage"
+          [total]="pagination.total"
+          [from]="pagination.from"
+          [to]="pagination.to"
+          [perPage]="pagination.perPage"
+          (pageChange)="onPageChange($event)">
+        </app-shared-pagination>
+      </div>
+    }
+  </div>
+
+  <!-- Estado vacío -->
+  @if (!loading() && vinculados().length === 0) {
+    <div class="bg-slate-50 rounded-md p-12 text-center">
+      <h3 class="text-lg font-bold text-slate-600 mb-2">Sin estudiantes vinculados</h3>
+      <p class="text-sm text-slate-400">
+        @if (search) {
+          No se encontraron resultados para "{{ search }}".
+        } @else {
+          Todavía nadie vinculó su cuenta con el bot de Telegram.
+        }
+      </p>
+    </div>
+  }
+
+</div>

@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { AuthService } from '@core/auth/services/auth.service';
 
 interface ConfigCard {
   title: string;
@@ -8,6 +9,7 @@ interface ConfigCard {
   icon: string;
   route: string;
   color: string;
+  soloAdmin?: boolean;
 }
 
 @Component({
@@ -18,6 +20,7 @@ interface ConfigCard {
 })
 export class ConfiguracionHomeComponent {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   cards: ConfigCard[] = [
     {
@@ -103,8 +106,21 @@ export class ConfiguracionHomeComponent {
       icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
       route: '/app/configuracion/plantillas-modificacion',
       color: 'purple'
+    },
+    {
+      title: 'Telegram',
+      description: 'Estudiantes vinculados al bot de notificaciones de solicitudes y estadísticas de adopción.',
+      icon: 'M21.198 2.433a2.242 2.242 0 00-1.022.215l-16.5 6.844c-1.29.53-1.282 1.267-.236 1.588l4.23 1.32 9.784-6.17c.462-.28.882-.13.536.176l-7.928 7.163-.305 4.35c.44 0 .63-.2.865-.435l2.075-2.02 4.32 3.19c.795.44 1.365.213 1.565-.735l2.83-13.34c.29-1.167-.435-1.696-1.214-1.146z',
+      route: '/app/configuracion/telegram',
+      color: 'indigo',
+      soloAdmin: true
     }
   ];
+
+  get visibleCards(): ConfigCard[] {
+    const esAdmin = this.authService.isDeveloper() || this.authService.hasRole('admin');
+    return this.cards.filter(c => !c.soloAdmin || esAdmin);
+  }
 
   navigateTo(route: string): void {
     this.router.navigate([route]);
