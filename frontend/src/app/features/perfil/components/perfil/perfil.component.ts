@@ -1,13 +1,15 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { interval, Subscription, switchMap, takeWhile, tap } from 'rxjs';
 import { AuthService } from '@core/auth/services/auth.service';
 import { HistorialService, HistorialResponse, ImportPdfResumen } from '@core/services/historial.service';
 import { ProgresoService, ProgresoAcademico } from '@core/services/progreso.service';
+import { TelegramService, TelegramEstado } from '@core/services/telegram.service';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
-type Tab = 'datos' | 'password' | 'historial' | 'progreso';
+type Tab = 'datos' | 'password' | 'historial' | 'progreso' | 'telegram';
 
 @Component({
   selector: 'app-perfil',
@@ -15,11 +17,13 @@ type Tab = 'datos' | 'password' | 'historial' | 'progreso';
   imports: [CommonModule, DecimalPipe, FormsModule, AppBadgeComponent],
   templateUrl: './perfil.component.html',
 })
-export class PerfilComponent implements OnInit {
+export class PerfilComponent implements OnInit, OnDestroy {
   private authService      = inject(AuthService);
   private historialService = inject(HistorialService);
   private progresoService  = inject(ProgresoService);
+  private telegramService  = inject(TelegramService);
   private route             = inject(ActivatedRoute);
+  private pollSubTelegram?: Subscription;
 
   user    = this.authService.currentUser;
   tabActiva = signal<Tab>('datos');
@@ -46,6 +50,12 @@ export class PerfilComponent implements OnInit {
   // Progreso académico
   progreso         = signal<ProgresoAcademico | null>(null);
   loadingProgreso  = signal(false);
+
+  // Telegram
+  telegramEstado   = signal<TelegramEstado | null>(null);
+  telegramLoading  = signal(false);
+  telegramVinculando = signal(false);
+  telegramDeepLink = signal<string | null>(null);
 
   // Mensaje general
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
@@ -79,6 +89,9 @@ export class PerfilComponent implements OnInit {
     this.resumenImport.set(null);
     if (tab === 'progreso' && this.esEstudiante()) {
       this.cargarProgreso();
+    }
+    if (tab === 'telegram' && this.esEstudiante()) {
+      this.cargarEstadoTelegram();
     }
   }
 
@@ -212,5 +225,58 @@ export class PerfilComponent implements OnInit {
     if (tipo === 'O') return 'Obligatorio';
     if (tipo === 'E') return 'Electivo';
     return '-';
+  }
+
+  // ── Telegram ─────────────────────────────────────────────────────────────
+
+  cargarEstadoTelegram(): void {
+    this.telegramLoading.set(true);
+    this.telegramService.getEstado().subscribe({
+      next: (estado) => {
+        this.telegramEstado.set(estado);
+        this.telegramLoading.set(false);
+      },
+      error: () => this.telegramLoading.set(false),
+    });
+  }
+
+  iniciarVinculacionTelegram(): void {
+    this.telegramVinculando.set(true);
+    this.pollSubTelegram?.unsubscribe();
+
+    this.telegramService.generarVinculo().subscribe({
+      next: ({ deep_link }) => {
+        this.telegramDeepLink.set(deep_link);
+        window.open(deep_link, '_blank');
+        this.pollEstadoTelegram();
+      },
+      error: () => this.telegramVinculando.set(false),
+    });
+  }
+
+  private pollEstadoTelegram(): void {
+    this.pollSubTelegram = interval(3000).pipe(
+      switchMap(() => this.telegramService.getEstado()),
+      tap((estado) => {
+        this.telegramEstado.set(estado);
+        if (estado.vinculado) {
+          this.telegramVinculando.set(false);
+          this.telegramDeepLink.set(null);
+        }
+      }),
+      takeWhile((estado) => !estado.vinculado),
+    ).subscribe();
+  }
+
+  desvincularTelegram(): void {
+    if (!confirm('¿Desvincular tu cuenta de Telegram? Dejarás de recibir notificaciones ahí.')) return;
+
+    this.telegramService.desvincular().subscribe({
+      next: () => this.telegramEstado.set({ vinculado: false, vinculado_desde: null }),
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.pollSubTelegram?.unsubscribe();
   }
 }
