@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTOs\Solicitud\CreateSolicitudDTO;
+use App\Jobs\EnviarNotificacionSolicitudTelegramJob;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Repositories\Contracts\ProgramacionRepositoryInterface;
@@ -176,7 +177,13 @@ class SolicitudService
             $data['asignado_a'] = $asignadoA->id;
         }
 
-        return $this->repository->update($id, $data);
+        $solicitud = $this->repository->update($id, $data);
+
+        if ($solicitud && in_array($estado, ['aprobada', 'rechazada'], true)) {
+            EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id);
+        }
+
+        return $solicitud;
     }
 
     protected function storeBase64Signature(string $base64, string $userId): string

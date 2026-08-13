@@ -34,6 +34,8 @@ class User extends Authenticatable
         'activo',
         'ultima_actualizacion_historial',
         'egresante',
+        'telegram_chat_id',
+        'telegram_linked_at',
     ];
 
     /**
@@ -60,6 +62,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'egresante' => 'boolean',
             'must_change_password' => 'boolean',
+            'telegram_linked_at' => 'datetime',
         ];
     }
 
@@ -89,6 +92,14 @@ class User extends Authenticatable
     public function historialAcademico(): HasMany
     {
         return $this->hasMany(HistorialAcademico::class);
+    }
+
+    /**
+     * Solicitudes de cupo extra presentadas por el alumno
+     */
+    public function solicitudes(): HasMany
+    {
+        return $this->hasMany(Solicitud::class);
     }
 
     /**

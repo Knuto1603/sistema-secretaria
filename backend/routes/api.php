@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\ProgramacionController;
 use App\Http\Controllers\Api\V1\ProgramacionModificacionController;
 use App\Http\Controllers\Api\V1\RolController;
 use App\Http\Controllers\Api\V1\SolicitudController;
+use App\Http\Controllers\Api\V1\TelegramController;
 use App\Http\Controllers\Api\V1\TipoSolicitudController;
 use App\Http\Controllers\Api\V1\UsuarioController;
 use App\Http\Controllers\Api\V1\WhatsappController;
@@ -104,6 +105,14 @@ Route::prefix('whatsapp')->group(function () {
 });
 
 // =============================================
+// TELEGRAM BOT (Webhook público desde Telegram)
+// Protegido por X-Telegram-Bot-Api-Secret-Token header
+// =============================================
+Route::prefix('telegram')->group(function () {
+    Route::post('/webhook', [TelegramController::class, 'webhook']);
+});
+
+// =============================================
 // RUTAS PROTEGIDAS
 // =============================================
 
@@ -113,6 +122,13 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me/password', [AuthController::class, 'cambiarPassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Vinculación de Telegram (estudiante)
+    Route::prefix('me/telegram')->group(function () {
+        Route::post('/generar-vinculo', [TelegramController::class, 'generarVinculo']);
+        Route::get('/estado', [TelegramController::class, 'estado']);
+        Route::delete('/', [TelegramController::class, 'desvincular']);
+    });
 
     // Rutas de Periodos
     Route::prefix('periodos')->group(function () {
