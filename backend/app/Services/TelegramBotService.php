@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Jobs\EnviarMensajeTelegramJob;
+use App\Models\Escuela;
 use App\Models\Solicitud;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -288,16 +290,66 @@ class TelegramBotService
         ];
     }
 
-    public function listarVinculados(?string $search, int $perPage = 20): LengthAwarePaginator
+    public function listarVinculados(
+        ?string $search,
+        ?string $escuelaCodigo = null,
+        ?int $anioIngreso = null,
+        int $perPage = 20
+    ): LengthAwarePaginator {
+        return $this->baseQueryVinculados($search, $escuelaCodigo, $anioIngreso)
+            ->with('escuela')
+            ->orderByDesc('telegram_linked_at')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Envía un mensaje libre a estudiantes vinculados.
+     *
+     * Si $filtros['user_ids'] viene, se envía solo a esos IDs (selección manual).
+     * En caso contrario, se envía a todos los que coincidan con search/escuela_codigo/anio_ingreso.
+     *
+     * @param array{user_ids?: array, search?: string, escuela_codigo?: string, anio_ingreso?: int} $filtros
+     */
+    public function enviarMensajeMasivo(string $mensaje, array $filtros): int
+    {
+        if (!empty($filtros['user_ids'])) {
+            $ids = User::estudiantes()
+                ->whereNotNull('telegram_chat_id')
+                ->whereIn('id', $filtros['user_ids'])
+                ->pluck('id');
+        } else {
+            $ids = $this->baseQueryVinculados(
+                $filtros['search'] ?? null,
+                $filtros['escuela_codigo'] ?? null,
+                $filtros['anio_ingreso'] ?? null,
+            )->pluck('id');
+        }
+
+        // Texto libre del admin: se escapa porque sendMessage siempre usa parse_mode HTML,
+        // y un '<' o '&' suelto rompería el parseo de Telegram (400, mensaje no entregado).
+        $textoSeguro = htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8');
+
+        foreach ($ids as $id) {
+            EnviarMensajeTelegramJob::dispatch($id, $textoSeguro);
+        }
+
+        return $ids->count();
+    }
+
+    private function baseQueryVinculados(?string $search, ?string $escuelaCodigo, ?int $anioIngreso)
     {
         return User::estudiantes()
             ->whereNotNull('telegram_chat_id')
-            ->with('escuela')
             ->when($search, fn ($q) => $q->where(function ($inner) use ($search) {
                 $inner->where('name', 'like', "%{$search}%")
                     ->orWhere('codigo_universitario', 'like', "%{$search}%");
             }))
-            ->orderByDesc('telegram_linked_at')
-            ->paginate($perPage);
+            ->when($escuelaCodigo, function ($q) use ($escuelaCodigo) {
+                $escuela = Escuela::findByCodigo($escuelaCodigo);
+                if ($escuela) {
+                    $q->where('escuela_id', $escuela->id);
+                }
+            })
+            ->when($anioIngreso, fn ($q) => $q->where('anio_ingreso', $anioIngreso));
     }
 }

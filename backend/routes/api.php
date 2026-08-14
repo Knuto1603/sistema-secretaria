@@ -136,6 +136,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         ->group(function () {
             Route::get('/estadisticas', [TelegramController::class, 'estadisticas']);
             Route::get('/vinculados', [TelegramController::class, 'vinculados']);
+            Route::post('/enviar', [TelegramController::class, 'enviarMasivo']);
         });
 
     // Rutas de Periodos

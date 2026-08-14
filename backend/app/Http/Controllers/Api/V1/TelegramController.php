@@ -116,7 +116,11 @@ class TelegramController extends Controller
      */
     public function vinculados(Request $request): JsonResponse
     {
-        $vinculados = $this->bot->listarVinculados($request->get('search'));
+        $vinculados = $this->bot->listarVinculados(
+            $request->get('search'),
+            $request->get('escuela_codigo'),
+            $request->get('anio_ingreso') ? (int) $request->get('anio_ingreso') : null,
+        );
 
         $items = collect($vinculados->items())->map(fn ($u) => [
             'id'                 => $u->id,
@@ -127,6 +131,33 @@ class TelegramController extends Controller
         ]);
 
         return $this->paginated($items, $vinculados, 'Estudiantes vinculados');
+    }
+
+    /**
+     * POST /api/telegram/enviar
+     *
+     * Envía un mensaje libre a estudiantes vinculados: a IDs específicos (selección manual)
+     * o a todos los que coincidan con search/escuela_codigo/anio_ingreso.
+     */
+    public function enviarMasivo(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'mensaje'        => 'required|string|max:4096',
+            'user_ids'       => 'nullable|array',
+            'user_ids.*'     => 'string',
+            'search'         => 'nullable|string',
+            'escuela_codigo' => 'nullable|string',
+            'anio_ingreso'   => 'nullable|integer',
+        ]);
+
+        $enviados = $this->bot->enviarMensajeMasivo($data['mensaje'], [
+            'user_ids'       => $data['user_ids'] ?? null,
+            'search'         => $data['search'] ?? null,
+            'escuela_codigo' => $data['escuela_codigo'] ?? null,
+            'anio_ingreso'   => $data['anio_ingreso'] ?? null,
+        ]);
+
+        return $this->success(['enviados' => $enviados], 'Mensaje encolado para envío');
     }
 
     // =========================================================================
