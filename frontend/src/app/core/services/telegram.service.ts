@@ -28,6 +28,14 @@ export interface TelegramVinculado {
   vinculado_desde: string | null;
 }
 
+export interface EnviarMasivoPayload {
+  mensaje: string;
+  user_ids?: string[];
+  search?: string;
+  escuela_codigo?: string;
+  anio_ingreso?: number;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -72,11 +80,24 @@ export class TelegramService {
     );
   }
 
-  getVinculados(page = 1, search?: string): Observable<PaginatedData<TelegramVinculado>> {
+  getVinculados(
+    page = 1,
+    search?: string,
+    escuelaCodigo?: string,
+    anioIngreso?: number,
+  ): Observable<PaginatedData<TelegramVinculado>> {
     let params = new HttpParams().set('page', page.toString());
     if (search) params = params.set('search', search);
+    if (escuelaCodigo) params = params.set('escuela_codigo', escuelaCodigo);
+    if (anioIngreso) params = params.set('anio_ingreso', anioIngreso.toString());
 
     return this.http.get<ApiResponse<PaginatedData<TelegramVinculado>>>(`${this.adminUrl}/vinculados`, { params }).pipe(
+      map(r => r.data)
+    );
+  }
+
+  enviarMasivo(payload: EnviarMasivoPayload): Observable<{ enviados: number }> {
+    return this.http.post<ApiResponse<{ enviados: number }>>(`${this.adminUrl}/enviar`, payload).pipe(
       map(r => r.data)
     );
   }

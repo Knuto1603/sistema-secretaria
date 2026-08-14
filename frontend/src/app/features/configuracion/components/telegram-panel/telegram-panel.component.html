@@ -18,18 +18,61 @@
     </div>
   }
 
-  <!-- Búsqueda -->
-  <div class="relative w-72">
-    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-    </svg>
-    <input
-      type="text"
-      [(ngModel)]="search"
-      (keyup.enter)="buscar()"
-      placeholder="Buscar por nombre o código..."
-      class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full">
+  <!-- Filtros y acciones -->
+  <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+    <div class="flex flex-wrap gap-3">
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="buscar()"
+          placeholder="Buscar por nombre o código..."
+          class="pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-64">
+      </div>
+
+      <select
+        [(ngModel)]="escuelaFilter"
+        (change)="buscar()"
+        class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        <option value="">Todas las escuelas</option>
+        @for (escuela of escuelas; track escuela.id) {
+          <option [value]="escuela.id">{{ escuela.nombre }}</option>
+        }
+      </select>
+
+      <input
+        type="number"
+        [(ngModel)]="anioIngresoFilter"
+        (keyup.enter)="buscar()"
+        placeholder="Promoción (año)"
+        class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-40">
+
+      @if (search || escuelaFilter || anioIngresoFilter) {
+        <button
+          (click)="search = ''; escuelaFilter = ''; anioIngresoFilter = null; buscar()"
+          class="px-3 py-2.5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+          Limpiar
+        </button>
+      }
+    </div>
+
+    <button
+      (click)="abrirComposer()"
+      class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap">
+      Redactar mensaje
+    </button>
   </div>
+
+  <!-- Barra de selección -->
+  @if (seleccionados().size > 0) {
+    <div class="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-sm text-indigo-700">
+      <span class="font-semibold">{{ seleccionados().size }} estudiante(s) seleccionados</span>
+      <button (click)="limpiarSeleccion()" class="text-indigo-500 hover:text-indigo-800 font-semibold">Limpiar selección</button>
+    </div>
+  }
 
   <!-- Tabla -->
   <div class="space-y-4">
@@ -39,6 +82,13 @@
       [loading]="loading()">
 
       <ng-template #cellTemplate let-row let-column="column">
+        @if (column.key === 'seleccion') {
+          <input
+            type="checkbox"
+            [checked]="estaSeleccionado(row.id)"
+            (change)="toggleSeleccion(row.id)"
+            class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+        }
         @if (column.key === 'name') {
           <span class="text-sm font-semibold text-slate-800">{{ row.name }}</span>
         }
@@ -76,12 +126,59 @@
     <div class="bg-slate-50 rounded-md p-12 text-center">
       <h3 class="text-lg font-bold text-slate-600 mb-2">Sin estudiantes vinculados</h3>
       <p class="text-sm text-slate-400">
-        @if (search) {
-          No se encontraron resultados para "{{ search }}".
+        @if (search || escuelaFilter || anioIngresoFilter) {
+          No se encontraron resultados con los filtros aplicados.
         } @else {
           Todavía nadie vinculó su cuenta con el bot de Telegram.
         }
       </p>
+    </div>
+  }
+
+  <!-- Modal compositor de mensaje -->
+  @if (mostrarComposer()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" (click)="cerrarComposer()"></div>
+      <div class="relative bg-white rounded-md shadow-xl w-full max-w-lg overflow-hidden">
+        <div class="p-6 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-800">Redactar mensaje</h3>
+          <p class="text-sm text-slate-500 mt-1">{{ descripcionDestinatarios() }}</p>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <textarea
+            [(ngModel)]="mensajeTexto"
+            rows="6"
+            maxlength="4096"
+            placeholder="Escribe el mensaje que recibirán por Telegram..."
+            class="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+
+          @if (resultadoEnvio()) {
+            <div
+              class="p-3 rounded-lg text-sm font-medium"
+              [class.bg-emerald-50]="resultadoEnvio()?.tipo === 'success'"
+              [class.text-emerald-700]="resultadoEnvio()?.tipo === 'success'"
+              [class.bg-red-50]="resultadoEnvio()?.tipo === 'error'"
+              [class.text-red-700]="resultadoEnvio()?.tipo === 'error'">
+              {{ resultadoEnvio()?.texto }}
+            </div>
+          }
+        </div>
+
+        <div class="p-6 border-t border-slate-100 flex justify-end gap-3">
+          <button
+            (click)="cerrarComposer()"
+            class="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button
+            (click)="enviarMensaje()"
+            [disabled]="!mensajeTexto.trim() || enviando()"
+            class="px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+            {{ enviando() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 
