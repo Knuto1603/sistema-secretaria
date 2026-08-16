@@ -66,6 +66,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
     }
     if (this.cambioObligatorio() || this.route.snapshot.queryParamMap.get('cambio_obligatorio') === '1') {
       this.tabActiva.set('password');
+    } else if (this.esEstudiante() && this.route.snapshot.queryParamMap.get('tab') === 'telegram') {
+      this.setTab('telegram');
     }
   }
 
