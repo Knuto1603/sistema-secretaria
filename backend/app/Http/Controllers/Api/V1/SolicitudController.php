@@ -259,6 +259,7 @@ class SolicitudController extends Controller
             'por_tipo'    => [
                 'cupo_ext'     => (int) ($porTipo['CUPO_EXT']     ?? 0),
                 'insc_escuela' => (int) ($porTipo['INSC_ESCUELA'] ?? 0),
+                'retiro_curso' => (int) ($porTipo['RETIRO_CURSO'] ?? 0),
             ],
             'cursos_top'  => $cursosTop,
             'por_escuela' => $porEscuela,

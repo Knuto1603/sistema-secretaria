@@ -55,8 +55,9 @@ class SolicitudService
             }
 
             // Verificar que la sección fue programada para la escuela del estudiante.
-            // Se omite si fuera_de_plan = true o inscripcion_escuela = true.
-            $esExcepcion = $dto->fuera_de_plan || $dto->inscripcion_escuela;
+            // Se omite si fuera_de_plan = true, inscripcion_escuela = true o retiro_curso = true
+            // (una anulación de matrícula no depende de la escuela programada de la sección).
+            $esExcepcion = $dto->fuera_de_plan || $dto->inscripcion_escuela || $dto->retiro_curso;
 
             if ($user->escuela_id && !$esExcepcion) {
                 if ($programacion->escuela_programada_id !== $user->escuela_id) {
@@ -70,7 +71,11 @@ class SolicitudService
             }
 
             // Elegir el tipo de solicitud según el contexto
-            $tipoCodigo = $dto->inscripcion_escuela ? 'INSC_ESCUELA' : 'CUPO_EXT';
+            $tipoCodigo = match (true) {
+                $dto->retiro_curso => 'RETIRO_CURSO',
+                $dto->inscripcion_escuela => 'INSC_ESCUELA',
+                default => 'CUPO_EXT',
+            };
             $tipoSolicitud = $this->tipoSolicitudRepository->findByCode($tipoCodigo);
 
             if (!$tipoSolicitud) {

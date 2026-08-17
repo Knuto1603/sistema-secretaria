@@ -26,5 +26,15 @@ class TipoSolicitudSeeder extends Seeder
                 'activo' => true
             ]
         );
+
+        TipoSolicitud::updateOrCreate(
+            ['codigo' => 'RETIRO_CURSO'],
+            [
+                'nombre' => 'Anulación de Matrícula',
+                'descripcion' => 'Constancia para gestionar ante la Secretaría Académica la anulación de la matrícula del alumno en un curso.',
+                'requiere_archivo' => false,
+                'activo' => true
+            ]
+        );
     }
 }

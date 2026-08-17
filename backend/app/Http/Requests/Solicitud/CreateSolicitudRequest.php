@@ -20,6 +20,7 @@ class CreateSolicitudRequest extends FormRequest
             'archivo_sustento' => ['nullable', 'file', 'mimes:pdf,jpg,png', 'max:2048'],
             'fuera_de_plan'       => ['nullable', 'boolean'],
             'inscripcion_escuela' => ['nullable', 'boolean'],
+            'retiro_curso'        => ['nullable', 'boolean'],
         ];
     }
 

@@ -174,7 +174,7 @@ class TelegramBotService
     public function mensajeBienvenida(User $user): string
     {
         return "✅ ¡Cuenta vinculada correctamente!\n\n"
-            . "Hola <b>{$user->name}</b>, a partir de ahora te avisaré aquí cuando haya novedades en tus solicitudes de cupo extra.\n\n"
+            . "Hola <b>{$user->name}</b>, a partir de ahora te avisaré aquí cuando haya novedades en tus solicitudes.\n\n"
             . $this->construirListaSolicitudes($user);
     }
 
@@ -251,7 +251,7 @@ class TelegramBotService
     public function mensajeAyuda(): string
     {
         return "🤖 <b>Comandos disponibles:</b>\n\n"
-            . "/misolicitudes — Consulta el estado de tus solicitudes de cupo extra\n"
+            . "/misolicitudes — Consulta el estado de tus solicitudes\n"
             . "/ayuda — Muestra este mensaje\n\n"
             . "Este bot te avisa automáticamente cuando hay novedades en tus solicitudes. Para vincular tu cuenta, ve a tu Perfil en el sistema.";
     }
