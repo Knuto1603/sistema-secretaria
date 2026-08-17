@@ -43,7 +43,7 @@ export class SolicitudListaComponent implements OnInit {
   stats = signal<{
     por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
     total: number;
-    por_tipo: { cupo_ext: number; insc_escuela: number };
+    por_tipo: { cupo_ext: number; insc_escuela: number; retiro_curso: number };
     por_escuela: Array<{ escuela: string; total: number }>;
     cursos_top: Array<{ curso: string; codigo: string; total_solicitudes: number; escuela_programada?: string }>;
   } | null>(null);

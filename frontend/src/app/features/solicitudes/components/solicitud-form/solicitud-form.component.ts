@@ -47,6 +47,7 @@ export class SolicitudFormComponent implements OnInit {
   firmaBase64 = signal('');
   fueraDePlan = signal(false);
   inscripcionEscuela = signal(false);
+  retiroCurso = signal(false);
 
   solicitudForm = this.fb.group({
     motivo: ['', [Validators.required, Validators.minLength(20)]],
@@ -57,6 +58,7 @@ ngOnInit(): void {
   const id = this.route.snapshot.paramMap.get('id');
   this.fueraDePlan.set(this.route.snapshot.queryParamMap.get('fuera_de_plan') === '1');
   this.inscripcionEscuela.set(this.route.snapshot.queryParamMap.get('inscripcion_escuela') === '1');
+  this.retiroCurso.set(this.route.snapshot.queryParamMap.get('retiro_curso') === '1');
 
   if (!id) {
     this.router.navigate(['/programacion']);
@@ -115,7 +117,8 @@ ngOnInit(): void {
       firma: this.firmaBase64(),
       archivo_sustento: this.solicitudForm.value.archivo_sustento as any | undefined,
       fuera_de_plan: this.fueraDePlan(),
-      inscripcion_escuela: this.inscripcionEscuela()
+      inscripcion_escuela: this.inscripcionEscuela(),
+      retiro_curso: this.retiroCurso()
     };
 
     this.solicitudService.crearSolicitud(payload).subscribe({

@@ -1,0 +1,48 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-xl p-7">
+
+    <div class="flex items-start justify-between gap-4 mb-5">
+      <div>
+        <h3 class="text-base font-bold text-slate-800">¿Qué solicitud deseas presentar?</h3>
+        <p class="text-sm text-slate-500 mt-0.5">
+          {{ programacion().curso?.nombre }} — Sec {{ programacion().seccion }}, Grupo {{ programacion().grupo }}
+        </p>
+      </div>
+      <button (click)="cerrado.emit()" class="p-2 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="space-y-3">
+      @if (mostrarCupoExtra()) {
+        <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+          <div class="flex-1">
+            <p class="text-sm font-bold text-slate-700">Ampliación de cupo</p>
+            <p class="text-xs text-slate-500 mt-0.5">Esta sección alcanzó su capacidad máxima. Solicita que se te asigne un cupo adicional.</p>
+          </div>
+          <app-btn variant="primary" (clicked)="elegirCupoExtra.emit()">Solicitar cupo</app-btn>
+        </div>
+      }
+
+      @if (mostrarInscripcionEscuela()) {
+        <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+          <div class="flex-1">
+            <p class="text-sm font-bold text-slate-700">Inscripción entre escuelas</p>
+            <p class="text-xs text-slate-500 mt-0.5">Esta sección fue programada por otra escuela profesional que tiene cupos disponibles.</p>
+          </div>
+          <app-btn variant="secondary" (clicked)="elegirInscripcionEscuela.emit()">Inscribir</app-btn>
+        </div>
+      }
+
+      <div class="flex items-start gap-3 p-3 border border-slate-200 rounded-md">
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-700">Anulación de matrícula</p>
+          <p class="text-xs text-slate-500 mt-0.5">¿Ya no vas a llevar este curso? Presenta la constancia para que la Secretaría Académica gestione tu retiro.</p>
+        </div>
+        <app-btn variant="danger" (clicked)="elegirRetiro.emit()">Anular matrícula</app-btn>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,13 +2,14 @@ import { Component, inject, signal, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProgramacionService, Programacion } from '../../services/programacion.service';
+import { SolicitudTipoModalComponent } from '../solicitud-tipo-modal/solicitud-tipo-modal.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 
 @Component({
   selector: 'app-todos-cursos-modal',
   standalone: true,
-  imports: [CommonModule, AppButtonComponent, AppBadgeComponent],
+  imports: [CommonModule, AppButtonComponent, AppBadgeComponent, SolicitudTipoModalComponent],
   templateUrl: './todos-cursos-modal.component.html'
 })
 export class TodosCursosModalComponent implements OnInit {
@@ -22,6 +23,7 @@ export class TodosCursosModalComponent implements OnInit {
   todosCursosPage       = signal(1);
   todosCursosSearch     = signal('');
   todosCursosLoading    = signal(false);
+  tipoModalItem         = signal<Programacion | null>(null);
 
   ngOnInit(): void {
     this.cargar();
@@ -63,5 +65,38 @@ export class TodosCursosModalComponent implements OnInit {
     this.router.navigate(['app/solicitudes/nueva/', item.id], {
       queryParams: { inscripcion_escuela: '1' },
     });
+  }
+
+  solicitarRetiro(item: Programacion): void {
+    this.cerrar();
+    this.router.navigate(['app/solicitudes/nueva/', item.id], {
+      queryParams: { retiro_curso: '1' },
+    });
+  }
+
+  abrirModalTipo(item: Programacion): void {
+    this.tipoModalItem.set(item);
+  }
+
+  cerrarModalTipo(): void {
+    this.tipoModalItem.set(null);
+  }
+
+  onElegirCupoExtra(): void {
+    const item = this.tipoModalItem();
+    this.tipoModalItem.set(null);
+    if (item) this.solicitarFueraDePlan(item);
+  }
+
+  onElegirInscripcionEscuela(): void {
+    const item = this.tipoModalItem();
+    this.tipoModalItem.set(null);
+    if (item) this.solicitarInscripcionEscuela(item);
+  }
+
+  onElegirRetiro(): void {
+    const item = this.tipoModalItem();
+    this.tipoModalItem.set(null);
+    if (item) this.solicitarRetiro(item);
   }
 }

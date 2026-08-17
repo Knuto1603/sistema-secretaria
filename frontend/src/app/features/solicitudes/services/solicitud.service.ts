@@ -89,6 +89,7 @@ export interface CreateSolicitudDTO {
   archivo_sustento?: File;
   fuera_de_plan?: boolean;
   inscripcion_escuela?: boolean;
+  retiro_curso?: boolean;
 }
 
 export interface UpdateEstadoDTO {
@@ -148,6 +149,10 @@ export class SolicitudService {
 
     if (data.inscripcion_escuela) {
       formData.append('inscripcion_escuela', '1');
+    }
+
+    if (data.retiro_curso) {
+      formData.append('retiro_curso', '1');
     }
 
     return this.http.post<ApiResponse<Solicitud>>(this.apiUrl, formData).pipe(
@@ -312,7 +317,7 @@ export class SolicitudService {
     periodo_id: string | null;
     por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
     total: number;
-    por_tipo: { cupo_ext: number; insc_escuela: number };
+    por_tipo: { cupo_ext: number; insc_escuela: number; retiro_curso: number };
     por_escuela: Array<{ escuela: string; total: number }>;
     cursos_top: Array<{ curso: string; codigo: string; total_solicitudes: number; escuela_programada?: string }>;
   }> {

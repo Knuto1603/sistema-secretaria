@@ -62,16 +62,12 @@
               <div class="flex items-center gap-2 flex-shrink-0">
                 @if (item.esta_lleno) {
                   <app-badge color="red">Lleno</app-badge>
-                  <app-btn variant="primary" (clicked)="solicitarFueraDePlan(item)">
-                    Solicitar cupo
-                  </app-btn>
                 } @else {
                   <span class="text-[10px] font-bold text-emerald-500 uppercase">Disponible</span>
-                  <button (click)="solicitarInscripcionEscuela(item)"
-                    class="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-50 border border-violet-300 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap">
-                    Solicitar curso en otra escuela
-                  </button>
                 }
+                <app-btn variant="primary" (clicked)="abrirModalTipo(item)">
+                  Solicitar
+                </app-btn>
               </div>
             </div>
           }
@@ -105,3 +101,16 @@
 
   </div>
 </div>
+
+<!-- Modal: ¿Qué solicitud deseas presentar? -->
+@if (tipoModalItem()) {
+  <app-solicitud-tipo-modal
+    [programacion]="tipoModalItem()!"
+    [mostrarCupoExtra]="tipoModalItem()!.esta_lleno"
+    [mostrarInscripcionEscuela]="!tipoModalItem()!.esta_lleno"
+    (cerrado)="cerrarModalTipo()"
+    (elegirCupoExtra)="onElegirCupoExtra()"
+    (elegirInscripcionEscuela)="onElegirInscripcionEscuela()"
+    (elegirRetiro)="onElegirRetiro()">
+  </app-solicitud-tipo-modal>
+}

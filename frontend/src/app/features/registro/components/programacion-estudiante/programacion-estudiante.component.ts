@@ -10,6 +10,7 @@ import { HistorialOnboardingComponent } from '../historial-onboarding/historial-
 import { ProgramacionDetalleComponent } from '../programacion-detalle/programacion-detalle.component';
 import { TodosCursosModalComponent } from '../todos-cursos-modal/todos-cursos-modal.component';
 import { SeccionAlternativaModalComponent } from '../seccion-alternativa-modal/seccion-alternativa-modal.component';
+import { SolicitudTipoModalComponent } from '../solicitud-tipo-modal/solicitud-tipo-modal.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppTableComponent, TableColumn } from '@shared/table/table.component';
@@ -29,6 +30,7 @@ import { PaginationComponent } from '@shared/pagination/pagination.component';
     ProgramacionDetalleComponent,
     TodosCursosModalComponent,
     SeccionAlternativaModalComponent,
+    SolicitudTipoModalComponent,
   ],
   templateUrl: './programacion-estudiante.component.html'
 })
@@ -54,6 +56,7 @@ export class ProgramacionEstudianteComponent implements OnInit {
   showTodosCursos            = signal(false);
   programacionDetalleId      = signal<string | null>(null);
   seccionLlenaAviso          = signal<Programacion | null>(null);
+  tipoModalRow               = signal<Programacion | null>(null);
 
   isPeriodoActivo = signal(true);
 
@@ -119,6 +122,32 @@ export class ProgramacionEstudianteComponent implements OnInit {
     this.cargar(1);
   }
 
+  abrirModalTipo(item: Programacion): void {
+    this.tipoModalRow.set(item);
+  }
+
+  cerrarModalTipo(): void {
+    this.tipoModalRow.set(null);
+  }
+
+  onElegirCupoExtra(): void {
+    const item = this.tipoModalRow();
+    this.tipoModalRow.set(null);
+    if (item) this.solicitarCupo(item);
+  }
+
+  onElegirInscripcionEscuela(): void {
+    const item = this.tipoModalRow();
+    this.tipoModalRow.set(null);
+    if (item) this.solicitarInscripcionEscuela(item);
+  }
+
+  onElegirRetiro(): void {
+    const item = this.tipoModalRow();
+    this.tipoModalRow.set(null);
+    if (item) this.solicitarRetiro(item);
+  }
+
   solicitarCupo(item: Programacion): void {
     if (item.seccion_hermana_disponible) {
       this.seccionLlenaAviso.set(item);
@@ -149,6 +178,10 @@ export class ProgramacionEstudianteComponent implements OnInit {
 
   solicitarInscripcionEscuela(item: Programacion): void {
     this.router.navigate(['app/solicitudes/nueva/', item.id], { queryParams: { inscripcion_escuela: '1' } });
+  }
+
+  solicitarRetiro(item: Programacion): void {
+    this.router.navigate(['app/solicitudes/nueva/', item.id], { queryParams: { retiro_curso: '1' } });
   }
 
   getAulaMostrar(row: Programacion): string {

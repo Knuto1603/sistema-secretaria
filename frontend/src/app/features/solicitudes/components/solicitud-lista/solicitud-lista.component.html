@@ -3,7 +3,7 @@
   <!-- Estadísticas de demanda (solo admin/secretaria) -->
   @if (esAdmin() && stats()) {
     <!-- Fila 1: Estado + Tipo -->
-    <div class="grid grid-cols-2 md:grid-cols-7 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-8 gap-3">
       <!-- Pendientes -->
       <div class="bg-amber-50 border border-amber-200 rounded-md p-4">
         <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Pendientes</p>
@@ -38,6 +38,11 @@
       <div class="bg-rose-50 border border-rose-200 rounded-md p-4">
         <p class="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Insc. Escuela</p>
         <p class="text-3xl font-black text-rose-700 mt-1">{{ stats()!.por_tipo.insc_escuela }}</p>
+      </div>
+      <!-- Anulación de Matrícula -->
+      <div class="bg-red-50 border border-red-200 rounded-md p-4">
+        <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Anulaciones</p>
+        <p class="text-3xl font-black text-red-700 mt-1">{{ stats()!.por_tipo.retiro_curso }}</p>
       </div>
     </div>
 
@@ -143,6 +148,7 @@
             <option value="">Todos los tipos</option>
             <option value="CUPO_EXT">Cupo Extra</option>
             <option value="INSC_ESCUELA">Inscripción Escuela</option>
+            <option value="RETIRO_CURSO">Anulación de Matrícula</option>
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
