@@ -15,6 +15,7 @@ export interface Solicitud {
   archivo_sustento_path: string | null;
   archivo_sustento_url: string | null;
   archivo_sustento_nombre: string | null;
+  constancia_pdf_url: string | null;
   asignado_a: string | null;
   observaciones_admin: string | null;
   fuera_de_plan: boolean;
