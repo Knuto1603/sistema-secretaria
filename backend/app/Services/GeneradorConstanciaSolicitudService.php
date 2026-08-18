@@ -18,10 +18,19 @@ class GeneradorConstanciaSolicitudService
             $firmaBase64 = base64_encode(Storage::disk('public')->get($solicitud->firma_digital_path));
         }
 
+        // Independiente de APP_LOCALE/APP_TIMEZONE (en/UTC): la constancia siempre se
+        // presenta en español con la hora local de Peru, sin importar la config global de la app.
+        $fechaPresentacion = $solicitud->created_at
+            ->clone()
+            ->setTimezone('America/Lima')
+            ->locale('es')
+            ->translatedFormat('d \d\e F \d\e\l Y, H:i');
+
         $pdf = Pdf::loadView('pdf.solicitud-constancia', [
-            'solicitud'   => $solicitud,
-            'config'      => $config,
-            'firmaBase64' => $firmaBase64,
+            'solicitud'          => $solicitud,
+            'config'             => $config,
+            'firmaBase64'        => $firmaBase64,
+            'fechaPresentacion'  => $fechaPresentacion,
         ])->setPaper('a4');
 
         $ruta = "constancias/{$solicitud->id}.pdf";

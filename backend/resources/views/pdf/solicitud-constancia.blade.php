@@ -35,7 +35,7 @@
         </tr>
         <tr>
             <td class="label">Fecha de presentación:</td>
-            <td>{{ $solicitud->created_at->translatedFormat('d \d\e F \d\e\l Y, H:i') }}</td>
+            <td>{{ $fechaPresentacion }}</td>
         </tr>
         <tr>
             <td class="label">Tipo de solicitud:</td>
