@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramService
 {
+    /**
+     * Forzar IPv4: en algunos contenedores Docker la interfaz IPv6 esta "a medias"
+     * (existe pero sin ruta de salida real). curl CLI lo evita con Happy Eyeballs,
+     * pero el cliente cURL de PHP puede quedarse colgado intentando esa ruta hasta
+     * agotar el timeout completo (visto en produccion: cURL error 28, 0 bytes
+     * recibidos, siempre justo en el timeout configurado).
+     */
+    private const CURL_FORZAR_IPV4 = ['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]];
+
     private string $baseUrl;
 
     public function __construct()
@@ -21,7 +30,7 @@ class TelegramService
      */
     public function sendMessage(string $chatId, string $texto): array
     {
-        $response = Http::timeout(10)->post("{$this->baseUrl}/sendMessage", [
+        $response = Http::timeout(10)->withOptions(self::CURL_FORZAR_IPV4)->post("{$this->baseUrl}/sendMessage", [
             'chat_id'    => $chatId,
             'text'       => $texto,
             'parse_mode' => 'HTML',
@@ -46,6 +55,7 @@ class TelegramService
     public function sendDocument(string $chatId, string $absolutePath, string $caption = ''): array
     {
         $response = Http::timeout(20)
+            ->withOptions(self::CURL_FORZAR_IPV4)
             ->attach('document', fopen($absolutePath, 'r'), basename($absolutePath))
             ->post("{$this->baseUrl}/sendDocument", [
                 'chat_id'    => $chatId,
@@ -70,7 +80,7 @@ class TelegramService
      */
     public function setWebhook(string $url, string $secretToken): array
     {
-        $response = Http::timeout(10)->post("{$this->baseUrl}/setWebhook", [
+        $response = Http::timeout(10)->withOptions(self::CURL_FORZAR_IPV4)->post("{$this->baseUrl}/setWebhook", [
             'url'          => $url,
             'secret_token' => $secretToken,
         ]);
