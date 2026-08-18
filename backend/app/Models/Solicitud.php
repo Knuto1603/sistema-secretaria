@@ -24,6 +24,7 @@ class Solicitud extends Model
         'firma_digital_path',
         'archivo_sustento_path',
         'archivo_sustento_nombre',
+        'constancia_pdf_path',
         'asignado_a',
         'observaciones_admin',
         'fuera_de_plan',

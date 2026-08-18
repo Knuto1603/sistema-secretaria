@@ -67,6 +67,23 @@ class TelegramBotService
     }
 
     /**
+     * Igual que notificar(), pero envía un documento adjunto (ej. constancia PDF) con
+     * $texto como caption en vez de un mensaje de texto plano.
+     */
+    public function notificarConDocumento(User $user, string $texto, string $absolutePath): void
+    {
+        if (!$user->telegram_chat_id) {
+            return;
+        }
+
+        $resultado = $this->telegram->sendDocument($user->telegram_chat_id, $absolutePath, $texto);
+
+        if (!($resultado['ok'] ?? false) && (int) ($resultado['error_code'] ?? 0) === 403) {
+            $this->desvincular($user);
+        }
+    }
+
+    /**
      * Procesa un update entrante del webhook de Telegram.
      */
     public function procesarUpdate(array $update): void

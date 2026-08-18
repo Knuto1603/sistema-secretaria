@@ -39,6 +39,32 @@ class TelegramService
     }
 
     /**
+     * Envía un documento (archivo) a un chat de Telegram, con un texto opcional como caption.
+     *
+     * @return array Respuesta cruda de la API de Telegram (incluye 'ok' y, en fallos, 'error_code').
+     */
+    public function sendDocument(string $chatId, string $absolutePath, string $caption = ''): array
+    {
+        $response = Http::timeout(20)
+            ->attach('document', fopen($absolutePath, 'r'), basename($absolutePath))
+            ->post("{$this->baseUrl}/sendDocument", [
+                'chat_id'    => $chatId,
+                'caption'    => $caption,
+                'parse_mode' => 'HTML',
+            ]);
+
+        if (!$response->successful()) {
+            Log::error('TelegramService: error al enviar documento', [
+                'chat_id' => $chatId,
+                'status'  => $response->status(),
+                'body'    => $response->body(),
+            ]);
+        }
+
+        return $response->json() ?? ['ok' => false];
+    }
+
+    /**
      * Registra la URL del webhook y el secret token contra los servidores de Telegram.
      * Se ejecuta una vez por deploy/dominio via el comando artisan telegram:set-webhook.
      */

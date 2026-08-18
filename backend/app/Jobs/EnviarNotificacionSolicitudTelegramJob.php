@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
 {
@@ -37,6 +38,16 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
             'apelacion' => $bot->mensajeApelacionRecibida($solicitud),
             default     => $bot->mensajeCambioEstado($solicitud),
         };
+
+        if ($this->tipo === 'creada' && $solicitud->constancia_pdf_path
+            && Storage::disk('public')->exists($solicitud->constancia_pdf_path)) {
+            $bot->notificarConDocumento(
+                $solicitud->user,
+                $texto,
+                Storage::disk('public')->path($solicitud->constancia_pdf_path)
+            );
+            return;
+        }
 
         $bot->notificar($solicitud->user, $texto);
     }

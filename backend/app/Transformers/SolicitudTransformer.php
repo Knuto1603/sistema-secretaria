@@ -25,6 +25,9 @@ class SolicitudTransformer
                 ? request()->getSchemeAndHttpHost() . '/api/storage/' . $model->archivo_sustento_path
                 : null,
             archivo_sustento_nombre: $model->archivo_sustento_nombre,
+            constancia_pdf_url: $model->constancia_pdf_path
+                ? request()->getSchemeAndHttpHost() . '/api/storage/' . $model->constancia_pdf_path
+                : null,
             asignado_a: $model->asignado_a,
             observaciones_admin: $model->observaciones_admin,
             fuera_de_plan: (bool) $model->fuera_de_plan,

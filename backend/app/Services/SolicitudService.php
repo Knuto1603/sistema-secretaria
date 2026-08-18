@@ -14,6 +14,7 @@ use App\Transformers\SolicitudTransformer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Exception;
@@ -26,7 +27,8 @@ class SolicitudService
         protected SolicitudRepositoryInterface $repository,
         protected TipoSolicitudRepositoryInterface $tipoSolicitudRepository,
         protected ProgramacionRepositoryInterface $programacionRepository,
-        protected SolicitudTransformer $transformer
+        protected SolicitudTransformer $transformer,
+        protected GeneradorConstanciaSolicitudService $generadorConstancia
     ) {}
 
     public function create(CreateSolicitudDTO $dto, User $user): Solicitud
@@ -110,6 +112,20 @@ class SolicitudService
             ]);
 
             $nueva = $this->repository->findById($solicitud->id);
+
+            // La constancia es un valor agregado, no un requisito de negocio: si dompdf
+            // falla (fuente, memoria), la solicitud igual debe quedar creada.
+            try {
+                $constanciaPath = $this->generadorConstancia->generar($nueva);
+                $this->repository->update($nueva->id, ['constancia_pdf_path' => $constanciaPath]);
+                $nueva->constancia_pdf_path = $constanciaPath;
+            } catch (\Throwable $e) {
+                Log::error('SolicitudService: fallo al generar constancia PDF', [
+                    'solicitud_id' => $nueva->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             EnviarNotificacionSolicitudTelegramJob::dispatch($nueva->id, 'creada');
 
             return $nueva;
