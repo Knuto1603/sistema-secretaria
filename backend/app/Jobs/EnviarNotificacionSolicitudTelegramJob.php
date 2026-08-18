@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
@@ -50,12 +51,22 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
 
         if ($this->tipo === 'creada' && $solicitud->constancia_pdf_path
             && Storage::disk('public')->exists($solicitud->constancia_pdf_path)) {
-            $bot->notificarConDocumento(
-                $solicitud->user,
-                $texto,
-                Storage::disk('public')->path($solicitud->constancia_pdf_path)
-            );
-            return;
+            try {
+                $bot->notificarConDocumento(
+                    $solicitud->user,
+                    $texto,
+                    Storage::disk('public')->path($solicitud->constancia_pdf_path)
+                );
+                return;
+            } catch (\Throwable $e) {
+                // sendDocument (multipart) puede fallar por red aunque sendMessage funcione
+                // (visto en produccion: timeout especifico a la subida del archivo). Mejor
+                // que el alumno reciba al menos el texto a que se pierda todo por 3 reintentos.
+                Log::warning('EnviarNotificacionSolicitudTelegramJob: fallo al enviar documento, cae a texto', [
+                    'solicitud_id' => $this->solicitudId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $bot->notificar($solicitud->user, $texto);
