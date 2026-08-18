@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
@@ -30,6 +31,14 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
         $solicitud = Solicitud::with(['user', 'programacion.curso'])->find($this->solicitudId);
 
         if (!$solicitud || !$solicitud->user) {
+            return;
+        }
+
+        // Lock atomico: si el worker muere justo despues de enviar (ej. el contenedor se
+        // reinicia por una caida de BD) el job puede quedar sin marcarse como completado y
+        // reejecutarse desde cero al volver. Este lock evita reenviar el mismo mensaje.
+        $lockKey = "telegram_notif_enviada:{$this->solicitudId}:{$this->tipo}";
+        if (!Cache::add($lockKey, true, now()->addMinutes(10))) {
             return;
         }
 
