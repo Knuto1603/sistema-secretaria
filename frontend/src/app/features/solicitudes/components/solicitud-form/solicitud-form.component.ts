@@ -42,7 +42,7 @@ export class SolicitudFormComponent implements OnInit {
   periodoInactivo = signal(false);
   loading = signal(false);
   isSubmitting = signal(false);
-  successMessage = signal('');
+  solicitudExitosa = signal(false);
   errorMessage = signal('');
   firmaBase64 = signal('');
   fueraDePlan = signal(false);
@@ -123,7 +123,7 @@ ngOnInit(): void {
 
     this.solicitudService.crearSolicitud(payload).subscribe({
       next: () => {
-        this.successMessage.set('Solicitud enviada con éxito. Redirigiendo...');
+        this.solicitudExitosa.set(true);
         setTimeout(() => this.router.navigate(['/app/solicitudes/list']), 2000);
       },
       error: (err) => {

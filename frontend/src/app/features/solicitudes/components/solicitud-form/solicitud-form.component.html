@@ -90,10 +90,6 @@
       </div>
     }
 
-    @if (successMessage()) {
-      <app-alert type="success" [message]="successMessage()" />
-    }
-
     @if (errorMessage()) {
       <app-alert type="error" [message]="errorMessage()" />
     }
@@ -150,3 +146,28 @@
     </form>
   </div>
 </div>
+
+@if (solicitudExitosa()) {
+  <!-- Backdrop bloqueante: sin botón de cierre, no se puede interactuar hasta redirigir -->
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-md shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+      <div class="flex flex-col items-center px-6 pt-8 pb-6">
+        <div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <h2 class="text-lg font-semibold text-slate-800 text-center">¡Solicitud registrada con éxito!</h2>
+        <p class="mt-2 text-sm text-slate-500 text-center leading-relaxed">
+          Tu trámite digital fue presentado correctamente. Te redirigiremos a la lista de solicitudes en un momento.
+        </p>
+
+        <svg class="w-5 h-5 text-slate-400 animate-spin mt-5" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+}
