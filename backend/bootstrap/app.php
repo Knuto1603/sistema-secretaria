@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Confiar en el proxy de EasyPanel para que detecte correctamente
+        // el esquema HTTPS original (evita generar URLs http:// -> mixed content)
+        $middleware->trustProxies(at: '*');
+
         // Habilitar CORS para todas las rutas de API
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
