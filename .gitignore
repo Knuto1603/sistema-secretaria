@@ -55,3 +55,4 @@ frontend/build_output.txt
 # ── Solo local (no se suben al repo) ──────────────────────
 APIs/
 archivos varios/
+docker-compose.local.yml
