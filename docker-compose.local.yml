@@ -1,0 +1,44 @@
+########################################################################
+# docker-compose.local.yml
+# Infraestructura local para desarrollo (DB + Redis únicamente)
+#
+# Uso:
+#   docker compose -f docker-compose.local.yml up -d
+#
+# Luego levantar manualmente:
+#   Backend  → cd backend && php artisan serve          (localhost:8000)
+#   Frontend → cd frontend && ng serve                  (localhost:4200)
+########################################################################
+
+services:
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: gestion_academica
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: secretaria
+      MYSQL_PASSWORD: secret
+    volumes:
+      - db-local:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-local:/data
+    restart: unless-stopped
+
+volumes:
+  db-local:
+  redis-local:
