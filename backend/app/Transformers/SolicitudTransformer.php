@@ -22,11 +22,11 @@ class SolicitudTransformer
             firma_digital_path: $model->firma_digital_path,
             archivo_sustento_path: $model->archivo_sustento_path,
             archivo_sustento_url: $model->archivo_sustento_path
-                ? request()->getSchemeAndHttpHost() . '/api/storage/' . $model->archivo_sustento_path
+                ? rtrim(config('app.url'), '/') . '/api/storage/' . $model->archivo_sustento_path
                 : null,
             archivo_sustento_nombre: $model->archivo_sustento_nombre,
             constancia_pdf_url: $model->constancia_pdf_path
-                ? request()->getSchemeAndHttpHost() . '/api/storage/' . $model->constancia_pdf_path
+                ? rtrim(config('app.url'), '/') . '/api/storage/' . $model->constancia_pdf_path
                 : null,
             asignado_a: $model->asignado_a,
             observaciones_admin: $model->observaciones_admin,
