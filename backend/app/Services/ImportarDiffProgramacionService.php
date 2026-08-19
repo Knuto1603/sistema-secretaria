@@ -555,16 +555,14 @@ class ImportarDiffProgramacionService
     private function resolverGrupo(?string $nombre): ?string
     {
         if (!$nombre || trim($nombre) === '') return null;
-        $raw = strtoupper(trim($nombre));
-        // "G1abh" → "G1": conservar solo la letra G seguida de dígitos
-        $key = preg_match('/^(G\d+)/i', $raw, $m) ? strtoupper($m[1]) : $raw;
+        $key = strtoupper(trim($nombre));
         if (isset($this->grupoCache[$key])) {
             return $this->grupoCache[$key];
         }
-        $grupo = GrupoHorario::firstOrCreate(
-            ['nombre' => $key],
-            ['descripcion' => null, 'activo' => true]
-        );
+        // Conserva el código completo (ej. "G7ABH"): las letras codifican el
+        // día de dictado según la Plantilla Horaria institucional y
+        // resolverPorCodigo() autogenera el horario si el grupo es nuevo.
+        $grupo = GrupoHorario::resolverPorCodigo($key);
         $this->grupoCache[$key] = $grupo->id;
         return $grupo->id;
     }
