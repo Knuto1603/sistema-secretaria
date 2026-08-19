@@ -178,13 +178,20 @@
               </a>
             </div>
 
-            <div class="rounded-md overflow-hidden border border-slate-200 bg-slate-50">
+            <div
+              class="relative rounded-md overflow-hidden border border-slate-200 bg-slate-50 cursor-pointer group"
+              (click)="abrirPdfCompleto(solicitud()!.constancia_pdf_url!, 'Constancia de Solicitud')">
               <iframe
                 [src]="solicitud()!.constancia_pdf_url! | trustUrl"
-                class="w-full"
-                style="height: 520px; border: none;"
+                class="w-full pointer-events-none"
+                style="height: 220px; border: none;"
                 title="Vista previa de la constancia">
               </iframe>
+              <div class="absolute inset-0 flex items-center justify-center bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors">
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 bg-white/95 text-slate-700 text-xs font-bold rounded-lg shadow-sm">
+                  Click para ver completo
+                </span>
+              </div>
             </div>
           </div>
         }
@@ -227,13 +234,20 @@
 
             <!-- Visor PDF -->
             @if (esPDF(solicitud()!.archivo_sustento_nombre)) {
-              <div class="rounded-md overflow-hidden border border-slate-200 bg-slate-50">
+              <div
+                class="relative rounded-md overflow-hidden border border-slate-200 bg-slate-50 cursor-pointer group"
+                (click)="abrirPdfCompleto(solicitud()!.archivo_sustento_url!, solicitud()!.archivo_sustento_nombre || 'Archivo adjunto')">
                 <iframe
                   [src]="solicitud()!.archivo_sustento_url! | trustUrl"
-                  class="w-full"
-                  style="height: 520px; border: none;"
+                  class="w-full pointer-events-none"
+                  style="height: 220px; border: none;"
                   title="Vista previa del documento">
                 </iframe>
+                <div class="absolute inset-0 flex items-center justify-center bg-slate-900/0 group-hover:bg-slate-900/30 transition-colors">
+                  <span class="opacity-0 group-hover:opacity-100 transition-opacity px-3 py-1.5 bg-white/95 text-slate-700 text-xs font-bold rounded-lg shadow-sm">
+                    Click para ver completo
+                  </span>
+                </div>
               </div>
             }
 
@@ -422,6 +436,46 @@
           </div>
         }
 
+      </div>
+    </div>
+  }
+
+  <!-- Modal de PDF a pantalla completa -->
+  @if (pdfModalUrl()) {
+    <div
+      class="fixed inset-0 z-50 bg-slate-900/70 flex items-center justify-center p-4"
+      (click)="cerrarPdfModal()">
+      <div
+        class="bg-white rounded-md shadow-xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden"
+        (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between gap-3 px-5 py-3 border-b border-slate-200">
+          <p class="text-sm font-bold text-slate-800 truncate">{{ pdfModalTitulo() }}</p>
+          <div class="flex items-center gap-2 shrink-0">
+            <a
+              [href]="pdfModalUrl()!"
+              target="_blank"
+              download
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              Descargar
+            </a>
+            <button
+              (click)="cerrarPdfModal()"
+              class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <iframe
+          [src]="pdfModalUrl()! | trustUrl"
+          class="w-full flex-1"
+          style="border: none;"
+          title="Documento completo">
+        </iframe>
       </div>
     </div>
   }

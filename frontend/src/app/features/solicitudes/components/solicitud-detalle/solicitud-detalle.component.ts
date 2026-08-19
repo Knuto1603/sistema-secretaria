@@ -29,6 +29,9 @@ export class SolicitudDetalleComponent implements OnInit {
   textoRespuesta = signal('');
   mensaje = signal<{ tipo: 'success' | 'error'; texto: string } | null>(null);
 
+  pdfModalUrl = signal<string | null>(null);
+  pdfModalTitulo = signal<string>('');
+
   // Para el formulario de actualización
   nuevoEstado = signal<string>('');
   observaciones = signal<string>('');
@@ -183,6 +186,15 @@ export class SolicitudDetalleComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  abrirPdfCompleto(url: string, titulo: string): void {
+    this.pdfModalUrl.set(url);
+    this.pdfModalTitulo.set(titulo);
+  }
+
+  cerrarPdfModal(): void {
+    this.pdfModalUrl.set(null);
   }
 
   esPDF(nombre: string | null): boolean {
