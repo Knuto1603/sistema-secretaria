@@ -356,7 +356,14 @@ export class SolicitudListaComponent implements OnInit {
   anularSolicitud(solicitud: Solicitud): void {
     if (!confirm(`¿Anular la solicitud de "${solicitud.programacion?.curso?.nombre ?? 'este trámite'}"? No se puede deshacer.`)) return;
     this.solicitudService.anularSolicitud(solicitud.id).subscribe({
-      next: () => this.pushQueryParams({ page: null }),
+      next: () => {
+        // Si quedamos en una página vacía tras eliminar, retrocedemos una página
+        if (this.solicitudes().length === 1 && this.currentPage() > 1) {
+          this.pushQueryParams({ page: this.currentPage() - 1 === 1 ? null : this.currentPage() - 1 });
+        } else {
+          this.cargarDatos();
+        }
+      },
       error: (err) => alert(err.error?.message || 'Error al anular la solicitud')
     });
   }
