@@ -23,6 +23,21 @@ export interface DiffCambio extends DiffSeccion {
   grupo_nuevo: string | null;
 }
 
+export interface DiffCambioCupo {
+  programacion_id: string;
+  curso_codigo: string;
+  curso_nombre: string;
+  escuela_nombre: string | null;
+  seccion: string | null;
+  ciclo: number | null;
+  capacidad_anterior: number;
+  capacidad_nuevo: number;
+  n_inscritos_anterior: number;
+  n_inscritos_nuevo: number;
+  sin_cupo_anterior: boolean;
+  sin_cupo_nuevo: boolean;
+}
+
 export interface DiffOmitido {
   codigo: string;
   nombre: string;
@@ -36,6 +51,7 @@ export interface DiffPreview {
   cambios_aula: DiffCambio[];
   cambios_grupo: DiffCambio[];
   cambios_aula_y_grupo: DiffCambio[];
+  cambios_cupo: DiffCambioCupo[];
   sin_cambios: number;
   omitidos: DiffOmitido[];
 }

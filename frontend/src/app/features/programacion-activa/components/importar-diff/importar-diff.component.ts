@@ -11,6 +11,7 @@ import { ProgramacionEstadoService } from '@features/programacion/services/progr
 import {
   DiffAplicarResult,
   DiffCambio,
+  DiffCambioCupo,
   DiffOmitido,
   DiffPreview,
   DiffSeccion,
@@ -136,7 +137,8 @@ export class ImportarDiffComponent {
       d.reabiertas.length +
       d.cambios_aula.length +
       d.cambios_grupo.length +
-      d.cambios_aula_y_grupo.length
+      d.cambios_aula_y_grupo.length +
+      d.cambios_cupo.length
     );
   }
 
@@ -158,5 +160,9 @@ export class ImportarDiffComponent {
 
   asDiffOmitido(items: unknown[]): DiffOmitido[] {
     return items as DiffOmitido[];
+  }
+
+  asDiffCambioCupo(items: unknown[]): DiffCambioCupo[] {
+    return items as DiffCambioCupo[];
   }
 }
