@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
 {
@@ -19,13 +20,23 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
 
     public int $tries = 3;
 
+    private readonly string $dedupeId;
+
     /**
      * @param string $tipo 'creada' | 'apelacion' | 'cambio_estado'
      */
     public function __construct(
         private readonly string $solicitudId,
         private readonly string $tipo = 'cambio_estado',
-    ) {}
+    ) {
+        // Identificador propio de este despacho (no del tipo): 'cambio_estado' se repite en
+        // cada transicion de una misma solicitud, asi que si el lock se keyeara por
+        // solicitudId+tipo, el segundo cambio de estado quedaria bloqueado por el lock que
+        // dejo el primero (10 min de TTL). Al generarse una vez en el constructor y quedar
+        // serializado con el job, sigue siendo estable si el worker muere y Laravel reejecuta
+        // esta misma instancia desde cero (el caso que el lock si debe bloquear).
+        $this->dedupeId = (string) Str::uuid();
+    }
 
     public function handle(TelegramBotService $bot): void
     {
@@ -38,7 +49,7 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
         // Lock atomico: si el worker muere justo despues de enviar (ej. el contenedor se
         // reinicia por una caida de BD) el job puede quedar sin marcarse como completado y
         // reejecutarse desde cero al volver. Este lock evita reenviar el mismo mensaje.
-        $lockKey = "telegram_notif_enviada:{$this->solicitudId}:{$this->tipo}";
+        $lockKey = "telegram_notif_enviada:{$this->dedupeId}";
         if (!Cache::add($lockKey, true, now()->addMinutes(10))) {
             return;
         }
