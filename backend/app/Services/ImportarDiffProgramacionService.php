@@ -48,7 +48,7 @@ class ImportarDiffProgramacionService
      */
     public function preview(UploadedFile $file, string $periodoId): array
     {
-        [$filasArchivo, $omitidos, $debug] = $this->parsearArchivo($file);
+        [$filasArchivo, $omitidos, $debug, $esFormatoUniversidad] = $this->parsearArchivo($file);
         $indiceActual  = $this->construirIndiceActual($periodoId);
         $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
 
@@ -58,6 +58,7 @@ class ImportarDiffProgramacionService
         $cambiosAula       = [];
         $cambiosGrupo      = [];
         $cambiosAulaYGrupo = [];
+        $cambiosCupo       = [];
         $sinCambios        = 0;
 
         // Filas del archivo vs BD
@@ -68,6 +69,31 @@ class ImportarDiffProgramacionService
             }
 
             $prog     = $indiceActual[$clave];
+
+            // Cupo (solo reporte UNP): se evalúa aparte de aula/grupo, ya que es
+            // una dimensión independiente que puede cambiar sola.
+            if ($esFormatoUniversidad && $fila['capacidad'] !== null && $fila['n_inscritos'] !== null) {
+                $capacidadAnterior  = (int) $prog->capacidad;
+                $nInscritosAnterior = (int) $prog->n_inscritos;
+
+                if ($capacidadAnterior !== $fila['capacidad'] || $nInscritosAnterior !== $fila['n_inscritos']) {
+                    $cambiosCupo[] = [
+                        'programacion_id'      => $prog->id,
+                        'curso_codigo'         => $prog->curso?->codigo,
+                        'curso_nombre'         => $prog->curso?->nombre,
+                        'escuela_nombre'       => $prog->escuelaProgramada?->nombre_corto ?? $prog->escuelaProgramada?->nombre,
+                        'seccion'              => $prog->seccion,
+                        'ciclo'                => $prog->ciclo,
+                        'capacidad_anterior'   => $capacidadAnterior,
+                        'capacidad_nuevo'      => $fila['capacidad'],
+                        'n_inscritos_anterior' => $nInscritosAnterior,
+                        'n_inscritos_nuevo'    => $fila['n_inscritos'],
+                        'sin_cupo_anterior'    => $nInscritosAnterior >= $capacidadAnterior,
+                        'sin_cupo_nuevo'       => $fila['n_inscritos'] >= $fila['capacidad'],
+                    ];
+                }
+            }
+
             $mismaAula  = ($prog->aula_id ?? null) === ($fila['aula_id'] ?? null);
             $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
 
@@ -128,6 +154,7 @@ class ImportarDiffProgramacionService
             'cambios_aula'       => $cambiosAula,
             'cambios_grupo'      => $cambiosGrupo,
             'cambios_aula_y_grupo' => $cambiosAulaYGrupo,
+            'cambios_cupo'       => $cambiosCupo,
             'sin_cambios'        => $sinCambios,
             'omitidos'           => $omitidos,
             'debug'              => $debug,
@@ -139,7 +166,7 @@ class ImportarDiffProgramacionService
      */
     public function aplicar(UploadedFile $file, string $periodoId, string $motivo, string $userId): array
     {
-        [$filasArchivo, $omitidos, $debug] = $this->parsearArchivo($file);
+        [$filasArchivo, $omitidos, $debug, $esFormatoUniversidad] = $this->parsearArchivo($file);
         $indiceActual  = $this->construirIndiceActual($periodoId);
         $indiceArchivo = $this->construirIndiceArchivo($filasArchivo);
 
@@ -165,6 +192,7 @@ class ImportarDiffProgramacionService
             'cambios_aula'       => 0,
             'cambios_grupo'      => 0,
             'cambios_aula_y_grupo' => 0,
+            'cambios_cupo'       => 0,
         ];
 
         DB::transaction(function () use (
@@ -196,8 +224,8 @@ class ImportarDiffProgramacionService
                     'ciclo'                 => $fila['ciclo'],
                     'aula'                  => $fila['aula_texto'] ?? null,
                     'n_acta'                => null,
-                    'capacidad'             => 40,
-                    'n_inscritos'           => 0,
+                    'capacidad'             => $fila['capacidad']   ?? 40,
+                    'n_inscritos'           => $fila['n_inscritos'] ?? 0,
                     'lleno_manual'          => false,
                     'escuela_programada_id' => $fila['escuela_id'] ?? null,
                 ]);
@@ -249,6 +277,34 @@ class ImportarDiffProgramacionService
                 }
 
                 $fila       = $indiceArchivo[$clave];
+
+                // Cupo (solo reporte UNP): se actualiza aparte de aula/grupo,
+                // sin tocar lleno_manual (eso queda reservado al toggle manual).
+                if ($fila['capacidad'] !== null && $fila['n_inscritos'] !== null) {
+                    $capacidadAnterior  = (int) $prog->capacidad;
+                    $nInscritosAnterior = (int) $prog->n_inscritos;
+
+                    if ($capacidadAnterior !== $fila['capacidad'] || $nInscritosAnterior !== $fila['n_inscritos']) {
+                        $prog->update([
+                            'capacidad'   => $fila['capacidad'],
+                            'n_inscritos' => $fila['n_inscritos'],
+                        ]);
+
+                        ModificacionProgramacion::create([
+                            'periodo_id'       => $periodoId,
+                            'borrador_id'      => $borradorId,
+                            'tipo'             => 'actualizar_cupo',
+                            'programacion_id'  => $prog->id,
+                            'datos_anteriores' => ['capacidad' => $capacidadAnterior, 'n_inscritos' => $nInscritosAnterior],
+                            'datos_nuevos'     => ['capacidad' => $fila['capacidad'], 'n_inscritos' => $fila['n_inscritos']],
+                            'motivo'           => $motivo,
+                            'user_id'          => $userId,
+                        ]);
+
+                        $conteos['cambios_cupo']++;
+                    }
+                }
+
                 $mismaAula  = ($prog->aula_id ?? null) === ($fila['aula_id'] ?? null);
                 $mismoGrupo = ($prog->grupo_horario_id ?? null) === ($fila['grupo_horario_id'] ?? null);
 
@@ -407,6 +463,21 @@ class ImportarDiffProgramacionService
             $escuelaId      = $this->resolverEscuela($escuelaTexto);
             $seccion        = $this->parsearSeccion($seccionTexto);
 
+            // Cupo (capacidad/inscritos) solo viene en el reporte UNP; el formato
+            // propio no trae estas columnas de forma confiable.
+            $capacidad  = null;
+            $nInscritos = null;
+            if ($esFormatoUniversidad) {
+                $capacidadRaw  = $row['capacidad']   ?? null;
+                $nInscritosRaw = $row['n_inscritos'] ?? null;
+                if ($capacidadRaw !== null && trim((string) $capacidadRaw) !== '') {
+                    $capacidad = (int) $capacidadRaw;
+                }
+                if ($nInscritosRaw !== null && trim((string) $nInscritosRaw) !== '') {
+                    $nInscritos = (int) $nInscritosRaw;
+                }
+            }
+
             // Nombre de aula/grupo para el diff UI
             $aulaNombre  = null;
             if ($aulaId) {
@@ -445,10 +516,12 @@ class ImportarDiffProgramacionService
                 'grupo_nombre'     => $grupoNombre,
                 'aula_texto'       => $aulaTexto ? strtoupper(trim($aulaTexto)) : null,
                 'grupo_texto'      => $grupoTexto ? strtoupper(trim($grupoTexto)) : null,
+                'capacidad'        => $capacidad,
+                'n_inscritos'      => $nInscritos,
             ];
         }
 
-        return [$filas, $omitidos, $debug];
+        return [$filas, $omitidos, $debug, $esFormatoUniversidad];
     }
 
     /**

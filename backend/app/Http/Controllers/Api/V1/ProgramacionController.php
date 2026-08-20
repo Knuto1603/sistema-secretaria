@@ -679,7 +679,8 @@ class ProgramacionController extends Controller
             $msg = "Diff aplicado: {$aplicadas['nuevas']} nuevas, {$aplicadas['eliminadas']} cerradas, "
                  . "{$aplicadas['reabiertas']} reabiertas, "
                  . "{$aplicadas['cambios_aula']} cambios aula, {$aplicadas['cambios_grupo']} cambios grupo, "
-                 . "{$aplicadas['cambios_aula_y_grupo']} cambios aula+grupo.";
+                 . "{$aplicadas['cambios_aula_y_grupo']} cambios aula+grupo, "
+                 . "{$aplicadas['cambios_cupo']} cambios de cupo.";
 
             return $this->success($resumen, $msg);
         } catch (\RuntimeException $e) {
