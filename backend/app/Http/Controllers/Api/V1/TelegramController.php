@@ -33,7 +33,10 @@ class TelegramController extends Controller
      */
     public function webhook(Request $request): JsonResponse
     {
+        Log::info('Telegram: webhook recibido', ['body' => $request->all()]);
+
         if (!$this->validarWebhookSecret($request)) {
+            Log::warning('Telegram: webhook rechazado, secret invalido o ausente');
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
