@@ -32,35 +32,47 @@
     </div>
   }
 
-  <!-- Banner: vincular Telegram (solo estudiantes sin vincular) -->
+  <!-- Sección: vincular Telegram con QR (solo estudiantes sin vincular) -->
   @if (authService.isEstudiante() && telegramVinculado() === false) {
-    <div class="flex flex-col sm:flex-row items-start gap-4 bg-indigo-50 border border-indigo-200 rounded-md p-5 mb-8">
-      <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-md flex-shrink-0">
-        <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M21.05 4.28a1.5 1.5 0 00-1.53-.26L2.85 10.4a1.4 1.4 0 00.07 2.63l4.35 1.4 1.68 5.4a1.2 1.2 0 002 .5l2.5-2.36 4.24 3.13a1.4 1.4 0 002.2-.85l2.6-14.02a1.5 1.5 0 00-.49-1.5zM9.3 13.5l-1.1 3.5-1.1-3.6 10.4-6.6z"/>
-        </svg>
-      </div>
-      <div class="flex-1">
-        <p class="text-sm font-bold text-indigo-800">Vincula tu Telegram y recibe notificaciones al instante</p>
-        <p class="text-xs text-indigo-600 mt-0.5">
-          Entérate apenas cambie el estado de tus solicitudes, sin tener que entrar al sistema a revisar.
+    <div class="flex flex-col md:flex-row bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden mb-8">
+      <div class="flex-1 p-6 md:p-8">
+        <div class="w-10 h-10 flex items-center justify-center bg-indigo-100 rounded-md mb-4">
+          <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M21.05 4.28a1.5 1.5 0 00-1.53-.26L2.85 10.4a1.4 1.4 0 00.07 2.63l4.35 1.4 1.68 5.4a1.2 1.2 0 002 .5l2.5-2.36 4.24 3.13a1.4 1.4 0 002.2-.85l2.6-14.02a1.5 1.5 0 00-.49-1.5zM9.3 13.5l-1.1 3.5-1.1-3.6 10.4-6.6z"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-bold text-slate-900">Vincula tu Telegram</h2>
+        <p class="text-sm text-slate-500 mt-1 leading-relaxed max-w-md">
+          Recibe una notificación al instante cada vez que cambie el estado de tus solicitudes, sin tener que entrar al sistema a revisar.
         </p>
-        <p class="text-xs text-indigo-500 mt-2">
-          Escanea el código QR con tu teléfono o usa el botón para abrir el bot directamente.
-        </p>
+        <ol class="mt-5 space-y-3">
+          <li class="flex items-center gap-3 text-sm text-slate-600">
+            <span class="w-6 h-6 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full flex-shrink-0">1</span>
+            Escanea el código con la cámara de tu teléfono
+          </li>
+          <li class="flex items-center gap-3 text-sm text-slate-600">
+            <span class="w-6 h-6 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full flex-shrink-0">2</span>
+            Pulsa "Iniciar" dentro de Telegram
+          </li>
+          <li class="flex items-center gap-3 text-sm text-slate-600">
+            <span class="w-6 h-6 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-bold rounded-full flex-shrink-0">3</span>
+            Listo, ya estás vinculado
+          </li>
+        </ol>
+        <a routerLink="/app/perfil" [queryParams]="{ tab: 'telegram' }"
+          class="mt-6 inline-block text-sm font-bold text-indigo-600 hover:underline">
+          ¿No puedes escanear? Vincula manualmente desde tu perfil →
+        </a>
       </div>
-      <div class="flex flex-col items-center gap-2 flex-shrink-0">
+      <div class="flex flex-col items-center justify-center gap-3 bg-indigo-50 border-t md:border-t-0 md:border-l border-indigo-100 p-6 md:p-8 md:w-64 flex-shrink-0">
         @if (telegramQr(); as qr) {
-          <img [src]="qr" alt="Código QR para vincular Telegram" class="w-32 h-32 bg-white border border-indigo-200 rounded-md p-1" />
+          <img [src]="qr" alt="Código QR para vincular Telegram" class="w-40 h-40 bg-white rounded-md p-2 shadow-sm" />
         } @else {
-          <div class="w-32 h-32 bg-white border border-indigo-200 rounded-md flex items-center justify-center">
+          <div class="w-40 h-40 bg-white rounded-md flex items-center justify-center shadow-sm">
             <span class="text-xs text-indigo-400">Generando…</span>
           </div>
         }
-        <a routerLink="/app/perfil" [queryParams]="{ tab: 'telegram' }"
-          class="text-xs font-bold text-indigo-700 bg-white border border-indigo-200 rounded-md px-3 py-2 hover:bg-indigo-100 transition-colors w-full text-center">
-          Vincular ahora
-        </a>
+        <p class="text-[11px] text-indigo-500 text-center">Se renueva automáticamente</p>
       </div>
     </div>
   }
