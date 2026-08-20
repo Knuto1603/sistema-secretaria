@@ -116,6 +116,26 @@
       </a>
     }
 
+    <!-- Canal de Telegram de la Secretaría Académica (visible para todos) -->
+    <a [href]="canalTelegramUrl" target="_blank" rel="noopener"
+      class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+      <div class="flex items-start gap-4">
+        <div class="flex-1">
+          <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-md flex items-center justify-center mb-4">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M21.05 4.28a1.5 1.5 0 00-1.53-.26L2.85 10.4a1.4 1.4 0 00.07 2.63l4.35 1.4 1.68 5.4a1.2 1.2 0 002 .5l2.5-2.36 4.24 3.13a1.4 1.4 0 002.2-.85l2.6-14.02a1.5 1.5 0 00-.49-1.5zM9.3 13.5l-1.1 3.5-1.1-3.6 10.4-6.6z"/>
+            </svg>
+          </div>
+          <h3 class="font-bold text-slate-800">Canal de Telegram</h3>
+          <p class="text-xs text-slate-500 mt-2 leading-relaxed">Entérate al instante de los avisos y comunicados de la Secretaría Académica de la FII.</p>
+        </div>
+        @if (canalTelegramQr(); as qr) {
+          <img [src]="qr" alt="Código QR del canal de Telegram" class="w-20 h-20 flex-shrink-0 rounded-md border border-slate-100" />
+        }
+      </div>
+      <span class="mt-4 inline-block text-sm font-bold text-indigo-600 hover:underline">Unirme al canal →</span>
+    </a>
+
     <!-- Para Secretaría / Decanato / Admin / Developer -->
     @if (authService.hasRole('secretaria') || authService.hasRole('decano') || authService.hasRole('admin') || authService.isDeveloper()) {
       <div class="bg-white p-6 rounded-md border border-slate-200 shadow-sm hover:shadow-md transition-shadow">

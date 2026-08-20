@@ -15,6 +15,9 @@ import { TelegramService } from '@core/services/telegram.service';
 const QR_REGEN_MARGIN_MS = 30 * 1000;
 const ESTADO_POLL_MS = 5000;
 
+/** Enlace fijo del canal público de Telegram de la Secretaría Académica FII. */
+const CANAL_TELEGRAM_URL = 'https://t.me/+0umo4h4ZNecyOWVh';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -32,6 +35,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   solicitudesAbiertas = signal<boolean>(true);
   telegramVinculado = signal<boolean | null>(null);
   telegramQr = signal<string | null>(null);
+  canalTelegramUrl = CANAL_TELEGRAM_URL;
+  canalTelegramQr = signal<string | null>(null);
 
   private estadoPollSub?: Subscription;
   /** Timestamp (ms) en el que el codigo actualmente mostrado deja de ser valido en backend. */
@@ -43,6 +48,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    QRCode.toDataURL(this.canalTelegramUrl, { margin: 1, width: 200 })
+      .then(dataUrl => this.canalTelegramQr.set(dataUrl))
+      .catch(() => this.canalTelegramQr.set(null));
+
     if (this.authService.isEstudiante()) {
       this.periodoService.getPeriodoActivo().subscribe({
         next: periodo => this.solicitudesAbiertas.set(periodo?.solicitudes_abiertas ?? true),
