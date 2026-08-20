@@ -8,6 +8,7 @@ use App\Models\Solicitud;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TelegramBotService
@@ -40,6 +41,12 @@ class TelegramBotService
     {
         $codigo = Str::upper(Str::random(6));
         Cache::put("telegram_link:{$codigo}", $user->id, now()->addMinutes(self::CODIGO_TTL_MINUTOS));
+
+        Log::info('Telegram: codigo de vinculacion generado', [
+            'user_id' => $user->id,
+            'codigo'  => $codigo,
+            'existe_en_cache_justo_despues' => Cache::has("telegram_link:{$codigo}"),
+        ]);
 
         return $codigo;
     }
@@ -137,6 +144,13 @@ class TelegramBotService
     private function vincularConCodigo(string $chatId, string $codigo): void
     {
         $userId = Cache::get("telegram_link:{$codigo}");
+
+        Log::info('Telegram: intento de vinculacion via webhook', [
+            'chat_id' => $chatId,
+            'codigo_recibido' => $codigo,
+            'longitud' => strlen($codigo),
+            'encontrado_en_cache' => $userId !== null,
+        ]);
 
         if (!$userId) {
             $this->telegram->sendMessage(
