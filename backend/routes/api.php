@@ -112,22 +112,6 @@ Route::prefix('telegram')->group(function () {
     Route::post('/webhook', [TelegramController::class, 'webhook']);
 });
 
-// TEMPORAL (ver conversacion 2026-08-20): opcache.validate_timestamps=Off en produccion
-// hace que PHP-FPM siga sirviendo bytecode viejo aunque el archivo en disco ya cambio y
-// el contenedor se haya reiniciado. Ruta gateada con el mismo secret del webhook para
-// forzar opcache_reset() desde un proceso FPM real (php artisan/tinker corre en CLI, que
-// tiene opcache.enable_cli=Off, por eso ahi el archivo siempre se ve "correcto"). Quitar
-// despues de confirmar que se resolvio.
-Route::get('/_debug/opcache-reset/{secret}', function (string $secret) {
-    if (!hash_equals((string) config('telegram.webhook_secret'), $secret)) {
-        abort(404);
-    }
-
-    return response()->json([
-        'opcache_reset' => function_exists('opcache_reset') ? opcache_reset() : 'opcache_reset no disponible',
-    ]);
-});
-
 // =============================================
 // RUTAS PROTEGIDAS
 // =============================================

@@ -33,10 +33,7 @@ class TelegramController extends Controller
      */
     public function webhook(Request $request): JsonResponse
     {
-        Log::info('Telegram: webhook recibido', ['body' => $request->all()]);
-
         if (!$this->validarWebhookSecret($request)) {
-            Log::warning('Telegram: webhook rechazado, secret invalido o ausente');
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -61,34 +58,14 @@ class TelegramController extends Controller
      */
     public function generarVinculo(Request $request): JsonResponse
     {
-        try {
-            $codigo = $this->bot->generarCodigoVinculacion($request->user());
-            $botUsername = config('telegram.bot_username');
+        $codigo = $this->bot->generarCodigoVinculacion($request->user());
+        $botUsername = config('telegram.bot_username');
 
-            return $this->success([
-                'codigo'    => $codigo,
-                'deep_link' => "https://t.me/{$botUsername}?start={$codigo}",
-                'expira_en_minutos' => 10,
-            ], 'Código de vinculación generado');
-        } catch (\Throwable $e) {
-            Log::error('Telegram: fallo al generar codigo de vinculacion', [
-                'error' => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
-            ]);
-
-            // TEMPORAL para depuracion (ver conversacion 2026-08-20): exponer el error
-            // real en la respuesta para no depender de logs por replica. Quitar despues.
-            return response()->json([
-                'success' => false,
-                'message' => 'Error interno del servidor.',
-                'debug_temporal' => [
-                    'error' => $e->getMessage(),
-                    'file'  => $e->getFile(),
-                    'line'  => $e->getLine(),
-                ],
-            ], 500);
-        }
+        return $this->success([
+            'codigo'    => $codigo,
+            'deep_link' => "https://t.me/{$botUsername}?start={$codigo}",
+            'expira_en_minutos' => 10,
+        ], 'Código de vinculación generado');
     }
 
     /**
