@@ -78,7 +78,7 @@ export interface MetricaCurso {
   codigo: string;
   nombre: string;
   total: number;
-  por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
+  por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number; anulada: number };
   secciones: SeccionMetrica[];
   solicitantes: SolicitanteMetrica[];
 }
@@ -316,7 +316,7 @@ export class SolicitudService {
    */
   getEstadisticas(periodoId?: string): Observable<{
     periodo_id: string | null;
-    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
+    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number; anulada: number };
     total: number;
     por_tipo: { cupo_ext: number; insc_escuela: number; retiro_curso: number };
     por_escuela: Array<{ escuela: string; total: number }>;

@@ -129,6 +129,7 @@ export class AnaliticaComponent implements OnInit {
       aprobada:    'bg-emerald-100 text-emerald-800 border-emerald-200',
       rechazada:   'bg-red-100 text-red-800 border-red-200',
       apelado:     'bg-violet-100 text-violet-800 border-violet-200',
+      anulada:     'bg-slate-100 text-slate-600 border-slate-200',
     };
     return map[estado] ?? 'bg-slate-100 text-slate-600 border-slate-200';
   }
@@ -136,7 +137,7 @@ export class AnaliticaComponent implements OnInit {
   getLabelEstado(estado: string): string {
     const map: Record<string, string> = {
       pendiente: 'Pendiente', en_revision: 'En Revisión',
-      aprobada: 'Aprobada', rechazada: 'Rechazada', apelado: 'Apelado',
+      aprobada: 'Aprobada', rechazada: 'Rechazada', apelado: 'Apelado', anulada: 'Anulada',
     };
     return map[estado] ?? estado;
   }

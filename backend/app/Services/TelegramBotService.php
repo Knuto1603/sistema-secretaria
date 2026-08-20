@@ -21,6 +21,7 @@ class TelegramBotService
         'aprobada'    => '✅',
         'rechazada'   => '❌',
         'apelado'     => '🔁',
+        'anulada'     => '🚫',
     ];
 
     private const ESTADO_LABELS = [
@@ -29,6 +30,7 @@ class TelegramBotService
         'aprobada'    => 'Aprobada',
         'rechazada'   => 'Rechazada',
         'apelado'     => 'Apelada',
+        'anulada'     => 'Anulada por ti',
     ];
 
     public function __construct(private readonly TelegramService $telegram) {}

@@ -123,7 +123,12 @@ class SolicitudController extends Controller
             return $this->error('Solo puedes anular solicitudes pendientes o en revisión', 422);
         }
 
-        $solicitud->delete();
+        // Antes se hacía soft delete: la solicitud desaparecía de todos los listados y
+        // estadísticas del admin sin dejar rastro de que fue el propio alumno quien la
+        // anuló (relevante porque la constancia PDF ya fue enviada por Telegram al crearla).
+        // Ahora se conserva la fila y solo cambia el estado, igual que cualquier otra
+        // transición, para que quede visible y auditable en el detalle/listado admin.
+        $this->service->updateEstado($id, 'anulada');
 
         return $this->success(null, 'Solicitud anulada correctamente');
     }
@@ -254,6 +259,7 @@ class SolicitudController extends Controller
                 'aprobada'    => (int) ($porEstado['aprobada']    ?? 0),
                 'rechazada'   => (int) ($porEstado['rechazada']   ?? 0),
                 'apelado'     => (int) ($porEstado['apelado']     ?? 0),
+                'anulada'     => (int) ($porEstado['anulada']     ?? 0),
             ],
             'total'       => (int) $porEstado->sum(),
             'por_tipo'    => [
@@ -347,6 +353,7 @@ class SolicitudController extends Controller
                     'aprobada'    => $sols->where('estado', 'aprobada')->count(),
                     'rechazada'   => $sols->where('estado', 'rechazada')->count(),
                     'apelado'     => $sols->where('estado', 'apelado')->count(),
+                    'anulada'     => $sols->where('estado', 'anulada')->count(),
                 ],
                 'secciones'    => $secciones->values(),
                 'solicitantes' => $solicitantes,

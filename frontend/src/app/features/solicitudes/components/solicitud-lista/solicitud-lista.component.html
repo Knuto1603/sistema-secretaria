@@ -3,7 +3,7 @@
   <!-- Estadísticas de demanda (solo admin/secretaria) -->
   @if (esAdmin() && stats()) {
     <!-- Fila 1: Estado + Tipo -->
-    <div class="grid grid-cols-2 md:grid-cols-8 gap-3">
+    <div class="grid grid-cols-2 md:grid-cols-9 gap-3">
       <!-- Pendientes -->
       <div class="bg-amber-50 border border-amber-200 rounded-md p-4">
         <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Pendientes</p>
@@ -28,6 +28,11 @@
       <div class="bg-orange-50 border border-orange-200 rounded-md p-4">
         <p class="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Apeladas</p>
         <p class="text-3xl font-black text-orange-700 mt-1">{{ stats()!.por_estado.apelado }}</p>
+      </div>
+      <!-- Anuladas por el alumno -->
+      <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Anuladas</p>
+        <p class="text-3xl font-black text-slate-500 mt-1">{{ stats()!.por_estado.anulada }}</p>
       </div>
       <!-- Cupo Extra -->
       <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
@@ -131,6 +136,7 @@
             <option value="aprobada">Aprobada</option>
             <option value="rechazada">Rechazada</option>
             <option value="apelado">Apelado</option>
+            <option value="anulada">Anulada</option>
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

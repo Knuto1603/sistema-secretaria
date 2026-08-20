@@ -41,7 +41,7 @@ export class SolicitudListaComponent implements OnInit {
 
   // Estadísticas de demanda (solo admin)
   stats = signal<{
-    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number };
+    por_estado: { pendiente: number; en_revision: number; aprobada: number; rechazada: number; apelado: number; anulada: number };
     total: number;
     por_tipo: { cupo_ext: number; insc_escuela: number; retiro_curso: number };
     por_escuela: Array<{ escuela: string; total: number }>;
@@ -104,7 +104,8 @@ export class SolicitudListaComponent implements OnInit {
     { value: 'en_revision', label: 'En Revisión' },
     { value: 'aprobada', label: 'Aprobada' },
     { value: 'rechazada', label: 'Rechazada' },
-    { value: 'apelado', label: 'Apelado' }
+    { value: 'apelado', label: 'Apelado' },
+    { value: 'anulada', label: 'Anulada' }
   ];
 
   // Detectar si es admin/secretaria/decano
@@ -328,7 +329,8 @@ export class SolicitudListaComponent implements OnInit {
       'en_revision': 'indigo',
       'aprobada': 'emerald',
       'rechazada': 'red',
-      'apelado': 'violet'
+      'apelado': 'violet',
+      'anulada': 'slate'
     };
     return mapping[estado?.toLowerCase()] || 'slate';
   }
@@ -339,7 +341,8 @@ export class SolicitudListaComponent implements OnInit {
       'en_revision': 'En Revisión',
       'aprobada': 'Aprobada',
       'rechazada': 'Rechazada',
-      'apelado': 'Apelado'
+      'apelado': 'Apelado',
+      'anulada': 'Anulada'
     };
     return labels[estado?.toLowerCase()] || estado;
   }

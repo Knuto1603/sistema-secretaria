@@ -203,7 +203,7 @@ class SolicitudService
 
         $solicitud = $this->repository->update($id, $data);
 
-        if ($solicitud && in_array($estado, ['en_revision', 'aprobada', 'rechazada'], true)) {
+        if ($solicitud && in_array($estado, ['en_revision', 'aprobada', 'rechazada', 'anulada'], true)) {
             EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id, 'cambio_estado');
         }
 

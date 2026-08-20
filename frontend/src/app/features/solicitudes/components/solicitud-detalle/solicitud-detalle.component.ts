@@ -62,7 +62,8 @@ export class SolicitudDetalleComponent implements OnInit {
     { value: 'en_revision', label: 'En Revisión', color: 'indigo' },
     { value: 'aprobada', label: 'Aprobada', color: 'emerald' },
     { value: 'rechazada', label: 'Rechazada', color: 'red' },
-    { value: 'apelado', label: 'Apelado', color: 'violet' }
+    { value: 'apelado', label: 'Apelado', color: 'violet' },
+    { value: 'anulada', label: 'Anulada por el alumno', color: 'slate' }
   ];
 
   ngOnInit(): void {
@@ -163,7 +164,8 @@ export class SolicitudDetalleComponent implements OnInit {
       'en_revision': 'indigo',
       'aprobada': 'emerald',
       'rechazada': 'red',
-      'apelado': 'violet'
+      'apelado': 'violet',
+      'anulada': 'slate'
     };
     return mapping[estado?.toLowerCase()] || 'slate';
   }
