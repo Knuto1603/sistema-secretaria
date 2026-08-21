@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
+import { map, merge, Subject, switchMap } from 'rxjs';
 import { environment } from '@env/environment';
 import { AuthService } from '@core/auth/services/auth.service';
 import { SolicitudService, Solicitud, PaginatedResponse } from '../../services/solicitud.service';
@@ -131,6 +131,11 @@ export class SolicitudListaComponent implements OnInit {
     return cols;
   });
 
+  // Dispara una recarga manual (p.ej. tras anular) sin tocar los query params.
+  // Emite null para distinguirse de una emisión real de route.queryParams (siempre un
+  // objeto, incluso vacío) y así no pisar los filtros ya aplicados.
+  private reload$ = new Subject<null>();
+
   ngOnInit(): void {
     if (this.esAdmin()) {
       this.cargarCursosConSolicitud();
@@ -138,20 +143,67 @@ export class SolicitudListaComponent implements OnInit {
       this.cargarEscuelas();
     }
 
-    // Los query params son la fuente de verdad de todos los filtros
-    this.route.queryParams.subscribe(params => {
-      this.searchTerm.set(params['search'] ?? '');
-      this.estadoFiltro.set(params['estado'] ?? '');
-      this.tipoFiltro.set(params['tipo'] ?? '');
-      this.escuelaIdFiltro.set(params['escuela_id'] ?? '');
-      this.escuelaProgramadaFiltro.set(params['escuela_programada_id'] ?? '');
-      this.sortOrder.set(params['sort'] === 'asc' ? 'asc' : 'desc');
-      this.currentPage.set(Number(params['page']) || 1);
-      this.perPage.set(Number(params['per_page']) || 10);
-      this.programacionIdFiltro.set(params['programacion_id'] ?? null);
-      this.cursoIdFiltro.set(params['curso_id'] ?? '');
-      this.grupoFiltro.set(params['grupo'] ?? '');
-      this.cargarDatos();
+    // Los query params son la fuente de verdad de todos los filtros.
+    // switchMap cancela cualquier petición anterior aún en vuelo: sin esto, dos
+    // peticiones en paralelo (p.ej. al escribir rápido en el buscador o encadenar
+    // curso→grupo) podían resolver en desorden y la respuesta más lenta (no la más
+    // reciente) terminaba pisando la tabla con resultados de un filtro ya obsoleto.
+    merge(this.route.queryParams, this.reload$).pipe(
+      switchMap(params => {
+        if (params) {
+          this.searchTerm.set(params['search'] ?? '');
+          this.estadoFiltro.set(params['estado'] ?? '');
+          this.tipoFiltro.set(params['tipo'] ?? '');
+          this.escuelaIdFiltro.set(params['escuela_id'] ?? '');
+          this.escuelaProgramadaFiltro.set(params['escuela_programada_id'] ?? '');
+          this.sortOrder.set(params['sort'] === 'asc' ? 'asc' : 'desc');
+          this.currentPage.set(Number(params['page']) || 1);
+          this.perPage.set(Number(params['per_page']) || 10);
+          this.programacionIdFiltro.set(params['programacion_id'] ?? null);
+          this.cursoIdFiltro.set(params['curso_id'] ?? '');
+          this.grupoFiltro.set(params['grupo'] ?? '');
+        }
+
+        this.loading.set(true);
+        return this.esAdmin()
+          ? this.solicitudService.getAllSolicitudes(
+              this.currentPage(),
+              this.perPage(),
+              this.searchTerm() || undefined,
+              this.estadoFiltro() || undefined,
+              this.programacionIdFiltro() || undefined,
+              this.tipoFiltro() || undefined,
+              this.escuelaIdFiltro() || undefined,
+              this.escuelaProgramadaFiltro() || undefined,
+              this.cursoIdFiltro() || undefined,
+              this.grupoFiltro() || undefined,
+              this.sortOrder()
+            )
+          : this.solicitudService.getMisSolicitudes(this.currentPage(), this.perPage());
+      })
+    ).subscribe({
+      next: (res) => {
+        this.solicitudes.set(res.data);
+        this.paginationData.set(res);
+
+        // Si hay filtro de programación, obtener nombre del curso de la primera solicitud
+        if (this.programacionIdFiltro()) {
+          if (res.data.length > 0) {
+            const primera = res.data[0];
+            if (primera.programacion?.curso) {
+              this.cursoFiltrado.set(`${primera.programacion.curso.codigo} - ${primera.programacion.curso.nombre}`);
+            } else {
+              this.cursoFiltrado.set(null);
+            }
+          } else {
+            // No hay resultados, mantener cursoFiltrado en null para mostrar mensaje
+            this.cursoFiltrado.set(null);
+          }
+        }
+
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
     });
   }
 
@@ -208,48 +260,7 @@ export class SolicitudListaComponent implements OnInit {
   }
 
   cargarDatos(): void {
-    this.loading.set(true);
-
-    const request$ = this.esAdmin()
-      ? this.solicitudService.getAllSolicitudes(
-          this.currentPage(),
-          this.perPage(),
-          this.searchTerm() || undefined,
-          this.estadoFiltro() || undefined,
-          this.programacionIdFiltro() || undefined,
-          this.tipoFiltro() || undefined,
-          this.escuelaIdFiltro() || undefined,
-          this.escuelaProgramadaFiltro() || undefined,
-          this.cursoIdFiltro() || undefined,
-          this.grupoFiltro() || undefined,
-          this.sortOrder()
-        )
-      : this.solicitudService.getMisSolicitudes(this.currentPage(), this.perPage());
-
-    request$.subscribe({
-      next: (res) => {
-        this.solicitudes.set(res.data);
-        this.paginationData.set(res);
-
-        // Si hay filtro de programación, obtener nombre del curso de la primera solicitud
-        if (this.programacionIdFiltro()) {
-          if (res.data.length > 0) {
-            const primera = res.data[0];
-            if (primera.programacion?.curso) {
-              this.cursoFiltrado.set(`${primera.programacion.curso.codigo} - ${primera.programacion.curso.nombre}`);
-            } else {
-              this.cursoFiltrado.set(null);
-            }
-          } else {
-            // No hay resultados, mantener cursoFiltrado en null para mostrar mensaje
-            this.cursoFiltrado.set(null);
-          }
-        }
-
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+    this.reload$.next(null);
   }
 
   onSearch(value: string): void {
