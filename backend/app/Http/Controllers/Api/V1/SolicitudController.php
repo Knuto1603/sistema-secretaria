@@ -135,7 +135,7 @@ class SolicitudController extends Controller
 
     /**
      * Devuelve los curso_ids del periodo activo donde el estudiante ya tiene solicitud
-     * activa (pendiente, en_revision o aprobada). Usado para deshabilitar el botón
+     * activa (pendiente o en_revision). Usado para deshabilitar el botón
      * "Solicitar cupo" — se agrupa por curso (no por sección) porque la regla de negocio
      * de duplicados (ver SolicitudService::create) también es por curso, no por sección.
      */
@@ -146,7 +146,7 @@ class SolicitudController extends Controller
         $ids = Solicitud::where('user_id', $request->user()->id)
             ->where('periodo_id', $periodoId)
             ->whereNotNull('programacion_id')
-            ->whereIn('estado', ['pendiente', 'en_revision', 'aprobada'])
+            ->whereIn('estado', ['pendiente', 'en_revision'])
             ->with('programacion:id,curso_id')
             ->get()
             ->pluck('programacion.curso_id')
