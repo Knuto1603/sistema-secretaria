@@ -240,7 +240,7 @@
                 <tbody class="divide-y divide-slate-50">
                   @for (sec of curso.secciones; track sec.id) {
                     <tr class="hover:bg-slate-50 transition-colors">
-                      <td class="py-2.5 font-bold text-slate-700">{{ sec.grupo }}</td>
+                      <td class="py-2.5 font-bold text-slate-700">{{ sec.grupo ?? '-' }}</td>
                       <td class="py-2.5 text-slate-600">{{ sec.seccion ?? '-' }}</td>
                       @if (esInscEscuela()) {
                         <td class="py-2.5">
