@@ -162,7 +162,7 @@ class SolicitudController extends Controller
      */
     public function cursosConSolicitud(): JsonResponse
     {
-        $items = Solicitud::with(['programacion.curso', 'programacion.escuelaProgramada'])
+        $items = Solicitud::with(['programacion.curso', 'programacion.grupoHorario', 'programacion.escuelaProgramada'])
             ->whereNotNull('programacion_id')
             ->get()
             ->unique('programacion_id')
@@ -172,7 +172,7 @@ class SolicitudController extends Controller
                 'id'       => $s->programacion_id,
                 'curso_id' => $s->programacion->curso->id,
                 'clave'    => $s->programacion->clave,
-                'grupo'    => $s->programacion->grupo,
+                'grupo'    => $s->programacion->grupoHorario?->nombre ?? $s->programacion->grupo,
                 'seccion'  => $s->programacion->seccion,
                 'curso'    => [
                     'id'     => $s->programacion->curso->id,
@@ -311,14 +311,14 @@ class SolicitudController extends Controller
                 ? ProgramacionAcademica::periodo($periodoId)
                     ->select('programacion_secciones.*')
                     ->where('programacion_secciones.curso_id', $cursoId)
-                    ->with(['docente', 'aulaRelacion', 'escuelaProgramada'])
+                    ->with(['docente', 'aulaRelacion', 'grupoHorario', 'escuelaProgramada'])
                     ->orderBy('programacion_secciones.grupo')
                 : ProgramacionAcademica::whereRaw('0=1')
-                    ->with(['docente', 'aulaRelacion', 'escuelaProgramada']);
+                    ->with(['docente', 'aulaRelacion', 'grupoHorario', 'escuelaProgramada']);
             $secciones = $seccionesQuery->get()
                 ->map(fn($p) => [
                     'id'               => $p->id,
-                    'grupo'            => $p->grupo,
+                    'grupo'            => $p->grupoHorario?->nombre ?? $p->grupo,
                     'seccion'          => $p->seccion,
                     'n_inscritos'      => $p->n_inscritos,
                     'capacidad'        => $p->capacidad,

@@ -417,7 +417,7 @@ class EstudianteController extends Controller
         }
 
         $inscripciones = \App\Models\Inscripcion::where('user_id', $id)
-            ->with(['programacion.curso', 'programacion.periodo', 'periodo'])
+            ->with(['programacion.curso', 'programacion.periodo', 'programacion.grupoHorario', 'periodo'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn($i) => [
@@ -432,7 +432,7 @@ class EstudianteController extends Controller
                     'id'      => $i->programacion->id,
                     'clave'   => $i->programacion->clave,
                     'seccion' => $i->programacion->seccion,
-                    'grupo'   => $i->programacion->grupo,
+                    'grupo'   => $i->programacion->grupoHorario?->nombre ?? $i->programacion->grupo,
                     'curso'   => $i->programacion->curso
                         ? ['nombre' => $i->programacion->curso->nombre, 'codigo' => $i->programacion->curso->codigo]
                         : null,

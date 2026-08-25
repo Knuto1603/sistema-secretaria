@@ -297,7 +297,7 @@ class ProgramacionController extends Controller
             ->map(fn($p) => [
                 'id'          => $p->id,
                 'seccion'     => $p->seccion,
-                'grupo'       => $p->grupo,
+                'grupo'       => $p->grupoHorario?->nombre ?? $p->grupo,
                 'docente'     => $p->docente?->nombre_completo,
                 'aula'        => $p->aula ?? $p->aulaRelacion?->nombre,
                 'capacidad'   => $p->capacidad,

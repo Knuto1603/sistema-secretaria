@@ -108,7 +108,7 @@
                 }
                 <div class="bg-slate-50 rounded-md p-3">
                   <dt class="text-[10px] font-bold text-slate-400 uppercase">Grupo</dt>
-                  <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.grupo }}</dd>
+                  <dd class="text-sm font-bold text-slate-700 mt-0.5">{{ solicitud()!.programacion!.grupo ?? '-' }}</dd>
                 </div>
                 @if (solicitud()!.programacion!.aula) {
                   <div class="bg-slate-50 rounded-md p-3">

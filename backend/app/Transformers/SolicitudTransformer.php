@@ -50,7 +50,7 @@ class SolicitudTransformer
             programacion: $model->programacion ? [
                 'id'               => $model->programacion->id,
                 'clave'            => $model->programacion->clave,
-                'grupo'            => $model->programacion->grupo,
+                'grupo'            => $model->programacion->grupoHorario?->nombre ?? $model->programacion->grupo,
                 'seccion'          => $model->programacion->seccion,
                 'capacidad'        => $model->programacion->capacidad,
                 'n_inscritos'      => $model->programacion->n_inscritos,
