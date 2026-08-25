@@ -20,21 +20,18 @@ class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, W
         return Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
             ->whereNotNull('programacion_id')
             ->when($this->periodoId, fn($q) => $q->where('periodo_id', $this->periodoId))
-            ->with(['user.escuela', 'programacion.curso', 'programacion.escuelaProgramada'])
+            ->with(['user.escuela', 'programacion.curso', 'programacion.grupoHorario', 'programacion.escuelaProgramada'])
             ->orderBy('created_at')
             ->get()
             ->map(function ($s) {
                 $row = [
                     $s->programacion?->curso?->codigo ?? '',
                     $s->programacion?->curso?->nombre ?? '',
+                    $s->programacion?->escuelaProgramada?->nombre_corto
+                        ?? $s->programacion?->escuelaProgramada?->nombre ?? '',
                 ];
 
-                if ($this->tipo === 'INSC_ESCUELA') {
-                    $row[] = $s->programacion?->escuelaProgramada?->nombre_corto
-                          ?? $s->programacion?->escuelaProgramada?->nombre ?? '';
-                }
-
-                $row[] = $s->programacion?->grupo ?? '';
+                $row[] = $s->programacion?->grupoHorario?->nombre ?? $s->programacion?->grupo ?? '';
                 $row[] = $s->programacion?->seccion ?? '';
                 $row[] = $s->user?->codigo_universitario ?? '';
                 $row[] = $s->user?->name ?? '';
@@ -53,11 +50,7 @@ class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, W
 
     public function headings(): array
     {
-        $heads = ['Cód. Curso', 'Nombre del Curso'];
-
-        if ($this->tipo === 'INSC_ESCUELA') {
-            $heads[] = 'Escuela Programada';
-        }
+        $heads = ['Cód. Curso', 'Nombre del Curso', 'Escuela Programada'];
 
         $heads = array_merge($heads, [
             'Grupo',

@@ -39,7 +39,7 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
         $secciones = ProgramacionAcademica::periodo($this->periodoId)
             ->select('programacion_secciones.*')
             ->whereIn('programacion_secciones.curso_id', $cursoIds)
-            ->with(['curso', 'docente', 'aulaRelacion', 'escuelaProgramada'])
+            ->with(['curso', 'docente', 'aulaRelacion', 'grupoHorario', 'escuelaProgramada'])
             ->orderBy('programacion_secciones.curso_id')
             ->orderBy('programacion_secciones.grupo')
             ->get();
@@ -48,13 +48,10 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
             $row = [
                 $p->curso?->codigo ?? '',
                 $p->curso?->nombre ?? '',
+                $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre ?? '',
             ];
 
-            if ($this->tipo === 'INSC_ESCUELA') {
-                $row[] = $p->escuelaProgramada?->nombre_corto ?? $p->escuelaProgramada?->nombre ?? '';
-            }
-
-            $row[] = $p->grupo ?? '';
+            $row[] = $p->grupoHorario?->nombre ?? $p->grupo ?? '';
             $row[] = $p->seccion ?? '';
             $row[] = $p->docente?->nombre ?? '';
             $row[] = $p->aulaRelacion?->nombre ?? '';
@@ -68,11 +65,7 @@ class MetricasResumenSheet implements FromCollection, WithHeadings, WithTitle, W
 
     public function headings(): array
     {
-        $heads = ['Cód. Curso', 'Nombre del Curso'];
-
-        if ($this->tipo === 'INSC_ESCUELA') {
-            $heads[] = 'Escuela Programada';
-        }
+        $heads = ['Cód. Curso', 'Nombre del Curso', 'Escuela Programada'];
 
         return array_merge($heads, [
             'Grupo',
