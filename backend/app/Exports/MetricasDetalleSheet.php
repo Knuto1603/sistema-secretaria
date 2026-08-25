@@ -20,13 +20,14 @@ class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, W
         return Solicitud::whereHas('tipoSolicitud', fn($q) => $q->where('codigo', $this->tipo))
             ->whereNotNull('programacion_id')
             ->when($this->periodoId, fn($q) => $q->where('periodo_id', $this->periodoId))
-            ->with(['user.escuela', 'programacion.curso', 'programacion.grupoHorario', 'programacion.escuelaProgramada'])
+            ->with(['user.escuela', 'programacion.curso.area', 'programacion.grupoHorario', 'programacion.escuelaProgramada'])
             ->orderBy('created_at')
             ->get()
             ->map(function ($s) {
                 $row = [
                     $s->programacion?->curso?->codigo ?? '',
                     $s->programacion?->curso?->nombre ?? '',
+                    $s->programacion?->curso?->area?->nombre ?? '',
                     $s->programacion?->escuelaProgramada?->nombre_corto
                         ?? $s->programacion?->escuelaProgramada?->nombre ?? '',
                 ];
@@ -50,7 +51,7 @@ class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, W
 
     public function headings(): array
     {
-        $heads = ['Cód. Curso', 'Nombre del Curso', 'Escuela Programada'];
+        $heads = ['Cód. Curso', 'Nombre del Curso', 'Departamento', 'Escuela Programada'];
 
         $heads = array_merge($heads, [
             'Grupo',
@@ -79,9 +80,9 @@ class MetricasDetalleSheet implements FromCollection, WithHeadings, WithTitle, W
     {
         return [
             'A' => 14, 'B' => 40, 'C' => 25,
-            'D' => 10, 'E' => 10, 'F' => 20,
-            'G' => 35, 'H' => 25, 'I' => 18,
-            'J' => 14, 'K' => 18,
+            'D' => 25, 'E' => 10, 'F' => 10,
+            'G' => 20, 'H' => 35, 'I' => 25,
+            'J' => 18, 'K' => 14, 'L' => 18,
         ];
     }
 
