@@ -165,6 +165,11 @@ class ProgramacionService
         return $this->programacionRepository->toggleLlenoManual($id);
     }
 
+    public function marcarLlenoPorPeriodo(string $periodoId, bool $lleno): int
+    {
+        return $this->programacionRepository->marcarLlenoPorPeriodo($periodoId, $lleno);
+    }
+
     public function delete(string $id): bool
     {
         return $this->programacionRepository->delete($id);

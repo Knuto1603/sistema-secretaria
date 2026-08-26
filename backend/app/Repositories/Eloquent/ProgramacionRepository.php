@@ -208,4 +208,17 @@ class ProgramacionRepository implements ProgramacionRepositoryInterface
     {
         return $this->model->whereIn('id', $ids)->update(['lleno_manual' => true]);
     }
+
+    public function marcarLlenoPorPeriodo(string $periodoId, bool $lleno): int
+    {
+        $ids = $this->model->periodo($periodoId)
+            ->where('programacion_secciones.activo', true)
+            ->pluck('programacion_secciones.id');
+
+        if ($ids->isEmpty()) {
+            return 0;
+        }
+
+        return $this->model->whereIn('id', $ids)->update(['lleno_manual' => $lleno]);
+    }
 }

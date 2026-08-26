@@ -43,6 +43,19 @@
       </app-limpiar-periodo-modal>
     }
 
+    <!-- Modal: Marcar/desmarcar todos los cursos como llenos -->
+    @if (showMarcarLlenos()) {
+      <app-marcar-llenos-modal
+        [periodoNombre]="estadoService.periodo()?.nombre ?? 'Seleccionar periodo'"
+        [loading]="marcarLlenosLoading()"
+        [errorMsg]="marcarLlenosError()"
+        [resultado]="marcarLlenosResultado()"
+        (cancelar)="cerrarMarcarLlenos()"
+        (marcarTodos)="marcarTodosLlenos()"
+        (desmarcarTodos)="desmarcarTodosLlenos()">
+      </app-marcar-llenos-modal>
+    }
+
     <!-- Modal: Confirmar Eliminación -->
     @if (programacionAEliminar()) {
       <app-confirm-eliminar-modal
@@ -204,6 +217,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
             Nueva
+          </app-btn>
+
+          <!-- Cierre general de cupos: marcar/desmarcar todos los cursos del periodo como llenos -->
+          <app-btn variant="secondary" (clicked)="abrirMarcarLlenos()" title="Marcar/desmarcar todos los cursos del periodo como llenos">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Cierre de cupos
           </app-btn>
 
           <!-- Limpiar periodo (solo developer) -->

@@ -27,4 +27,7 @@ interface ProgramacionRepositoryInterface
 
     /** Marca lleno_manual=true en múltiples secciones (bulk, sin disparar observers). */
     public function cerrarMasivo(array $ids): int;
+
+    /** Marca/desmarca lleno_manual en TODAS las secciones activas de un periodo. */
+    public function marcarLlenoPorPeriodo(string $periodoId, bool $lleno): int;
 }

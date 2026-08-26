@@ -25,6 +25,7 @@ import { ProgramacionEstudianteComponent } from '../programacion-estudiante/prog
 import { ConfirmEliminarModalComponent } from '../confirm-eliminar-modal/confirm-eliminar-modal.component';
 import { LimpiarPeriodoModalComponent } from '../limpiar-periodo-modal/limpiar-periodo-modal.component';
 import { CampusDebugPanelComponent } from '../campus-debug-panel/campus-debug-panel.component';
+import { MarcarLlenosModalComponent } from '../marcar-llenos-modal/marcar-llenos-modal.component';
 
 type VistaActiva = 'tabla' | 'matriz';
 
@@ -49,6 +50,7 @@ type VistaActiva = 'tabla' | 'matriz';
     ConfirmEliminarModalComponent,
     LimpiarPeriodoModalComponent,
     CampusDebugPanelComponent,
+    MarcarLlenosModalComponent,
   ],
   templateUrl: './programacion-tabla.component.html'
 })
@@ -128,6 +130,12 @@ export class ProgramacionTablaComponent implements OnInit {
   limpiarPeriodoLoading   = signal(false);
   limpiarPeriodoError     = signal<string | null>(null);
   limpiarPeriodoEliminados = signal<number | null>(null);
+
+  // Modal: Marcar/desmarcar todos los cursos del periodo como llenos (cierre general de cupos)
+  showMarcarLlenos      = signal(false);
+  marcarLlenosLoading   = signal(false);
+  marcarLlenosError     = signal<string | null>(null);
+  marcarLlenosResultado = signal<number | null>(null);
 
   columnas: TableColumn[] = [
     { key: 'curso',             label: 'Curso' },
@@ -593,4 +601,41 @@ export class ProgramacionTablaComponent implements OnInit {
       },
     });
   }
+
+  abrirMarcarLlenos(): void {
+    this.marcarLlenosError.set(null);
+    this.marcarLlenosResultado.set(null);
+    this.showMarcarLlenos.set(true);
+  }
+
+  cerrarMarcarLlenos(): void {
+    this.showMarcarLlenos.set(false);
+    // Si se aplicó algún cambio, refrescar la tabla para reflejar el nuevo estado de cupos
+    if (this.marcarLlenosResultado() !== null) {
+      this.cargarProgramacion(1);
+      this.todosLosItems.set([]);
+    }
+  }
+
+  private ejecutarMarcarLlenos(lleno: boolean): void {
+    const periodoId = this.estadoService.periodoId();
+    if (!periodoId || this.marcarLlenosLoading()) return;
+
+    this.marcarLlenosLoading.set(true);
+    this.marcarLlenosError.set(null);
+
+    this.programacionService.marcarLlenoPorPeriodo(periodoId, lleno).subscribe({
+      next: res => {
+        this.marcarLlenosResultado.set(res.actualizadas);
+        this.marcarLlenosLoading.set(false);
+      },
+      error: err => {
+        this.marcarLlenosError.set(err.error?.message || 'Error al actualizar los cursos del periodo');
+        this.marcarLlenosLoading.set(false);
+      },
+    });
+  }
+
+  marcarTodosLlenos(): void { this.ejecutarMarcarLlenos(true); }
+  desmarcarTodosLlenos(): void { this.ejecutarMarcarLlenos(false); }
 }

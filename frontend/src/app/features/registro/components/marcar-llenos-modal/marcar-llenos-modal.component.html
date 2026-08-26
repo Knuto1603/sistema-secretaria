@@ -1,0 +1,49 @@
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-md shadow-xl w-full max-w-md p-7">
+    <div class="flex items-center gap-4 mb-5">
+      <div class="w-12 h-12 flex items-center justify-center bg-amber-100 rounded-md flex-shrink-0">
+        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-800">Cierre general de cupos</h3>
+        <p class="text-sm text-slate-500 mt-0.5">Aplica a todos los cursos del periodo seleccionado.</p>
+      </div>
+    </div>
+
+    <div class="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md mb-5">
+      <p class="text-xs font-bold text-amber-600 uppercase tracking-widest">Periodo</p>
+      <p class="text-sm font-bold text-slate-800 mt-1">{{ periodoNombre() }}</p>
+      <p class="text-xs text-amber-600 mt-2">
+        Marca (o quita la marca de) <strong>lleno</strong> en todas las secciones activas, aunque tengan cupo
+        disponible. Útil tras el cierre de fechas de inscripción, para que cualquier alumno deba presentar
+        una solicitud en vez de acercarse a hacer cola. Es reversible: puedes desmarcar todas cuando quieras.
+      </p>
+    </div>
+
+    @if (errorMsg()) {
+      <p class="text-sm text-red-600 font-medium mb-4">{{ errorMsg() }}</p>
+    }
+
+    @if (resultado() !== null) {
+      <div class="px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-md mb-5">
+        <p class="text-sm font-bold text-emerald-700">{{ resultado() }} sección(es) actualizadas.</p>
+      </div>
+      <div class="flex justify-end">
+        <app-btn variant="secondary" (clicked)="cancelar.emit()">Cerrar</app-btn>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-2">
+        <app-btn variant="primary" [loading]="loading()" [disabled]="loading()" (clicked)="marcarTodos.emit()">
+          Marcar todas como llenas
+        </app-btn>
+        <app-btn variant="secondary" [loading]="loading()" [disabled]="loading()" (clicked)="desmarcarTodos.emit()">
+          Desmarcar todas
+        </app-btn>
+        <app-btn variant="ghost" [disabled]="loading()" (clicked)="cancelar.emit()">Cancelar</app-btn>
+      </div>
+    }
+  </div>
+</div>

@@ -725,6 +725,28 @@ class ProgramacionController extends Controller
     }
 
     /**
+     * Marcar/desmarcar como lleno TODAS las secciones activas de un periodo de una sola vez
+     * (uso típico: tras el cierre de fechas de inscripción, para que los alumnos deban
+     * pasar por el flujo de solicitud aunque el curso técnicamente tenga cupo, evitando colas).
+     */
+    public function marcarLlenoPorPeriodo(Request $request, string $periodoId): JsonResponse
+    {
+        $request->validate(['lleno' => 'required|boolean']);
+
+        try {
+            $lleno = $request->boolean('lleno');
+            $actualizadas = $this->service->marcarLlenoPorPeriodo($periodoId, $lleno);
+            $msg = $lleno
+                ? "{$actualizadas} sección(es) marcadas como llenas"
+                : "{$actualizadas} sección(es) desmarcadas como llenas";
+
+            return $this->success(['actualizadas' => $actualizadas], $msg);
+        } catch (Exception $e) {
+            return $this->error('Error al actualizar: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Descargar plantilla de ejemplo para importación
      */
     public function downloadTemplate(): BinaryFileResponse

@@ -367,4 +367,14 @@ export class ProgramacionService {
       .delete<ApiResponse<{ eliminados: number }>>(`${this.apiUrl}/periodo/${periodoId}`)
       .pipe(map(r => r.data));
   }
+
+  /**
+   * Marca/desmarca lleno_manual en TODAS las secciones activas del periodo de una sola vez
+   * (uso típico: tras el cierre de fechas de inscripción, para forzar el flujo de solicitud).
+   */
+  marcarLlenoPorPeriodo(periodoId: string, lleno: boolean): Observable<{ actualizadas: number }> {
+    return this.http
+      .patch<ApiResponse<{ actualizadas: number }>>(`${this.apiUrl}/periodo/${periodoId}/lleno-masivo`, { lleno })
+      .pipe(map(r => r.data));
+  }
 }

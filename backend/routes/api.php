@@ -196,6 +196,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
             ->middleware('role:developer');
         Route::patch('/{id}/toggle-lleno', [ProgramacionController::class, 'toggleLleno'])
             ->middleware('role:secretaria|admin|developer');
+        Route::patch('/periodo/{periodoId}/lleno-masivo', [ProgramacionController::class, 'marcarLlenoPorPeriodo'])
+            ->middleware('role:secretaria|admin|developer');
 
         // ── Modificaciones de programación publicada ──────────────────────
         Route::middleware('role:secretaria|admin|developer')->group(function () {
