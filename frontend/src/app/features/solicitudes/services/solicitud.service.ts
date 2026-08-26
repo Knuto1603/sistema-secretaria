@@ -242,6 +242,16 @@ export class SolicitudService {
   }
 
   /**
+   * Cambia el estado de varias solicitudes a la vez, con la misma observación
+   * (admin/secretaria/decano)
+   */
+  updateEstadoMasivo(ids: string[], data: UpdateEstadoDTO): Observable<{ actualizadas: number }> {
+    return this.http.patch<ApiResponse<{ actualizadas: number }>>(`${this.apiUrl}/estado-masivo`, { ids, ...data }).pipe(
+      map(response => response.data)
+    );
+  }
+
+  /**
    * Enviar apelación a una solicitud rechazada (propio estudiante)
    */
   responderSolicitud(id: string, respuesta: string): Observable<Solicitud> {

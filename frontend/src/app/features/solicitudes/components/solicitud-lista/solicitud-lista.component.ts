@@ -11,6 +11,7 @@ import { AppTableComponent, TableColumn } from '@shared/table/table.component';
 import { AppBadgeComponent } from '@shared/badge/badge.component';
 import { AppButtonComponent } from '@shared/button/button.component';
 import { PaginationComponent } from '@shared/pagination/pagination.component';
+import { CambiarEstadoMasivoModalComponent, CambioEstadoMasivoPayload } from '../cambiar-estado-masivo-modal/cambiar-estado-masivo-modal.component';
 
 interface Escuela { id: string; nombre: string; nombre_corto: string | null; }
 
@@ -23,7 +24,8 @@ interface Escuela { id: string; nombre: string; nombre_corto: string | null; }
     AppTableComponent,
     AppBadgeComponent,
     AppButtonComponent,
-    PaginationComponent
+    PaginationComponent,
+    CambiarEstadoMasivoModalComponent
   ],
   templateUrl: './solicitud-lista.component.html'
 })
@@ -96,6 +98,12 @@ export class SolicitudListaComponent implements OnInit {
   // Cursos que tienen solicitudes (para el selector de filtro)
   cursosConSolicitud = signal<Array<{ id: string; curso_id: string; clave: string; grupo: string; seccion: string | null; curso: { nombre: string; codigo: string }; escuela_programada: string | null }>>([]);
   loadingCursos = signal(false);
+
+  // Selección múltiple para cambio de estado en lote (solo admin)
+  seleccionadas = signal<Set<string>>(new Set());
+  mostrarModalMasivo = signal(false);
+  enviandoMasivo = signal(false);
+  errorMasivo = signal<string | null>(null);
 
   // Estados disponibles para filtro
   estados = [
@@ -185,6 +193,7 @@ export class SolicitudListaComponent implements OnInit {
       next: (res) => {
         this.solicitudes.set(res.data);
         this.paginationData.set(res);
+        this.seleccionadas.set(new Set());
 
         // Si hay filtro de programación, obtener nombre del curso de la primera solicitud
         if (this.programacionIdFiltro()) {
@@ -379,6 +388,59 @@ export class SolicitudListaComponent implements OnInit {
         }
       },
       error: (err) => alert(err.error?.message || 'Error al anular la solicitud')
+    });
+  }
+
+  toggleSeleccion(id: string): void {
+    const next = new Set(this.seleccionadas());
+    if (next.has(id)) next.delete(id); else next.add(id);
+    this.seleccionadas.set(next);
+  }
+
+  toggleSeleccionTodas(marcar: boolean): void {
+    const next = new Set(this.seleccionadas());
+    for (const s of this.solicitudes()) {
+      if (marcar) next.add(s.id); else next.delete(s.id);
+    }
+    this.seleccionadas.set(next);
+  }
+
+  limpiarSeleccion(): void {
+    this.seleccionadas.set(new Set());
+  }
+
+  abrirModalMasivo(): void {
+    this.errorMasivo.set(null);
+    this.mostrarModalMasivo.set(true);
+  }
+
+  cerrarModalMasivo(): void {
+    if (this.enviandoMasivo()) return;
+    this.mostrarModalMasivo.set(false);
+  }
+
+  confirmarCambioMasivo(payload: CambioEstadoMasivoPayload): void {
+    const ids = Array.from(this.seleccionadas());
+    if (ids.length === 0) return;
+
+    this.enviandoMasivo.set(true);
+    this.errorMasivo.set(null);
+
+    this.solicitudService.updateEstadoMasivo(ids, {
+      estado: payload.estado,
+      observaciones: payload.observaciones || undefined
+    }).subscribe({
+      next: () => {
+        this.enviandoMasivo.set(false);
+        this.mostrarModalMasivo.set(false);
+        this.limpiarSeleccion();
+        this.cargarDatos();
+        if (this.esAdmin()) this.cargarEstadisticas();
+      },
+      error: (err) => {
+        this.enviandoMasivo.set(false);
+        this.errorMasivo.set(err.error?.message || 'Error al cambiar el estado de las solicitudes seleccionadas');
+      }
     });
   }
 }

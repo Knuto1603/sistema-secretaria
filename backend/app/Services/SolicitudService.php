@@ -210,6 +210,26 @@ class SolicitudService
         return $solicitud;
     }
 
+    /**
+     * Cambia el estado de varias solicitudes a la vez con la misma observación,
+     * reutilizando updateEstado() para mantener el mismo efecto (notificaciones incluidas)
+     * que un cambio individual.
+     */
+    public function updateEstadoMasivo(array $ids, string $estado, ?string $observaciones, ?User $asignadoA = null): int
+    {
+        return DB::transaction(function () use ($ids, $estado, $observaciones, $asignadoA) {
+            $actualizadas = 0;
+
+            foreach ($ids as $id) {
+                if ($this->updateEstado($id, $estado, $observaciones, $asignadoA)) {
+                    $actualizadas++;
+                }
+            }
+
+            return $actualizadas;
+        });
+    }
+
     protected function storeBase64Signature(string $base64, string $userId): string
     {
         if (Str::contains($base64, ',')) {

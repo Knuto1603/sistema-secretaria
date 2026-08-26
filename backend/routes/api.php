@@ -411,6 +411,10 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
         // Ver detalle (todos pueden, pero estudiantes solo las suyas)
         Route::get('/{id}', [SolicitudController::class, 'show']);
 
+        // Actualizar estado en lote (admin/secretaria/decano)
+        Route::patch('/estado-masivo', [SolicitudController::class, 'updateEstadoMasivo'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
         // Actualizar estado (admin/secretaria/decano)
         Route::patch('/{id}/estado', [SolicitudController::class, 'updateEstado'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');

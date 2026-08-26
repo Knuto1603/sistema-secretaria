@@ -292,8 +292,24 @@
   <!-- Tabla de solicitudes -->
   <div class="space-y-4">
 
-  <!-- Ordenamiento por fecha -->
-  <div class="flex justify-end">
+  <!-- Ordenamiento por fecha + acciones de selección -->
+  <div class="flex justify-between items-center gap-3 flex-wrap">
+    @if (esAdmin() && seleccionadas().size > 0) {
+      <div class="flex items-center gap-3 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-md">
+        <span class="text-xs font-bold text-indigo-700">{{ seleccionadas().size }} seleccionada(s)</span>
+        <button (click)="abrirModalMasivo()"
+          class="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+          Cambiar estado
+        </button>
+        <button (click)="limpiarSeleccion()"
+          class="text-xs font-semibold text-indigo-500 hover:text-indigo-700 transition-colors">
+          Limpiar
+        </button>
+      </div>
+    } @else {
+      <div></div>
+    }
+
     <button
       (click)="toggleSortOrder()"
       class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
@@ -308,7 +324,11 @@
   <app-table
     [columns]="columnas()"
     [data]="solicitudes()"
-    [loading]="loading()">
+    [loading]="loading()"
+    [selectable]="esAdmin()"
+    [selectedIds]="seleccionadas()"
+    (rowSelectToggle)="toggleSeleccion($event)"
+    (allSelectToggle)="toggleSeleccionTodas($event)">
 
     <ng-template #cellTemplate let-row let-column="column">
 
@@ -429,6 +449,16 @@
         {{ esAdmin() ? 'No hay solicitudes que coincidan con los filtros.' : 'Aún no has realizado ninguna solicitud.' }}
       </p>
     </div>
+  }
+
+  @if (mostrarModalMasivo()) {
+    <app-cambiar-estado-masivo-modal
+      [cantidad]="seleccionadas().size"
+      [enviando]="enviandoMasivo()"
+      [error]="errorMasivo()"
+      (cerrado)="cerrarModalMasivo()"
+      (confirmar)="confirmarCambioMasivo($event)">
+    </app-cambiar-estado-masivo-modal>
   }
 
 </div>

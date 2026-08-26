@@ -448,4 +448,30 @@ class SolicitudController extends Controller
         );
     }
 
+    /**
+     * Cambiar el estado de varias solicitudes a la vez, con la misma observación
+     * (útil cuando se toma una decisión general sobre un curso, ej. abrir otra sección).
+     */
+    public function updateEstadoMasivo(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'string|exists:solicitud,id',
+            'estado' => 'required|in:pendiente,en_revision,aprobada,rechazada',
+            'observaciones' => 'nullable|string|max:1000',
+        ]);
+
+        $actualizadas = $this->service->updateEstadoMasivo(
+            $request->ids,
+            $request->estado,
+            $request->observaciones,
+            $request->user()
+        );
+
+        return $this->success(
+            ['actualizadas' => $actualizadas],
+            "{$actualizadas} solicitud(es) actualizada(s) exitosamente"
+        );
+    }
+
 }
