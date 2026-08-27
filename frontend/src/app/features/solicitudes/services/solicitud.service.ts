@@ -21,6 +21,7 @@ export interface Solicitud {
   fuera_de_plan: boolean;
   respuesta_alumno: string | null;
   fecha_respuesta: string | null;
+  respuesta_admin: string | null;
   metadatos: any;
   created_at: string;
   updated_at: string;
@@ -96,6 +97,7 @@ export interface CreateSolicitudDTO {
 export interface UpdateEstadoDTO {
   estado: 'pendiente' | 'en_revision' | 'aprobada' | 'rechazada';
   observaciones?: string;
+  respuesta_apelacion?: string;
 }
 
 export interface PaginatedResponse<T> {

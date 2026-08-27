@@ -30,6 +30,7 @@ class Solicitud extends Model
         'fuera_de_plan',
         'respuesta_alumno',
         'fecha_respuesta',
+        'respuesta_admin',
     ];
 
     protected $casts = [

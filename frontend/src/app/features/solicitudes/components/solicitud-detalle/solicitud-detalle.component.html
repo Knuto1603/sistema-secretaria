@@ -325,6 +325,19 @@
                   class="w-full px-4 py-3 text-sm border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
               </div>
 
+              <!-- Respuesta a la apelación del alumno (campo aparte, no pisa Observaciones) -->
+              @if (mostrarRespuestaApelacion()) {
+                <div>
+                  <label class="block text-xs font-bold text-blue-700 uppercase mb-2">Respuesta a la apelación</label>
+                  <textarea
+                    [ngModel]="respuestaApelacion()"
+                    (ngModelChange)="respuestaApelacion.set($event)"
+                    rows="4"
+                    placeholder="Responde al estudiante sobre su apelación..."
+                    class="w-full px-4 py-3 text-sm border border-blue-200 rounded-md bg-blue-50 focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
+                </div>
+              }
+
               <!-- Botón guardar -->
               <app-btn
                 variant="primary"
@@ -357,6 +370,14 @@
               }
             </div>
             <p class="text-sm text-blue-800 whitespace-pre-wrap">{{ solicitud()!.respuesta_alumno }}</p>
+          </div>
+        }
+
+        <!-- Respuesta de la Secretaría a la apelación (visible para todos) -->
+        @if (solicitud()!.respuesta_admin) {
+          <div class="bg-indigo-50 p-6 rounded-md border border-indigo-200">
+            <h3 class="text-xs font-semibold text-indigo-700 uppercase tracking-widest mb-2">Respuesta de la Secretaría</h3>
+            <p class="text-sm text-indigo-800 whitespace-pre-wrap">{{ solicitud()!.respuesta_admin }}</p>
           </div>
         }
 

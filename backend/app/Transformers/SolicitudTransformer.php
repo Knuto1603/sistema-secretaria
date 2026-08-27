@@ -33,6 +33,7 @@ class SolicitudTransformer
             fuera_de_plan: (bool) $model->fuera_de_plan,
             respuesta_alumno: $model->respuesta_alumno,
             fecha_respuesta: $model->fecha_respuesta?->toISOString(),
+            respuesta_admin: $model->respuesta_admin,
             metadatos: $model->metadatos,
             user: $model->user ? [
                 'id' => $model->user->id,

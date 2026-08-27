@@ -23,7 +23,7 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
     private readonly string $dedupeId;
 
     /**
-     * @param string $tipo 'creada' | 'apelacion' | 'cambio_estado'
+     * @param string $tipo 'creada' | 'apelacion' | 'cambio_estado' | 'respuesta_apelacion'
      */
     public function __construct(
         private readonly string $solicitudId,
@@ -55,9 +55,10 @@ class EnviarNotificacionSolicitudTelegramJob implements ShouldQueue
         }
 
         $texto = match ($this->tipo) {
-            'creada'    => $bot->mensajeSolicitudCreada($solicitud),
-            'apelacion' => $bot->mensajeApelacionRecibida($solicitud),
-            default     => $bot->mensajeCambioEstado($solicitud),
+            'creada'              => $bot->mensajeSolicitudCreada($solicitud),
+            'apelacion'           => $bot->mensajeApelacionRecibida($solicitud),
+            'respuesta_apelacion' => $bot->mensajeRespuestaApelacion($solicitud),
+            default               => $bot->mensajeCambioEstado($solicitud),
         };
 
         if ($this->tipo === 'creada' && $solicitud->constancia_pdf_path

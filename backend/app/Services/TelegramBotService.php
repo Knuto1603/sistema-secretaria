@@ -267,6 +267,27 @@ class TelegramBotService
         return "🔁 Registramos tu apelación para <b>{$curso}</b>. La secretaría la revisará nuevamente.";
     }
 
+    /**
+     * Notificación enviada cuando la secretaría responde a la apelación del alumno,
+     * sin sobreescribir la observación original del rechazo (respuesta_admin es un campo aparte).
+     */
+    public function mensajeRespuestaApelacion(Solicitud $solicitud): string
+    {
+        $curso  = $solicitud->programacion?->curso?->nombre ?? 'tu curso';
+        $icono  = self::ESTADO_ICONOS[$solicitud->estado] ?? '•';
+        $estado = self::ESTADO_LABELS[$solicitud->estado] ?? $solicitud->estado;
+
+        $texto = "💬 <b>Respuesta a tu apelación</b>\n\n"
+            . "Curso: <b>{$curso}</b>\n"
+            . "Estado: {$icono} {$estado}\n";
+
+        if (!empty($solicitud->respuesta_admin)) {
+            $texto .= "📝 Respuesta: {$solicitud->respuesta_admin}\n";
+        }
+
+        return $texto . "\nIngresa al sistema para más detalles.";
+    }
+
     public function mensajeAyuda(): string
     {
         return "🤖 <b>Comandos disponibles:</b>\n\n"

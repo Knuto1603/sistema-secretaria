@@ -427,6 +427,7 @@ class SolicitudController extends Controller
         $request->validate([
             'estado' => 'required|in:pendiente,en_revision,aprobada,rechazada',
             'observaciones' => 'nullable|string|max:1000',
+            'respuesta_apelacion' => 'nullable|string|max:2000',
         ]);
 
         $solicitud = $this->service->findById($id);
@@ -439,7 +440,8 @@ class SolicitudController extends Controller
             $id,
             $request->estado,
             $request->observaciones,
-            $request->user()
+            $request->user(),
+            $request->respuesta_apelacion
         );
 
         return $this->success(

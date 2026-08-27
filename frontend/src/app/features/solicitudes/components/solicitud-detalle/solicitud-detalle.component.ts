@@ -35,6 +35,7 @@ export class SolicitudDetalleComponent implements OnInit {
   // Para el formulario de actualización
   nuevoEstado = signal<string>('');
   observaciones = signal<string>('');
+  respuestaApelacion = signal<string>('');
 
   esAdmin = computed(() => {
     return this.authService.hasRole('admin') ||
@@ -56,6 +57,8 @@ export class SolicitudDetalleComponent implements OnInit {
     if (!sol) return false;
     return this.authService.hasRole('estudiante') && sol.estado === 'rechazada' && !sol.respuesta_alumno;
   });
+
+  mostrarRespuestaApelacion = computed(() => !!this.solicitud()?.respuesta_alumno);
 
   estados = [
     { value: 'pendiente', label: 'Pendiente', color: 'amber' },
@@ -82,6 +85,7 @@ export class SolicitudDetalleComponent implements OnInit {
         this.solicitud.set(solicitud);
         this.nuevoEstado.set(solicitud.estado);
         this.observaciones.set(solicitud.observaciones_admin || '');
+        this.respuestaApelacion.set(solicitud.respuesta_admin || '');
         this.loading.set(false);
       },
       error: () => {
@@ -98,7 +102,8 @@ export class SolicitudDetalleComponent implements OnInit {
     this.updating.set(true);
     const data: UpdateEstadoDTO = {
       estado: this.nuevoEstado() as any,
-      observaciones: this.observaciones() || undefined
+      observaciones: this.observaciones() || undefined,
+      respuesta_apelacion: this.mostrarRespuestaApelacion() ? (this.respuestaApelacion() || undefined) : undefined
     };
 
     this.solicitudService.updateEstado(sol.id, data).subscribe({

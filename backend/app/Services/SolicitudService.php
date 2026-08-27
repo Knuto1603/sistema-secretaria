@@ -189,12 +189,16 @@ class SolicitudService
     /**
      * Actualiza el estado de una solicitud
      */
-    public function updateEstado(string $id, string $estado, ?string $observaciones = null, ?User $asignadoA = null): ?Solicitud
+    public function updateEstado(string $id, string $estado, ?string $observaciones = null, ?User $asignadoA = null, ?string $respuestaApelacion = null): ?Solicitud
     {
         $data = ['estado' => $estado];
 
         if ($observaciones !== null) {
             $data['observaciones_admin'] = $observaciones;
+        }
+
+        if ($respuestaApelacion !== null) {
+            $data['respuesta_admin'] = $respuestaApelacion;
         }
 
         if ($asignadoA !== null) {
@@ -203,7 +207,9 @@ class SolicitudService
 
         $solicitud = $this->repository->update($id, $data);
 
-        if ($solicitud && in_array($estado, ['en_revision', 'aprobada', 'rechazada', 'anulada'], true)) {
+        if ($solicitud && $respuestaApelacion !== null) {
+            EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id, 'respuesta_apelacion');
+        } elseif ($solicitud && in_array($estado, ['en_revision', 'aprobada', 'rechazada', 'anulada'], true)) {
             EnviarNotificacionSolicitudTelegramJob::dispatch($solicitud->id, 'cambio_estado');
         }
 
