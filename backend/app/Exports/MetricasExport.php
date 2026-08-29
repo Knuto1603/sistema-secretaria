@@ -11,6 +11,7 @@ class MetricasExport implements WithMultipleSheets
     public function sheets(): array
     {
         return [
+            new MetricasConsolidadoSheet($this->periodoId),
             new MetricasResumenSheet('CUPO_EXT', $this->periodoId),
             new MetricasDetalleSheet('CUPO_EXT', $this->periodoId),
             new MetricasResumenSheet('INSC_ESCUELA', $this->periodoId),
