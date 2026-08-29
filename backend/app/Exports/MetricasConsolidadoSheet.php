@@ -24,6 +24,7 @@ class MetricasConsolidadoSheet implements FromCollection, WithHeadings, WithTitl
 
         $solicitudes = Solicitud::whereNotNull('programacion_id')
             ->where('periodo_id', $this->periodoId)
+            ->where('estado', '!=', 'anulada')
             ->whereHas('tipoSolicitud', fn($q) => $q->whereIn('codigo', ['CUPO_EXT', 'INSC_ESCUELA']))
             ->with('tipoSolicitud:id,codigo')
             ->get(['id', 'programacion_id', 'user_id', 'estado', 'tipo_solicitud_id']);
