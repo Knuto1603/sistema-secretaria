@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\PlantillaModificacionController;
 use App\Http\Controllers\Api\V1\ProgramacionController;
 use App\Http\Controllers\Api\V1\ProgramacionModificacionController;
 use App\Http\Controllers\Api\V1\RolController;
+use App\Http\Controllers\Api\V1\SolicitudAperturaController;
 use App\Http\Controllers\Api\V1\SolicitudController;
 use App\Http\Controllers\Api\V1\TelegramController;
 use App\Http\Controllers\Api\V1\TipoSolicitudController;
@@ -419,6 +420,40 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function () {
 
         // Actualizar estado (admin/secretaria/decano)
         Route::patch('/{id}/estado', [SolicitudController::class, 'updateEstado'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+    });
+
+    // Rutas de Solicitudes de Apertura de Curso
+    Route::prefix('solicitudes-apertura')->group(function () {
+        // Estudiante: buscar en el catálogo completo de cursos
+        Route::get('/buscar-curso', [SolicitudAperturaController::class, 'buscarCurso']);
+
+        // Estudiante: ver sus propias solicitudes
+        Route::get('/mis-solicitudes', [SolicitudAperturaController::class, 'misSolicitudes']);
+
+        // Estudiante: crear solicitud
+        Route::post('/', [SolicitudAperturaController::class, 'store']);
+
+        // Admin: vista agrupada por curso con indicadores de prioridad
+        Route::get('/agrupado', [SolicitudAperturaController::class, 'agrupado'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
+        // Admin: listado individual
+        Route::get('/', [SolicitudAperturaController::class, 'index'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
+        // Estudiante: anular la propia (solo pendiente/en_revision)
+        Route::delete('/{id}', [SolicitudAperturaController::class, 'anular']);
+
+        // Detalle (todos pueden, estudiante solo las suyas)
+        Route::get('/{id}', [SolicitudAperturaController::class, 'show']);
+
+        // Admin: cambiar estado en lote
+        Route::patch('/estado-masivo', [SolicitudAperturaController::class, 'updateEstadoMasivo'])
+            ->middleware('role:admin|secretaria|decano|secretario academico|developer');
+
+        // Admin: cambiar estado individual
+        Route::patch('/{id}/estado', [SolicitudAperturaController::class, 'updateEstado'])
             ->middleware('role:admin|secretaria|decano|secretario academico|developer');
     });
 
