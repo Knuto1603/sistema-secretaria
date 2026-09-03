@@ -48,9 +48,13 @@ export const routes: Routes = [
          path: 'programacion-activa',
          loadChildren: () => import('./features/programacion-activa/programacion-activa.routes').then(m => m.PROGRAMACION_ACTIVA_ROUTES)
        },
-       { 
+       {
           path: 'solicitudes',
          loadChildren: () => import('./features/solicitudes/components/solicitudes.routes').then(m => m.routes),
+       },
+       {
+         path: 'solicitudes-apertura',
+         loadChildren: () => import('./features/solicitudes-apertura/solicitudes-apertura.routes').then(m => m.routes),
        },
        {
          path: 'chatbot',

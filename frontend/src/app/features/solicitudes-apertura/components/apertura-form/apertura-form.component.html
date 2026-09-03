@@ -1,0 +1,98 @@
+<div class="max-w-2xl mx-auto bg-white rounded-md border border-slate-200 shadow-xl overflow-hidden">
+
+  <div class="p-8 text-white" [ngClass]="tipo() === 'cambio_grupo' ? 'bg-violet-600' : 'bg-indigo-600'">
+    <h2 class="text-2xl font-black tracking-tight">
+      @if (tipo() === 'cambio_grupo') { Solicitud de Otro Grupo } @else { Solicitud de Apertura de Curso }
+    </h2>
+    <div class="mt-4 flex items-center gap-3 bg-white/10 p-4 rounded-md border border-white/20">
+      <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-600 flex-shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-semibold uppercase tracking-widest opacity-60">Curso Seleccionado</p>
+        <p class="text-sm font-bold truncate">{{ nombre() }} ({{ codigo() }})</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-8 space-y-6">
+
+    @if (tipo() === 'cambio_grupo') {
+      <div class="flex items-start gap-3 p-4 bg-violet-50 border border-violet-200 rounded-md">
+        <svg class="w-5 h-5 text-violet-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <div>
+          <p class="text-sm font-bold text-violet-800">Este curso ya se dicta este periodo</p>
+          <p class="text-xs text-violet-700 mt-0.5">
+            Estás solicitando la apertura de un grupo distinto porque cruza de horario con
+            <strong>{{ referenciaLabel() }}</strong>. La Secretaría evaluará abrir otra sección si hay suficientes
+            estudiantes en tu misma situación.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="flex items-start gap-3 p-4 bg-indigo-50 border border-indigo-200 rounded-md">
+        <svg class="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div>
+          <p class="text-sm font-bold text-indigo-800">Este curso no se dicta este periodo</p>
+          <p class="text-xs text-indigo-700 mt-0.5">
+            Tu solicitud se sumará a la de otros estudiantes interesados en este curso. La Secretaría prioriza su
+            apertura según la cantidad de solicitantes y otros criterios académicos.
+          </p>
+        </div>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <app-alert type="error" [message]="errorMessage()" />
+    }
+
+    <form [formGroup]="form" (ngSubmit)="enviar()" class="space-y-6">
+
+      <div class="flex flex-col gap-2">
+        <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest ml-1">Motivo de la Solicitud</label>
+        <textarea
+          formControlName="motivo"
+          rows="4"
+          placeholder="Explica por qué necesitas este curso este periodo..."
+          class="w-full p-4 bg-slate-50 border border-slate-200 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none font-medium text-slate-700"></textarea>
+        @if (form.get('motivo')?.touched && form.get('motivo')?.invalid) {
+          <span class="text-[10px] text-red-500 font-bold ml-1 uppercase">El motivo debe tener al menos 20 caracteres</span>
+        }
+      </div>
+
+      <app-signature-pad (signatureSaved)="onFirmaSaved($event)" />
+
+      <div class="flex gap-4 pt-4 border-t border-slate-100">
+        <app-btn type="submit" variant="primary" class="flex-grow" [loading]="isSubmitting()">
+          Enviar Solicitud
+        </app-btn>
+      </div>
+    </form>
+  </div>
+</div>
+
+@if (solicitudExitosa()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-md shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+      <div class="flex flex-col items-center px-6 pt-8 pb-6">
+        <div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold text-slate-800 text-center">¡Solicitud registrada con éxito!</h2>
+        <p class="mt-2 text-sm text-slate-500 text-center leading-relaxed">
+          Te redirigiremos a tus solicitudes de apertura en un momento.
+        </p>
+        <svg class="w-5 h-5 text-slate-400 animate-spin mt-5" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+}

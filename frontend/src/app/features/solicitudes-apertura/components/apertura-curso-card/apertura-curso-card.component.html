@@ -1,0 +1,149 @@
+<div class="bg-white border border-slate-200 rounded-md overflow-hidden">
+
+  <button type="button" (click)="toggleExpandir()"
+    class="w-full flex items-center justify-between gap-4 p-4 text-left hover:bg-slate-50 transition-colors">
+    <div class="min-w-0">
+      <p class="text-sm font-bold text-slate-800 truncate">{{ curso().codigo }} — {{ curso().nombre }}</p>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2">
+        @if (curso().cumple_minimo) {
+          <app-badge color="emerald" size="sm">✓ Mínimo alcanzado ({{ curso().total_activas }}/10)</app-badge>
+        } @else {
+          <app-badge color="slate" size="sm">{{ curso().total_activas }}/10 solicitantes</app-badge>
+        }
+        @if (curso().es_cadena) {
+          <app-badge color="violet" size="sm">Curso cadena</app-badge>
+        }
+        @if (curso().fuera_de_periodo) {
+          <app-badge color="indigo" size="sm">No se dicta este periodo</app-badge>
+        }
+        @if (curso().por_tipo.cambio_grupo > 0) {
+          <app-badge color="amber" size="sm">{{ curso().por_tipo.cambio_grupo }} por cruce de horario</app-badge>
+        }
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 flex-shrink-0">
+      <div class="text-right">
+        <p class="text-xl font-black text-slate-800 leading-none">{{ curso().total_activas }}</p>
+        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Solicitantes</p>
+      </div>
+      <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="expandido()"
+        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </button>
+
+  @if (expandido()) {
+    <div class="border-t border-slate-100 p-4 space-y-4 bg-slate-50/50">
+
+      <!-- Indicadores por escuela -->
+      <div class="grid gap-3" [ngClass]="mostrarEscuelas() ? 'sm:grid-cols-2' : 'sm:grid-cols-1'">
+        @for (esc of curso().escuelas; track esc.escuela_id) {
+          <div class="bg-white border border-slate-200 rounded-md p-3.5">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-xs font-bold text-slate-700">{{ esc.escuela_nombre ?? 'Sin escuela' }}</p>
+              <span class="text-[10px] font-bold text-slate-400">{{ esc.total_solicitantes }} solicitantes</span>
+            </div>
+
+            <div class="mt-2 space-y-1.5 text-[11px] text-slate-500">
+              @if (esc.ciclo_en_plan) {
+                <p>Ciclo {{ esc.ciclo_en_plan }} en el plan de esta escuela.</p>
+              } @else {
+                <p class="text-amber-600">No está registrado en el plan activo de esta escuela.</p>
+              }
+
+              @if (esc.es_cadena) {
+                <p class="text-violet-600 font-semibold">
+                  Prerequisito de {{ esc.cursos_cadena.length }} cursos del siguiente ciclo: {{ cadenaResumen(esc.cursos_cadena) }}
+                </p>
+              }
+
+              @if (esc.fuera_de_periodo === true) {
+                <p class="text-indigo-600">No corresponde programarse este periodo.</p>
+              } @else if (esc.fuera_de_periodo === false) {
+                <p>Sí correspondería dictarse este periodo (verificar por qué no está programado).</p>
+              }
+
+              @if (esc.pct_cumple_prerequisitos !== null) {
+                <div>
+                  <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                    <span>Cumplen prerequisitos</span>
+                    <span>{{ esc.pct_cumple_prerequisitos }}%</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-emerald-500" [style.width.%]="esc.pct_cumple_prerequisitos"></div>
+                  </div>
+                </div>
+              } @else {
+                <p class="text-slate-400">Sin prerequisitos registrados para este curso.</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Barra de selección masiva -->
+      <div class="flex items-center justify-between gap-3">
+        <label class="flex items-center gap-2 text-[11px] font-bold text-slate-500 cursor-pointer">
+          <input type="checkbox" [checked]="todasSeleccionadas()"
+            (change)="toggleSeleccionTodas($any($event.target).checked)" class="accent-indigo-600" />
+          Seleccionar todos ({{ solicitantes().length }})
+        </label>
+
+        @if (seleccionadas().size > 0) {
+          <app-btn variant="primary" (clicked)="abrirModalMasivo()">
+            Cambiar estado ({{ seleccionadas().size }})
+          </app-btn>
+        }
+      </div>
+
+      <!-- Lista de solicitantes -->
+      <div class="bg-white border border-slate-200 rounded-md divide-y divide-slate-100 overflow-hidden">
+        @for (s of solicitantes(); track s.solicitud_id) {
+          <div class="flex items-center gap-3 p-3">
+            <input type="checkbox" [checked]="seleccionadas().has(s.solicitud_id)"
+              (change)="toggleSeleccion(s.solicitud_id, $event)" class="accent-indigo-600 flex-shrink-0" />
+
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-bold text-slate-700 truncate">{{ s.nombre ?? 'Sin nombre' }}</p>
+              <p class="text-[10px] text-slate-400">
+                {{ s.codigo }}
+                @if (mostrarEscuelas()) { · {{ s.escuela_nombre }} }
+                · {{ s.fecha }}
+              </p>
+            </div>
+
+            <app-badge [color]="s.tipo === 'cambio_grupo' ? 'amber' : 'slate'" size="sm">{{ labelTipo(s.tipo) }}</app-badge>
+
+            @if (s.cumple_prerequisitos === true) {
+              <span class="text-emerald-500 flex-shrink-0" title="Cumple prerequisitos">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              </span>
+            } @else if (s.cumple_prerequisitos === false) {
+              <span class="text-red-500 flex-shrink-0" title="No cumple prerequisitos">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </span>
+            }
+
+            <app-badge [color]="colorEstado(s.estado)" size="sm">{{ labelEstado(s.estado) }}</app-badge>
+
+            <button type="button" (click)="abrirModalIndividual(s.solicitud_id, $event)"
+              class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex-shrink-0 uppercase tracking-wide">
+              Cambiar
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (mostrarModal()) {
+    <app-apertura-estado-modal
+      [cantidad]="modalIds().length"
+      [enviando]="enviando()"
+      [error]="errorModal()"
+      (cerrado)="cerrarModal()"
+      (confirmar)="confirmarCambio($event)" />
+  }
+</div>
